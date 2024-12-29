@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Mensaje</title>
+</head>
+<body>
+    <h1>Editar Mensaje</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }} <!-- Genera el formulario con los datos pre-rellenados -->
+        <button type="submit">Guardar Cambios</button>
+    </form>
+    <a href="{% url 'com-table-edit' %}">Cancelar</a>
+</body>
+</html>

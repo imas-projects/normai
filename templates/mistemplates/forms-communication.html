@@ -1,0 +1,237 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Basic Elements{% endblock title %}
+{% block extra_css %}
+{% endblock extra_css %}
+{% block content %}
+        <!-- ============================================================== -->
+        <!-- Start right Content here -->
+        <!-- ============================================================== -->
+        <div class="main-content">
+
+            <div class="page-content">
+                <div class="container-fluid">
+
+                    {% block pagetitle %}
+                    {% include "partials/page-title.html" with pagetitle="Forms" title="Añadir Mensaje a Tabla Comunicación" %}
+                    {% endblock pagetitle %}
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header align-items-center d-flex">
+                                    <h4 class="card-title mb-0 flex-grow-1">Formulario Mensajes</h4>   
+                                </div><!-- end card header -->
+                                <div class="card-body">
+                                    <div class="live-preview">
+                                        <div class="row gy-4">
+                                            <div class="row g-3">
+                                                <div class="col-lg-12">
+
+                                                    <form method="post">
+                                                        <input type="hidden" name="form_type" value="new_message_form">
+                                                        {% csrf_token %}
+                                                        {% for field in message_form %}
+                                                            <div class="form-group">
+                                                                
+                                                                <!-- Tipo de Comunicación -->
+                                                                {% if field.name == 'mes_com_typ' %}
+                                                                <div class="input-group">
+                                                                    <div class="mb-3 col-lg-12">
+                                                                    <label class="input-group-text" for="inputGroupSelect01">Tipo de Comunicación</label>
+                                                                    <select class="form-select" name="field_mes_com_typ" id="field_mes_com_typ">
+                                                                        <option selected>Seleccionar...</option>
+                                                                        {% for i in all_communicationtype %} 
+                                                                        <option value="{{ i.id }}">{{i.doc}} {{i.tow}}</option>  
+                                                                        {% endfor %}   
+                                                                    </select>
+                                                                    </div>
+                                                                </div>
+                                                                {% endif %}
+
+                                                                <!-- Canal de Comunicación -->
+                                                                {% if field.name == 'mes_cha' %}                
+                                                                <div class="mb-3">
+                                                                    <label class="input-group-text" for="inputGroupSelect02">Canal de Comunicación</label>
+                                                                    <select class="form-control" name="field_mes_cha" multiple form-select data-choices data-choices-removeItem>
+                                                                        {% for i in all_channels %} 
+                                                                        <option value="{{ i.id }}">{{i.cha}}</option>  
+                                                                        {% endfor %} 
+                                                                    </select>
+                                                                </div>
+                                                                {% endif %}
+
+
+                                                                <!--Emisor-->
+                                                                {% if field.name == 'mes_tra' %}                
+                                                                <div class="input-group">
+                                                                    <div class="mb-3  col-lg-12">
+                                                                    <label class="input-group-text" for="inputGroupSelect01">Emisor</label>
+                                                                    <select class="form-select" name="field_mes_tra" id="field_mes_tra">
+                                                                        <option selected>Seleccionar...</option>
+                                                                        {% for i in all_departments %} 
+                                                                        <option value="{{ i.id }}">{{i.ppl}}</option>  
+                                                                        {% endfor %}   
+                                                                    </select>
+                                                                    </div>
+                                                                </div>
+                                                                {% endif %}
+
+                                                                <!--Receptor-->
+                                                                {% if field.name == 'mes_rec' %}                
+                                                                <div class="mb-3">
+                                                                    <label class="input-group-text" for="inputGroupSelect02">A quién va dirigido?</label>
+                                                                    <select class="form-control" name="field_mes_rec" multiple form-select data-choices data-choices-removeItem>
+                                                                        {% for i in all_departments %} 
+                                                                        <option value="{{ i.id }}">{{i.ppl}}</option>  
+                                                                        {% endfor %} 
+                                                                    </select>
+                                                                </div>
+                                                                {% endif %}
+                                                            
+                                                                <!--Periodicidad-->
+                                                                {% if field.name == 'mes_per' %} 
+                                                                <div class="mb-3 col-lg-12"></div>
+                                                                <label class="input-group-text" for="inputGroupSelect02">Periodicidad</label>
+                                                                    <select name="field_mes_per" id="field_mes_per" class="form-select">
+                                                                        <option value="" selected>Seleccionar...</option>
+                                                                        {% for i in all_periodicity %}
+                                                                        <option value="{{ i.id }}">{{ i.per }}</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                </div>
+                                                                {% endif %}
+
+                                                                <!--Asunto del mensaje-->
+                                                                {% if field.name == 'mes_sub' %}
+                                                                <div class="input-group">
+                                                                <div class="mb-3 col-lg-12">
+                                                                    <label class="form-label" for="inputGroupSelect01">Mensaje</label>
+                                                                    <textarea class="form-control" placeholder="Escribe el mensaje" name="field_mes_sub"></textarea>
+                                                            
+                                                                </div>
+                                                                {% endif %}
+
+                                                            </div>
+                                                            {% endfor %}
+                                                            
+                                                        <button type="submit" class="btn btn-primary">Enviar</button>
+                                                        
+                                                    </form>
+                                                </div><!--end col-->
+                                            </div><!--end row-->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div><!--end col-->
+                        </div><!--end row-->
+                    
+    
+                    </div> <!-- container-fluid -->
+                
+                
+
+
+                    
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header align-items-center d-flex">
+                                    <h4 class="card-title mb-0 flex-grow-1">Formulario Mensajes</h4>   
+                                </div><!-- end card header -->
+                                <div class="card-body">
+                                    <div class="live-preview">
+                                        <div class="row gy-4">
+                                            <div class="row g-3">
+                                                <div class="col-lg-6">
+                                                        <div class="input-group">
+                                                            <label class="input-group-text" for="inputGroupSelect01">Tipo de Comunicación</label>
+                                                            <select class="form-select" id="inputGroupSelect01">
+                                                                <option selected>Seleccionar...</option>
+                                                                {% for i in all_communicationtype %} 
+                                                                <option>{{i.doc}} {{i.tow}}</option>  
+                                                                {% endfor %}   
+                                                            </select>
+                                                        </div>
+                                                </div>        
+                                            </div><!--end col-->
+
+
+                                            <div class="col-xxl-3 col-md-6">
+                                                <div>
+                                                    <label for="placeholderInput" class="form-label">Input with Placeholder</label>
+                                                    <input type="password" class="form-control" id="placeholderInput" placeholder="Placeholder">
+                                                </div>
+                                            </div><!--end col-->
+                                            
+                                            
+                                            <div class="col-xxl-3 col-md-6">
+                                                <div>
+                                                    <label for="disabledInput" class="form-label">Disabled Input</label>
+                                                    <input type="text" class="form-control" id="disabledInput" value="Disabled input" disabled>
+                                                </div>
+                                            </div><!--end col-->
+                                            
+                                           
+                                            <div class="col-xxl-3 col-md-6">
+                                                <div>
+                                                    <label for="exampleInputdate" class="form-label">Input Date</label>
+                                                    <input type="date" class="form-control" id="exampleInputdate">
+                                                </div>
+                                            </div><!--end col-->
+                                            <div class="col-xxl-3 col-md-6">
+                                                <div>
+                                                    <label for="exampleInputtime" class="form-label">Input Time</label>
+                                                    <input type="time" class="form-control" id="exampleInputtime">
+                                                </div>
+                                            </div><!--end col-->
+                                            
+
+
+
+                                            <div class="col-xxl-3 col-md-6">
+                                                <div>
+                                                    <label for="exampleFormControlTextarea5" class="form-label">Example Textarea</label>
+                                                    <textarea class="form-control" id="exampleFormControlTextarea5" rows="3"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="row g-3">
+                                                <div class="col-lg-6">
+                                                        <div class="input-group">
+                                                            <label class="input-group-text" for="inputGroupSelect01">Options</label>
+                                                            <select class="form-select" id="inputGroupSelect01">
+                                                                <option selected>Choose...</option>
+                                                                <option value="1">One</option>
+                                                                <option value="2">Two</option>
+                                                                <option value="3">Three</option>
+                                                            </select>
+                                                        </div>
+                                                </div>        
+                                            </div><!--end col-->
+
+                                            <div class="row g-3">
+                                                <div class="text-end">
+                                                    <button type="submit" class="btn btn-primary">Guardar</button>
+                                                </div>
+                                            </div><!--end col-->
+                                        </div><!--end row-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!--end col-->
+                    </div><!--end row-->
+                </form>
+
+                </div> <!-- container-fluid -->
+            </div><!-- End Page-content -->
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+        </div>
+        <!-- end main content-->
+{% endblock content %}
+{% block extra_js %}
+    <!-- prismjs plugin -->
+    <script src="{% static 'libs/prismjs/prism.js'%}"></script>
+{% endblock extra_js %}
