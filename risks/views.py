@@ -91,7 +91,7 @@ def create_risk(request, risk_id=None):
 
     return render(
         request,
-        'templates/mistemplates/risks.html',
+        'mistemplates/risks.html',
         {
             'risk_identifications': risk_identifications,
             'risk_treatments': risk_treatments,
@@ -357,5 +357,3 @@ def update_risk(request, risk_id, step):
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
     return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
-
-
