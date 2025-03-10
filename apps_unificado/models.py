@@ -156,6 +156,7 @@ class MessageForm(forms.ModelForm): #Crea un formulario a partir del modelo ya c
            "receivers",
            "periodicity"
         ]
+       
 '''
 ######################## MATRIZ DE RIESGOS ########################
 # Tabla de roles
