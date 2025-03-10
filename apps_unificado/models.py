@@ -156,7 +156,7 @@ class MessageForm(forms.ModelForm): #Crea un formulario a partir del modelo ya c
            "receivers",
            "periodicity"
         ]
-
+'''
 ######################## MATRIZ DE RIESGOS ########################
 # Tabla de roles
 class Role(models.Model):
@@ -373,4 +373,6 @@ class Revision(models.Model):
             "review_date": self.review_date,
             "review_number": self.review_number,
             "update_date": self.update_date
-        } 
+        } '
+        ''
+'''
