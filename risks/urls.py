@@ -8,8 +8,7 @@ app_name = 'risks'
 urlpatterns = [
     path("get-risk-data/<int:risk_id>/", get_risk_data, name="get-risk-data"),
     path("update-risk/<int:risk_id>/step-<int:step>/", update_risk, name="update-risk-step"),
-    path('',view =dashboard_view,name="dashboard"),
-    path('risks/', views.create_risk, name='risks'),
+    path('', views.create_risk, name='risks'),
     path('download-risks-pdf/<str:department_name>/', generate_risks_pdf, name='download_risks_pdf'),
     path("save-risk-step/<int:step>/", views.save_risk_step, name="save-risk-step")
   ]
