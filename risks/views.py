@@ -91,7 +91,7 @@ def create_risk(request, risk_id=None):
 
     return render(
         request,
-        'dashboards/dashboard-analytics.html',
+        'templates/mistemplates/risks.html',
         {
             'risk_identifications': risk_identifications,
             'risk_treatments': risk_treatments,
