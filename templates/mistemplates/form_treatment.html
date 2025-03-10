@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tratamiento de Riesgo</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Tratamiento de Riesgo</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.risk.label_tag }}
+            {{ form.risk }}
+
+            {{ form.treatment_action.label_tag }}
+            {{ form.treatment_action }}
+
+            {{ form.responsible.label_tag }}
+            {{ form.responsible }}
+
+            {{ form.target_date.label_tag }}
+            {{ form.target_date }}
+
+            {{ form.actual_date.label_tag }}
+            {{ form.actual_date }}
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
