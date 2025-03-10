@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluación de Riesgo</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Evaluación de Riesgo</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.risk.label_tag }}
+            {{ form.risk }}
+
+            {{ form.severity.label_tag }}
+            {{ form.severity }}
+
+            {{ form.current_preventive_controls.label_tag }}
+            {{ form.current_preventive_controls }}
+
+            {{ form.occurrence.label_tag }}
+            {{ form.occurrence }}
+
+            {{ form.current_detection_controls.label_tag }}
+            {{ form.current_detection_controls }}
+
+            {{ form.detection.label_tag }}
+            {{ form.detection }}
+
+            {{ form.risk_level.label_tag }}
+            {{ form.risk_level }}
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
