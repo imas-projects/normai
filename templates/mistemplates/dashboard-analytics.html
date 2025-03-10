@@ -1,0 +1,702 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Wizard{% endblock title %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+{% endblock extra_css %}
+{% block content %}
+    <!-- ============================================================== -->
+    <!-- Start right Content here -->
+    <!-- ============================================================== -->
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+
+                {% block pagetitle %}
+                {% include "partials/page-title.html" with pagetitle="Quality Management" title="Tables" %}
+                {% endblock pagetitle %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <!-- Título "Risk Matrix" a la izquierda -->
+                <h4 class="card-title mb-0">Risk Matrix</h4>
+
+                <!-- Botones alineados -->
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#myModal">
+                        + Add Risk
+                    </button>
+                    <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#stepsModal">
+                        + Add Steps
+                    </button>
+                </div>
+            </div><!-- end card header -->
+            <div class="card-body" style="padding: 0;">
+                <div class="listjs-table" id="customerList">
+                    <div class="row">
+                        <div class="col-sm-auto">
+                            <!-- Modal de "Add Risk" (solo Step 1) -->
+                            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="myModalLabel">Add Risk</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="accordion" id="risk-accordion">
+                                                <!-- Step 1: Risk Identification -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingOne">
+                                                        <div class="d-grid gap-2">
+                                                            <button class="btn btn-dark btn-border" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                                                Step 1: Risk Identification
+                                                            </button>
+                                                        </div>
+                                                    </h2>
+                                                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                                                        data-bs-parent="#risk-accordion">
+                                                        <div class="accordion-body">
+                                                            <h2>Identify Risk</h2>
+                                                            <form method="POST" id="form-step-1">
+                                                                {% csrf_token %}
+                                                                {{ form_create.as_p }}
+                                                                <button type="button" class="btn btn-success save-step" data-save-step="1">
+                                                                    Guardar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div> <!-- /.accordion -->
+                                        </div><!-- /.modal-body -->
+                                    </div><!-- /.modal-content -->
+                                </div><!-- /.modal-dialog -->
+                            </div><!-- /.modal -->
+
+                            <!-- Nuevo Modal de "Add Steps" (Steps 2,3,4,5) -->
+                            <div id="stepsModal" class="modal fade" tabindex="-1" aria-labelledby="stepsModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="stepsModalLabel">Add Steps</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="accordion" id="steps-accordion">
+                                                <!-- Step 2: Risk Evaluation -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingTwo">
+                                                        <div class="d-grid gap-2">
+                                                            <button class="btn btn-dark btn-border" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                                                Step 2: Risk Evaluation
+                                                            </button>
+                                                        </div>
+                                                    </h2>
+                                                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                                                        data-bs-parent="#steps-accordion">
+                                                        <div class="accordion-body">
+                                                            <h2>Evaluate Risk</h2>
+                                                            <form method="POST" id="form-step-2">
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="risk" value="{{ risk.id }}">
+                                                                {{ form_evaluation.as_p }}
+                                                                <button type="button" class="btn btn-success save-step" data-save-step="2">
+                                                                    Guardar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 3: Risk Treatment -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingThree">
+                                                        <div class="d-grid gap-2">
+                                                            <button class="btn btn-dark btn-border" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                                                Step 3: Risk Treatment
+                                                            </button>
+                                                        </div>
+                                                    </h2>
+                                                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+                                                        data-bs-parent="#steps-accordion">
+                                                        <div class="accordion-body">
+                                                            <h2>Plan Treatment for Risk</h2>
+                                                            <form method="POST" id="form-step-3">
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="risk" value="{{ risk.id }}">
+                                                                {{ form_treatment.as_p }}
+                                                                <button type="button" class="btn btn-success save-step" data-save-step="3">
+                                                                    Guardar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 4: Contingency Plan -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingFour">
+                                                        <div class="d-grid gap-2">
+                                                            <button class="btn btn-dark btn-border" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                                                Step 4: Contingency Plan
+                                                            </button>
+                                                        </div>
+                                                    </h2>
+                                                    <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
+                                                        data-bs-parent="#steps-accordion">
+                                                        <div class="accordion-body">
+                                                            <h2>Plan Contingency for Risk</h2>
+                                                            <form method="POST" id="form-step-4">
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="risk" value="{{ risk.id }}">
+                                                                {{ form_contingency.as_p }}
+                                                                <button type="button" class="btn btn-success save-step" data-save-step="4">
+                                                                    Guardar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Step 5: Risk Reevaluation -->
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingFive">
+                                                        <div class="d-grid gap-2">
+                                                            <button class="btn btn-dark btn-border" type="button" data-bs-toggle="collapse"
+                                                                data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                                                Step 5: Risk Reevaluation
+                                                            </button>
+                                                        </div>
+                                                    </h2>
+                                                    <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive"
+                                                        data-bs-parent="#steps-accordion">
+                                                        <div class="accordion-body">
+                                                            <h2>Reevaluate Risk</h2>
+                                                            <form method="POST" id="form-step-5">
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="risk" value="{{ risk.id }}">
+                                                                {{ form_reevaluation.as_p }}
+                                                                <button type="submit" class="btn btn-primary" data-save-step="5">
+                                                                    Guardar y Finalizar
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div> <!-- /.accordion -->
+                                        </div><!-- /.modal-body -->
+                                    </div><!-- /.modal-content -->
+                                </div><!-- /.modal-dialog -->
+                            </div><!-- /.modal -->
+                    <!-- Modal de "Revision" -->
+                </div><!-- /.listjs-table -->
+            </div><!-- /.card-body -->
+</div><!-- /.card-body -->
+        </div><!-- /.card -->
+    </div><!-- /.col-lg-12 -->
+</div><!-- /.row -->
+
+<div class="mt-3">
+    {% for department, risks in grouped_risks.items %}
+    <div class="accordion" id="accordion{{ department|slugify }}">
+        <div class="accordion-item">
+            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ department|slugify }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse{{ department|slugify }}" 
+                    aria-expanded="false" 
+                    aria-controls="collapse{{ department|slugify }}">
+                    {{ department }}
+                </button>
+                <a href="{% url 'dashboards:download_risks_pdf' department %}" class="btn btn-danger btn-sm ms-2">
+                    <i class="ri-file-download-line"></i> Download PDF
+                </a>
+            </h2>
+
+            <div id="collapse{{ department|slugify }}" class="accordion-collapse collapse"
+                aria-labelledby="heading{{ department|slugify }}">
+                <div class="accordion-body">
+                    {% for risk in risks %}
+                    <div class="card mb-3" style="background-color: #e9ecef; color: black;">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-bordered" style="border-color: #6c757d;">
+                                        <tbody>
+                                            <tr>
+                                                <th style="font-size: 18px; width: 30%;">Risk Name:</th>
+                                                <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th style="font-size: 18px;">Activity Name:</th>
+                                                <td style="font-size: 18px;">{{ risk.activity_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th style="font-size: 18px;">Consequences:</th>
+                                                <td style="font-size: 18px;">{{ risk.consequences }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-5 text-center">
+                                    <div class="d-flex flex-column gap-2">
+                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                            data-bs-target="#modalRiskEvaluation{{ risk.id }}">
+                                            Risk Evaluation
+                                        </button>
+                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                            data-bs-target="#modalRiskTreatment{{ risk.id }}">
+                                            Risk Treatment
+                                        </button>
+                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                            data-bs-target="#modalContingencyPlan{{ risk.id }}">
+                                            Contingency Plan
+                                        </button>
+                                        <button class="btn btn-dark w-100" data-bs-toggle="modal"
+                                            data-bs-target="#modalReevaluation{{ risk.id }}">
+                                            Reevaluation
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Botones de Edición y Eliminación -->
+                                <div class="col-md-1 d-flex flex-column align-items-end align-self-start">
+                                    <button class="btn btn-primary mb-2 edit-risk" data-id="{{ risk.id }}" data-bs-toggle="modal" data-bs-target="#editRiskModal">
+    <i class="ri-pencil-fill"></i>
+</button>
+
+                                    <button class="btn btn-danger" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal{{ risk.id }}">
+                                        <i class="ri-delete-back-2-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MODALES -->
+
+<!-- Modal de Edición de Riesgo -->
+<div class="modal fade" id="editRiskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Editar Riesgo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="risk_id">
+                <div class="accordion" id="edit-risk-accordion">
+
+                    <!-- Paso 1: Identificación del Riesgo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingEditOne">
+                            <button class="btn btn-dark btn-border w-100" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEditOne" aria-expanded="true" aria-controls="collapseEditOne">
+                                Paso 1: Identificación del Riesgo
+                            </button>
+                        </h2>
+                        <div id="collapseEditOne" class="accordion-collapse collapse show"
+                            aria-labelledby="headingEditOne" data-bs-parent="#edit-risk-accordion">
+                            <div class="accordion-body">
+                                <form id="edit-form-step-1">
+                                    {% csrf_token %}
+                                    <div id="form_create_container"></div>
+                                    <!-- Botón de Guardar eliminado -->
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2: Evaluación del Riesgo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingEditTwo">
+                            <button class="btn btn-dark btn-border w-100" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEditTwo" aria-expanded="false" aria-controls="collapseEditTwo">
+                                Paso 2: Evaluación del Riesgo
+                            </button>
+                        </h2>
+                        <div id="collapseEditTwo" class="accordion-collapse collapse"
+                            aria-labelledby="headingEditTwo" data-bs-parent="#edit-risk-accordion">
+                            <div class="accordion-body">
+                                <form id="edit-form-step-2">
+                                    {% csrf_token %}
+                                    <div id="form_evaluation_container"></div>
+                                    <!-- Botón de Guardar eliminado -->
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 3: Tratamiento del Riesgo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingEditThree">
+                            <button class="btn btn-dark btn-border w-100" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEditThree" aria-expanded="false" aria-controls="collapseEditThree">
+                                Paso 3: Tratamiento del Riesgo
+                            </button>
+                        </h2>
+                        <div id="collapseEditThree" class="accordion-collapse collapse"
+                            aria-labelledby="headingEditThree" data-bs-parent="#edit-risk-accordion">
+                            <div class="accordion-body">
+                                <form id="edit-form-step-3">
+                                    {% csrf_token %}
+                                    <div id="form_treatment_container"></div>
+                                    <!-- Botón de Guardar eliminado -->
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 4: Plan de Contingencia -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingEditFour">
+                            <button class="btn btn-dark btn-border w-100" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEditFour" aria-expanded="false" aria-controls="collapseEditFour">
+                                Paso 4: Plan de Contingencia
+                            </button>
+                        </h2>
+                        <div id="collapseEditFour" class="accordion-collapse collapse"
+                            aria-labelledby="headingEditFour" data-bs-parent="#edit-risk-accordion">
+                            <div class="accordion-body">
+                                <form id="edit-form-step-4">
+                                    {% csrf_token %}
+                                    <div id="form_contingency_container"></div>
+                                    <!-- Botón de Guardar eliminado -->
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 5: Reevaluación del Riesgo -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingEditFive">
+                            <button class="btn btn-dark btn-border w-100" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseEditFive" aria-expanded="false" aria-controls="collapseEditFive">
+                                Paso 5: Reevaluación del Riesgo
+                            </button>
+                        </h2>
+                        <div id="collapseEditFive" class="accordion-collapse collapse"
+                            aria-labelledby="headingEditFive" data-bs-parent="#edit-risk-accordion">
+                            <div class="accordion-body">
+                                <form id="edit-form-step-5">
+                                    {% csrf_token %}
+                                    <div id="form_reevaluation_container"></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- /.accordion -->
+            </div><!-- /.modal-body -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+                    <!-- Modal para Eliminar -->
+                    <div class="modal fade" id="deleteModal{{ risk.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Delete Risk</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure you want to delete <strong>{{ risk.identified_risk }}</strong>?</p>
+                                    <button class="btn btn-danger">Delete</button>
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                   <!-- Aquí irían los modales de cada riesgo -->
+
+                    <!-- Modal para Risk Evaluation -->
+                    <div class="modal fade" id="modalRiskEvaluation{{ risk.id }}" tabindex="-1" aria-labelledby="modalRiskEvaluationLabel{{ risk.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalRiskEvaluationLabel{{ risk.id }}">Risk Evaluation - {{ risk.identified_risk }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Severity</th>
+                                                <th>Current Preventive Controls</th>
+                                                <th>Occurrence</th>
+                                                <th>Current Detection Controls</th>
+                                                <th>Detection</th>
+                                                <th>Risk Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for evaluation in evaluations %}
+                                                {% if evaluation.risk.id == risk.id %}
+                                                    <tr>
+                                                        <td>{{ evaluation.severity }}</td>
+                                                        <td>{{ evaluation.current_preventive_controls }}</td>
+                                                        <td>{{ evaluation.occurrence }}</td>
+                                                        <td>{{ evaluation.current_detection_controls }}</td>
+                                                        <td>{{ evaluation.detection }}</td>
+                                                        <td>{{ evaluation.risk_level.level }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center">No evaluations available</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Risk Treatment -->
+                    <div class="modal fade" id="modalRiskTreatment{{ risk.id }}" tabindex="-1" aria-labelledby="modalRiskTreatmentLabel{{ risk.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalRiskTreatmentLabel{{ risk.id }}">Risk Treatment - {{ risk.identified_risk }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Treatment Action</th>
+                                                <th>Responsible</th>
+                                                <th>Target Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for treatment in risk_treatments %}
+                                                {% if treatment.risk.id == risk.id %}
+                                                    <tr>
+                                                        <td>{{ treatment.treatment_action }}</td>
+                                                        <td>{{ treatment.responsible.all|join:", " }}</td>
+                                                        <td>{{ treatment.target_date }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="3" class="text-center">No treatments available</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Contingency Plan -->
+                    <div class="modal fade" id="modalContingencyPlan{{ risk.id }}" tabindex="-1" aria-labelledby="modalContingencyPlanLabel{{ risk.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalContingencyPlanLabel{{ risk.id }}">Contingency Plan - {{ risk.identified_risk }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Contingency Action</th>
+                                                <th>Responsible</th>
+                                                <th>Communicate to</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for plan in contingency_plans %}
+                                                {% if plan.risk.id == risk.id %}
+                                                    <tr>
+                                                        <td>{{ plan.contingency_actions.all|join:", " }}</td>
+                                                        <td>{{ plan.responsible.all|join:", " }}</td>
+                                                        <td>{{ plan.communicate_to.all|join:", " }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="3" class="text-center">No contingency plans available</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para Reevaluation -->
+                    <div class="modal fade" id="modalReevaluation{{ risk.id }}" tabindex="-1" aria-labelledby="modalReevaluationLabel{{ risk.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalReevaluationLabel{{ risk.id }}">Reevaluation - {{ risk.identified_risk }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <table class="table table-bordered table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Severity</th>
+                                                <th>Occurrence</th>
+                                                <th>Detection</th>
+                                                <th>Risk Level</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for reevaluation in reevaluations %}
+                                                {% if reevaluation.risk.id == risk.id %}
+                                                    <tr>
+                                                        <td>{{ reevaluation.severity }}</td>
+                                                        <td>{{ reevaluation.occurrence }}</td>
+                                                        <td>{{ reevaluation.detection }}</td>
+                                                        <td>{{ reevaluation.risk_level.level }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No reevaluations available</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Cargar datos al abrir el modal
+    document.querySelectorAll(".edit-risk").forEach(element => {
+        element.addEventListener("click", function () {
+            let riskId = this.dataset.id;
+
+            $.ajax({
+                url: `/get-risk-data/${riskId}/`,
+                method: "GET",
+                success: function (response) {
+                    console.log("Datos recibidos:", response);
+
+                    // Actualizar título del modal
+                    $("#modalTitle").text("Edit Risk - " + response.identified_risk);
+
+                    // Guardar el ID del riesgo en un campo oculto
+                    $("#risk_id").val(response.id);
+
+                    // Insertar los formularios renderizados dinámicamente
+                    $("#form_create_container").html(response.form_create);
+                    $("#form_evaluation_container").html(response.form_evaluation);
+                    $("#form_treatment_container").html(response.form_treatment);
+                    $("#form_contingency_container").html(response.form_contingency);
+                    $("#form_reevaluation_container").html(response.form_reevaluation);
+
+                    // Abrir el modal
+                    $("#editRiskModal").modal("show");
+                },
+                error: function (error) {
+                    console.log("Error al obtener los datos:", error);
+                },
+            });
+        });
+    });
+
+    // Guardar cambios en cada paso
+    document.querySelectorAll("[data-save-step]").forEach(button => {
+        button.addEventListener("click", function (event) {
+            event.preventDefault(); // Evita el envío normal del formulario
+            
+            let step = this.dataset.saveStep; // Obtiene el número de paso desde el botón
+            let form = document.getElementById(`edit-form-step-${step}`); // Encuentra el formulario correcto
+            
+            if (!form) {
+                console.error(`Formulario para el paso ${step} no encontrado`);
+                return;
+            }
+
+            const formData = new FormData(form);
+
+            fetch(`/update-risk/${$("#risk_id").val()}/step-${step}/`, {
+                method: 'POST',
+                body: formData,  // Se envía directamente FormData sin manipularlo
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie("csrftoken") // Asegúrate de incluir el CSRF Token
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`Paso ${step} guardado correctamente`);
+                    alert(`Paso ${step} guardado con éxito`);
+
+                    // Solo refresca la página si es el paso 5
+                    if (step == 5) {
+                        location.reload();  // Refresca la página
+                    }
+                } else {
+                    console.error(`Error al guardar el Paso ${step}:`, data.error);
+                    alert(`Error al guardar el Paso ${step}: ` + JSON.stringify(data.error));
+                }
+            })
+            .catch(error => console.error(`Error en la solicitud para el Paso ${step}:`, error));
+        });
+    });
+
+    // Obtener CSRF Token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- CSS de Bootstrap -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- JS de Bootstrap y dependencias -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+{% endblock content %}
