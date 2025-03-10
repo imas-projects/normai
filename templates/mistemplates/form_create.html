@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Identificación de Riesgo</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Crear Identificación de Riesgo</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.department.label_tag }}
+            {{ form.department }}
+
+            {{ form.activity_name.label_tag }}
+            {{ form.activity_name }}
+
+            {{ form.identified_risk.label_tag }}
+            {{ form.identified_risk }}
+
+            {{ form.consequences.label_tag }}
+            {{ form.consequences }}
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </form>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
