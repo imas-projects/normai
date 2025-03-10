@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity, Department
+from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
+from risks.models import Department
 from django.http import JsonResponse
 import json
 

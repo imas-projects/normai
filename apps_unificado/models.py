@@ -24,7 +24,7 @@ class CommunicationType(models.Model):
             "direction":self.direction,
         }
 
-
+'''
 # Tabla de departamentos
 class Department(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -39,7 +39,7 @@ class Department(models.Model):
         return {
             "name":self.name,
         }
-        
+'''       
 
 # Tabla de canales de comunicacion
 class Channel(models.Model):
