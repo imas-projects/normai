@@ -1,7 +1,7 @@
 from django.db import models
 from django import forms
 from django.core.validators import RegexValidator
-
+from risks.models import Department
 # Create your models here.
 
 
