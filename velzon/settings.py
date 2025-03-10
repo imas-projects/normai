@@ -48,6 +48,7 @@ LOCAL_APPS = [
     "pages",
     #"misapps",
     "apps_unificado"
+    "risks"
     ]
 THIRDPARTY_APPS = [
     
