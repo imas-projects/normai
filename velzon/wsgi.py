@@ -8,8 +8,12 @@ https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/
 """
 
 import os
+import sys
 
 from django.core.wsgi import get_wsgi_application
+
+sys.path.append('/home/ubuntu/normai')
+sys.path.append('/home/ubuntu/normai-env/lib/python3.12/site-packages')
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'velzon.settings')
 
