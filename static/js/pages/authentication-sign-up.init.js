@@ -44,7 +44,7 @@ document.getElementById('sign-up-form').addEventListener('submit', function (eve
     })  
         .then(response => response.json())
         .then(data => {
-            console.log('Respuesta del servidor:', data); // debug Ver también la respuesta completa
+            console.log('Respuesta del servidor:', data); // debug 
             if (data.success) {
                 alert('Row updated successfully!');
                 location.reload();
