@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
@@ -23,6 +24,7 @@ def communication_table_view(request):
 
 
 # Carga la información de todos los mensajes.
+@login_required
 def all_messages(request):
     all_communicationtable = CommunicationTable.objects.all()  # Get all entries
     all_communicationtables = [table.as_dict() for table in all_communicationtable]
@@ -201,4 +203,11 @@ def create_message(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 
-######################## MATRIZ DE RIESGOS ########################
+######################## Usuario ########################
+from django.contrib.sessions.models import Session
+from django.contrib.auth.models import User 
+
+@login_required
+def wellcome_view(request):
+    
+    return render(request,"mistemplates/wellcome-page.html")

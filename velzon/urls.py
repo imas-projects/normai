@@ -45,9 +45,10 @@ urlpatterns = [
     # All Auth 
     path('account/', include('allauth.urls')),
     # Mis apps
-    #path('misapps/', include('misapps.urls')),
+    
     path('apps_unificado/', include('apps_unificado.urls')),
     path('risks/', include('risks.urls')),
+    path('authentication/', include('authentication.urls')),
     
 ]
 

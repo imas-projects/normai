@@ -1,0 +1,62 @@
+{% load static %}
+{% block header %}
+        <header id="page-topbar">
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <h1 class="text-white align-middle">Normai</h1>
+                    </div>
+
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
+                                data-toggle="fullscreen">
+                                <i class='bx bx-fullscreen fs-22'></i>
+                            </button>
+                            <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user" src="{% static 'images/users/avatar-1.jpg'%}"
+                                        alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{user.username}}</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">cargo</span>
+                                    </span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <!-- item-->
+                                <a class="dropdown-item" href="{% url 'apps_unificado:wellcome_view' %}">
+                                    <i class="mdi mdi-key text-muted fs-16 align-middle me-1"></i> 
+                                    <span class="align-middle" data-key="t-change-password">Inicio</span>
+                                </a>
+                                <a class="dropdown-item" href="{% url 'account_change_password' %}">
+                                    <i class="mdi mdi-key text-muted fs-16 align-middle me-1"></i> 
+                                    <span class="align-middle" data-key="t-change-password">Cambiar contraseña</span>
+                                </a>
+                                <a class="dropdown-item" href="{% url 'autenticacion:authentication_log_out' %}">
+                                    <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> 
+                                    <span class="align-middle" data-key="t-logout">Cerrar sesión</span>
+                                </a>
+                                <!--{% if user.is_authenticated %}
+                                    {% if user.has_usable_password %}
+                                        <a class="dropdown-item" href="{% url 'account_change_password' %}">
+                                            <i class="mdi mdi-key text-muted fs-16 align-middle me-1"></i> 
+                                            <span class="align-middle" data-key="t-change-password">Cambiar contraseña</span>
+                                        </a>
+                                    {% else %}
+                                        <a class="dropdown-item" href="{% url 'account_set_password' %}">
+                                            <i class="mdi mdi-key text-muted fs-16 align-middle me-1"></i> 
+                                            <span class="align-middle" data-key="t-set-password">set password</span>
+                                        </a>
+                                    {% endif %}
+                                        <a class="dropdown-item" href="{% url 'autenticacion:authentication_log_out' %}">
+                                            <i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> 
+                                            <span class="align-middle" data-key="t-logout">Cerrar sesión</span>
+                                        </a>
+                                {% endif %}-->
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </header>
+{% endblock header %}
