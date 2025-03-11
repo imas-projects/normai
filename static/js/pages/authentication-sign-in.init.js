@@ -11,7 +11,7 @@ document.getElementById('sign-in-form').addEventListener('submit', function (eve
     };
     console.log(data.password); //debug
 
-    fetch('/autenticacion/sign-in/', {
+    fetch('/authentication/sign-in/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),    

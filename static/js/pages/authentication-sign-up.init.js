@@ -37,7 +37,7 @@ document.getElementById('sign-up-form').addEventListener('submit', function (eve
             password: document.getElementById('password-input').value,            
     };
     
-    fetch('/autenticacion/sign-up/', {
+    fetch('/authentication/sign-up/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),    
