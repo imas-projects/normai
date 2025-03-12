@@ -24,7 +24,7 @@ def communication_table_view(request):
 
 
 # Carga la información de todos los mensajes.
-@login_required
+#@login_required
 def all_messages(request):
     all_communicationtable = CommunicationTable.objects.all()  # Get all entries
     all_communicationtables = [table.as_dict() for table in all_communicationtable]
