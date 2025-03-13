@@ -16,8 +16,6 @@ urlpatterns = [
     path('delete-message/<int:id>/', views.delete_message, name='delete-message'),
     path('create-message/', views.create_message, name='create-message'),
 
-    path('wellcome/', views.wellcome_view, name='wellcome_view'),
-
-]
+  ]
 
 
