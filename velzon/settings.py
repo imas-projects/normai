@@ -48,7 +48,6 @@ LOCAL_APPS = [
     "pages",
     "communications",
     "risks",
-    #"apps_unificado",
     "authentication",
     ]
 THIRDPARTY_APPS = [

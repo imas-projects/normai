@@ -66,7 +66,7 @@
                     <h2 class="card-header mb-4 fw-bold lh-base bg-light">Funcionalidades</h2>
                     <ul class="card-body mx-auto" id="navbar-example">
                         <div class="">
-                                <a href="/authentication/signin-basic" class="btn btn-secondary">Comunicaciones</a>
+                                <a href="{% url 'communications:all_messages' %}" class="btn btn-secondary">Comunicaciones</a>
                                 <a href="{% url 'risks:risks' %}" class="btn btn-secondary">Riesgos</a>
                                 <a href="/authentication/signup-basic" class="btn btn-secondary">Auditorias Internas</a>
                                 <a href="{% url 'authentication:authentication_sign_in' %}" class="btn btn-primary">Iniciar sesión</a>
