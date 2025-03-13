@@ -23,7 +23,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Dashboard
-    path('',include('dashboards.urls')),
+    path('dashboards',include('dashboards.urls')),
     # Apps
     path('apps/',include('apps.urls')),
     # Layouts
@@ -31,7 +31,7 @@ urlpatterns = [
     # Components
     path('components/',include('components.urls')),
     # Pages
-    path('pages/',include('pages.urls')),
+    path('',include('pages.urls')),
     path(
         "account/password/change/",
         login_required(MyPasswordChangeView.as_view()),

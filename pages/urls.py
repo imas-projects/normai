@@ -1,5 +1,6 @@
 from django.urls import path
 from pages.views import (
+pages_normai_landing,
 authentication_signin_basic,
 authentication_signin_cover,
 authentication_signup_basic,
@@ -48,6 +49,7 @@ app_name = "pages"
 
 urlpatterns = [
     # Authentication
+    path("",view=pages_normai_landing,name="pages.normai_landing"),
     path("authentication/signin-basic",view =authentication_signin_basic,name="authentication.signin_basic"),
     path("authentication/signin-cover",view =authentication_signin_cover,name="authentication.signin_cover"),
     path("authentication/signup-basic",view =authentication_signup_basic,name="authentication.signup_basic"),

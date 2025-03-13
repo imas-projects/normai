@@ -1,0 +1,122 @@
+{% load static %}
+
+<html lang="en" data-layout="horizontal" data-topbar="dark" data-sidebar-size="lg" data-sidebar-image="none">
+
+<head>
+
+    <meta charset="utf-8" />
+    <title>Normai</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="Normai" name="description" />
+    <meta content="Themesbrand" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
+
+    <!--Swiper slider css-->
+    <link href="{% static 'libs/swiper/swiper-bundle.min.css' %}" rel="stylesheet" type="text/css" />
+
+    <!-- Layout config Js -->
+    <script src="{% static 'js/layout.js' %}"></script>
+    <!-- Bootstrap Css -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+    <!-- Icons Css -->
+    <link href="{% static 'css/icons.min.css' %}" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link href="{% static 'css/app.min.css' %}" rel="stylesheet" type="text/css" />
+    <!-- custom Css-->
+    <link href="{% static 'css/custom.min.css' %}" rel="stylesheet" type="text/css" />
+
+
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#navbar-example">
+
+    <!-- Begin page -->
+    <div class="layout-wrapper landing">
+        <nav class="navbar navbar-expand-lg navbar-landing navbar-light fixed-top" id="navbar">
+            <div class="container">
+                <button class="navbar-toggler py-0 fs-20 text-body" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="mdi mdi-menu"></i>
+                </button>
+                <div class="collapse navbar-collapse w-100" id="navbarSupportedContent">
+                    <ul class="navbar-nav mx-auto mt-3" id="navbar-example">
+                    <div class="">
+                        <a href="{% url 'authentication:authentication_sign_in' %}" class="btn btn-primary">Iniciar sesión</a>
+                        <a href="{% url 'authentication:authentication_sign_up' %}" class="btn btn-info">Nuevo Usuario</a>
+                    </div>
+                    </ul>
+                </div>    
+            </div>
+        </nav>
+        <!-- end navbar -->
+
+        <!-- start hero section -->
+        <section class="section nft-hero" id="hero">
+            <div class="bg-overlay"></div>
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-5 col-sm-10">
+                        <div class="text-center">
+                            <h1 class="display-3 fw-semibold mb-0 lh-base text-white">NormAI</h1>
+                            <p class="lead text-white-50 lh-base mb-4 pb-0">La gestión de la calidad en un solo lugar</p>
+                        </div>
+                    </div><!--end col-->
+                </div><!-- end row -->
+            </div><!-- end container -->
+            <div class="row justify-content-center">
+                <div class="w-100">
+                    <div class="text-center mb-5">
+                        <h2 class="mb-4 fw-bold lh-base  bg-light">Funcionalidades</h2>
+                        <ul class="navbar-nav mx-auto mt-3" id="navbar-example">
+                            <div class="">
+                                <a href="/authentication/signin-basic" class="btn btn-secondary">Comunicaciones</a>
+                                <a href="{% url 'risks:risks' %}" class="btn btn-secondary">Riesgos</a>
+                                <a href="/authentication/signup-basic" class="btn btn-secondary">Auditorias Internas</a>
+                            </div>
+                            </ul>
+                    </div>
+                </div><!-- end col -->
+            </div><!-- end row -->
+        </section><!-- end hero section -->
+
+        <!-- Start footer -->
+        <footer class="custom-footer bg-dark py-2 position-relative">
+            <div class="container">
+
+                <div class="row text-center text-sm-start align-items-center mt-5">
+                    <div class="col-sm-6">
+                        <div>
+                            <p class="copy-rights mb-0">
+                                <script> document.write(new Date().getFullYear()) </script> © Velzon - Themesbrand
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <!-- end footer -->
+
+        <!--start back-to-top-->
+        <button onclick="topFunction()" class="btn btn-danger btn-icon landing-back-top" id="back-to-top">
+            <i class="ri-arrow-up-line"></i>
+        </button>
+        <!--end back-to-top-->
+
+    </div>
+    <!-- end layout wrapper -->
+
+
+     <!-- JAVASCRIPT -->
+     <script src="{% static 'libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+     <script src="{% static 'libs/simplebar/dist/simplebar.min.js' %}"></script>
+     <script src="{% static 'libs/node-waves/dist/waves.min.js' %}"></script>
+     <script src="{% static 'libs/feather-icons/dist/feather.min.js' %}"></script>
+     <script src="{% static 'js/pages/plugins/lord-icon-2.1.0.js' %}"></script>
+     <script src="{% static 'js/plugins.js' %}"></script>
+ 
+     <!--Swiper slider js-->
+     <script src="{% static 'libs/swiper/swiper-bundle.min.js' %}"></script>
+ 
+</body>
+
+</html>

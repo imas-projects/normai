@@ -6,6 +6,8 @@ class PagesView(TemplateView):
     pass
 
 # Authenticatin
+pages_normai_landing= PagesView.as_view(template_name="pages/pages-normai-landing.html")
+
 authentication_signin_basic= PagesView.as_view(template_name="pages/authentication/auth-signin-basic.html")
 authentication_signin_cover= PagesView.as_view(template_name="pages/authentication/auth-signin-cover.html")
 authentication_signup_basic= PagesView.as_view(template_name="pages/authentication/auth-signup-basic.html")
