@@ -53,4 +53,8 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+    # Para archivos estáticos
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+    # Para archivos de media
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
