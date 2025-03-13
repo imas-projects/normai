@@ -46,8 +46,9 @@ LOCAL_APPS = [
     "layouts",
     "components",
     "pages",
-    "apps_unificado",
+    "communications",
     "risks",
+    #"apps_unificado",
     "authentication",
     ]
 THIRDPARTY_APPS = [

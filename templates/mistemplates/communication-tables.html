@@ -289,7 +289,7 @@
                     const receiversSelect = document.getElementById('message-receiver');
                     channelsSelect.innerHTML = '';  
                     receiversSelect.innerHTML = '';
-                    fetch(`/apps_unificado/get-message/${id}/`)
+                    fetch(`/communications/get-message/${id}/`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
@@ -417,7 +417,7 @@
             
             //const formData = new FormData(this);
 
-            fetch('/apps_unificado/update-message/', {
+            fetch('/communications/update-message/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),    
@@ -446,7 +446,7 @@
 
             document.getElementById('confirm-delete-btn').addEventListener('click', function () {
                     if (messageToDelete) {
-                        fetch(`/apps_unificado/delete-message/${messageToDelete}/`, {
+                        fetch(`/communications/delete-message/${messageToDelete}/`, {
                             method: 'POST',
                             headers: { 'X-CSRFToken': getCookie('csrftoken') }, // Si usas CSRF
                         })
@@ -636,7 +636,7 @@
             };
         
 
-        fetch('/apps_unificado/create-message/', {
+        fetch('/communications/create-message/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),    
