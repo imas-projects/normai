@@ -27,6 +27,7 @@ def authentication_sign_up(request):
             # Asegúrate de que el usuario esté activo
         
             print("Usuario creado correctamente")
+            return JsonResponse({'success': True}) 
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})    
     return render(request, "mistemplates/authentication-sign-up.html")
