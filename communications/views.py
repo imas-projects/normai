@@ -203,11 +203,3 @@ def create_message(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 
-######################## Usuario ########################
-from django.contrib.sessions.models import Session
-from django.contrib.auth.models import User 
-
-@login_required
-def wellcome_view(request):
-    
-    return render(request,"mistemplates/wellcome-page.html")

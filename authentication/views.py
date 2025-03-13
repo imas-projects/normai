@@ -69,3 +69,11 @@ def authentication_log_out(request):
     logout(request)
     print("sesion cerrada")
     return render(request, "mistemplates/authentication-log-out.html")
+
+######################## Usuario ########################
+from django.contrib.sessions.models import Session
+from django.contrib.auth.models import User 
+
+@login_required
+def wellcome_view(request):
+    return render(request,"mistemplates/wellcome-page.html")

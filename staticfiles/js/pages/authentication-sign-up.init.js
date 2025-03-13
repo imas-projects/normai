@@ -46,7 +46,8 @@ document.getElementById('sign-up-form').addEventListener('submit', function (eve
         .then(data => {
             console.log('Respuesta del servidor:', data); // debug Ver también la respuesta completa
             if (data.success) {
-                alert('Row updated successfully!');
+                //alert('Row updated successfully!');
+                window.location.href = '/authentication/wellcome/';
                 location.reload();
             } else {
                 alert('Failed to update row.');

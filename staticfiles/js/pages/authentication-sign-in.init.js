@@ -21,7 +21,7 @@ document.getElementById('sign-in-form').addEventListener('submit', function (eve
             console.log('Respuesta del servidor:', data); // debug Ver también la respuesta completa
             if (data.success) {
                 //alert('Row updated successfully!');
-                window.location.href = '/apps_unificado/wellcome/';  // Redirección a otra vista
+                window.location.href = '/authentication/wellcome/';  // Redirección a otra vista
             } else {
                 alert('Failed to update row.');
             }
