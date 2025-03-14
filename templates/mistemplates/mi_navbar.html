@@ -2,57 +2,32 @@
 {% block sidebar %}
         <!-- ========== App Menu ========== -->
         <div class="app-menu navbar-menu">
-            <!-- LOGO -->
-            <div class="navbar-brand-box">
-                <!-- Dark Logo-->
-                <a href="{% url 'dashboards:dashboard'%}" class="logo logo-dark">
-                    <span class="logo-sm">
-                        <img src="{% static 'images/logo-sm.png'%}" alt="" height="22">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{% static 'images/logo-dark.png'%}" alt="" height="17">
-                    </span>
-                </a>
-                <!-- Light Logo-->
-                <a href="{% url 'dashboards:dashboard'%}" class="logo logo-light">
-                    <span class="logo-sm">
-                        <img src="{% static 'images/logo-sm.png'%}" alt="" height="22">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{% static 'images/logo-light.png'%}" alt="" height="17">
-                    </span>
-                </a>
-                <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
-                    <i class="ri-record-circle-line"></i>
-                </button>
-            </div>
-
+            <!-- LOGO -->           
             <div id="scrollbar">
-                <div class="container-fluid">
-                    
+                <div class="container-fluid">      
                     <div id="two-column-menu">
                     </div>
                     <ul class="navbar-nav" id="navbar-nav">
                         <!--Menu Comunicaciones-->
                         <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarDashboards" data-bs-toggle="collapse" role="button"
+                            <a class="nav-link menu-link" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
                                 <i class="bx bxs-message"></i> <span data-key="t-dashboards">Comunicaciones</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
+                                        <a href="{% url 'communications:all_messages' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="#sidebarCalendar" class="nav-link" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCalendar" data-key="t-calender">
+                                        <a href="{% url 'communications:all_messages' %}"  class="nav-link" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCalendar" data-key="t-calender">
                                             Mensajes
                                         </a>
                                         <div class="collapse menu-dropdown" id="sidebarCalendar">
                                             <ul class="nav nav-sm flex-column">
                                                 <li class="nav-item">
-                                                    <a href="{% url 'apps:calendar'%}" class="nav-link" data-key="t-main-calender"> Departamentos </a>
+                                                    <a href="" class="nav-link" data-key="t-main-calender"> Departamentos </a>
                                                 </li>
                                             </ul>
                                         </div>
@@ -64,23 +39,14 @@
                         <!-- Fin Menu Comunicaciones -->
                         <!--Menu Riesgos-->
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarApps" data-bs-toggle="collapse"
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse"
                                 role="button" aria-expanded="false" aria-controls="sidebarApps">
                                 <i class="bx bx-layer"></i> <span data-key="t-apps">Riesgos</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarApps">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="#sidebarCalendar" class="nav-link" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCalendar" data-key="t-calender">
-                                            Matrices de Riesgos
-                                        </a>
-                                        <div class="collapse menu-dropdown" id="sidebarCalendar">
-                                            <ul class="nav nav-sm flex-column">
-                                                <li class="nav-item">
-                                                    <a href="{% url 'apps:calendar'%}" class="nav-link" data-key="t-main-calender"> Riesgos</a>
-                                                </li>
-                                            </ul>
-                                        </div>
+                                        <a href="{% url 'risks:risks' %}" class="nav-link" data-key="t-analytics"> Matrices de Riesgos </a>
                                     </li>
                                 </ul>
                             </div>    
@@ -89,23 +55,23 @@
                          <!--Menu Auditorias-->
                         <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarDashboards" data-bs-toggle="collapse" role="button"
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
                                 <i class="bx bxs-dashboard"></i> <span data-key="t-dashboards">Auditorias Internas</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Programación Anual </a>
+                                        <a href="" class="nav-link" data-key="t-analytics"> Programación Anual </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Plan Anual </a>
+                                        <a href="" class="nav-link" data-key="t-analytics"> Plan Anual </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Auditorias</a>
+                                        <a href="" class="nav-link" data-key="t-analytics"> Auditorias</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Requisitos Norma </a>
+                                        <a href="" class="nav-link" data-key="t-analytics"> Requisitos Norma </a>
                                     </li>
                                 </ul>
                             </div>
@@ -113,7 +79,7 @@
                         <!-- Fin Menu Auditorias -->  
                         <!-- Menu Autenticacion -->  
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarAuth" data-bs-toggle="collapse" role="button"
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarAuth">
                                 <i class="bx bx-user-circle"></i> <span data-key="t-authentication">Autenticación</span>
                             </a>
@@ -121,10 +87,10 @@
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <li class="nav-item">
-                                            <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Iniciar Sesión </a>
+                                            <a href="{% url 'authentication:authentication_sign_in' %}" class="nav-link" data-key="t-analytics"> Iniciar Sesión </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{% url 'dashboards:dashboard_analytics' %}" class="nav-link" data-key="t-analytics"> Nuevo Usuario </a>
+                                            <a href="{% url 'authentication:authentication_sign_up' %}" class="nav-link" data-key="t-analytics"> Nuevo Usuario </a>
                                         </li>
                                     </li>
                                             </ul>
@@ -138,10 +104,6 @@
                 </div>
                 <!-- Sidebar -->
             </div>
-            <div class="sidebar-background"></div>
-        </div>
-        <!-- Left Sidebar End -->
-        <!-- Vertical Overlay-->
-        <div class="vertical-overlay"></div>
+
 {% endblock sidebar %}
     

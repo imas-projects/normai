@@ -1,3 +1,5 @@
+{% extends "mistemplates/mi_base.html" %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,9 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-{% extends "mistemplates/mi_base.html" %}
-{% load static %}
-{% block title %}Listjs{% endblock title %}
+{% block title %}Comunicaciones{% endblock title %}
 {% block extra_css %}
 <!-- Sweet Alert css-->
 <link href="{% static 'libs/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet" type="text/css" />
