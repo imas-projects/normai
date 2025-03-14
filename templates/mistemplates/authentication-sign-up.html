@@ -1,9 +1,11 @@
 {% load static %}
+{% block header %}
+{% include "mistemplates/mi_topbar.html" %}
+{% endblock header %}
 <!DOCTYPE html>
-<html lang="en" {% block html %}data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"{% endblock html %}>
+<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"{% endblock html %}>
     <head>
         <meta charset="utf-8" />
-        <title>Crear nuevo usuario</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
         <meta content="Themesbrand" name="author" />
@@ -22,16 +24,10 @@
         <link href="{% static 'css/custom.min.css'%}" id="app-style" rel="stylesheet" type="text/css" />
     </head>
     <body>
-        <div class="auth-page-wrapper pt-5">
+        <div class="bg-light pt-5">
             <!-- auth page bg -->
-            <div class="auth-one-bg-position auth-one-bg"  id="auth-particles">
-                <div class="bg-overlay"></div>
-                
-                <div class="shape">
-                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
-                        <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
-                    </svg>
-                </div>
+            <!-- auth page bg -->
+            <div class="auth-one-bg-position bg-primary"  id="auth-particles">
             </div>
 
             <!-- auth page content -->
