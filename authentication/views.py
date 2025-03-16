@@ -1,12 +1,31 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
 import json
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView
 from django.http import JsonResponse
 from audits.models import Area
+from django.contrib.auth.mixins import LoginRequiredMixin , UserPassesTestMixin
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout
 # Create your views here.
+
+
+
+class AuditorVentasLoginView(UserPassesTestMixin, TemplateView): 
+    template_name = "mistemplates/auditor_ventas-dashboard.html"
+    permission_denied_message = "Este usuario no tiene acceso a esta página"
+
+    def test_func(self):
+        # print("test") #debug
+        return self.request.user.groups.filter(name='auditor_ventas').exists()
+
+class LoginView(TemplateView):
+    pass
+auditables_ventas_dashboard_view=LoginView.as_view(template_name="mistemplates/auditables_ventas-dashboard.html")
+
+
 
 @csrf_exempt
 def authentication_sign_up(request):
@@ -45,28 +64,23 @@ def authentication_sign_in(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            
             username = data.get('username')
             password = data.get('password')
-            
-            # Comprobaciones
-            #print(f"Username: {username}, Password: {password}")
-            #usuario = User.objects.get(username=username)
-            #print(f"Esta activo?: {usuario.is_active}")
-            #print(f"Contraseña usable?: {usuario.has_usable_password()}")
-            #print(f"Contraseña correcta?: {usuario.check_password(password)}")
-
             user = authenticate(username=username, password=password)
-            print(user)
+
+            all_groups = Group.objects.all()
 
             if user is not None:
                 login(request, user)
-                print("el usuario existe")
-                if request.user.is_authenticated:
-                    print(f"Sesion iniciada por: {user}")
-                    return JsonResponse({'success': True})
-                else:
-                    print(f"Sesion no iniciada")
+                print("El usuario existe")
+                print(f"Sesion iniciada por: {user}")
+
+                user_groups = Group.objects.get(id=user.groups.first().id)
+                print("El usuario esta en un grupo")
+
+                return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
+
+                #return JsonResponse({'success': True})
             else:
                 print("el usuario no existe")
         except Exception as e:
