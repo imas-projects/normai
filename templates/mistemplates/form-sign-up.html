@@ -1,0 +1,72 @@
+{% load static %}
+{% block header %}
+{% include "mistemplates/mi_topbar.html" %}
+{% endblock header %}
+<!DOCTYPE html>
+<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"{% endblock html %}>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
+        <meta content="Themesbrand" name="author" />
+        <!-- App favicon -->
+        <link rel="shortcut icon" href="{% static 'images/favicon.ico'%}">
+        <!-- Layout config Js -->
+        <script src="{% static 'js/layout.js'%}"></script>
+        <!-- Bootstrap Css -->
+        <link href="{% static 'css/bootstrap.min.css'%}" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="{% static 'css/icons.min.css'%}" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="{% static 'css/app.min.css'%}" id="app-style" rel="stylesheet" type="text/css" />
+        <!-- custom Css-->
+        <link href="{% static 'css/custom.min.css'%}" id="app-style" rel="stylesheet" type="text/css" />
+    </head>
+<body>
+    <div class="bg-light pt-5">
+        <!-- auth page bg -->
+        <div class="auth-one-bg-position bg-primary"  id="auth-particles"></div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4">        
+                <div class="card-body p-4"> 
+                    <div class="text-center mt-2">
+                        <h3 class="text-primary">Nuevo Usuario</h3>
+                    </div>
+                    <form class="needs-validation" method="post">
+                        {% csrf_token %}
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                        <div class="invalid-feedback">
+                            Seleccione el rol del usuario
+                        </div>
+
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+
+                        {{ form.groups.label_tag }}
+                        {{ form.groups }}
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.password.label_tag }}</label>
+                            <div class="position-relative auth-pass-inputgroup">
+                            {{ form.password }}
+                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon"><i class="ri-eye-fill align-middle"></i></button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-sm-1">Crear Usuario</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

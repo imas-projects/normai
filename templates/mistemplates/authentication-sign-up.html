@@ -34,32 +34,26 @@
             <div class="auth-page-content">
                 <div class="container">
                     <div class="row">
-                        <div class="col-lg-12">
-                            <div class="text-center mt-sm-5 mb-4 text-black-90">
-                                <div>
-                                    <h2>Normai</h2>
-                                </div>
-                            </div>
+                        <div class="col-lg-12 mt-sm-1 mb-2">
                         </div>
                     </div>
                     <!-- end row -->
 
                     <div class="row justify-content-center">
-                        <div class="col-md-8 col-lg-6 col-xl-5">
+                        <div class="col-md-8 col-lg-6 col-xl-9">
                             <div class="card mt-4">
-                            
                                 <div class="card-body p-4"> 
-                                    <div class="text-center mt-2">
-                                        <h5 class="text-primary">Crear usuario</h5>
+                                    <div class="text-center">
+                                        <h3 class="text-primary">Nuevo usuario</h3>
                                     </div>
                                     <div class="p-2 mt-4">
                                         <form class="needs-validation" id="sign-up-form" novalidate action="{% url 'dashboards:dashboard'%}">
             
                                             <div class="mb-3">
                                                 <label for="useremail" class="form-label">Email <span class="text-danger">*</span></label>
-                                                <input type="email" class="form-control" id="useremail" placeholder="Enter email address" required>  
+                                                <input type="email" class="form-control" id="useremail" placeholder="email@example.com" required>  
                                                 <div class="invalid-feedback">
-                                                    Please enter email
+                                                    Campo obligatorio
                                                 </div>      
                                             </div>
 
@@ -67,7 +61,7 @@
                                                 <label for="username" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control" id="username" placeholder="Enter email address" required>  
                                                 <div class="invalid-feedback">
-                                                    Este usuario ya existe
+                                                    Introduzca un nombre de usuario válido
                                                 </div>      
                                             </div>
 
@@ -75,7 +69,7 @@
                                                 <label for="firstname" class="form-label">Nombre <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control" id="firstname" placeholder="Enter username" required>
                                                 <div class="invalid-feedback">
-                                                    Please enter username
+                                                    Campo obligatorio
                                                 </div>
                                             </div>
                                             
@@ -83,37 +77,46 @@
                                                 <label for="lastname" class="form-label">Apellido <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control" id="lastname" placeholder="Enter username" required>
                                                 <div class="invalid-feedback">
-                                                    Please enter username
+                                                    Campo obligatorio
                                                 </div>
                                             </div>
 
                                             <div class="mb-3">
-                                                <label class="form-label" for="password-input">Contraseña</label>
-                                                <div class="position-relative auth-pass-inputgroup">
-                                                    <input type="password" class="form-control pe-5 password-input" onpaste="return false" placeholder="Enter password" id="password-input" aria-describedby="passwordInput"> <!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required> -->
-                                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon"><i class="ri-eye-fill align-middle"></i></button>
-                                                    <div class="invalid-feedback">
-                                                        Please enter password
-                                                    </div>
+                                                <label for="new-user-group" class="form-label">Rol <span class="text-danger">*</span></label>
+                                                <select id="group" name="group" class="form-select mb-3" required>
+                                                    <option value="">Seleccionar...</option>
+                                                    <!--<option selected>Seleccionar...</option>-->
+                                                    {% for group in all_groups %}    
+                                                    <option value="{{ group.id }}">{{ group.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <div class="invalid-feedback">
+                                                    Campo obligatorio
                                                 </div>
                                             </div>
 
+                                            <div class="mb-3">
+                                                <label class="form-label" for="password-input">Contraseña <span class="text-danger">*</span></label>
+                                                <div class="position-relative auth-pass-inputgroup">
+                                                    <input type="password" class="form-control pe-5 password-input" onpaste="return false" placeholder="Enter password" id="password-input" aria-describedby="passwordInput" required></input><!-- pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required>-->
+                                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon"><i class="ri-eye-fill align-middle"></i></button>
+                                                    <div class="invalid-feedback">
+                                                        Introduzca una contraseña válida
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--
                                             <div id="password-contain" class="p-3 bg-light mb-2 rounded">
                                                 <h5 class="fs-13">Password must contain:</h5>
                                                 <p id="pass-length" class="invalid fs-12 mb-2">Minimum <b>8 characters</b></p>
                                                 <p id="pass-lower" class="invalid fs-12 mb-2">At <b>lowercase</b> letter (a-z)</p>
                                                 <p id="pass-upper" class="invalid fs-12 mb-2">At least <b>uppercase</b> letter (A-Z)</p>
                                                 <p id="pass-number" class="invalid fs-12 mb-0">A least <b>number</b> (0-9)</p>
-                                            </div>
+                                            </div>-->
                                             
                                             <div class="mt-4">
-                                                <button class="btn btn-success w-100" type="submit">Crear Usuario</button>
-                                            </div>
-
-                                            <div class="mt-4 text-center">
-                                                <div class="signin-other-title">
-                                                    <h5 class="fs-13 mb-4 title text-muted">Create account with</h5>
-                                                </div>
+                                                <button class="btn btn-success w-100" type="submit" id="custom-sa-success">Crear Usuario</button>
+                                                <!-- success Alert -->
                                             </div>
                                         </form>
 
@@ -156,6 +159,8 @@
         <script src="{% static 'libs/feather-icons/dist/feather.min.js'%}"></script>
         <script src="{% static 'js/pages/plugins/lord-icon-2.1.0.js'%}"></script>
         <script src="{% static 'js/plugins.js'%}"></script>
+        <script src="{% static 'libs/sweetalert2/dist/sweetalert2.min.js'%}"></script>
+        <script src="{% static 'js/pages/sweetalerts.init.js'%}"></script>
         <!-- particles js -->
         <script src="{% static 'libs/particles.js/particles.js'%}"></script>
         <!-- particles app js -->
@@ -164,6 +169,7 @@
         <script src="{% static 'js/pages/password-addon.init.js'%}"></script>
         <!-- validation init -->
         <script src="{% static 'js/pages/form-validation.init.js'%}"></script>
+        <script src="{% static 'js/app.js'%}"></script>
         <!-- password create init 
         <script src="{% static 'js/pages/passowrd-create.init.js'%}"></script>-->
         <!-- Pasar formulario a Django-->
