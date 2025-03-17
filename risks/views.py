@@ -13,6 +13,22 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from io import BytesIO
 from datetime import date
 from django.template.loader import render_to_string
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import csrf_protect
+
+# Create your views here.
+class DashboardView(LoginRequiredMixin, TemplateView):
+    pass
+
+dashboard_view = DashboardView.as_view(template_name="dashboards/index.html")
+dashboard_analytics_view = DashboardView.as_view(template_name="dashboards/dashboard-analytics.html")
+dashboard_crm_view = DashboardView.as_view(template_name="dashboards/dashboard-crm.html")
+dashboard_crypto_view = DashboardView.as_view(template_name="dashboards/dashboard-crypto.html")
+dashboard_projects_view = DashboardView.as_view(template_name="dashboards/dashboard-projects.html")
+dashboard_nft_view = DashboardView.as_view(template_name="dashboards/dashboard-nft.html")
+dashboard_job_view = DashboardView.as_view(template_name="dashboards/dashboard-job.html")
+dashboard_blog_view = DashboardView.as_view(template_name='dashboards/dashboard-blog.html')
 
 
 def create_risk(request, risk_id=None):
@@ -29,69 +45,80 @@ def create_risk(request, risk_id=None):
     for risk in risk_identifications:
         grouped_risks[risk.department.name].append(risk)
 
-    risk = None
-    if risk_id:
-        risk = get_object_or_404(RiskIdentification, id=risk_id)
+    risk = get_object_or_404(RiskIdentification, id=risk_id) if risk_id else None
 
-    # Si hay un ID en el POST, intentamos obtener el riesgo
-    elif request.method == "POST":
-        risk_id = request.POST.get("risk")  
-        if risk_id:
-            risk = RiskIdentification.objects.filter(id=risk_id).first()
-
-    # Cargar instancias de los modelos relacionados si el riesgo existe
     evaluation = RiskEvaluation.objects.filter(risk=risk).first() if risk else None
     treatment = RiskTreatment.objects.filter(risk=risk).first() if risk else None
     contingency_plan = ContingencyPlan.objects.filter(risk=risk).first() if risk else None
     reevaluation = Reevaluation.objects.filter(risk=risk).first() if risk else None
 
-    # Inicializar formularios
-    form_create = RiskIdentificationForm(request.POST if "save_risk_identification" in request.POST else None, instance=risk)
-    form_evaluation = RiskEvaluationForm(request.POST if "save_risk_evaluation" in request.POST else None, instance=evaluation)
-    form_treatment = RiskTreatmentForm(request.POST if "save_risk_treatment" in request.POST else None, instance=treatment)
-    form_contingency = ContingencyPlanForm(request.POST if "save_contingency_plan" in request.POST else None, instance=contingency_plan)
-    form_reevaluation = ReevaluationForm(request.POST if "save_risk_reevaluation" in request.POST else None, instance=reevaluation)
+    form_create = RiskIdentificationForm(instance=risk)
+    form_evaluation = RiskEvaluationForm(instance=evaluation)
+    form_treatment = RiskTreatmentForm(instance=treatment)
+    form_contingency = ContingencyPlanForm(instance=contingency_plan)
+    form_reevaluation = ReevaluationForm(instance=reevaluation)
 
     if request.method == "POST":
+        response_data = {}
+
         if "save_risk_identification" in request.POST:
+            form_create = RiskIdentificationForm(request.POST, instance=risk)
             if form_create.is_valid():
                 risk = form_create.save()
                 success_message = "Risk Identification saved successfully!"
-                return redirect('dashboard-analytics', risk_id=risk.id)
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'message': success_message, 'reload': True})
+                return redirect('dashboards/dashboard-analytics')
 
-        elif "save_risk_evaluation" in request.POST and risk:
-            if form_evaluation.is_valid():
+        elif "save_risk_evaluation" in request.POST:
+            form_evaluation = RiskEvaluationForm(request.POST, instance=evaluation)
+            if risk and form_evaluation.is_valid():
                 evaluation = form_evaluation.save(commit=False)
                 evaluation.risk = risk
                 evaluation.save()
                 success_message = "Risk Evaluation saved successfully!"
+                return JsonResponse({'message': success_message})
+            else:
+                return JsonResponse({'error': form_evaluation.errors}, status=400)
 
-        elif "save_risk_treatment" in request.POST and risk:
-            if form_treatment.is_valid():
+        elif "save_risk_treatment" in request.POST:
+            form_treatment = RiskTreatmentForm(request.POST, instance=treatment)
+            if risk and form_treatment.is_valid():
                 treatment = form_treatment.save(commit=False)
                 treatment.risk = risk
                 treatment.save()
                 success_message = "Risk Treatment saved successfully!"
+                return JsonResponse({'message': success_message})
+            else:
+                return JsonResponse({'error': form_treatment.errors}, status=400)
 
-        elif "save_contingency_plan" in request.POST and risk:
-            if form_contingency.is_valid():
+        elif "save_contingency_plan" in request.POST:
+            form_contingency = ContingencyPlanForm(request.POST, instance=contingency_plan)
+            if risk and form_contingency.is_valid():
                 contingency_plan = form_contingency.save(commit=False)
                 contingency_plan.risk = risk
                 contingency_plan.save()
                 success_message = "Contingency Plan saved successfully!"
+                return JsonResponse({'message': success_message})
+            else:
+                return JsonResponse({'error': form_contingency.errors}, status=400)
 
-        elif "save_risk_reevaluation" in request.POST and risk:
-            if form_reevaluation.is_valid():
+        elif "save_risk_reevaluation" in request.POST:
+            form_reevaluation = ReevaluationForm(request.POST, instance=reevaluation)
+            if risk and form_reevaluation.is_valid():
                 reevaluation = form_reevaluation.save(commit=False)
                 reevaluation.risk = risk
                 reevaluation.save()
                 success_message = "Risk Reevaluation saved successfully!"
+                return JsonResponse({'message': success_message, 'reload': True})
+            else:
+                return JsonResponse({'error': form_reevaluation.errors}, status=400)
 
-        keep_modal_open = True
+        return JsonResponse({'error': 'Invalid request'}, status=400)
 
     return render(
         request,
-        'mistemplates/risks.html',
+        'dashboards/dashboard-analytics.html',
         {
             'risk_identifications': risk_identifications,
             'risk_treatments': risk_treatments,
@@ -111,7 +138,6 @@ def create_risk(request, risk_id=None):
     )
 
 
-
 def generate_risks_pdf(request, department_name):
     department = get_object_or_404(Department, name=department_name)
     buffer = BytesIO()
@@ -129,15 +155,14 @@ def generate_risks_pdf(request, department_name):
     if not risks.exists():
         elements.append(Paragraph("No risks found for this department.", normal_style))
     else:
-        for idx, risk in enumerate(risks, start=1):  # Numerar los riesgos
+        for idx, risk in enumerate(risks, start=1):  
             try:
                 risk_name = str(risk.identified_risk).replace('<', '&lt;').replace('>', '&gt;')
                 elements.append(Paragraph(f"Risk #{idx}: {risk_name}", bold_style))
                 elements.append(Paragraph(f"Activity Name: {risk.activity_name}", normal_style))
                 elements.append(Paragraph(f"Consequences: {risk.consequences}", normal_style))
-                elements.append(Spacer(1, 12))  # Espaciado aumentado entre riesgos
+                elements.append(Spacer(1, 12))  
 
-                # Paso 1 - Evaluaciones de Riesgo
                 evaluations = RiskEvaluation.objects.filter(risk=risk)
                 if evaluations.exists():
                     elements.append(Paragraph("Risk Evaluations:", styles["Heading4"]))
@@ -145,9 +170,9 @@ def generate_risks_pdf(request, department_name):
                     for eval in evaluations:
                         eval_data.append([
                             eval.severity,
-                            "\n".join(eval.current_preventive_controls.split(", ")),  # Cada control en una línea
+                            "\n".join(eval.current_preventive_controls.split(", ")),  
                             eval.occurrence,
-                            "\n".join(eval.current_detection_controls.split(", ")),  # Cada control en una línea
+                            "\n".join(eval.current_detection_controls.split(", ")),  
                             eval.detection,
                             eval.risk_level.level
                         ])
@@ -159,12 +184,11 @@ def generate_risks_pdf(request, department_name):
                         ('GRID', (0, 0), (-1, -1), 1, colors.black),
                         ('FONTSIZE', (0, 0), (-1, -1), 10),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  # Ajustar texto que excede
+                        ('WORDWRAP', (0, 0), (-1, -1), True),  
                     ]))
                     elements.append(eval_table)
-                    elements.append(Spacer(1, 10))  # Espaciado entre tablas
+                    elements.append(Spacer(1, 10))  
 
-                # Paso 2 - Tratamiento de Riesgo
                 treatments = RiskTreatment.objects.filter(risk=risk)
                 if treatments.exists():
                     elements.append(Paragraph("Risk Treatments:", styles["Heading4"]))
@@ -172,7 +196,7 @@ def generate_risks_pdf(request, department_name):
                     for treat in treatments:
                         treat_data.append([
                             treat.treatment_action,
-                            "\n".join(role.name for role in treat.responsible.all()),  # Cada responsable en una línea
+                            "\n".join(role.name for role in treat.responsible.all()),  
                             treat.target_date.strftime('%Y-%m-%d') if treat.target_date else '',
                             treat.actual_date.strftime('%Y-%m-%d') if treat.actual_date else '',
                         ])
@@ -184,21 +208,20 @@ def generate_risks_pdf(request, department_name):
                         ('GRID', (0, 0), (-1, -1), 1, colors.black),
                         ('FONTSIZE', (0, 0), (-1, -1), 10),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  # Ajustar texto que excede
+                        ('WORDWRAP', (0, 0), (-1, -1), True),
                     ]))
                     elements.append(treat_table)
-                    elements.append(Spacer(1, 10))  # Espaciado entre tablas
-
-                # Paso 3 - Plan de Contingencia
+                    elements.append(Spacer(1, 10))
+                    
                 contingency_plans = ContingencyPlan.objects.filter(risk=risk)
                 if contingency_plans.exists():
                     elements.append(Paragraph("Contingency Plans:", styles["Heading4"]))
                     contingency_data = [["Contingency Actions", "Responsible", "Communicate To"]]
                     for plan in contingency_plans:
                         contingency_data.append([
-                            "\n".join(plan.contingency_actions.values_list('name', flat=True)),  # Cada acción en una línea
-                            "\n".join(plan.responsible.values_list('name', flat=True)),  # Cada responsable en una línea
-                            "\n".join(plan.communicate_to.values_list('name', flat=True)),  # Cada comunicado en una línea
+                            "\n".join(plan.contingency_actions.values_list('name', flat=True)),  
+                            "\n".join(plan.responsible.values_list('name', flat=True)),  
+                            "\n".join(plan.communicate_to.values_list('name', flat=True)),  
                         ])
                     contingency_table = Table(contingency_data, colWidths=[180, 100, 100], repeatRows=1)
                     contingency_table.setStyle(TableStyle([
@@ -208,12 +231,11 @@ def generate_risks_pdf(request, department_name):
                         ('GRID', (0, 0), (-1, -1), 1, colors.black),
                         ('FONTSIZE', (0, 0), (-1, -1), 10),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  # Ajustar texto que excede
+                        ('WORDWRAP', (0, 0), (-1, -1), True),  
                     ]))
                     elements.append(contingency_table)
-                    elements.append(Spacer(1, 10))  # Espaciado entre tablas
+                    elements.append(Spacer(1, 10))  
 
-                # Paso 4 - Reevaluación
                 reevaluations = Reevaluation.objects.filter(risk=risk)
                 if reevaluations.exists():
                     elements.append(Paragraph("Reevaluations:", styles["Heading4"]))
@@ -230,24 +252,22 @@ def generate_risks_pdf(request, department_name):
                         ('GRID', (0, 0), (-1, -1), 1, colors.black),
                         ('FONTSIZE', (0, 0), (-1, -1), 10),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  # Ajustar texto que excede
+                        ('WORDWRAP', (0, 0), (-1, -1), True),  
                     ]))
                     elements.append(reevaluation_table)
-                    elements.append(Spacer(1, 12))  # Espaciado entre tablas
+                    elements.append(Spacer(1, 12))  
 
-                elements.append(PageBreak())  # Añadir un salto de página al final de cada riesgo
+                elements.append(PageBreak())  
 
             except Exception as e:
                 elements.append(Paragraph(f"Error processing risk: {e}", normal_style))
     
-    # Pie de página sin estilo
     def add_footer(canvas, doc):
         canvas.saveState()
         footer_text = f"Generated on {date.today()} | Page {doc.page}"
         canvas.setFont("Helvetica", 10)
         width = doc.width
-        # Estilo del pie de página sin fondo ni color
-        canvas.drawString(10, 10, footer_text)  # Texto simple
+        canvas.drawString(10, 10, footer_text)
         canvas.restoreState()
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
@@ -256,11 +276,14 @@ def generate_risks_pdf(request, department_name):
 
 
 
+
+
+@csrf_protect  
 def save_risk_step(request, step):
     if request.method == "POST":
-        print("Datos recibidos:", request.POST)  # Ver qué datos llegan al servidor
+        print("Datos recibidos:", request.POST)  
 
-        risk_id = request.POST.get("risk_id")
+        risk_id = request.POST.get("risk") 
         risk = None
         if risk_id:
             risk = get_object_or_404(RiskIdentification, id=risk_id)
@@ -268,7 +291,7 @@ def save_risk_step(request, step):
         form = None
 
         if step == 1:
-            form = RiskIdentificationForm(request.POST, instance=risk)  # Usar la instancia para editar
+            form = RiskIdentificationForm(request.POST, instance=risk)  
         elif step == 2:
             form = RiskEvaluationForm(request.POST, instance=RiskEvaluation.objects.filter(risk=risk).first())
         elif step == 3:
@@ -283,7 +306,7 @@ def save_risk_step(request, step):
                 form.save()
                 return JsonResponse({"success": True})
             else:
-                print("Errores del formulario:", form.errors)  # Ver los errores de validación
+                print("Errores del formulario:", form.errors)  
                 return JsonResponse({"success": False, "error": form.errors}, status=400)
         else:
             print("No se encontró el formulario para el paso", step)
@@ -296,20 +319,17 @@ def get_risk_data(request, risk_id):
     """Obtiene los datos de un riesgo y devuelve los formularios renderizados."""
     risk = get_object_or_404(RiskIdentification, id=risk_id)
 
-    # Obtener las instancias correctas para cada formulario
     evaluation = RiskEvaluation.objects.filter(risk=risk).first()
     treatment = RiskTreatment.objects.filter(risk=risk).first()
     contingency = ContingencyPlan.objects.filter(risk=risk).first()
     reevaluation = Reevaluation.objects.filter(risk=risk).first()
 
-    # Inicializar formularios con sus respectivas instancias
     form_create = RiskIdentificationForm(instance=risk)
-    form_evaluation = RiskEvaluationForm(instance=evaluation)  # Corregido
-    form_treatment = RiskTreatmentForm(instance=treatment)  # Corregido
-    form_contingency = ContingencyPlanForm(instance=contingency)  # Corregido
-    form_reevaluation = ReevaluationForm(instance=reevaluation)  # Corregido
+    form_evaluation = RiskEvaluationForm(instance=evaluation)  
+    form_treatment = RiskTreatmentForm(instance=treatment)  
+    form_contingency = ContingencyPlanForm(instance=contingency)  
+    form_reevaluation = ReevaluationForm(instance=reevaluation)  
 
-    # Renderizar los formularios como HTML
     form_create_html = render_to_string('dashboards/form_create.html', {'form': form_create})
     form_evaluation_html = render_to_string('dashboards/form_evaluation.html', {'form': form_evaluation})
     form_treatment_html = render_to_string('dashboards/form_treatment.html', {'form': form_treatment})
@@ -328,32 +348,3 @@ def get_risk_data(request, risk_id):
 
     return JsonResponse(data)
 
-
-
-def update_risk(request, risk_id, step):
-    """Actualiza los datos de un riesgo en función del paso del formulario."""
-    risk = get_object_or_404(RiskIdentification, id=risk_id)
-
-    if request.method == "POST":
-        step = int(step)  # Asegurar que sea un número entero
-
-        form_classes = [
-            RiskIdentificationForm,
-            RiskEvaluationForm,
-            RiskTreatmentForm,
-            ContingencyPlanForm,
-            ReevaluationForm
-        ]
-
-        if 1 <= step <= 5:
-            form = form_classes[step - 1](request.POST, instance=risk)
-        else:
-            return JsonResponse({"success": False, "error": "Paso no válido"}, status=400)
-
-        if form.is_valid():
-            form.save()
-            return JsonResponse({"success": True, "message": "Datos actualizados correctamente"})
-        else:
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-
-    return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
