@@ -286,3 +286,4 @@ SOCIALACCOUNT_PROVIDERS = {
         'SECRET': 'fake',
     }
 }
+

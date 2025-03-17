@@ -2,7 +2,7 @@ from django.contrib import admin
 from . models import CrmContact,CrmCompany,CrmLead,JobApplication,EcommerceOrder,EcommerceCustomer,TicketList
 
 # Register your models here.
-
+''''
 @admin.register(CrmContact)
 class CrmContactAdmin(admin.ModelAdmin):
     list_display = ['name','company_name','designation','email_id','phone','lead_score','tags','profile_pic']
@@ -30,3 +30,4 @@ class EcommerceCustomerAdmin(admin.ModelAdmin):
 @admin.register(TicketList)
 class TicketListAdmin(admin.ModelAdmin):
     list_display = ['title','client_name','assign_to','create_date','due_date','status','priority']
+'''

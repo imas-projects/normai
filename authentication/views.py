@@ -12,8 +12,8 @@ from django.contrib.auth import authenticate, login, logout
 # Create your views here.
 
 
-
-class AuditorVentasLoginView(UserPassesTestMixin, TemplateView): 
+# Páginas de inicio según grupos usuarios.
+class AuditorVentasDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView): 
     template_name = "mistemplates/auditor_ventas-dashboard.html"
     permission_denied_message = "Este usuario no tiene acceso a esta página"
 
@@ -21,10 +21,13 @@ class AuditorVentasLoginView(UserPassesTestMixin, TemplateView):
         # print("test") #debug
         return self.request.user.groups.filter(name='auditor_ventas').exists()
 
-class LoginView(TemplateView):
-    pass
-auditables_ventas_dashboard_view=LoginView.as_view(template_name="mistemplates/auditables_ventas-dashboard.html")
+class AuditablesVentasDashboardView(LoginRequiredMixin, UserPassesTestMixin,TemplateView):
+    template_name = "mistemplates/auditables_ventas-dashboard.html"
+    permission_denied_message = "Este usuario no tiene acceso a esta página"
 
+    def test_func(self):
+        # print("test") #debug
+        return self.request.user.groups.filter(name='auditables_ventas').exists()
 
 
 @csrf_exempt
