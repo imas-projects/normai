@@ -17,20 +17,6 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 
-# Create your views here.
-class DashboardView(LoginRequiredMixin, TemplateView):
-    pass
-
-dashboard_view = DashboardView.as_view(template_name="dashboards/index.html")
-dashboard_analytics_view = DashboardView.as_view(template_name="dashboards/dashboard-analytics.html")
-dashboard_crm_view = DashboardView.as_view(template_name="dashboards/dashboard-crm.html")
-dashboard_crypto_view = DashboardView.as_view(template_name="dashboards/dashboard-crypto.html")
-dashboard_projects_view = DashboardView.as_view(template_name="dashboards/dashboard-projects.html")
-dashboard_nft_view = DashboardView.as_view(template_name="dashboards/dashboard-nft.html")
-dashboard_job_view = DashboardView.as_view(template_name="dashboards/dashboard-job.html")
-dashboard_blog_view = DashboardView.as_view(template_name='dashboards/dashboard-blog.html')
-
-
 def create_risk(request, risk_id=None):
     success_message = None
     keep_modal_open = False
@@ -68,7 +54,7 @@ def create_risk(request, risk_id=None):
                 success_message = "Risk Identification saved successfully!"
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'message': success_message, 'reload': True})
-                return redirect('dashboards/dashboard-analytics')
+                return redirect('mistemplates/dashboard-analytics')
 
         elif "save_risk_evaluation" in request.POST:
             form_evaluation = RiskEvaluationForm(request.POST, instance=evaluation)
@@ -118,7 +104,7 @@ def create_risk(request, risk_id=None):
 
     return render(
         request,
-        'dashboards/dashboard-analytics.html',
+        'mistemplates/risks.html',
         {
             'risk_identifications': risk_identifications,
             'risk_treatments': risk_treatments,
@@ -330,11 +316,11 @@ def get_risk_data(request, risk_id):
     form_contingency = ContingencyPlanForm(instance=contingency)  
     form_reevaluation = ReevaluationForm(instance=reevaluation)  
 
-    form_create_html = render_to_string('dashboards/form_create.html', {'form': form_create})
-    form_evaluation_html = render_to_string('dashboards/form_evaluation.html', {'form': form_evaluation})
-    form_treatment_html = render_to_string('dashboards/form_treatment.html', {'form': form_treatment})
-    form_contingency_html = render_to_string('dashboards/form_contingency.html', {'form': form_contingency})
-    form_reevaluation_html = render_to_string('dashboards/form_reevaluation.html', {'form': form_reevaluation})
+    form_create_html = render_to_string('mistemplates/form_create.html', {'form': form_create})
+    form_evaluation_html = render_to_string('mistemplates/form_evaluation.html', {'form': form_evaluation})
+    form_treatment_html = render_to_string('mistemplates/form_treatment.html', {'form': form_treatment})
+    form_contingency_html = render_to_string('mistemplates/form_contingency.html', {'form': form_contingency})
+    form_reevaluation_html = render_to_string('mistemplates/form_reevaluation.html', {'form': form_reevaluation})
 
     data = {
         "id": risk.id,
