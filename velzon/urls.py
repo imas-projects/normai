@@ -56,6 +56,7 @@ admin.site.site_header = "NormAI"
 admin.site.site_title = "NormAI"
 admin.site.index_title = "Página de Administrador"
 
+
 if settings.DEBUG:
     # Para archivos estáticos
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

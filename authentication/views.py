@@ -78,10 +78,13 @@ def authentication_sign_in(request):
                 print("El usuario existe")
                 print(f"Sesion iniciada por: {user}")
 
-                user_groups = Group.objects.get(id=user.groups.first().id)
-                print("El usuario esta en un grupo")
-
-                return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
+                if user.is_superuser == True:
+                    print("superusuario")
+                    return JsonResponse({'success': True, 'redirect_url': reverse(f"admin:index")})
+                else:
+                    user_groups = Group.objects.get(id=user.groups.first().id)
+                    print("El usuario esta en un grupo")
+                    return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
 
                 #return JsonResponse({'success': True})
             else:
