@@ -10,7 +10,7 @@
             <div class="container-fluid">
 
                 {% block pagetitle %}
-                {% include "partials/page-title.html" with pagetitle="Quality Management" title="Tables" %}
+                {% include "partials/page-title.html" with pagetitle="Risk Matrix" title="Tables" %}
                             <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mt-5">
         <h1 class="text-center flex-grow-1">Risk Matrix</h1>
@@ -136,7 +136,7 @@
                     aria-controls="collapse{{ department|slugify }}">
                     {{ department }}
                 </button>
-                <a href="{% url 'dashboards:download_risks_pdf' department %}" class="btn btn-danger btn-sm ms-2">
+                <a href="{% url 'risks:download_risks_pdf' department %}" class="btn btn-danger btn-sm ms-2">
                     <i class="ri-file-download-line"></i> Download PDF
                 </a>
             </h2>
@@ -510,7 +510,7 @@
 {% block extra_js %}
 <script>
 document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function() {
-    fetch("{% url 'dashboards:add_risk_identification' %}")
+    fetch("{% url 'risks:add_risk_identification' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskIdentificationContent").innerHTML = html;
@@ -522,28 +522,28 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
     new bootstrap.Modal(document.getElementById("addStepsModal")).show();
     
     // Cargar formularios de evaluación, tratamiento y plan de contingencia
-    fetch("{% url 'dashboards:add_risk_evaluation' %}")
+    fetch("{% url 'risks:add_risk_evaluation' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskEvaluationContent").innerHTML = html;
         handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent"); // Agregar manejo de formulario
     });
 
-    fetch("{% url 'dashboards:add_risk_treatment' %}")
+    fetch("{% url 'risks:add_risk_treatment' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskTreatmentContent").innerHTML = html;
         handleFormSubmit("add-risk-treatment-form", "riskTreatmentContent"); // Agregar manejo de formulario
     });
 
-    fetch("{% url 'dashboards:add_contingency_plan' %}")
+    fetch("{% url 'risks:add_contingency_plan' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("contingencyPlanContent").innerHTML = html;
         handleFormSubmit("add-contingency-plan-form", "contingencyPlanContent"); // Agregar manejo de formulario
     });
 
-    fetch("{% url 'dashboards:add_reevaluation' %}")
+    fetch("{% url 'risks:add_reevaluation' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("reevaluationContent").innerHTML = html;
