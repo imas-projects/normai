@@ -32,7 +32,7 @@ def create_risk(request):
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
     reevaluations = Reevaluation.objects.select_related('risk').all()
 
-    return render(request, 'mistemplates/risks/risks.html', {
+    return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
         'evaluations': evaluations,
         'treatments': treatments,
@@ -49,7 +49,7 @@ def add_risk_identification(request):
     else:
         form = RiskIdentificationForm()
 
-    return render(request, 'mistemplates/risks/add_risk_identification.html', {'form': form})
+    return render(request, 'mistemplates/add_risk_identification.html', {'form': form})
 
 def add_risk_evaluation(request):
     if request.method == 'POST':
@@ -62,7 +62,7 @@ def add_risk_evaluation(request):
     else:
         form = RiskEvaluationForm()
 
-    return render(request, 'mistemplates/risks/add_risk_evaluation.html', {'form': form})
+    return render(request, 'mistemplates/add_risk_evaluation.html', {'form': form})
 
 def add_risk_treatment(request):
     if request.method == 'POST':
@@ -75,7 +75,7 @@ def add_risk_treatment(request):
     else:
         form = RiskTreatmentForm()
 
-    return render(request, 'mistemplates/risks/add_risk_treatment.html', {'form': form})
+    return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
 
 def add_contingency_plan(request):
     if request.method == 'POST':
@@ -88,7 +88,7 @@ def add_contingency_plan(request):
     else:
         form = ContingencyPlanForm()
 
-    return render(request, 'mistemplates/risks/add_contingency_plan.html', {'form': form})
+    return render(request, 'mistemplates/add_contingency_plan.html', {'form': form})
 
 def add_reevaluation(request):
     if request.method == 'POST':
@@ -99,7 +99,7 @@ def add_reevaluation(request):
     else:
         form = ReevaluationForm()
 
-    return render(request, 'mistemplates/risks/add_reevaluation.html', {'form': form})
+    return render(request, 'mistemplates/add_reevaluation.html', {'form': form})
 
 def edit_risk_identification(request, risk_id):
     risk = get_object_or_404(RiskIdentification, id=risk_id)
@@ -112,7 +112,7 @@ def edit_risk_identification(request, risk_id):
     else:
         form = RiskIdentificationForm(instance=risk)
 
-    return render(request, 'mistemplates/risks/edit_risk_identification.html', {'form': form, 'risk': risk})
+    return render(request, 'mistemplates/edit_risk_identification.html', {'form': form, 'risk': risk})
 
 
 def edit_risk_evaluation(request, risk_id):
@@ -128,7 +128,7 @@ def edit_risk_evaluation(request, risk_id):
     else:
         form = RiskEvaluationForm(instance=evaluation)
 
-    return render(request, 'mistemplates/risks/edit_risk_evaluation.html', {'form': form, 'evaluation': evaluation})
+    return render(request, 'mistemplates/edit_risk_evaluation.html', {'form': form, 'evaluation': evaluation})
 
 
 def edit_risk_treatment(request, risk_id):
@@ -144,7 +144,7 @@ def edit_risk_treatment(request, risk_id):
     else:
         form = RiskTreatmentForm(instance=treatment)
 
-    return render(request, 'mistemplates/risks/edit_risk_treatment.html', {'form': form, 'treatment': treatment})
+    return render(request, 'mistemplates/edit_risk_treatment.html', {'form': form, 'treatment': treatment})
 
 
 def edit_contingency_plan(request, risk_id):
@@ -160,7 +160,7 @@ def edit_contingency_plan(request, risk_id):
     else:
         form = ContingencyPlanForm(instance=plan)
 
-    return render(request, 'mistemplates/risks/edit_contingency_plan.html', {'form': form, 'plan': plan})
+    return render(request, 'mistemplates/edit_contingency_plan.html', {'form': form, 'plan': plan})
 
 
 def edit_reevaluation(request, risk_id):
@@ -174,7 +174,7 @@ def edit_reevaluation(request, risk_id):
     else:
         form = ReevaluationForm(instance=reevaluation)
 
-    return render(request, 'mistemplates/risks/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
+    return render(request, 'mistemplates/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
 
 def generate_risks_pdf(request, department_name):
     department = get_object_or_404(Department, name=department_name)
