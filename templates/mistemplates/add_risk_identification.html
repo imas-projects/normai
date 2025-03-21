@@ -1,0 +1,23 @@
+{% load static %}
+<div class="container">
+    <form method="post" id="add-risk-identification-form" action="{% url 'risks:add_risk_identification' %}">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.department.label_tag }}
+            {{ form.department }}
+        </div>
+        <div class="mb-3">
+            {{ form.activity_name.label_tag }}
+            {{ form.activity_name }}
+        </div>
+        <div class="mb-3">
+            {{ form.identified_risk.label_tag }}
+            {{ form.identified_risk }}
+        </div>
+        <div class="mb-3">
+            {{ form.consequences.label_tag }}
+            {{ form.consequences }}
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
