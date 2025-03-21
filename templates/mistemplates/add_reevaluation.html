@@ -1,6 +1,6 @@
 {% load static %}
 <div class="container">
-    <form method="post" id="add-reevaluation-form" action="{% url 'dashboards:add_reevaluation' %}">
+    <form method="post" id="add-reevaluation-form" action="{% url 'risks:add_reevaluation' %}">
         {% csrf_token %}
         <div class="mb-3">
             {{ form.risk.label_tag }}
