@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import create_risk
-from .views import generate_risks_pdf, get_risk_data
-from . import views
+from .views import create_risk, edit_risk_identification, edit_risk_evaluation, edit_risk_treatment, edit_contingency_plan, edit_reevaluation
+from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluation, add_risk_treatment, add_contingency_plan, add_reevaluation
 
 app_name = 'risks'
 
