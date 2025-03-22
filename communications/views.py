@@ -26,6 +26,8 @@ def communication_table_view(request):
 # Carga la información de todos los mensajes.
 #@login_required
 def all_messages(request):
+    #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
+
     all_communicationtable = CommunicationTable.objects.all()  # Get all entries
     all_communicationtables = [table.as_dict() for table in all_communicationtable]
     
@@ -39,6 +41,7 @@ def all_messages(request):
         'messages' : message,
         'all_communicationtables' : all_communicationtables,
         'all_channels' : all_channels,
+        #'user_in_comunicadores': user_in_comunicadores
     }
     return render(request,"mistemplates/communication-tables.html",context)
 
@@ -160,6 +163,16 @@ def load_messageform_options_asJson(request):
     except CommunicationTable.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Row not found.'})
 
+def load_addtableform_options_asJson(request):
+    all_departments = list(Department.objects.all().values('id', 'name'))
+    #'departments_options' : all_departments,
+    try:
+        return JsonResponse({
+                'success' : True,
+                'departments_options' : all_departments, 
+                })
+    except:
+        return JsonResponse({'success': False, 'error': 'Error'})
 
 @csrf_exempt
 def create_message(request):
@@ -202,4 +215,29 @@ def create_message(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
+import datetime
+@csrf_exempt
+def create_table(request):
+    if request.method == 'POST':
+        try:
+            # Coger los valores introducidos en el formulario
+            data = json.loads(request.body) 
+            table_code = data.get('table_code')  # Simple text field
+            table_transmitter = data.get('table_transmitter')  # Foreign key
+            
+            # Crear tabla
+            new_table = CommunicationTable(
+                code=table_code,
+                created_by=Department.objects.get(id=table_transmitter),
+                review_date=datetime.date.today(),
+                review_number=0,
+                reviewed_by=Department.objects.get(id=0),
+                approved_by=Department.objects.get(id=0),
+                )
+            # Guardar tabla
+            new_table.save()  
 
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method.'})

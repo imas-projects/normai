@@ -8,13 +8,16 @@
                         <h1 class="text-white align-middle py-3">NormAI</h1>
                     </div>
                     <div class="row justify-content-end py-3">
-                        <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
-                                data-toggle="fullscreen">
+                        <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-toggle="fullscreen">
                             <i class='bx bx-fullscreen fs-22'></i>
                         </button>
                         <a href="{% url 'pages:pages_normai_landing' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle bx bx-home fs-22"></a>
-                        <!--<i href="{% url 'pages:pages_normai_landing' %}" class='bx bx-home fs-22'></i>-->
-                    </button>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'authentication:authentication_log_out' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle bx bx-log-out-circle fs-22"></a>
+                        {% else %}
+                            <a href="{% url 'authentication:authentication_sign_in' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle bx bx-user fs-22"></a>
+                        {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

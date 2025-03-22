@@ -30,7 +30,6 @@ class AuditablesVentasDashboardView(LoginRequiredMixin, UserPassesTestMixin,Temp
         return self.request.user.groups.filter(name='auditables_ventas').exists()
 
 
-@csrf_exempt
 def authentication_sign_up(request):
     all_groups = list(Group.objects.all().values('id', 'name'))
 
@@ -84,7 +83,9 @@ def authentication_sign_in(request):
                 else:
                     user_groups = Group.objects.get(id=user.groups.first().id)
                     print("El usuario esta en un grupo")
-                    return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
+                    return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:wellcome_view")})
+                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"pages:pages_normai_landing")})
+                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
 
                 #return JsonResponse({'success': True})
             else:

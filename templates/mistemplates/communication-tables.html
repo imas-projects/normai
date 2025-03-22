@@ -1,7 +1,9 @@
 {% extends "mistemplates/mi_base.html" %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"{% endblock html %}>
+<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"
+    {% endblock html %}>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,9 +19,9 @@
 <link rel="stylesheet" type="text/css" href="{% static 'libs/multi.js/dist/multi.min.css'%}" />
 {% endblock extra_css %}
 {% block content %}
-        <!-- ============================================================== -->
-        <!-- Start right Content here -->
-        <!-- ============================================================== -->
+<!-- ============================================================== -->
+<!-- Start right Content here -->
+<!-- ============================================================== -->
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -29,257 +31,301 @@
             {% endblock pagetitle %}
 
 
-        <body>
-            <div id="alert-container"></div>
-            {% for table in all_communicationtables %}
-            <div class="card">
-            <div class="card-header vstack gap-0">
-                <div class="hstack gap-0">
-                    <h4 class="card-title bg-dark text-light w-25 p-1"> Código Tabla</h4>
-                    <h4 class="card-title bg-light w-75 p-1">{{ table.code }}</h4>
-                </div>
-                <div class="hstack gap-0">
-                    <h4 class="card-title bg-dark text-light w-25 p-1">Nº Revisión</h4>
-                    <h4 class="card-title bg-light w-75 p-1">{{ table.review_number }}</h4>
-                </div>
-                <div class="hstack gap-0">
-                    <h4 class="card-title bg-dark text-light w-25 p-1">Elaborado Por</h4>
-                    <h4 class="card-title bg-light w-75 p-1">{{ table.created_by.name }}</h4>
-                </div>
-                <div class="hstack gap-0">
-                    <h4 class="card-title bg-dark text-light w-25 p-1">Revisado Por</h4>
-                    <h4 class="card-title bg-light w-75 p-1">{{ table.reviewed_by.name }}</h4>
-                </div>
-                <div class="hstack gap-0">
-                    <h4 class="card-title bg-dark text-light w-25 p-1">Aprobado Por</h4>
-                    <h4 class="card-title bg-light w-75 p-1">{{ table.approved_by.name }}</h4>
-                </div>
-            </div>
-    
-
-
-
-            <div class="card-body">
-                <table class="table w-100">
-                    <thead class="table-dark">
-                        <tr>
-                        <div class="hstack gap-3">
-                            <h4 class="card-title bg-dark text-light w-25 p-1">Mensajes</h4>
-                            <button 
-                            type="button"
-                            class="btn btn-soft-info ms-auto add-btn" 
-                            id="add-message-btn"
-                            data-table-id="{{ table.id }}"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#addModal"><i class="ri-add-line"></i>
-                            Nuevo Mensaje
-                            </button>
-                        </div>
-                        </tr>
-                        <tr>
-                            <th>Tipo de Comunicación</th>
-                            <th>Asunto</th>
-                            <th>Emisor</th>
-                            <th>Receptor</th>
-                            <th>Canal</th>
-                            <th>Periodicidad</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody class="table-light">
-                        {% for message in table.messages %}
-                        <tr>
-                            <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
-                            <td>{{ message.subject }}</td>
-                            <td>{{ message.transmitter.name }}</td>
-                            <td>
-                                {% for receiver in message.receivers %}
-                                <li>{{ receiver.name }}</li>
-                                {% endfor %}
-                            </td>
-                            <td>
-                                {% for channel in message.channels %}
-                                <li>{{ channel.name }}</li>
-                                {% endfor %}
-                            </td>
-                            <td>
-                            {{ message.periodicity.name }}
-                            </td>
-                            <td>
-                                <button class="btn edit-btn btn-ghost-info"  
-                                        data-id="{{ message.id }}" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#editModal">
-                                        <i class="ri-edit-2-line" style="font-size: 18px;"></i>
-                                </button>
-
-                                <button class="btn open-delete-modal btn-ghost-danger" 
-                                        data-id="{{ message.id }}" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#deleteModal">
-                                        <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            </div>
-            {% endfor %}
-
-            <!-- Modal Edición Mensaje-->
-            <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" data-bs-backdrop="static">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form id="editForm"> 
-                            <div class="modal-header">
-                                <h5 class="modal-title bg-dark text-light p-1" id="editModalLabel">Editar Mensaje</h5>
-                                <button type="button" class="btn-close bg-danger bg-opacity-50" data-bs-dismiss="modal" aria-label="Close"></button>
+            <body>
+                <div id="alert-container"></div>
+                <button type="button" class="btn btn-soft-success add-table-btn" id="add-table-btn"
+                    data-bs-toggle="modal" data-bs-target="#addTableModal"><i
+                        class="ri-add-line"></i>
+                    Nueva Tabla
+                </button>
+                {% for table in all_communicationtables %}
+                <div class="card border card-border-dark">
+                    <div class="card-header">
+                        <div class="hstack gap-4 w-auto">
+                            <div class="hstack gap-1">
+                                <h4 class="card-title bg-dark text-light p-1 px-1 rounded-top"> Código Tabla: {{ table.code }}</h4>
                             </div>
-                            <div class="modal-body">
-                                <input type="hidden" id="message-id" name="id">
-                                <div class="mb-3">
-                                    <label for="message-communication-type" class="form-label">Tipo de Comunicación</label>
-                                    <select class="form-select" class="form-control" id="message-communication-type" name="communication_type">
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message-subject" class="form-label">Asunto</label>
-                                    <input type="text" class="form-control" id="message-subject" name="subject">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message-transmitter" class="form-label">Emisor</label>
-                                    <select class="form-select" id="message-transmitter" name="transmitter">
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message-channel" class="form-label">Canales</label>
-                                    <select id="message-channel" name="channels" class="form-control" multiple>
-                                    </select>
-                                    <!--<select id="message-cha" name="channels"  class="form-control" data-choices data-choices-removeItem multiple>
+                            <div class="hstack gap-1">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Nº Revisión:{{ table.review_number }}</h4>
+                            </div>
+                            <!--<button type="button" class="btn btn-soft-success ms-auto add-btn" id="add-message-btn"
+                                data-table-id="{{ table.id }}" data-bs-toggle="modal" data-bs-target="#addModal"><i
+                                    class="ri-add-line"></i>
+                                Editar Tabla
+                            </button>-->
+                        </div>
+                        <div class="hstack gap-4 w-auto">
+                            <div class="hstack gap-1 start-0 bottom-0">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Elaborado Por: {{ table.created_by.name }}</h4>
+                            </div>
+                            <div class="hstack gap-1 w-auto bottom-0">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.name }}</h4>
+                            </div>
+                            <div class="hstack gap-1 w-auto bottom-0">
+                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.name }}</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Mostrar Mensajes-->
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="w-100">
+                                <thead class="bg-light text-dark align-middle fs-5 text">
+                                    <tr>
+                                        <div class="hstack gap-3">
+                                            <h3>Mensajes</h3>
+                                            <button type="button" class="btn btn-soft-info ms-auto add-btn"
+                                                id="add-message-btn" data-table-id="{{ table.id }}"
+                                                data-bs-toggle="modal" data-bs-target="#addModal"><i
+                                                    class="ri-add-line"></i>
+                                                Nuevo Mensaje
+                                            </button>
+                                        </div>
+                                    </tr>
+                                    <tr>
+                                        <th>Comunicación</th>
+                                        <th>Asunto</th>
+                                        <th>Emisor</th>
+                                        <th>Receptor</th>
+                                        <th>Canal</th>
+                                        <th>Periodicidad</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-responsive bg-light text-dark">
+                                    {% for message in table.messages %}
+                                    <tr>
+                                        <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
+                                        <td>{{ message.subject }}</td>
+                                        <td>{{ message.transmitter.name }}</td>
+                                        <td>
+                                            {% for receiver in message.receivers %}
+                                            <li>{{ receiver.name }}</li>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for channel in message.channels %}
+                                            <li>{{ channel.name }}</li>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {{ message.periodicity.name }}
+                                        </td>
+                                        <td>
+                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ message.id }}"
+                                                data-bs-toggle="modal" data-bs-target="#editModal">
+                                                <i class="ri-edit-2-line" style="font-size: 18px;"></i>
+                                            </button>
+
+                                            <button class="btn open-delete-modal btn-ghost-danger"
+                                                data-id="{{ message.id }}" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal">
+                                                <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <!--Fin tablas-->
+            </body>
+        </div>
+        
+        <!-- End Container-fluid -->
+
+    <!-- Modales -->
+        <!-- Modal Edición Mensaje-->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="editForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title bg-dark text-light p-1" id="editModalLabel">Editar Mensaje</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="message-id" name="id">
+                            <div class="mb-3">
+                                <label for="message-communication-type" class="form-label">Tipo de Comunicación</label>
+                                <select class="form-select" class="form-control" id="message-communication-type"
+                                    name="communication_type">
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message-subject" class="form-label">Asunto</label>
+                                <input type="text" class="form-control" id="message-subject" name="subject">
+                            </div>
+                            <div class="mb-3">
+                                <label for="message-transmitter" class="form-label">Emisor</label>
+                                <select class="form-select" id="message-transmitter" name="transmitter">
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message-channel" class="form-label">Canales</label>
+                                <select id="message-channel" name="channels" class="form-control" multiple>
+                                </select>
+                                <!--<select id="message-cha" name="channels"  class="form-control" data-choices data-choices-removeItem multiple>
                                         {% for i in all_channels %}
                                         <option value="{{ i.Cha }}">{{ i.Cha }}</option>
                                         {% endfor %}
                                     </select>  -->
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message-receiver" class="form-label">Receptor</label>
-                                    <select id="message-receiver" name="receivers" class="form-control" multiple>                 
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message-periodicity" class="form-label">Periodicidad</label>
-                                    <select class="form-select" id="message-periodicity" name="periodicity">
-                                    </select>
-                                </div>   
                             </div>
-                            <div class="modal-footer">
-                                <button type="submit" id="saveChangesBtn" class="btn bg-success btn-primary add-btn">Guardar cambios</button>
-                            </div> 
-                        </form>
+                            <div class="mb-3">
+                                <label for="message-receiver" class="form-label">Receptor</label>
+                                <select id="message-receiver" name="receivers" class="form-control" multiple>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message-periodicity" class="form-label">Periodicidad</label>
+                                <select class="form-select" id="message-periodicity" name="periodicity">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="saveChangesBtn" class="btn bg-success btn-primary add-btn">Guardar
+                                cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--Fin Modal Editar Mensaje-->
+
+        <!-- Modal Añadir Mensaje-->
+        <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="addForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title bg-dark text-light p-1" id="addModalLabel">Nuevo Mensaje</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="communication-table-id" name="communication-table-id">
+                            <div class="mb-3">
+                                <label for="new-message-communication-type" class="form-label">Tipo de
+                                    Comunicación</label>
+                                <select class="form-select" class="form-control" id="new-message-communication-type"
+                                    name="communication_type" required>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-message-subject" class="form-label">Asunto</label>
+                                <input type="text" class="form-control" id="new-message-subject" name="subject"
+                                    maxlength="240" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-message-transmitter" class="form-label">Emisor</label>
+                                <select class="form-select" id="new-message-transmitter" name="transmitter">
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-message-channel" class="form-label">Canales</label>
+                                <select id="new-message-channel" name="channels" class="form-control" multiple required>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-message-receiver" class="form-label">Receptor</label>
+                                <select id="new-message-receiver" name="receivers" class="form-control" multiple
+                                    required>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-message-periodicity" class="form-label">Periodicidad</label>
+                                <select class="form-select" id="new-message-periodicity" name="periodicity" required>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="saveChangesBtn" class="btn btn-primary bg-success">Guardar
+                                cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--Fin Modal Añadir Mensaje-->
+
+        <!-- Modal Eliminar Mensajes-->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="editModalLabel">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-5">
+                        ¿Está seguro de eliminar este mensaje?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" id="confirm-delete-btn" class="btn btn-danger">Eliminar</button>
                     </div>
                 </div>
             </div>
+        </div>
+        <!--Fin Modal Eliminar Mensaje-->
 
-
-            <!-- Modal Añadir Mensaje-->
-            <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" data-bs-backdrop="static">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form id="addForm"> 
-                            <div class="modal-header">
-                                <h5 class="modal-title bg-dark text-light p-1" id="addModalLabel">Nuevo Mensaje</h5>
-                                <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Modal Añadir Tabla-->
+        <div class="modal fade" id="addTableModal" tabindex="-1" aria-labelledby="addTableLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="addTableForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title bg-dark text-light p-1" id="addTableLabel">Nueva Tabla</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="new-table-code" class="form-label">Código Tabla</label>
+                                <input type="text" class="form-control" id="new-table-code" name="code"
+                                    maxlength="240" required>
                             </div>
-                            <div class="modal-body">
-                                <input type="hidden" id="communication-table-id" name="communication-table-id">
-                                <div class="mb-3">
-                                    <label for="new-message-communication-type" class="form-label">Tipo de Comunicación</label>
-                                    <select class="form-select" class="form-control" id="new-message-communication-type" name="communication_type" required>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="new-message-subject" class="form-label">Asunto</label>
-                                    <input type="text" class="form-control" id="new-message-subject" name="subject" maxlength="240" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="new-message-transmitter" class="form-label">Emisor</label>
-                                    <select class="form-select" id="new-message-transmitter" name="transmitter">
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="new-message-channel" class="form-label">Canales</label>
-                                    <select  id="new-message-channel" name="channels" class="form-control" multiple required>        
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="new-message-receiver" class="form-label">Receptor</label>
-                                    <select id="new-message-receiver" name="receivers" class="form-control" multiple required>                 
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="new-message-periodicity" class="form-label">Periodicidad</label>
-                                    <select class="form-select" id="new-message-periodicity" name="periodicity" required>
-                                    </select>
-                                </div>   
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" id="saveChangesBtn" class="btn btn-primary bg-success">Guardar cambios</button>
-                            </div> 
-                        </form>
-                    </div>
-                </div>
-            </div>            
-
-
-
-
-            <!-- Modal Eliminar Mensajes-->
-            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="editModalLabel" >
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-body text-center p-5">
-                            ¿Está seguro de eliminar este mensaje?
+                            <div class="mb-3">
+                                <label for="new-table-transmitter" class="form-label">Elaborado por:</label>
+                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" required>
+                                </select>
+                            </div>               
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            <button type="submit" id="confirm-delete-btn" class="btn btn-danger">Eliminar</button>
+                            <button type="submit" id="savetableBtn" class="btn btn-primary bg-success">Guardar
+                                cambios</button>
                         </div>
-                    </div>
+                    </form>
                 </div>
-            </div>            
+            </div>
+        </div>
+        <!--Fin Modal Añadir Tabla-->
+        <!--Fin MOdales-->
     </div>
-</div>
-<!-- container-fluid -->
-</div>
-<!-- End Page-content -->
+    <!-- End Page-content -->
 
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
-</div>
-<!-- end main content-->
 {% endblock content %}
+</div>
+<!-- End Main content-->
+
+
 {% block extra_js %}
 <!-- prismjs plugin -->
-    <script src="{% static 'libs/prismjs/prism.js' %}"></script>
-    <script src="{% static 'libs/list.js/dist/list.min.js' %}"></script>
-    <script src="{% static 'libs/list.pagination.js/dist/list.pagination.min.js' %}"></script>
-
-<!-- listjs init 
-    <script src="{% static 'js/pages/listjs.init.js'%}"></script>-->
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="{% static 'libs/prismjs/prism.js' %}"></script>
+<script src="{% static 'libs/list.js/dist/list.min.js' %}"></script>
+<!--<script src="{% static 'libs/list.pagination.js/dist/list.pagination.min.js' %}"></script>
+<script src="{% static 'js/pages/listjs.init.js'%}"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- choices.js -->
 <script type='text/javascript' src="{% static 'libs/choices.js/public/assets/scripts/choices.min.js' %}"></script>
+<!-- app js 
+<script src="{% static 'js/app.js'%}"></script>-->
 
- <!-- app js -->
-<script src="{% static 'js/app.js'%}"></script>
-
-
-<!-- Manejo acción click botón editar. Rellenar y cargar formulario edición -->
+<!--JS Formularios Modales-->
+    <!-- Edición Mensaje -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.edit-btn').forEach(button => {
@@ -287,7 +333,7 @@
                     const id = button.getAttribute('data-id');
                     const channelsSelect = document.getElementById('message-channel');
                     const receiversSelect = document.getElementById('message-receiver');
-                    channelsSelect.innerHTML = '';  
+                    channelsSelect.innerHTML = '';
                     receiversSelect.innerHTML = '';
                     fetch(`/communications/get-message/${id}/`)
                         .then(response => response.json())
@@ -314,9 +360,9 @@
                                     periodicitySelect.appendChild(optionElement);
                                 });
 
-                                new Choices(periodicitySelect, { 
-                                removeItemButton: true, 
-                                searchEnabled: false
+                                new Choices(periodicitySelect, {
+                                    removeItemButton: true,
+                                    searchEnabled: false
                                 });
 
                                 // Communication Type options
@@ -325,16 +371,16 @@
                                 data.communicationtype_options.forEach(communicationtypeOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = communicationtypeOption.id;
-                                    optionElement.textContent = communicationtypeOption.scope + ' ' + communicationtypeOption.direction; 
+                                    optionElement.textContent = communicationtypeOption.scope + ' ' + communicationtypeOption.direction;
                                     if (communicationtypeOption.id === data.communication_type) {
                                         optionElement.selected = true; // Mark current periodicity as selected
                                     }
                                     communicationtypeSelect.appendChild(optionElement);
                                 });
 
-                                new Choices(communicationtypeSelect, { 
-                                removeItemButton: true, 
-                                searchEnabled: false
+                                new Choices(communicationtypeSelect, {
+                                    removeItemButton: true,
+                                    searchEnabled: false
                                 });
 
                                 // Emisor options
@@ -343,7 +389,7 @@
                                 data.departments_options.forEach(departmentsOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = departmentsOption.id;
-                                    optionElement.textContent = departmentsOption.name; 
+                                    optionElement.textContent = departmentsOption.name;
                                     if (departmentsOption.id === data.transmitter) {
                                         optionElement.selected = true; // Mark current periodicity as selected
                                     }
@@ -367,9 +413,9 @@
                                     channelsSelect.appendChild(optionElement);
                                 });
 
-                                new Choices(channelsSelect, { 
-                                removeItemButton: true, 
-                                closeDropdownOnSelect: true
+                                new Choices(channelsSelect, {
+                                    removeItemButton: true,
+                                    closeDropdownOnSelect: true
                                 });
 
 
@@ -379,17 +425,17 @@
                                     optionElement.value = receiverOption.id;
                                     optionElement.textContent = receiverOption.name;
 
-                                    if (data.receivers.some(selectedReceiver => selectedReceiver.id === receiverOption.id)){
+                                    if (data.receivers.some(selectedReceiver => selectedReceiver.id === receiverOption.id)) {
                                         optionElement.selected = true;
                                     }
 
                                     receiversSelect.appendChild(optionElement);
                                 });
 
-                                new Choices(receiversSelect, { 
-                                removeItemButton: true, 
-                                searchEnabled: true, 
-                                closeDropdownOnSelect: true,
+                                new Choices(receiversSelect, {
+                                    removeItemButton: true,
+                                    searchEnabled: true,
+                                    closeDropdownOnSelect: true,
                                 });
                             }
                         });
@@ -399,12 +445,12 @@
 
             // Click en el botón de guardar cambios dentro del modal de edición.
             document.getElementById('editForm').addEventListener('submit', function (event) {
-            console.log('editform submitted!'); //debug
-            event.preventDefault();
+                console.log('editform submitted!'); //debug
+                event.preventDefault();
 
-            const channelsSelect = document.getElementById('message-channel');
-            const receiversSelect = document.getElementById('message-receiver');
-            const data = {
+                const channelsSelect = document.getElementById('message-channel');
+                const receiversSelect = document.getElementById('message-receiver');
+                const data = {
                     id: document.getElementById('message-id').value,
                     message_subject: document.getElementById('message-subject').value,
                     message_communication_type: document.getElementById('message-communication-type').value,
@@ -412,44 +458,44 @@
                     message_periodicity: document.getElementById('message-periodicity').value,
                     message_channel: Array.from(channelsSelect.selectedOptions).map(option => option.value),
                     message_receiver: Array.from(receiversSelect.selectedOptions).map(option => option.value),
-                    
-            };
-            
-            //const formData = new FormData(this);
 
-            fetch('/communications/update-message/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),    
-            })  
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Row updated successfully!');
-                        location.reload();
-                    } else {
-                        alert('Failed to update row.');
-                    }
-                });
+                };
+
+                //const formData = new FormData(this);
+
+                fetch('/communications/update-message/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Row updated successfully!');
+                            location.reload();
+                        } else {
+                            alert('Failed to update row.');
+                        }
+                    });
             });
         });
     </script>
 
-<!--Manejo click botón de Eliminar Mensajes-->
+    <!--Eliminar Mensajes-->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.open-delete-modal').forEach(button => {
-                    button.addEventListener('click', function () {
-                        messageToDelete = button.getAttribute('data-id'); // Guardar el ID del mensaje
-                    });
+                button.addEventListener('click', function () {
+                    messageToDelete = button.getAttribute('data-id'); // Guardar el ID del mensaje
                 });
+            });
 
             document.getElementById('confirm-delete-btn').addEventListener('click', function () {
-                    if (messageToDelete) {
-                        fetch(`/communications/delete-message/${messageToDelete}/`, {
-                            method: 'POST',
-                            headers: { 'X-CSRFToken': getCookie('csrftoken') }, // Si usas CSRF
-                        })
+                if (messageToDelete) {
+                    fetch(`/communications/delete-message/${messageToDelete}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': getCookie('csrftoken') }, // Si usas CSRF
+                    })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
@@ -470,8 +516,8 @@
                             }
                         })
                         .catch(error => console.error('Error:', error));
-                    }
-                });
+                }
+            });
         });
 
         // Función para obtener el token CSRF si es necesario
@@ -489,142 +535,138 @@
             }
             return cookieValue;
         }
-
     </script>
 
-<!--Añadir mensaje a una tabla de comunicación-->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Variable global para rastrear el ID de la tabla
-        let currentTableId = null;
+    <!--Añadir mensaje a una tabla de comunicación-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Variable global para rastrear el ID de la tabla
+            let currentTableId = null;
+            // COmporatmiento del botón de denuvo mensaje
+            document.querySelectorAll('.add-btn').forEach(button => {
+                button.addEventListener('click', function () {
+
+                    currentTableId = button.getAttribute('data-table-id');
+
+                    // Asigna el ID al campo oculto del formulario
+                    const tbIdField = document.getElementById('communication-table-id');
+                    tbIdField.value = currentTableId;
+
+                    //console.log('ID asignado al campo oculto:', tbIdField.value); //debug
+
+                    // Cargar opciones formulario
+                    fetch('/communications/load-messageform-options-asJson/')
+                        .then(response => response.json())
+                        .then(data => {
+                            //console.log('fech hecho') //debug
+                            if (data.success) {
+                                //// Opciones selecionables en el formulario
+                                // Periodicity options
+                                const periodicitySelect = document.getElementById('new-message-periodicity');
+                                periodicitySelect.innerHTML = ''; // Clear existing options
+                                data.periodicity_options.forEach(periodicityOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = periodicityOption.id;
+                                    optionElement.textContent = periodicityOption.name; // Display periodicity name
+                                    if (periodicityOption.id === data.periodicity) {
+                                        optionElement.selected = true; // Mark current periodicity as selected
+                                    }
+                                    periodicitySelect.appendChild(optionElement);
+                                });
+
+                                new Choices(periodicitySelect, {
+                                    removeItemButton: true,
+                                    placeholderValue: 'Seleccionar periodicidad',
+                                    searchEnabled: false
+                                });
+
+                                // Communication Type options
+                                const communicationtypeSelect = document.getElementById('new-message-communication-type');
+                                communicationtypeSelect.innerHTML = ''; // Clear existing options
+                                data.communicationtype_options.forEach(communicationtypeOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = communicationtypeOption.id;
+                                    optionElement.textContent = communicationtypeOption.scope + ' ' + communicationtypeOption.direction;
+                                    if (communicationtypeOption.id === data.communication_type) {
+                                        optionElement.selected = true; // Mark current periodicity as selected
+                                    }
+                                    communicationtypeSelect.appendChild(optionElement);
+                                });
+
+                                new Choices(communicationtypeSelect, {
+                                    removeItemButton: true,
+                                    placeholderValue: 'Seleccionar tipo de comunicación',
+                                    searchEnabled: false
+                                });
+
+                                //Emisor options
+                                const departmentsSelect = document.getElementById('new-message-transmitter');
+                                departmentsSelect.innerHTML = ''; // Clear existing options
+                                data.departments_options.forEach(departmentsOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = departmentsOption.id;
+                                    optionElement.textContent = departmentsOption.name;
+                                    if (departmentsOption.id === data.transmitter) {
+                                        optionElement.selected = true; // Mark current periodicity as selected
+                                    }
+                                    departmentsSelect.appendChild(optionElement);
+                                });
 
 
 
-        // COmporatmiento del botón de denuvo mensaje
-        document.querySelectorAll('.add-btn').forEach(button => {
-            button.addEventListener('click', function () {
+                                // Channels (Many-to-Many)
+                                const channelsSelect = document.getElementById('new-message-channel');
+                                channelsSelect.innerHTML = '';
+                                data.channels_options.forEach(channelOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = channelOption.id; optionElement.textContent = channelOption.name;
+                                    channelsSelect.appendChild(optionElement);
+                                });
 
-                currentTableId = button.getAttribute('data-table-id');
+                                new Choices(channelsSelect, {
+                                    removeItemButton: true,
+                                    placeholderValue: 'Seleccionar canal',
+                                    searchPlaceholderValue: 'Buscar',
+                                    closeDropdownOnSelect: true
+                                });
 
-                // Asigna el ID al campo oculto del formulario
-                const tbIdField = document.getElementById('communication-table-id');
-                tbIdField.value = currentTableId;
+                                // Receptores (many to many)
+                                const receiversSelect = document.getElementById('new-message-receiver');
+                                receiversSelect.innerHTML = '';
+                                data.departments_options.forEach(receiverOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = receiverOption.id;
+                                    optionElement.textContent = receiverOption.name;
+                                    receiversSelect.appendChild(optionElement);
+                                });
 
-                //console.log('ID asignado al campo oculto:', tbIdField.value); //debug
-                
-                // Cargar opciones formulario
-                fetch('/communications/load-messageform-options-asJson/')
-                    .then(response => response.json())
-                    .then(data => {
-                        //console.log('fech hecho') //debug
-                        if (data.success) {
-                            //// Opciones selecionables en el formulario
-                            // Periodicity options
-                            const periodicitySelect = document.getElementById('new-message-periodicity');
-                            periodicitySelect.innerHTML = ''; // Clear existing options
-                            data.periodicity_options.forEach(periodicityOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = periodicityOption.id;
-                                optionElement.textContent = periodicityOption.name; // Display periodicity name
-                                if (periodicityOption.id === data.periodicity) {
-                                    optionElement.selected = true; // Mark current periodicity as selected
-                                }
-                                periodicitySelect.appendChild(optionElement);
-                            });
+                                new Choices(receiversSelect, {
+                                    removeItemButton: true,
+                                    placeholderValue: 'Seleccionar receptor',
+                                    searchEnabled: true,
+                                    searchPlaceholderValue: 'Buscar',
+                                    closeDropdownOnSelect: true,
+                                });
 
-                            new Choices(periodicitySelect, { 
-                                removeItemButton: true, 
-                                placeholderValue: 'Seleccionar periodicidad',
-                                searchEnabled: false
-                            });
-
-                            // Communication Type options
-                            const communicationtypeSelect = document.getElementById('new-message-communication-type');
-                            communicationtypeSelect.innerHTML = ''; // Clear existing options
-                            data.communicationtype_options.forEach(communicationtypeOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = communicationtypeOption.id;
-                                optionElement.textContent = communicationtypeOption.scope + ' ' + communicationtypeOption.direction; 
-                                if (communicationtypeOption.id === data.communication_type) {
-                                    optionElement.selected = true; // Mark current periodicity as selected
-                                }
-                                communicationtypeSelect.appendChild(optionElement);
-                            });                            
-
-                            new Choices(communicationtypeSelect, { 
-                                removeItemButton: true, 
-                                placeholderValue: 'Seleccionar tipo de comunicación',
-                                searchEnabled: false
-                            });
-
-                            //Emisor options
-                            const departmentsSelect = document.getElementById('new-message-transmitter');
-                            departmentsSelect.innerHTML = ''; // Clear existing options
-                            data.departments_options.forEach(departmentsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = departmentsOption.id;
-                                optionElement.textContent = departmentsOption.name; 
-                                if (departmentsOption.id === data.transmitter) {
-                                    optionElement.selected = true; // Mark current periodicity as selected
-                                }
-                                departmentsSelect.appendChild(optionElement);
-                            });
-
-   
-
-                            // Channels (Many-to-Many)
-                            const channelsSelect = document.getElementById('new-message-channel'); 
-                            channelsSelect.innerHTML = ''; 
-                            data.channels_options.forEach(channelOption => { 
-                                const optionElement = document.createElement('option'); 
-                                optionElement.value = channelOption.id; optionElement.textContent = channelOption.name; 
-                                channelsSelect.appendChild(optionElement); 
-                            }); 
-                                
-                            new Choices(channelsSelect, { 
-                                removeItemButton: true, 
-                                placeholderValue: 'Seleccionar canal',
-                                searchPlaceholderValue: 'Buscar',
-                                closeDropdownOnSelect: true
-                            });
-
-                            // Receptores (many to many)
-                            const receiversSelect = document.getElementById('new-message-receiver'); 
-                            receiversSelect.innerHTML = ''; 
-                            data.departments_options.forEach(receiverOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = receiverOption.id;
-                                optionElement.textContent = receiverOption.name;
-                                receiversSelect.appendChild(optionElement);
-                            }); 
-
-                            new Choices(receiversSelect, { 
-                                removeItemButton: true, 
-                                placeholderValue: 'Seleccionar receptor',
-                                searchEnabled: true, 
-                                searchPlaceholderValue: 'Buscar',
-                                closeDropdownOnSelect: true,
-                            });
-                                
-                        }
-                    });
+                            }
+                        });
+                });
             });
-        });
 
 
-        // Click en el botón de guardar cambios dentro del modal de añadir mensaje.
-        document.getElementById('addForm').addEventListener('submit', function (event) {
-            event.preventDefault();
+            // Click en el botón de guardar cambios dentro del modal de añadir mensaje.
+            document.getElementById('addForm').addEventListener('submit', function (event) {
+                event.preventDefault();
 
-            //console.log('addform submitted!'); //debug
+                //console.log('addform submitted!'); //debug
 
-            const tbId = document.getElementById('communication-table-id').value; // Obtén el valor del ID de la tabla
-            //console.log('ID de tabla enviado:', tbId); //debug
+                const tbId = document.getElementById('communication-table-id').value; // Obtén el valor del ID de la tabla
+                //console.log('ID de tabla enviado:', tbId); //debug
 
-            const channelsSelect = document.getElementById('new-message-channel');
-            const receiversSelect = document.getElementById('new-message-receiver');
+                const channelsSelect = document.getElementById('new-message-channel');
+                const receiversSelect = document.getElementById('new-message-receiver');
 
-            const data = {
+                const data = {
                     communication_table_id: tbId,
                     message_subject: document.getElementById('new-message-subject').value,
                     message_communication_type: document.getElementById('new-message-communication-type').value,
@@ -632,36 +674,98 @@
                     message_periodicity: document.getElementById('new-message-periodicity').value,
                     message_channels: Array.from(channelsSelect.selectedOptions).map(option => option.value),
                     message_receivers: Array.from(receiversSelect.selectedOptions).map(option => option.value),
-                    
-            };
-        
 
-        fetch('/communications/create-message/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),    
-        })  
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('El mensaje se ha enviado con éxito', 'success');
-                    location.reload();
-                } else {
-                    alert('Failed to update row.');
-                }
+                };
+
+
+                fetch('/communications/create-message/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('El mensaje se ha enviado con éxito', 'success');
+                            location.reload();
+                        } else {
+                            alert('Failed to update row.');
+                        }
+                    });
             });
         });
-    });
+    </script>
 
-    
+    <!--Añadir Tabla de comunicación-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // COmporatmiento del botón de de nueva tabla
+            document.querySelectorAll('.add-table-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    console.log('boton tabla'); //debug
+
+                    // Cargar opciones formulario
+                    fetch('/communications/load-addtableform-options-asJson/')
+                        .then(response => response.json())
+                        .then(data => {
+                            //console.log('fech hecho') //debug
+                            if (data.success) {
+                                //// Opciones selecionables en el formulario         
+                                //Emisor options
+                                const departmentsSelect = document.getElementById('new-table-transmitter');
+                                departmentsSelect.innerHTML = ''; // Clear existing options
+                                data.departments_options.forEach(departmentsOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = departmentsOption.id;
+                                    optionElement.textContent = departmentsOption.name;
+                                    if (departmentsOption.id === data.transmitter) {
+                                        optionElement.selected = true; 
+                                    }
+                                    departmentsSelect.appendChild(optionElement);
+                                });           
+                            }
+                        });
+                });
+            });
+
+
+            // Click en el botón de guardar cambios dentro del modal de añadir tabla.
+            document.getElementById('addTableForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                //console.log('addform submitted!'); //debug
+                //console.log('ID de tabla enviado:', tbId); //debug
+
+                const data = {
+                    table_code: document.getElementById('new-table-code').value,
+                    table_transmitter: document.getElementById('new-table-transmitter').value,
+                };
+
+
+                fetch('/communications/create-table/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        //console.log(data); //debug
+                        if (data.success) {               
+                            alert('La tabla se ha creado con éxito', 'success');
+                            location.reload();
+                        } else {
+                            alert('Error al crear la tabla');
+                        }
+                    });
+            });
+        });
+    </script>
 
 
 
-
-</script>
 
 
 {% endblock extra_js %}
 
 </body>
+
 </html>
