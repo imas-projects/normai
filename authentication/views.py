@@ -61,38 +61,22 @@ def authentication_sign_up(request):
             return JsonResponse({'success': False, 'error': str(e)})    
     return render(request, "mistemplates/authentication-sign-up.html",context)
 
-@csrf_exempt
+
 def authentication_sign_in(request):
     if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            username = data.get('username')
-            password = data.get('password')
-            user = authenticate(username=username, password=password)
-
-            all_groups = Group.objects.all()
-
-            if user is not None:
-                login(request, user)
-                print("El usuario existe")
-                print(f"Sesion iniciada por: {user}")
-
-                if user.is_superuser == True:
-                    print("superusuario")
-                    return JsonResponse({'success': True, 'redirect_url': reverse(f"admin:index")})
-                else:
-                    user_groups = Group.objects.get(id=user.groups.first().id)
-                    print("El usuario esta en un grupo")
-                    return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:wellcome_view")})
-                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"pages:pages_normai_landing")})
-                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
-
-                #return JsonResponse({'success': True})
-            else:
-                print("el usuario no existe")
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})    
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        next_url = request.POST.get("next") or reverse(f"authentication:wellcome_view")
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            #print("sesion iniciada") #debug
+            return redirect(next_url)
+        else:
+            return render(request, "mistemplates/authentication-sign-in.html", {"error": "Usuario o contraseña incorrectos"})
     return render(request, "mistemplates/authentication-sign-in.html")
+
 
 def authentication_log_out(request):
     logout(request)
@@ -129,4 +113,40 @@ def prueba_sign_up(request):
        'form' : form_sign_up,
     }
     return render(request, "mistemplates/form-sign-up.html", context)'
+'''
+'''
+#sign in usando java y json
+@csrf_exempt
+def authentication_sign_in(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            password = data.get('password')
+            user = authenticate(username=username, password=password)
+
+            all_groups = Group.objects.all()
+
+            if user is not None:
+                login(request, user)
+                print("El usuario existe")
+                print(f"Sesion iniciada por: {user}")
+
+                if user.is_superuser == True:
+                    print("superusuario")
+                    return JsonResponse({'success': True, 'redirect_url': reverse(f"admin:index")})
+                else:
+                    user_groups = Group.objects.get(id=user.groups.first().id)
+                    print("El usuario esta en un grupo")
+                    return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:wellcome_view")})
+                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"pages:pages_normai_landing")})
+                    #return JsonResponse({'success': True, 'redirect_url': reverse(f"authentication:{user_groups.name}_dashboard_view")})
+
+                #return JsonResponse({'success': True})
+            else:
+                print("el usuario no existe")
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})    
+    return render(request, "mistemplates/authentication-sign-in.html")
+
 '''

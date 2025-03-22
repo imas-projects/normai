@@ -24,7 +24,7 @@ def communication_table_view(request):
 
 
 # Carga la información de todos los mensajes.
-#@login_required
+@login_required
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
@@ -174,7 +174,7 @@ def load_addtableform_options_asJson(request):
     except:
         return JsonResponse({'success': False, 'error': 'Error'})
 
-@csrf_exempt
+
 def create_message(request):
     if request.method == 'POST':
         try:
@@ -216,7 +216,7 @@ def create_message(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 import datetime
-@csrf_exempt
+
 def create_table(request):
     if request.method == 'POST':
         try:
