@@ -17,112 +17,164 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 
-def create_risk(request, risk_id=None):
-    success_message = None
-    keep_modal_open = False
+def create_risk(request):
+    all_risks = RiskIdentification.objects.all()
+    
+    grouped_risks = {}
+    for risk in all_risks:
+        department = risk.department
+        if department not in grouped_risks:
+            grouped_risks[department] = []
+        grouped_risks[department].append(risk)
 
-    risk_identifications = RiskIdentification.objects.all()
-    risk_treatments = RiskTreatment.objects.all()
-    contingency_plans = ContingencyPlan.objects.all()
-    reevaluations = Reevaluation.objects.all()
-    evaluations = RiskEvaluation.objects.select_related('risk_level').all()
+    evaluations = RiskEvaluation.objects.select_related('risk').all()
+    treatments = RiskTreatment.objects.select_related('risk').all()
+    contingency_plans = ContingencyPlan.objects.select_related('risk').all()
+    reevaluations = Reevaluation.objects.select_related('risk').all()
 
-    grouped_risks = defaultdict(list)
-    for risk in risk_identifications:
-        grouped_risks[risk.department.name].append(risk)
+    return render(request, 'mistemplates/risks.html', {
+        'grouped_risks': grouped_risks,
+        'evaluations': evaluations,
+        'treatments': treatments,
+        'contingency_plans': contingency_plans,
+        'reevaluations': reevaluations,
+    })
 
-    risk = get_object_or_404(RiskIdentification, id=risk_id) if risk_id else None
+def add_risk_identification(request):
+    if request.method == 'POST':
+        form = RiskIdentificationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')  
+    else:
+        form = RiskIdentificationForm()
 
-    evaluation = RiskEvaluation.objects.filter(risk=risk).first() if risk else None
-    treatment = RiskTreatment.objects.filter(risk=risk).first() if risk else None
-    contingency_plan = ContingencyPlan.objects.filter(risk=risk).first() if risk else None
-    reevaluation = Reevaluation.objects.filter(risk=risk).first() if risk else None
+    return render(request, 'mistemplates/add_risk_identification.html', {'form': form})
 
-    form_create = RiskIdentificationForm(instance=risk)
-    form_evaluation = RiskEvaluationForm(instance=evaluation)
-    form_treatment = RiskTreatmentForm(instance=treatment)
-    form_contingency = ContingencyPlanForm(instance=contingency_plan)
-    form_reevaluation = ReevaluationForm(instance=reevaluation)
+def add_risk_evaluation(request):
+    if request.method == 'POST':
+        form = RiskEvaluationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Risk evaluation saved successfully'}, status=200)
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = RiskEvaluationForm()
 
-    if request.method == "POST":
-        response_data = {}
+    return render(request, 'mistemplates/add_risk_evaluation.html', {'form': form})
 
-        if "save_risk_identification" in request.POST:
-            form_create = RiskIdentificationForm(request.POST, instance=risk)
-            if form_create.is_valid():
-                risk = form_create.save()
-                success_message = "Risk Identification saved successfully!"
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'message': success_message, 'reload': True})
-                return redirect('mistemplates/dashboard-analytics')
+def add_risk_treatment(request):
+    if request.method == 'POST':
+        form = RiskTreatmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Risk treatment saved successfully'}, status=200)  
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = RiskTreatmentForm()
 
-        elif "save_risk_evaluation" in request.POST:
-            form_evaluation = RiskEvaluationForm(request.POST, instance=evaluation)
-            if risk and form_evaluation.is_valid():
-                evaluation = form_evaluation.save(commit=False)
-                evaluation.risk = risk
-                evaluation.save()
-                success_message = "Risk Evaluation saved successfully!"
-                return JsonResponse({'message': success_message})
-            else:
-                return JsonResponse({'error': form_evaluation.errors}, status=400)
+    return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
 
-        elif "save_risk_treatment" in request.POST:
-            form_treatment = RiskTreatmentForm(request.POST, instance=treatment)
-            if risk and form_treatment.is_valid():
-                treatment = form_treatment.save(commit=False)
-                treatment.risk = risk
-                treatment.save()
-                success_message = "Risk Treatment saved successfully!"
-                return JsonResponse({'message': success_message})
-            else:
-                return JsonResponse({'error': form_treatment.errors}, status=400)
+def add_contingency_plan(request):
+    if request.method == 'POST':
+        form = ContingencyPlanForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'message': 'Contingency plan saved successfully'}, status=200)  
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = ContingencyPlanForm()
 
-        elif "save_contingency_plan" in request.POST:
-            form_contingency = ContingencyPlanForm(request.POST, instance=contingency_plan)
-            if risk and form_contingency.is_valid():
-                contingency_plan = form_contingency.save(commit=False)
-                contingency_plan.risk = risk
-                contingency_plan.save()
-                success_message = "Contingency Plan saved successfully!"
-                return JsonResponse({'message': success_message})
-            else:
-                return JsonResponse({'error': form_contingency.errors}, status=400)
+    return render(request, 'mistemplates/add_contingency_plan.html', {'form': form})
 
-        elif "save_risk_reevaluation" in request.POST:
-            form_reevaluation = ReevaluationForm(request.POST, instance=reevaluation)
-            if risk and form_reevaluation.is_valid():
-                reevaluation = form_reevaluation.save(commit=False)
-                reevaluation.risk = risk
-                reevaluation.save()
-                success_message = "Risk Reevaluation saved successfully!"
-                return JsonResponse({'message': success_message, 'reload': True})
-            else:
-                return JsonResponse({'error': form_reevaluation.errors}, status=400)
+def add_reevaluation(request):
+    if request.method == 'POST':
+        form = ReevaluationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+    else:
+        form = ReevaluationForm()
 
-        return JsonResponse({'error': 'Invalid request'}, status=400)
+    return render(request, 'mistemplates/add_reevaluation.html', {'form': form})
 
-    return render(
-        request,
-        'mistemplates/risks.html',
-        {
-            'risk_identifications': risk_identifications,
-            'risk_treatments': risk_treatments,
-            'contingency_plans': contingency_plans,
-            'reevaluations': reevaluations,
-            'evaluations': evaluations,
-            'form_create': form_create,
-            'form_evaluation': form_evaluation,
-            'form_treatment': form_treatment,
-            'form_contingency': form_contingency,
-            'form_reevaluation': form_reevaluation,
-            'success_message': success_message,
-            'keep_modal_open': keep_modal_open,
-            "grouped_risks": dict(grouped_risks),
-            "risk": risk,
-        }
-    )
+def edit_risk_identification(request, risk_id):
+    risk = get_object_or_404(RiskIdentification, id=risk_id)
+    
+    if request.method == 'POST':
+        form = RiskIdentificationForm(request.POST, instance=risk)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+    else:
+        form = RiskIdentificationForm(instance=risk)
 
+    return render(request, 'mistemplates/edit_risk_identification.html', {'form': form, 'risk': risk})
+
+
+def edit_risk_evaluation(request, risk_id):
+    evaluation = get_object_or_404(RiskEvaluation, id=risk_id)
+
+    if request.method == 'POST':
+        form = RiskEvaluationForm(request.POST, instance=evaluation)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = RiskEvaluationForm(instance=evaluation)
+
+    return render(request, 'mistemplates/edit_risk_evaluation.html', {'form': form, 'evaluation': evaluation})
+
+
+def edit_risk_treatment(request, risk_id):
+    treatment = get_object_or_404(RiskTreatment, id=risk_id)
+
+    if request.method == 'POST':
+        form = RiskTreatmentForm(request.POST, instance=treatment)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = RiskTreatmentForm(instance=treatment)
+
+    return render(request, 'mistemplates/edit_risk_treatment.html', {'form': form, 'treatment': treatment})
+
+
+def edit_contingency_plan(request, risk_id):
+    plan = get_object_or_404(ContingencyPlan, id=risk_id)
+
+    if request.method == 'POST':
+        form = ContingencyPlanForm(request.POST, instance=plan)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+    else:
+        form = ContingencyPlanForm(instance=plan)
+
+    return render(request, 'mistemplates/edit_contingency_plan.html', {'form': form, 'plan': plan})
+
+
+def edit_reevaluation(request, risk_id):
+    reevaluation = get_object_or_404(Reevaluation, id=risk_id)
+
+    if request.method == 'POST':
+        form = ReevaluationForm(request.POST, instance=reevaluation)
+        if form.is_valid():
+            form.save()
+            return redirect('risks:risks')
+    else:
+        form = ReevaluationForm(instance=reevaluation)
+
+    return render(request, 'mistemplates/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
 
 def generate_risks_pdf(request, department_name):
     department = get_object_or_404(Department, name=department_name)
@@ -259,78 +311,3 @@ def generate_risks_pdf(request, department_name):
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"risks_{department.name}.pdf")
-
-
-
-
-
-@csrf_protect  
-def save_risk_step(request, step):
-    if request.method == "POST":
-        print("Datos recibidos:", request.POST)  
-
-        risk_id = request.POST.get("risk") 
-        risk = None
-        if risk_id:
-            risk = get_object_or_404(RiskIdentification, id=risk_id)
-
-        form = None
-
-        if step == 1:
-            form = RiskIdentificationForm(request.POST, instance=risk)  
-        elif step == 2:
-            form = RiskEvaluationForm(request.POST, instance=RiskEvaluation.objects.filter(risk=risk).first())
-        elif step == 3:
-            form = RiskTreatmentForm(request.POST, instance=RiskTreatment.objects.filter(risk=risk).first())
-        elif step == 4:
-            form = ContingencyPlanForm(request.POST, instance=ContingencyPlan.objects.filter(risk=risk).first())
-        elif step == 5:
-            form = ReevaluationForm(request.POST, instance=Reevaluation.objects.filter(risk=risk).first())
-
-        if form:
-            if form.is_valid():
-                form.save()
-                return JsonResponse({"success": True})
-            else:
-                print("Errores del formulario:", form.errors)  
-                return JsonResponse({"success": False, "error": form.errors}, status=400)
-        else:
-            print("No se encontró el formulario para el paso", step)
-
-    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
-
-
-
-def get_risk_data(request, risk_id):
-    """Obtiene los datos de un riesgo y devuelve los formularios renderizados."""
-    risk = get_object_or_404(RiskIdentification, id=risk_id)
-
-    evaluation = RiskEvaluation.objects.filter(risk=risk).first()
-    treatment = RiskTreatment.objects.filter(risk=risk).first()
-    contingency = ContingencyPlan.objects.filter(risk=risk).first()
-    reevaluation = Reevaluation.objects.filter(risk=risk).first()
-
-    form_create = RiskIdentificationForm(instance=risk)
-    form_evaluation = RiskEvaluationForm(instance=evaluation)  
-    form_treatment = RiskTreatmentForm(instance=treatment)  
-    form_contingency = ContingencyPlanForm(instance=contingency)  
-    form_reevaluation = ReevaluationForm(instance=reevaluation)  
-
-    form_create_html = render_to_string('mistemplates/form_create.html', {'form': form_create})
-    form_evaluation_html = render_to_string('mistemplates/form_evaluation.html', {'form': form_evaluation})
-    form_treatment_html = render_to_string('mistemplates/form_treatment.html', {'form': form_treatment})
-    form_contingency_html = render_to_string('mistemplates/form_contingency.html', {'form': form_contingency})
-    form_reevaluation_html = render_to_string('mistemplates/form_reevaluation.html', {'form': form_reevaluation})
-
-    data = {
-        "id": risk.id,
-        "identified_risk": risk.identified_risk,
-        "form_create": form_create_html,
-        "form_evaluation": form_evaluation_html,
-        "form_treatment": form_treatment_html,
-        "form_contingency": form_contingency_html,
-        "form_reevaluation": form_reevaluation_html,
-    }
-
-    return JsonResponse(data)
-
