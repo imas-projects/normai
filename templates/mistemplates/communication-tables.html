@@ -144,6 +144,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <form id="editForm">
+                        {% csrf_token %}
                         <div class="modal-header">
                             <h5 class="modal-title bg-dark text-light p-1" id="editModalLabel">Editar Mensaje</h5>
                             <button type="button" class="btn-close bg-danger bg-opacity-50" data-bs-dismiss="modal"
@@ -202,6 +203,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <form id="addForm">
+                        {% csrf_token %}
                         <div class="modal-header">
                             <h5 class="modal-title bg-dark text-light p-1" id="addModalLabel">Nuevo Mensaje</h5>
                             <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
@@ -273,7 +275,8 @@
         <div class="modal fade" id="addTableModal" tabindex="-1" aria-labelledby="addTableLabel" data-bs-backdrop="static">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form id="addTableForm">
+                    <form id="addTableForm" method="post">
+                        {% csrf_token %}
                         <div class="modal-header">
                             <h5 class="modal-title bg-dark text-light p-1" id="addTableLabel">Nueva Tabla</h5>
                             <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
@@ -494,7 +497,7 @@
                 if (messageToDelete) {
                     fetch(`/communications/delete-message/${messageToDelete}/`, {
                         method: 'POST',
-                        headers: { 'X-CSRFToken': getCookie('csrftoken') }, // Si usas CSRF
+                        headers: { 'X-CSRFToken': getCookie('csrftoken') },
                     })
                         .then(response => response.json())
                         .then(data => {
@@ -743,8 +746,8 @@
 
                 fetch('/communications/create-table/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')  },
+                    body: JSON.stringify(data)
                 })
                     .then(response => response.json())
                     .then(data => {
@@ -758,6 +761,22 @@
                     });
             });
         });
+
+        // Función para obtener el token CSRF si es necesario
+                function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
 

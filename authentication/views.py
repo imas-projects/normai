@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 import json
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.views.generic import TemplateView
 from django.http import JsonResponse
 from audits.models import Area
@@ -13,6 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 
 
 # Páginas de inicio según grupos usuarios.
+'''
 class AuditorVentasDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView): 
     template_name = "mistemplates/auditor_ventas-dashboard.html"
     permission_denied_message = "Este usuario no tiene acceso a esta página"
@@ -28,7 +29,7 @@ class AuditablesVentasDashboardView(LoginRequiredMixin, UserPassesTestMixin,Temp
     def test_func(self):
         # print("test") #debug
         return self.request.user.groups.filter(name='auditables_ventas').exists()
-
+'''
 
 def authentication_sign_up(request):
     all_groups = list(Group.objects.all().values('id', 'name'))
@@ -61,7 +62,7 @@ def authentication_sign_up(request):
             return JsonResponse({'success': False, 'error': str(e)})    
     return render(request, "mistemplates/authentication-sign-up.html",context)
 
-
+@csrf_protect
 def authentication_sign_in(request):
     if request.method == "POST":
         username = request.POST.get("username")

@@ -54,8 +54,8 @@
                                     <p class="text-muted">Inicia sesión para continuar.</p>
                                 </div>
                                 <div class="p-2 mt-4">
-                                    <form method="POST" id="sign-in-form" action="{% url 'authentication:authentication_sign_in' %}">    
-                                        {% csrf_token %}
+                                    <form method="POST" id="sign-in-form" action="{% url 'authentication:authentication_sign_in' %}"> 
+                                        {% csrf_token %} 
                                         <input type="hidden" name="next" value="{{ request.GET.next }}">                                    
                                         <div class="mb-3">
                                             <label for="username" class="form-label">Nombre usuario</label>

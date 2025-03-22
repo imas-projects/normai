@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
@@ -10,21 +11,21 @@ import json
 
 
 # Create your views here.
-'''
-class DashboardView(LoginRequiredMixin,TemplateView): #Quito esto para no tener que hacer login
-'''
-######################## TABLAS DE COMUNICACIONES ########################
 
-# Carga la información de todas las Tablas de Comunicaciones
-def communication_table_view(request):
-    all_communicationtable = CommunicationTable.objects.all()  # Get all entries
-    communicationtable_info = [table.as_dict() for table in all_communicationtable]
+# Funciones para chequear permisos
+# Prueba acceso a all_messages solo si pertenece al grupo "comunicaciones" (Funciona)
+def communication_check(user):
+    check_communication_group = user.groups.filter(name="comunicaciones").exists()
+    if check_communication_group is True:
+        print(user.groups.all())
+        return (check_communication_group)
+    else:
+        raise PermissionDenied 
 
-    return render(request,"mistemplates/communication-tables.html",{'communicationtable_info':communicationtable_info})
-
-
-# Carga la información de todos los mensajes.
+# Carga la información de todos los mensajes. Requiere login y tener permisos
+@csrf_protect
 @login_required
+@user_passes_test(communication_check)
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
@@ -217,6 +218,7 @@ def create_message(request):
 
 import datetime
 
+@csrf_protect
 def create_table(request):
     if request.method == 'POST':
         try:
@@ -241,3 +243,13 @@ def create_table(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+
+
+'''
+# Carga la información de todas las Tablas de Comunicaciones
+def communication_table_view(request):
+    all_communicationtable = CommunicationTable.objects.all()  # Get all entries
+    communicationtable_info = [table.as_dict() for table in all_communicationtable]
+
+    return render(request,"mistemplates/communication-tables.html",{'communicationtable_info':communicationtable_info})
+'''
