@@ -14,6 +14,7 @@ import json
 
 # Funciones para chequear permisos
 # Prueba acceso a all_messages solo si pertenece al grupo "comunicaciones" (Funciona)
+'''
 def communication_check(user):
     check_communication_group = user.groups.filter(name="comunicaciones").exists()
     if check_communication_group is True:
@@ -21,11 +22,11 @@ def communication_check(user):
         return (check_communication_group)
     else:
         raise PermissionDenied 
-
+'''
 # Carga la información de todos los mensajes. Requiere login y tener permisos
 @csrf_protect
 @login_required
-@user_passes_test(communication_check)
+#@user_passes_test(communication_check)
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
