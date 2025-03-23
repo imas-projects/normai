@@ -99,7 +99,7 @@ def get_message(request, id):
     
 
 # Aplicación de las modificaciones hechas en un mensaje
-@csrf_exempt
+@csrf_protect
 def update_message(request):
     if request.method == 'POST':
         try:
@@ -139,7 +139,7 @@ def update_message(request):
 
 
 # Eliminación de mensaje de la tabla
-@csrf_exempt
+@csrf_protect
 def delete_message(request, id):
     if request.method == 'POST':
         try:
@@ -153,7 +153,7 @@ def delete_message(request, id):
 
 
 # Añadir Mensaje
-@csrf_exempt
+
 def load_messageform_options_asJson(request):
     try:
         form_options = load_form_options()
@@ -175,7 +175,7 @@ def load_addtableform_options_asJson(request):
     except:
         return JsonResponse({'success': False, 'error': 'Error'})
 
-
+@csrf_protect
 def create_message(request):
     if request.method == 'POST':
         try:

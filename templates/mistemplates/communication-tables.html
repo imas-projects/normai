@@ -202,7 +202,7 @@
         <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" data-bs-backdrop="static">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form id="addForm">
+                    <form id="addForm" method="post">
                         {% csrf_token %}
                         <div class="modal-header">
                             <h5 class="modal-title bg-dark text-light p-1" id="addModalLabel">Nuevo Mensaje</h5>
@@ -468,20 +468,36 @@
 
                 fetch('/communications/update-message/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
                     body: JSON.stringify(data),
                 })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Row updated successfully!');
+                            alert('Mensaje editado con éxito');
                             location.reload();
                         } else {
-                            alert('Failed to update row.');
+                            alert('Ha ocurrido un error.');
                         }
                     });
             });
         });
+
+        // Función para obtener el token CSRF si es necesario
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
     <!--Eliminar Mensajes-->
@@ -683,20 +699,36 @@
 
                 fetch('/communications/create-message/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
                     body: JSON.stringify(data),
                 })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('El mensaje se ha enviado con éxito', 'success');
+                            alert('El mensaje se ha creado con éxito', 'success');
                             location.reload();
                         } else {
-                            alert('Failed to update row.');
+                            alert('Error al crear el mensaje.');
                         }
                     });
             });
         });
+
+         // Función para obtener el token CSRF si es necesario
+         function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
     <!--Añadir Tabla de comunicación-->
@@ -778,10 +810,6 @@
             return cookieValue;
         }
     </script>
-
-
-
-
 
 {% endblock extra_js %}
 
