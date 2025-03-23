@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User, Group
 
 class ParentArea(models.Model):
     name = models.CharField(max_length=100, verbose_name="Parent Area Name", unique=True)
@@ -15,6 +16,8 @@ class ParentArea(models.Model):
 class Area(models.Model):
     parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="areas", verbose_name="Parent Area")
     name = models.CharField(max_length=100, verbose_name="Area Name")
+    groups = models.ManyToManyField(Group, related_name="areas")  # Un área puede tener varios grupos y cada grupo varias areas
+    users = models.ManyToManyField(User, related_name="areas")  # Un área puede tener varios usuarios y cada usuario estar en más de un area
     
     def __str__(self):
         return f"{self.name} ({self.parent_area.name})"
@@ -23,7 +26,7 @@ class Area(models.Model):
         db_table = 'tb_area'
     
     def as_dict(self):
-        return {"id": self.id, "parent_area": self.parent_area.as_dict(), "name": self.name}
+        return {"id": self.id, "parent_area": self.parent_area.as_dict(), "name": self.name, "groups":[group.as_dict() for group in self.groups.all()], "users":[user.as_dict() for user in self.users.all()],}
 
 class Position(models.Model):
     parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="positions", verbose_name="Parent Area")
@@ -38,7 +41,7 @@ class Position(models.Model):
     
     def as_dict(self):
         return {"id": self.id, "parent_area": self.parent_area.as_dict(), "area": self.area.as_dict(), "title": self.title}
-
+'''
 class Person(models.Model):
     first_name = models.CharField(max_length=100, verbose_name="First Name")
     last_name = models.CharField(max_length=100, verbose_name="Last Name")
@@ -54,7 +57,7 @@ class Person(models.Model):
     
     def as_dict(self):
         return {"id": self.id, "first_name": self.first_name, "last_name": self.last_name, "parent_area": self.parent_area.as_dict(), "area": self.area.as_dict(), "position": self.position.as_dict()}
-
+'''
 class AuditRole(models.Model):
     name = models.CharField(max_length=100, verbose_name="Audit Team Role", unique=True)
     
@@ -68,7 +71,7 @@ class AuditRole(models.Model):
         return {"id": self.id, "name": self.name}
 
 class AuditTeam(models.Model):
-    person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="audit_roles", verbose_name="Person")
+    person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audit_roles", verbose_name="Person")
     role = models.ForeignKey(AuditRole, on_delete=models.PROTECT, related_name="audit_members", verbose_name="Role")
     
     def __str__(self):
@@ -161,7 +164,7 @@ class Audited(models.Model):
     requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
     requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
     requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
-    audited_person = models.ForeignKey(Person, on_delete=models.PROTECT, related_name="audited", verbose_name="Audited Person")
+    audited_person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audited", verbose_name="Audited Person")
 
     def __str__(self):
         return f"{self.audited_person.first_name} {self.audited_person.last_name}"
