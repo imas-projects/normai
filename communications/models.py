@@ -81,6 +81,7 @@ class Message(models.Model):
     receivers = models.ManyToManyField(Department, related_name="message_receivers", verbose_name="Receptor")
     periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="message_periodicity", verbose_name="Periodicity of Communicaation", null=False)
     creation_date = models.DateTimeField(auto_now_add=True, null=False)
+    update_date = models.DateTimeField(auto_now=True, null=True)
     
     
     def __str__(self):

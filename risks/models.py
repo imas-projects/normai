@@ -90,7 +90,7 @@ class RiskIdentification(models.Model):
 
 # Tabla de evaluación de riesgo
 class RiskEvaluation(models.Model):
-    risk = models.ForeignKey(RiskIdentification, on_delete=models.CASCADE, related_name='evaluations')  # Añadir relación
+    
     SEVERITY_CHOICES = [(i, str(i)) for i in range(11)]
     OCCURRENCE_CHOICES = [(i, str(i)) for i in range(11)]
     DETECTION_CHOICES = [(i, str(i)) for i in range(11)]
@@ -101,6 +101,7 @@ class RiskEvaluation(models.Model):
     current_detection_controls = models.TextField(blank=True, null=True, verbose_name="Current Detection Controls")
     detection = models.IntegerField(choices=DETECTION_CHOICES, verbose_name="Detection")
     risk_level = models.ForeignKey(RiskLevel, on_delete=models.CASCADE, verbose_name="Risk Level")
+    risk = models.ForeignKey(RiskIdentification, on_delete=models.CASCADE, related_name='evaluations',blank=True, null=True)  # Añadir relación
 
     class Meta:
         db_table = 'tb_risk_evaluation'

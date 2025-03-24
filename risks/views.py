@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation
+from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation, Department
 from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm, ContingencyPlanForm, ReevaluationForm
 from django.http import JsonResponse
 from django.contrib import messages
@@ -32,6 +32,7 @@ def create_risk(request):
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
     reevaluations = Reevaluation.objects.select_related('risk').all()
 
+    print(grouped_risks)
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
         'evaluations': evaluations,
@@ -101,8 +102,8 @@ def add_reevaluation(request):
 
     return render(request, 'mistemplates/add_reevaluation.html', {'form': form})
 
-def edit_risk_identification(request, risk_id):
-    risk = get_object_or_404(RiskIdentification, id=risk_id)
+def edit_risk_identification(request, risk):
+    risk = get_object_or_404(RiskIdentification, id=risk)
     
     if request.method == 'POST':
         form = RiskIdentificationForm(request.POST, instance=risk)
@@ -115,8 +116,8 @@ def edit_risk_identification(request, risk_id):
     return render(request, 'mistemplates/edit_risk_identification.html', {'form': form, 'risk': risk})
 
 
-def edit_risk_evaluation(request, risk_id):
-    evaluation = get_object_or_404(RiskEvaluation, id=risk_id)
+def edit_risk_evaluation(request, risk):
+    evaluation = get_object_or_404(RiskEvaluation, id=risk)
 
     if request.method == 'POST':
         form = RiskEvaluationForm(request.POST, instance=evaluation)
@@ -131,8 +132,8 @@ def edit_risk_evaluation(request, risk_id):
     return render(request, 'mistemplates/edit_risk_evaluation.html', {'form': form, 'evaluation': evaluation})
 
 
-def edit_risk_treatment(request, risk_id):
-    treatment = get_object_or_404(RiskTreatment, id=risk_id)
+def edit_risk_treatment(request, risk):
+    treatment = get_object_or_404(RiskTreatment, id=risk)
 
     if request.method == 'POST':
         form = RiskTreatmentForm(request.POST, instance=treatment)
@@ -147,8 +148,8 @@ def edit_risk_treatment(request, risk_id):
     return render(request, 'mistemplates/edit_risk_treatment.html', {'form': form, 'treatment': treatment})
 
 
-def edit_contingency_plan(request, risk_id):
-    plan = get_object_or_404(ContingencyPlan, id=risk_id)
+def edit_contingency_plan(request, risk):
+    plan = get_object_or_404(ContingencyPlan, id=risk)
 
     if request.method == 'POST':
         form = ContingencyPlanForm(request.POST, instance=plan)
@@ -163,8 +164,8 @@ def edit_contingency_plan(request, risk_id):
     return render(request, 'mistemplates/edit_contingency_plan.html', {'form': form, 'plan': plan})
 
 
-def edit_reevaluation(request, risk_id):
-    reevaluation = get_object_or_404(Reevaluation, id=risk_id)
+def edit_reevaluation(request, risk):
+    reevaluation = get_object_or_404(Reevaluation, id=risk)
 
     if request.method == 'POST':
         form = ReevaluationForm(request.POST, instance=reevaluation)

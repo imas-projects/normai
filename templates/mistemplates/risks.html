@@ -354,20 +354,36 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {% for evaluation in evaluations %}
-                                                {% if evaluation.risk.id == risk.id %}
-                                                    <tr>
-                                                        <td>{{ evaluation.severity }}</td>
-                                                        <td>{{ evaluation.current_preventive_controls }}</td>
-                                                        <td>{{ evaluation.occurrence }}</td>
-                                                        <td>{{ evaluation.current_detection_controls }}</td>
-                                                        <td>{{ evaluation.detection }}</td>
-                                                        <td>{{ evaluation.risk_level.level }}</td>
+                                            {% for department, risks in grouped_risks.items %}
+                                                <tr style="display:none;">
+                                                    <td colspan="6" class="text-center"><strong>Departamento: {{ department }}</strong></td>
+                                                </tr>
+                                                {% for risk in risks %}
+                                                    <tr style="display:none;">
+                                                        <td>{{ risk.id }}</td>
+                                                        <td>{{ risk.name }}</td>
+                                                        <td>{{ risk.description }}</td>
+                                                        <td>
+                                                            {% for evaluation in evaluations %}
+                                                                {% if evaluation.risk.id == risk.id %}
+                                                                    <p>Severidad: {{ evaluation.severity }}</p>
+                                                                    <p>Controles Preventivos: {{ evaluation.current_preventive_controls }}</p>
+                                                                    <p>Ocurrencia: {{ evaluation.occurrence }}</p>
+                                                                    <p>Controles de Detección: {{ evaluation.current_detection_controls }}</p>
+                                                                    <p>Detección: {{ evaluation.detection }}</p>
+                                                                    <p>Nivel de Riesgo: {{ evaluation.risk_level.level }}</p>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </td>
                                                     </tr>
-                                                {% endif %}
+                                                {% empty %}
+                                                    <tr style="display:none;">
+                                                        <td colspan="6" class="text-center">No hay riesgos disponibles para este departamento</td>
+                                                    </tr>
+                                                {% endfor %}
                                             {% empty %}
-                                                <tr>
-                                                    <td colspan="6" class="text-center">No evaluations available</td>
+                                                <tr style="display:none;">
+                                                    <td colspan="6" class="text-center">No hay riesgos disponibles</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
