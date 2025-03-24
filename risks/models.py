@@ -190,6 +190,3 @@ class Reevaluation(models.Model):
             "risk_level": self.risk_level
         } 
     
-
-
-
