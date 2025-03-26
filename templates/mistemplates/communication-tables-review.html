@@ -1,0 +1,389 @@
+{% extends "mistemplates/mi_base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"
+    {% endblock html %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Types</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+{% block title %}Comunicaciones{% endblock title %}
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{% static 'libs/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet" type="text/css" />
+<!-- multi.js css -->
+<link rel="stylesheet" type="text/css" href="{% static 'libs/multi.js/dist/multi.min.css'%}" />
+{% endblock extra_css %}
+{% block content %}
+<!-- ============================================================== -->
+<!-- Start right Content here -->
+<!-- ============================================================== -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            {% block pagetitle %}
+            {% include "partials/page-title.html" with pagetitle="Tables" title="EDITAR TABLAS" %}
+            {% endblock pagetitle %}
+
+
+            <body>
+                <div id="alert-container"></div>
+                <button type="button" class="btn btn-soft-success add-table-btn" id="add-table-btn"
+                    data-bs-toggle="modal" data-bs-target="#addTableModal"><i
+                        class="ri-add-line"></i>
+                    Nueva Tabla
+                </button>
+                {% for table in all_communicationtables %}
+                <div class="card border card-border-dark">
+                    <div class="card-header">
+                        <div class="hstack gap-4 w-auto">
+                            <div class="hstack gap-1">
+                                <h4 class="card-title bg-dark text-light p-1 px-1 rounded-top"> Código Tabla: {{ table.code }}</h4>
+                            </div>
+                            <div class="hstack gap-1">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Área: {{ table.area.name }}</h4>
+                            </div>
+                            <div class="hstack gap-1">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Estado: {{ table.get_status_display }}</h4>
+                            </div>
+                            <button class="btn btn-soft-primary edit-table-btn" data-id="{{ table.id }}" data-bs-toggle="modal" data-bs-target="#editTableModal">
+                                <i class="ri-edit-line"></i> Editar Estado
+                            </button>
+                        </div>
+                        <div class="hstack gap-4 w-auto">
+                            <div class="hstack gap-1 start-0 bottom-0">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Elaborado Por: {{ table.created_by.first_name }} {{ table.created_by.last_name}}</h4>
+                            </div>
+                            <div class="hstack gap-1 w-auto bottom-0">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.first_name}} {{ table.reviewed_by.last_name}}</h4>
+                            </div>
+                            <div class="hstack gap-1 w-auto bottom-0">
+                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.first_name }} {{ table.approved_by.last_name }}</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--Mostrar Mensajes-->
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="w-100">
+                                <thead class="bg-light text-dark align-middle fs-5 text">
+                                    <tr>
+                                        <div class="hstack gap-3">
+                                            <h3>Mensajes</h3>
+                                        </div>
+                                    </tr>
+                                    <tr>
+                                        <th>Comunicación</th>
+                                        <th>Asunto</th>
+                                        <th>Emisor</th>
+                                        <th>Receptor</th>
+                                        <th>Canal</th>
+                                        <th>Periodicidad</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-responsive bg-light text-dark">
+                                    {% for message in table.messages.all %}
+                                    <tr>
+                                        <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
+                                        <td>{{ message.subject }}</td>
+                                        <td>{{ message.transmitter.first_name }} {{ message.transmitter.last_name }}</td>
+                                        <td>
+                                            {% for receiver in message.receivers.all %}
+                                            <li>{{ receiver.first_name }} {{ receiver.last_name }}</li>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for channel in message.channels.all %}
+                                            <li>{{ channel.name }}</li>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {{ message.periodicity.name }}
+                                        </td>
+                                        <td>
+                                            {% if user == message.transmitter and table.status == 'open' %}
+                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ message.id }}"
+                                                data-bs-toggle="modal" data-bs-target="#editModal">
+                                                <i class="ri-edit-2-line" style="font-size: 18px;"></i>
+                                            </button>
+
+                                            <button class="btn open-delete-modal btn-ghost-danger"
+                                                data-id="{{ message.id }}" data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal">
+                                                <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
+                                            </button>
+                                            {% else %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <!--Fin tablas-->
+            </body>
+        </div>
+        
+        <!-- End Container-fluid -->
+
+    <!-- Modales -->
+        <!-- Modal Añadir Tabla-->
+        <div class="modal fade" id="addTableModal" tabindex="-1" aria-labelledby="addTableLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="addTableForm" method="post">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title bg-dark text-light p-1" id="addTableLabel">Nueva Tabla</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="new-table-code" class="form-label">Código Tabla</label>
+                                <input type="text" class="form-control" id="new-table-code" name="code"
+                                    maxlength="240" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-table-transmitter" class="form-label">Elaborado por:</label>
+                                {% if user.is_authenticated %}
+                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" disabled>
+                                <selected value="{{ user.id }}" selected>{{ user.username }}></selected>
+                                </select>
+                                {% else %}
+                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" required>
+                                </select>
+                                {% endif %}
+                            </div>     
+                            <div class="mb-3">
+                                <label for="new-table-area" class="form-label">Area</label>
+                                <select class="form-select" id="new-table-area" name="new-table-area" required>
+                                </select>
+                            </div>           
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="savetableBtn" class="btn btn-primary bg-success">Guardar
+                                cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--Fin Modal Añadir Tabla-->
+
+        <!-- Modal editar Tabla-->
+        <div class="modal fade" id="editTableModal" tabindex="-1" aria-labelledby="editTableModalLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="editTableForm">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title bg-dark text-light p-1" id="editTableModalLabel">Editar Estado de la Tabla</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="table-id" name="table_id">
+                            <div class="mb-3">
+                                <label for="table-status" class="form-label">Nuevo Estado</label>
+                                <select class="form-select" id="table-status" name="status">
+                                    {% for status in all_status %}
+                                        <option value="{{ status.0 }}">{{ status.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="saveTableChangesBtn" class="btn bg-success">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--Fin modal editar tabla-->
+
+
+
+        <!--Fin MOdales-->
+
+    </div>
+    <!-- End Page-content -->
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+{% endblock content %}
+</div>
+<!-- End Main content-->
+
+
+{% block extra_js %}
+<!-- prismjs plugin -->
+<script src="{% static 'libs/prismjs/prism.js' %}"></script>
+<script src="{% static 'libs/list.js/dist/list.min.js' %}"></script>
+<!--<script src="{% static 'libs/list.pagination.js/dist/list.pagination.min.js' %}"></script>
+<script src="{% static 'js/pages/listjs.init.js'%}"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- choices.js -->
+<script type='text/javascript' src="{% static 'libs/choices.js/public/assets/scripts/choices.min.js' %}"></script>
+<!-- app js 
+<script src="{% static 'js/app.js'%}"></script>-->
+
+<!--JS Formularios Modales-->
+    <!-- Edición Tabla -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.edit-table-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const tableId = button.getAttribute('data-id');
+                    document.getElementById('table-id').value = tableId;
+                });
+            });
+
+            document.getElementById('editTableForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                const data = {
+                    table_id: document.getElementById('table-id').value,
+                    status: document.getElementById('table-status').value,
+                };
+
+                fetch('/communications/communication-table-review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Estado de la tabla actualizado con éxito');
+                            location.reload();
+                        } else {
+                            alert('Error al actualizar el estado');
+                        }
+                    });
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+
+    <!--Añadir Tabla de comunicación-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // COmporatmiento del botón de de nueva tabla
+            document.querySelectorAll('.add-table-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    console.log('boton tabla'); //debug
+
+                    // Cargar opciones formulario
+                    fetch('/communications/load-addtableform-options-asJson/')
+                        .then(response => response.json())
+                        .then(data => {
+                            //console.log('fech hecho') //debug
+                            if (data.success) {
+                                //// Opciones selecionables en el formulario         
+                                //Emisor options
+                                const departmentsSelect = document.getElementById('new-table-transmitter');
+                                departmentsSelect.innerHTML = ''; // Clear existing options
+                                data.departments_options.forEach(departmentsOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = departmentsOption.id;
+                                    optionElement.textContent = departmentsOption.first_name + departmentsOption.last_name;
+                                    if (departmentsOption.id === data.transmitter) {
+                                        optionElement.selected = true; 
+                                    }
+                                    departmentsSelect.appendChild(optionElement);
+                                });
+                                const areaSelect = document.getElementById('new-table-area');
+                                areaSelect.innerHTML = ''; // Clear existing options
+                                data.areas_options.forEach(areaOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = areaOption.id;
+                                    optionElement.textContent = areaOption.name;
+                                    if (areaOption.id === data.area) {
+                                        optionElement.selected = true; 
+                                    }
+                                    areaSelect.appendChild(optionElement);
+                                    console.log(data.areas_options)
+                                });           
+                            }
+                        });
+                });
+            });
+
+
+            // Click en el botón de guardar cambios dentro del modal de añadir tabla.
+            document.getElementById('addTableForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                //console.log('addform submitted!'); //debug
+                //console.log('ID de tabla enviado:', tbId); //debug
+
+                const data = {
+                    table_code: document.getElementById('new-table-code').value,
+                    table_transmitter: document.getElementById('new-table-transmitter').value,
+                    table_area: document.getElementById('new-table-area').value,
+                };
+
+
+                fetch('/communications/create-table/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')  },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        //console.log(data); //debug
+                        if (data.success) {               
+                            alert('La tabla se ha creado con éxito', 'success');
+                            location.reload();
+                        } else {
+                            alert('Error al crear la tabla');
+                        }
+                    });
+            });
+        });
+
+        // Función para obtener el token CSRF si es necesario
+                function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+
+{% endblock extra_js %}
+
+</body>
+
+</html>

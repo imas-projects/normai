@@ -27,17 +27,17 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Tables" title="EDITAR TABLAS" %}
+            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Mensajes Recibidos" %}
             {% endblock pagetitle %}
 
 
             <body>
                 <div id="alert-container"></div>
-                <button type="button" class="btn btn-soft-success add-table-btn" id="add-table-btn"
+                <!--<button type="button" class="btn btn-soft-success add-table-btn" id="add-table-btn"
                     data-bs-toggle="modal" data-bs-target="#addTableModal"><i
                         class="ri-add-line"></i>
                     Nueva Tabla
-                </button>
+                </button>-->
                 {% for table in all_communicationtables %}
                 <div class="card border card-border-dark">
                     <div class="card-header">
@@ -78,15 +78,12 @@
                                     <tr>
                                         <div class="hstack gap-3">
                                             <h3>Mensajes</h3>
-                                            {% if table.status == 'open' %}
-                                            <button type="button" class="btn btn-soft-info ms-auto add-btn"
+                                            <!--<button type="button" class="btn btn-soft-info ms-auto add-btn"
                                                 id="add-message-btn" data-table-id="{{ table.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#addModal"><i
                                                     class="ri-add-line"></i>
                                                 Nuevo Mensaje
-                                            </button>
-                                            {% else %}
-                                            {% endif %}
+                                            </button>-->
                                         </div>
                                     </tr>
                                     <tr>
@@ -100,7 +97,8 @@
                                     </tr>
                                 </thead>
                                 <tbody class="table-responsive bg-light text-dark">
-                                    {% for message in table.messages.all %}
+                                    {% for message in all_messages %}
+                                    {% if message in table.messages.all %}
                                     <tr>
                                         <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
                                         <td>{{ message.subject }}</td>
@@ -119,7 +117,7 @@
                                             {{ message.periodicity.name }}
                                         </td>
                                         <td>
-                                            {% if user == message.transmitter and table.status == 'open' %}
+                                            {% if user == message.transmitter %}
                                             <button class="btn edit-btn btn-ghost-info" data-id="{{ message.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#editModal">
                                                 <i class="ri-edit-2-line" style="font-size: 18px;"></i>
@@ -134,6 +132,8 @@
                                             {% endif %}
                                         </td>
                                     </tr>
+                                    {% else %}
+                                    {% endif %}
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -771,7 +771,7 @@
                     console.log('boton tabla'); //debug
 
                     // Cargar opciones formulario
-                    fetch('/communications/load_addtableform_options_asJson/')
+                    fetch('/communications/load-addtableform-options-asJson/')
                         .then(response => response.json())
                         .then(data => {
                             //console.log('fech hecho') //debug
@@ -830,7 +830,6 @@
                         //console.log(data); //debug
                         if (data.success) {               
                             alert('La tabla se ha creado con éxito', 'success');
-                            departmentsSelect.innerHTML = ''
                             location.reload();
                         } else {
                             alert('Error al crear la tabla');

@@ -21,6 +21,15 @@
                                         <a href="{% url 'communications:all_messages' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{% url 'communications:received_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes recibidos </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'communications:sent_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes enviados </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'communications:communication_table_review' %}" class="nav-link" data-key="t-analytics"> Revisiones </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{% url 'communications:all_messages' %}"  class="nav-link" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCalendar" data-key="t-calender">
                                             Mensajes
                                         </a>

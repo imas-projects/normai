@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import Group, User
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
-from risks.models import Department
+from audits.models import Area
 from django.http import JsonResponse
 import json
 
@@ -31,10 +32,10 @@ def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
     all_communicationtable = CommunicationTable.objects.all()  # Get all entries
-    all_communicationtables = [table.as_dict() for table in all_communicationtable]
+    all_communicationtables = [table for table in all_communicationtable]
     
     all_messages = Message.objects.all()
-    message = [message.as_dict() for message in all_messages]
+    message = [message for message in all_messages]
 
     all_channels = Channel.objects.all()
     all_channels = [channel.as_dict() for channel in all_channels]
@@ -55,7 +56,7 @@ def all_messages(request):
 def load_form_options():
     all_periodicities = list(Periodicity.objects.all().values('id', 'name')) 
     all_communicationtypes = list(CommunicationType.objects.all().values('id', 'scope', 'direction')) 
-    all_departments = list(Department.objects.all().values('id', 'name'))
+    all_departments = list(User.objects.all().values('id', 'first_name','last_name','groups'))
     all_channels = list(Channel.objects.all().values('id','name'))
 
     return {
@@ -74,7 +75,7 @@ def get_message(request, id):
 
         # Lista de los datos en los campos que pueden contener varios valores
         current_message_channels = list(current_message.channels.all().values('id', 'name'))
-        current_message_receivers = list(current_message.receivers.all().values('id', 'name'))
+        current_message_receivers = list(current_message.receivers.all().values('id', 'first_name','last_name'))
 
         # Cargar el resto de tablas
         form_options = load_form_options()
@@ -118,7 +119,7 @@ def update_message(request):
 
             # Update foreign key fields
             updated_message.communication_type = CommunicationType.objects.get(id=message_communication_type)  # Assign directly to FK field
-            updated_message.transmitter = Department.objects.get(id=message_transmitter) 
+            updated_message.transmitter = User.objects.get(id=message_transmitter) 
             updated_message.periodicity = Periodicity.objects.get(id=message_periodicity) 
             
             # Update simple fields
@@ -166,12 +167,15 @@ def load_messageform_options_asJson(request):
         return JsonResponse({'success': False, 'error': 'Row not found.'})
 
 def load_addtableform_options_asJson(request):
-    all_departments = list(Department.objects.all().values('id', 'name'))
+    all_departments = list(User.objects.all().values('id', 'first_name','last_name','groups'))
+    all_areas = list(Area.objects.all().values('id','name'))
+    # print(all_areas)
     #'departments_options' : all_departments,
     try:
         return JsonResponse({
                 'success' : True,
                 'departments_options' : all_departments, 
+                'areas_options' : all_areas
                 })
     except:
         return JsonResponse({'success': False, 'error': 'Error'})
@@ -194,7 +198,7 @@ def create_message(request):
             new_message = Message(
                 communication_type=CommunicationType.objects.get(id=message_communication_type),
                 subject=message_subject,
-                transmitter=Department.objects.get(id=message_transmitter),
+                transmitter=User.objects.get(id=message_transmitter),
                 periodicity=Periodicity.objects.get(id=message_periodicity),
                 )
             
@@ -227,18 +231,20 @@ def create_table(request):
             data = json.loads(request.body) 
             table_code = data.get('table_code')  # Simple text field
             table_transmitter = data.get('table_transmitter')  # Foreign key
-            
+            table_area = data.get('table_area')
+
+
             # Crear tabla
             new_table = CommunicationTable(
                 code=table_code,
-                created_by=Department.objects.get(id=table_transmitter),
+                created_by=User.objects.get(id=table_transmitter),
                 review_date=datetime.date.today(),
                 review_number=0,
-                reviewed_by=Department.objects.get(id=0),
-                approved_by=Department.objects.get(id=0),
+                area=Area.objects.get(id=table_area)
                 )
             # Guardar tabla
             new_table.save()  
+
 
             return JsonResponse({'success': True})
         except Exception as e:
@@ -246,11 +252,90 @@ def create_table(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
 
-'''
-# Carga la información de todas las Tablas de Comunicaciones
-def communication_table_view(request):
-    all_communicationtable = CommunicationTable.objects.all()  # Get all entries
-    communicationtable_info = [table.as_dict() for table in all_communicationtable]
+@csrf_protect
+@login_required
+#@user_passes_test(communication_check)
+def user_received_messages(request):
+    user = request.user
+    user_area = Area.objects.get(users=user)
 
-    return render(request,"mistemplates/communication-tables.html",{'communicationtable_info':communicationtable_info})
-'''
+    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct()  # Get all entries
+    all_communicationtables = [table for table in all_communicationtable]
+
+    all_messages = Message.objects.filter(receivers=user).distinct()
+    all_messages = [message for message in all_messages]
+
+    # Contexto para la plantilla
+    context = {
+        'all_messages' : all_messages,
+        'all_communicationtables': all_communicationtables
+    }
+    return render(request,"mistemplates/user-received-messages.html", context)
+
+
+@csrf_protect
+@login_required
+#@user_passes_test(communication_check)
+def user_sent_messages(request):
+    user = request.user
+    user_area = Area.objects.get(users=user)
+
+    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct() 
+    all_communicationtables = [table for table in all_communicationtable]
+
+    all_messages = Message.objects.filter(transmitter=user).distinct()
+    all_messages = [message for message in all_messages]
+
+    # Contexto para la plantilla
+    context = {
+        'all_messages' : all_messages,
+        'all_communicationtables': all_communicationtables
+    }
+    return render(request,"mistemplates/user-sent-messages.html", context)
+
+
+@csrf_protect
+@login_required
+#@user_passes_test(communication_check)
+def communication_table_review(request):
+    user = request.user
+    user_area = Area.objects.get(users=user)
+
+    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct()  # Get all entries
+    all_communicationtables = [table for table in all_communicationtable]
+
+    all_messages = Message.objects.filter(transmitter=user).distinct()
+    all_messages = [message for message in all_messages]
+
+    all_status = list(CommunicationTable.STATUS_CHOICES)
+
+    context = {
+        'all_messages' : all_messages,
+        'all_communicationtables': all_communicationtables,
+        'all_status' : all_status,
+    }
+
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            table_id = data.get("table_id")
+            new_status = data.get("status")
+            
+            table = get_object_or_404(CommunicationTable, id=table_id)
+            table.status = new_status
+            
+            if new_status == "approved":
+                table.approved_by = request.user  # Asignar el usuario autenticado como revisor
+                table.save()
+
+            else:
+                table.reviewed_by = request.user  # Asignar el usuario autenticado como revisor
+                table.save()
+            
+            return JsonResponse({"success": True, "message": "Tabla actualizada correctamente"})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    
+    #return JsonResponse({"success": False, "error": "Error al actualizar la tabla"})
+
+    return render(request,"mistemplates/communication-tables-review.html", context)
