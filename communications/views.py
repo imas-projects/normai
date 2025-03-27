@@ -4,9 +4,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Group, User
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
 from audits.models import Area
+from django.contrib.auth.models import Group, User
+from risks.models import Department
 from django.http import JsonResponse
 import json
 
@@ -32,16 +33,19 @@ def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
     all_communicationtable = CommunicationTable.objects.all()  # Get all entries
+    #all_communicationtables = list(CommunicationTable.objects.all().values('id', 'review_number', 'review_date', 'messages', 'created_by', 'reviewed_by', 'approved_by','area','code' )) 
     all_communicationtables = [table for table in all_communicationtable]
-    
+    #print(all_communicationtables)
     all_messages = Message.objects.all()
     message = [message for message in all_messages]
 
+    #message = list(Message.objects.all().values('id', 'communication_type', 'subject', 'channels', 'transmitter', 'receivers', 'periodicity','creation_date', 'update_date' )) 
+    #print(message)
     all_channels = Channel.objects.all()
     all_channels = [channel.as_dict() for channel in all_channels]
 
     context ={
-        'messages' : message,
+        'message' : message,
         'all_communicationtables' : all_communicationtables,
         'all_channels' : all_channels,
         #'user_in_comunicadores': user_in_comunicadores
@@ -63,7 +67,7 @@ def load_form_options():
         'periodicity_options' : all_periodicities,
         'communicationtype_options' : all_communicationtypes,
         'departments_options' : all_departments,
-        'channels_options' : all_channels,
+        'channels_options' : all_channels
     }
 
 
@@ -166,8 +170,9 @@ def load_messageform_options_asJson(request):
     except CommunicationTable.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Row not found.'})
 
+@login_required
 def load_addtableform_options_asJson(request):
-    all_departments = list(User.objects.all().values('id', 'first_name','last_name','groups'))
+    all_departments = list(User.objects.all().values('id', 'first_name','last_name'))
     all_areas = list(Area.objects.all().values('id','name'))
     # print(all_areas)
     #'departments_options' : all_departments,
@@ -175,7 +180,7 @@ def load_addtableform_options_asJson(request):
         return JsonResponse({
                 'success' : True,
                 'departments_options' : all_departments, 
-                'areas_options' : all_areas
+                'areas_options' : all_areas,
                 })
     except:
         return JsonResponse({'success': False, 'error': 'Error'})
@@ -224,7 +229,10 @@ def create_message(request):
 import datetime
 
 @csrf_protect
+@login_required
 def create_table(request):
+    user = request.user
+    
     if request.method == 'POST':
         try:
             # Coger los valores introducidos en el formulario
@@ -232,8 +240,7 @@ def create_table(request):
             table_code = data.get('table_code')  # Simple text field
             table_transmitter = data.get('table_transmitter')  # Foreign key
             table_area = data.get('table_area')
-
-
+            
             # Crear tabla
             new_table = CommunicationTable(
                 code=table_code,
@@ -245,12 +252,10 @@ def create_table(request):
             # Guardar tabla
             new_table.save()  
 
-
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
-
 
 @csrf_protect
 @login_required

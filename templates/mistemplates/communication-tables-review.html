@@ -27,7 +27,7 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Tables" title="EDITAR TABLAS" %}
+            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Revisiones" %}
             {% endblock pagetitle %}
 
 
@@ -156,14 +156,9 @@
                             </div>
                             <div class="mb-3">
                                 <label for="new-table-transmitter" class="form-label">Elaborado por:</label>
-                                {% if user.is_authenticated %}
-                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" disabled>
-                                <selected value="{{ user.id }}" selected>{{ user.username }}></selected>
-                                </select>
-                                {% else %}
-                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" required>
-                                </select>
-                                {% endif %}
+                                <select class="form-select" id="new-table-transmitter" value="{{ user.id }}" name="new-table-transmitter" disabled>
+                                    <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
+                                </select> 
                             </div>     
                             <div class="mb-3">
                                 <label for="new-table-area" class="form-label">Area</label>
@@ -304,18 +299,7 @@
                             //console.log('fech hecho') //debug
                             if (data.success) {
                                 //// Opciones selecionables en el formulario         
-                                //Emisor options
-                                const departmentsSelect = document.getElementById('new-table-transmitter');
-                                departmentsSelect.innerHTML = ''; // Clear existing options
-                                data.departments_options.forEach(departmentsOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = departmentsOption.id;
-                                    optionElement.textContent = departmentsOption.first_name + departmentsOption.last_name;
-                                    if (departmentsOption.id === data.transmitter) {
-                                        optionElement.selected = true; 
-                                    }
-                                    departmentsSelect.appendChild(optionElement);
-                                });
+                                
                                 const areaSelect = document.getElementById('new-table-area');
                                 areaSelect.innerHTML = ''; // Clear existing options
                                 data.areas_options.forEach(areaOption => {

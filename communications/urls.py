@@ -15,7 +15,7 @@ urlpatterns = [
 
     path('load-form-options/', views.load_form_options, name='load_form_options'),
     path('load-messageform-options-asJson/', views.load_messageform_options_asJson, name='load_messageform_options_asJson'),
-    path('load_addtableform_options_asJson/', views.load_addtableform_options_asJson, name='load_addtableform_options_asJson'),
+    path('load-addtableform-options-asJson/', views.load_addtableform_options_asJson, name='load_addtableform_options_asJson'),
 
     path('get-message/<int:id>/', views.get_message, name='get_message'),
     path('update-message/', views.update_message, name='update_message'),

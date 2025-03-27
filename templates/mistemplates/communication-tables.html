@@ -27,9 +27,8 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Tables" title="EDITAR TABLAS" %}
+            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Tablas" %}
             {% endblock pagetitle %}
-
 
             <body>
                 <div id="alert-container"></div>
@@ -78,15 +77,12 @@
                                     <tr>
                                         <div class="hstack gap-3">
                                             <h3>Mensajes</h3>
-                                            {% if table.status == 'open' %}
                                             <button type="button" class="btn btn-soft-info ms-auto add-btn"
                                                 id="add-message-btn" data-table-id="{{ table.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#addModal"><i
                                                     class="ri-add-line"></i>
                                                 Nuevo Mensaje
                                             </button>
-                                            {% else %}
-                                            {% endif %}
                                         </div>
                                     </tr>
                                     <tr>
@@ -175,10 +171,7 @@
                                 <label for="message-transmitter" class="form-label">Emisor</label>
                                 {% if user.is_authenticated %}
                                 <select class="form-select" id="message-transmitter" name="transmitter" disabled>
-                                <selected value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}></selected>
-                                </select>
-                                {% else %}  
-                                <select class="form-select" id="message-transmitter" name="transmitter">   
+                                <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
                                 </select>
                                 {% endif %}
                             </div>
@@ -186,11 +179,6 @@
                                 <label for="message-channel" class="form-label">Canales</label>
                                 <select id="message-channel" name="channels" class="form-control" multiple>
                                 </select>
-                                <!--<select id="message-cha" name="channels"  class="form-control" data-choices data-choices-removeItem multiple>
-                                        {% for i in all_channels %}
-                                        <option value="{{ i.Cha }}">{{ i.Cha }}</option>
-                                        {% endfor %}
-                                    </select>  -->
                             </div>
                             <div class="mb-3">
                                 <label for="message-receiver" class="form-label">Receptor</label>
@@ -242,12 +230,9 @@
                                 <label for="new-message-transmitter" class="form-label">Emisor</label>
                                 {% if user.is_authenticated %}
                                 <select class="form-select" id="new-message-transmitter" name="transmitter" disabled>
-                                <selected value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}></selected>
+                                <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
                                 </select>
-                                {% else %}  
-                                <select class="form-select" id="new-message-transmitter" name="transmitter">   
-                                </select>
-                                {% endif %}
+                                {% endif %}  
                             </div>
                             <div class="mb-3">
                                 <label for="new-message-channel" class="form-label">Canales</label>
@@ -305,19 +290,13 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="new-table-code" class="form-label">Código Tabla</label>
-                                <input type="text" class="form-control" id="new-table-code" name="code"
-                                    maxlength="240" required>
+                                <input type="text" class="form-control" id="new-table-code" name="code" maxlength="240" required></input>
                             </div>
                             <div class="mb-3">
                                 <label for="new-table-transmitter" class="form-label">Elaborado por:</label>
-                                {% if user.is_authenticated %}
-                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" disabled>
-                                <selected value="{{ user.id }}" selected>{{ user.username }}></selected>
-                                </select>
-                                {% else %}
-                                <select class="form-select" id="new-table-transmitter" name="new-table-transmitter" required>
-                                </select>
-                                {% endif %}
+                                <select class="form-select" id="new-table-transmitter" value="{{ user.id }}" name="new-table-transmitter" disabled>
+                                    <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
+                                </select> 
                             </div>     
                             <div class="mb-3">
                                 <label for="new-table-area" class="form-label">Area</label>
@@ -650,17 +629,7 @@
                                 });
 
                                 //Emisor options
-                                const departmentsSelect = document.getElementById('new-message-transmitter');
-                                departmentsSelect.innerHTML = ''; // Clear existing options
-                                data.departments_options.forEach(departmentsOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = departmentsOption.id;
-                                    optionElement.textContent = departmentsOption.first_name + departmentsOption.last_name;
-                                    if (departmentsOption.id === data.transmitter) {
-                                        optionElement.selected = true; // Mark current periodicity as selected
-                                    }
-                                    departmentsSelect.appendChild(optionElement);
-                                });
+                                
 
 
 
@@ -770,25 +739,20 @@
                 button.addEventListener('click', function () {
                     console.log('boton tabla'); //debug
 
+                    const data = {
+                        table_code: document.getElementById("new-table-code").value,
+                        table_transmitter: document.getElementById("new-table-transmitter").value,
+                        table_area: document.getElementById("new-table-area").value,
+                    };
+
                     // Cargar opciones formulario
-                    fetch('/communications/load_addtableform_options_asJson/')
+                    fetch('/communications/load-addtableform-options-asJson/')
                         .then(response => response.json())
                         .then(data => {
                             //console.log('fech hecho') //debug
                             if (data.success) {
                                 //// Opciones selecionables en el formulario         
-                                //Emisor options
-                                const departmentsSelect = document.getElementById('new-table-transmitter');
-                                departmentsSelect.innerHTML = ''; // Clear existing options
-                                data.departments_options.forEach(departmentsOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = departmentsOption.id;
-                                    optionElement.textContent = departmentsOption.first_name + departmentsOption.last_name;
-                                    if (departmentsOption.id === data.transmitter) {
-                                        optionElement.selected = true; 
-                                    }
-                                    departmentsSelect.appendChild(optionElement);
-                                });
+                                
                                 const areaSelect = document.getElementById('new-table-area');
                                 areaSelect.innerHTML = ''; // Clear existing options
                                 data.areas_options.forEach(areaOption => {
@@ -799,7 +763,7 @@
                                         optionElement.selected = true; 
                                     }
                                     areaSelect.appendChild(optionElement);
-                                    console.log(data.areas_options)
+                                    console.log(data.first_name)
                                 });           
                             }
                         });
@@ -830,7 +794,6 @@
                         //console.log(data); //debug
                         if (data.success) {               
                             alert('La tabla se ha creado con éxito', 'success');
-                            departmentsSelect.innerHTML = ''
                             location.reload();
                         } else {
                             alert('Error al crear la tabla');
