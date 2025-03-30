@@ -67,7 +67,7 @@ def authentication_sign_in(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
-        next_url = request.POST.get("next") or reverse(f"authentication:wellcome_view")
+        next_url = request.POST.get("next") or reverse(f"pages:wellcome_view")
         
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -81,16 +81,13 @@ def authentication_sign_in(request):
 
 def authentication_log_out(request):
     logout(request)
-    print("sesion cerrada")
+    #print("sesion cerrada")
     return render(request, "mistemplates/authentication-log-out.html")
 
 ######################## Usuario ########################
 from django.contrib.sessions.models import Session
 from django.contrib.auth.models import User 
 
-@login_required
-def wellcome_view(request):
-    return render(request,"mistemplates/wellcome-page.html")
 
 '''
 def prueba_sign_up(request):

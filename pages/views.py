@@ -1,6 +1,16 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
+from django.contrib.auth.decorators import login_required
 # Create your views here.
+
+@login_required
+def wellcome_view(request):
+    return render(request,"mistemplates/user-dashboard.html")
+
+@login_required
+def area_view(request):
+    return render(request,"mistemplates/area-dashboard.html")
+
 
 class PagesView(TemplateView):
     pass
