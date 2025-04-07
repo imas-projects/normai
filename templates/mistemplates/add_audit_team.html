@@ -1,0 +1,15 @@
+{% load static %}
+<div class="container">
+    <form method="post" action="{% url 'audits:add_audit_team' %}" id="add-audit-team-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.person.label_tag }}
+            {{ form.person }}
+        </div>
+        <div class="mb-3">
+            {{ form.role.label_tag }}
+            {{ form.role }}
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
