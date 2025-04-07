@@ -1,0 +1,19 @@
+{% load static %}
+<div class="container">
+    <form method="post" action="{% url 'audits:add_audited_evaluation_question' %}" id="add-audited-evaluation-question-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.requirement.label_tag }}
+            {{ form.requirement }}
+        </div>
+        <div class="mb-3">
+            {{ form.question_text.label_tag }}
+            {{ form.question_text }}
+        </div>
+        <div class="mb-3">
+            {{ form.order.label_tag }}
+            {{ form.order }}
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
