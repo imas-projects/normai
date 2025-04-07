@@ -1,0 +1,23 @@
+{% load static %}
+<div class="container">
+    <form method="post" action="{% url 'audits:add_annual_program' %}" id="add-annual-program-form">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            {{ form.requirement.label_tag }}
+            {{ form.requirement }}  
+        </div>
+        
+        <div class="mb-3">
+            {{ form.month.label_tag }}
+            {{ form.month }}  
+        </div>
+        
+        <div class="mb-3">
+            {{ form.year.label_tag }}
+            {{ form.year }}
+        </div>
+        
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
