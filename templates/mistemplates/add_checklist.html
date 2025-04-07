@@ -1,0 +1,60 @@
+{% load static %}
+{% block content %}
+<div class="modal-body">
+    <form id="checklistForm" action="{% url 'audits:add_checklist' %}" method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            {{ form.requirement.label_tag }}
+            {{ form.requirement }}
+        </div>
+        <div class="mb-3">
+            {{ form.question_text.label_tag }}
+            {{ form.question_text }}
+        </div>
+        <div class="mb-3">
+            {{ form.order.label_tag }}
+            {{ form.order }}
+        </div>
+
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-dark">Submit Checklist Question</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const checklistForm = document.getElementById("checklistForm");
+
+    checklistForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(checklistForm);
+        if (!formData.get("requirement")) {
+            alert("Please select a Requirement.");
+            return;
+        }
+        
+        fetch(checklistForm.action, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert("Checklist saved successfully!");
+                window.location.href = data.redirect_url;
+            } else {
+                alert("Error saving checklist. Please check your input.");
+                console.error("Error details:", data.errors);
+            }
+        })
+        .catch(error => console.error("Error submitting checklist:", error));
+    });
+});
+</script>
+{% endblock %}
