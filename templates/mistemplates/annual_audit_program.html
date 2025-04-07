@@ -1,0 +1,173 @@
+{% extends "partials/base.html" %}
+{% load static %}
+{% block title %}Annual Audit Program{% endblock title %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+{% endblock extra_css %}
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            {% block pagetitle %}
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center mt-5">
+                    <h1 class="text-center flex-grow-1">Annual Program of Internal Audits</h1>
+                    <div class="dropdown">
+                        <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            Add
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endblock pagetitle %}
+
+            <div class="container mt-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="table-responsive">
+                            <table class="table table-bordered mt-3">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Objective</th>
+                                        <th>Scope</th>
+                                        <th>Audit Criteria</th>
+                                        <th>Security Standards</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for header in audit_headers %}
+                                    <tr>
+                                        <td>{{ header.objective }}</td>
+                                        <td>{{ header.scope }}</td>
+                                        <td>{{ header.audit_criteria }}</td>
+                                        <td>{{ header.security_standards }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No audit programs available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h3 class="text-center">Audit Team</h3>
+                            <div class="row">
+                                {% for role, members in grouped_team.items %}
+                                <div class="col-12">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-primary text-white">{{ role }}</div>
+                                        <ul class="list-group list-group-flush">
+                                            {% for member in members %}
+                                            <li class="list-group-item">{{ member }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <p class="text-center">No team members assigned.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h3 class="text-center">Annual Program</h3>
+                    <div class="row">
+                        {% for year, months in annual_programs_by_year.items %}
+                            <div class="col-12">
+                                <hr class="my-4 border-primary">
+                                <h4 class="text-dark text-center">{{ year }}</h4>
+                            </div>
+                            {% for month, programs in months.items %}
+                                <div class="col-md-3">
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-dark text-white">{{ month }}</div>
+                                        <ul class="list-group list-group-flush">
+                                            {% for program in programs %}
+                                            <li class="list-group-item">
+                                                {{ program.requirement.name }}  
+                                            </li>
+                                            {% empty %}
+                                            <li class="list-group-item text-muted">No data available.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for adding Audit Program Header -->
+        <div class="modal fade" id="addAuditProgramHeaderModal" tabindex="-1" aria-labelledby="addAuditProgramHeaderModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Add Audit Program Header</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="auditProgramHeaderModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for adding Annual Program -->
+        <div class="modal fade" id="addAnnualProgramModal" tabindex="-1" aria-labelledby="addAnnualProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Add Annual Program</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="annualProgramModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
+        {% block footer %}
+        {% include "partials/footer.html" %}
+        {% endblock footer %}
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audit_program_header' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_program' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualProgramModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+    });
+});
+</script>
+{% endblock extra_js %}
