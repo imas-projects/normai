@@ -1,0 +1,23 @@
+{% load static %}
+<div class="container">
+    <form method="post" action="{% url 'audits:add_audit_plan_header' %}" id="add-audit-plan-header-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.opening_meeting_location.label_tag }}
+            {{ form.opening_meeting_location }}
+        </div>
+        <div class="mb-3">
+            {{ form.opening_meeting_date_time.label_tag }}
+            {{ form.opening_meeting_date_time }}
+        </div>
+        <div class="mb-3">
+            {{ form.closing_meeting_location.label_tag }}
+            {{ form.closing_meeting_location }}
+        </div>
+        <div class="mb-3">
+            {{ form.closing_meeting_date_time.label_tag }}
+            {{ form.closing_meeting_date_time }}
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
