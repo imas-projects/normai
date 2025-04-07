@@ -1,0 +1,27 @@
+{% load static %}
+<div class="container">
+    <form method="post" action="{% url 'audits:add_associated_elements' %}" id="add-associated-elements-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.requirement.label_tag }}
+            {{ form.requirement }}
+        </div>
+        <div class="mb-3">
+            {{ form.audit_date.label_tag }}
+            {{ form.audit_date }}
+        </div>
+        <div class="mb-3">
+            {{ form.audit_time.label_tag }}
+            {{ form.audit_time }}
+        </div>
+        <div class="mb-3">
+            {{ form.audit_team_member.label_tag }}
+            {{ form.audit_team_member }}
+        </div>
+        <div class="mb-3">
+            {{ form.audit_location.label_tag }}
+            {{ form.audit_location }}
+        </div>
+        <button type="submit" class="btn btn-success">Save</button>
+    </form>
+</div>
