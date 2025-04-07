@@ -1,23 +1,20 @@
 {% load static %}
 <div class="container">
-    <form method="post" action="{% url 'audits:add_audit_program_header' %}" id="add-audit-program-header-form">
+    <form method="post" action="{% url 'audits:add_audit_report' %}" id="add-audit-report-form">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.objective.label_tag }}
-            {{ form.objective }}
+            {{ form.requirement.label_tag }}
+            {{ form.requirement }}
         </div>
         <div class="mb-3">
-            {{ form.scope.label_tag }}
-            {{ form.scope }}
+            {{ form.summary.label_tag }}
+            {{ form.summary }}
         </div>
         <div class="mb-3">
-            {{ form.audit_criteria.label_tag }}
-            {{ form.audit_criteria }}
-        </div>
-        <div class="mb-3">
-            {{ form.security_standards.label_tag }}
-            {{ form.security_standards }}
+            {{ form.strengths.label_tag }}
+            {{ form.strengths }}
         </div>
         <button type="submit" class="btn btn-success">Save</button>
     </form>
 </div>
+ 
