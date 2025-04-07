@@ -1,27 +1,27 @@
 from django.contrib import admin
-from . import models
+from .models import (
+    ParentArea, Area, Position, AuditRole, AuditTeam,
+    Requirement, Checklist, Audited, AuditedEvaluationQuestion,
+    LeadAuditorEvaluationQuestion, AuditProgramHeader, AnnualProgram,
+    AuditPlanHeader, AssociatedElements, AuditorEvaluation,
+    Findings, AuditReport
+)
 
 # Register your models here.
-admin.site.register(models.ParentArea)
-admin.site.register(models.Area)
-admin.site.register(models.Position)
-admin.site.register(models.AuditRole)
-admin.site.register(models.AuditTeam)
-admin.site.register(models.RequirementLevel1)
-admin.site.register(models.RequirementLevel2)
-admin.site.register(models.RequirementLevel3)
-admin.site.register(models.ChecklistQuestion)
-admin.site.register(models.Audited)
-admin.site.register(models.AuditedEvaluationQuestion)
-admin.site.register(models.LeadAuditorEvaluationQuestion)
-admin.site.register(models.AuditProgramHeader)
-admin.site.register(models.AnnualProgram)
-admin.site.register(models.AuditPlanHeader)
-admin.site.register(models.AssociatedElements)
-admin.site.register(models.Checklist)
-admin.site.register(models.AuditorEvaluation)
-admin.site.register(models.FindingClassification)
-admin.site.register(models.Findings)
-admin.site.register(models.AuditReport)
-
-
+admin.site.register(ParentArea)
+admin.site.register(Area)
+admin.site.register(Position)
+admin.site.register(AuditRole)
+admin.site.register(AuditTeam)
+admin.site.register(Requirement)
+admin.site.register(Checklist)
+admin.site.register(Audited)
+admin.site.register(AuditedEvaluationQuestion)
+admin.site.register(LeadAuditorEvaluationQuestion)
+admin.site.register(AuditProgramHeader)
+admin.site.register(AnnualProgram)
+admin.site.register(AuditPlanHeader)
+admin.site.register(AssociatedElements)
+admin.site.register(AuditorEvaluation)
+admin.site.register(Findings)
+admin.site.register(AuditReport)
