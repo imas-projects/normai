@@ -3,171 +3,121 @@ from django.contrib.auth.models import User, Group
 
 class ParentArea(models.Model):
     name = models.CharField(max_length=100, verbose_name="Parent Area Name", unique=True)
-    
+
     def __str__(self):
         return self.name
-    
+
     class Meta:
         db_table = 'tb_parent_area'
-    
+
     def as_dict(self):
         return {"id": self.id, "name": self.name}
 
 class Area(models.Model):
     parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="areas", verbose_name="Parent Area")
     name = models.CharField(max_length=100, verbose_name="Area Name")
-    groups = models.ManyToManyField(Group, related_name="areas")  # Un área puede tener varios grupos y cada grupo varias areas
-    users = models.ManyToManyField(User, related_name="areas")  # Un área puede tener varios usuarios y cada usuario estar en más de un area
-    
+    groups = models.ManyToManyField(Group, related_name="areas")
+    users = models.ManyToManyField(User, related_name="areas")  
+
     def __str__(self):
         return f"{self.name} ({self.parent_area.name})"
-    
+
     class Meta:
         db_table = 'tb_area'
-    
+
     def as_dict(self):
-        return {"id": self.id, "parent_area": self.parent_area.as_dict(), "name": self.name, "groups":[group.as_dict() for group in self.groups.all()], "users":[user.as_dict() for user in self.users.all()],}
+        return {
+            "id": self.id,
+            "parent_area": self.parent_area.as_dict(),
+            "name": self.name,
+            "groups": [{"id": g.id, "name": g.name} for g in self.groups.all()],
+            "users": [{
+                "id": u.id,
+                "username": u.username,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "email": u.email
+            } for u in self.users.all()],
+        }
 
 class Position(models.Model):
     parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="positions", verbose_name="Parent Area")
     area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="positions", verbose_name="Area")
     title = models.CharField(max_length=100, verbose_name="Job Title")
-    
+
     def __str__(self):
         return f"{self.title} ({self.area.name} - {self.parent_area.name})"
-    
+
     class Meta:
         db_table = 'tb_position'
-    
+
     def as_dict(self):
         return {"id": self.id, "parent_area": self.parent_area.as_dict(), "area": self.area.as_dict(), "title": self.title}
-'''
-class Person(models.Model):
-    first_name = models.CharField(max_length=100, verbose_name="First Name")
-    last_name = models.CharField(max_length=100, verbose_name="Last Name")
-    parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="people", verbose_name="Parent Area")
-    area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="people", verbose_name="Area")
-    position = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="employees", verbose_name="Job Position")
-    
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} - {self.position.title} ({self.area.name} - {self.parent_area.name})"
-    
-    class Meta:
-        db_table = 'tb_person'
-    
-    def as_dict(self):
-        return {"id": self.id, "first_name": self.first_name, "last_name": self.last_name, "parent_area": self.parent_area.as_dict(), "area": self.area.as_dict(), "position": self.position.as_dict()}
-'''
+
 class AuditRole(models.Model):
     name = models.CharField(max_length=100, verbose_name="Audit Team Role", unique=True)
-    
+
     def __str__(self):
         return self.name
-    
+
     class Meta:
         db_table = 'tb_audit_role'
-    
+
     def as_dict(self):
         return {"id": self.id, "name": self.name}
 
 class AuditTeam(models.Model):
-    person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audit_roles", verbose_name="Person")
+    person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audit_roles", verbose_name="User")
     role = models.ForeignKey(AuditRole, on_delete=models.PROTECT, related_name="audit_members", verbose_name="Role")
-    
+
     def __str__(self):
-        return f"{self.person.first_name} {self.person.last_name} - {self.role.name}"
-    
+        return f"{self.person.get_full_name()} - {self.role.name}"
+
     class Meta:
         db_table = 'tb_audit_team'
-    
-    def as_dict(self):
-        return {"id": self.id, "person": self.person.as_dict(), "role": self.role.as_dict()}
 
-class RequirementLevel1(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Requirement Level 1")
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        db_table = 'tb_requirement_level1'
-    
-    def as_dict(self):
-        return {"id": self.id, "name": self.name}
-
-class RequirementLevel2(models.Model):
-    level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, related_name="level2_requirements", verbose_name="Requirement Level 1")
-    name = models.CharField(max_length=200, verbose_name="Requirement Level 2")
-    
-    def __str__(self):
-        return f"{self.name} ({self.level1.name})"
-    
-    class Meta:
-        db_table = 'tb_requirement_level2'
-    
-    def as_dict(self):
-        return {"id": self.id, "level1": self.level1.as_dict(), "name": self.name}
-
-class RequirementLevel3(models.Model):
-    level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, related_name="level3_requirements", verbose_name="Requirement Level 1")
-    level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, related_name="level3_requirements", verbose_name="Requirement Level 2")
-    name = models.CharField(max_length=200, verbose_name="Requirement Level 3")
-    
-    def __str__(self):
-        return f"{self.name} ({self.level2.name} - {self.level1.name})"
-    
-    class Meta:
-        db_table = 'tb_requirement_level3'
-    
-    def as_dict(self):
-        return {"id": self.id, "level1": self.level1.as_dict(), "level2": self.level2.as_dict(), "name": self.name}
-
-class ChecklistQuestion(models.Model):
-    REQUIREMENT_TYPE_CHOICES = [
-        ('level1', 'Requirement Level 1'),
-        ('level2', 'Requirement Level 2'),
-        ('level3', 'Requirement Level 3')
-    ]
-    
-    requirement_type = models.CharField(max_length=10, choices=REQUIREMENT_TYPE_CHOICES, verbose_name="Requirement Type")
-    requirement_level1 = models.ForeignKey('RequirementLevel1', on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey('RequirementLevel2', on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey('RequirementLevel3', on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
-    question_text = models.CharField(max_length=500, verbose_name="Question Text")
-    order = models.IntegerField(verbose_name="Order")
-    
-    def __str__(self):
-        return self.question_text
-    
-    class Meta:
-        db_table = 'tb_checklist_question'
-    
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement_type": self.requirement_type,
-            "requirement": self.get_selected_requirement(),
-            "question_text": self.question_text,
-            "order": self.order,
+            "person": {
+                "id": self.person.id,
+                "username": self.person.username,
+                "first_name": self.person.first_name,
+                "last_name": self.person.last_name,
+                "email": self.person.email,
+            },
+            "role": self.role.as_dict()
         }
-    
-    def get_selected_requirement(self):
-        if self.requirement_type == 'level1':
-            return self.requirement_level1.as_dict() if self.requirement_level1 else None
-        elif self.requirement_type == 'level2':
-            return self.requirement_level2.as_dict() if self.requirement_level2 else None
-        elif self.requirement_type == 'level3':
-            return self.requirement_level3.as_dict() if self.requirement_level3 else None
-        return None
 
-class Audited(models.Model):
-    requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
-    audited_person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audited", verbose_name="Audited Person")
+class Requirement(models.Model):
+    name = models.CharField(max_length=200, verbose_name="Requirement Name")
+    parent = models.ForeignKey(
+        'self', 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True, 
+        related_name="sub_requirements"
+    )
 
     def __str__(self):
-        return f"{self.audited_person.first_name} {self.audited_person.last_name}"
+        return f"{self.name}" if not self.parent else f"{self.name} (under {self.parent.name})"
+
+    class Meta:
+        db_table = 'tb_requirement'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "parent": self.parent.as_dict() if self.parent else None,
+        }
+
+class Audited(models.Model):
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
+    audited_user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audited", verbose_name="Audited User")
+
+    def __str__(self):
+        return f"{self.audited_user.get_full_name()}"
 
     class Meta:
         db_table = 'tb_audited'
@@ -175,23 +125,25 @@ class Audited(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.get_selected_requirement(),
-            "audited_person": self.audited_person.as_dict(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "audited_user": {
+                "id": self.audited_user.id,
+                "username": self.audited_user.username,
+                "first_name": self.audited_user.first_name,
+                "last_name": self.audited_user.last_name,
+                "email": self.audited_user.email,
+            }
         }
-
-    def get_selected_requirement(self):
-        if self.requirement_level1:
-            return self.requirement_level1.as_dict()
-        elif self.requirement_level2:
-            return self.requirement_level2.as_dict()
-        elif self.requirement_level3:
-            return self.requirement_level3.as_dict()
-        return None
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
 
 class AuditedEvaluationQuestion(models.Model):
-    audited = models.ForeignKey(Audited, on_delete=models.PROTECT, related_name="audited_questions", verbose_name="Audited")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     question_text = models.CharField(max_length=500, verbose_name="Question Text")
     order = models.IntegerField(verbose_name="Order")
+    rating = models.CharField(max_length=200, verbose_name="Rating", null=True, blank=True)  
 
     def __str__(self):
         return self.question_text
@@ -202,15 +154,18 @@ class AuditedEvaluationQuestion(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audited": self.audited.as_dict(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "question_text": self.question_text,
             "order": self.order,
+            "rating": self.rating,  
         }
 
+
 class LeadAuditorEvaluationQuestion(models.Model):
-    audited = models.ForeignKey(Audited, on_delete=models.PROTECT, related_name="lead_auditor_questions", verbose_name="Audited")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     question_text = models.CharField(max_length=500, verbose_name="Question Text")
     order = models.IntegerField(verbose_name="Order")
+    rating = models.CharField(max_length=200, verbose_name="Rating", null=True, blank=True) 
 
     def __str__(self):
         return self.question_text
@@ -221,10 +176,12 @@ class LeadAuditorEvaluationQuestion(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audited": self.audited.as_dict(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "question_text": self.question_text,
             "order": self.order,
+            "rating": self.rating,  
         }
+
 
 class AuditProgramHeader(models.Model):
     objective = models.TextField(verbose_name="Objective")
@@ -248,14 +205,12 @@ class AuditProgramHeader(models.Model):
         }
 
 class AnnualProgram(models.Model):
-    requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     month = models.IntegerField(verbose_name="Month")
     year = models.IntegerField(verbose_name="Year")
 
     def __str__(self):
-        return f"{self.get_selected_requirement()} - {self.month}/{self.year}"
+        return f"{self.requirement} - {self.month}/{self.year}" if self.requirement else f"Program for {self.month}/{self.year}"
 
     class Meta:
         db_table = 'tb_annual_program'
@@ -263,19 +218,10 @@ class AnnualProgram(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.get_selected_requirement(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "month": self.month,
             "year": self.year,
         }
-
-    def get_selected_requirement(self):
-        if self.requirement_level1:
-            return self.requirement_level1.as_dict()
-        elif self.requirement_level2:
-            return self.requirement_level2.as_dict()
-        elif self.requirement_level3:
-            return self.requirement_level3.as_dict()
-        return None
 
 class AuditPlanHeader(models.Model):
     opening_meeting_location = models.CharField(max_length=200, verbose_name="Opening Meeting Location")
@@ -299,16 +245,14 @@ class AuditPlanHeader(models.Model):
         }
 
 class AssociatedElements(models.Model):
-    requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     audit_date = models.DateField(verbose_name="Audit Date")
     audit_time = models.CharField(max_length=50, verbose_name="Audit Time")
     audit_team_member = models.ForeignKey(AuditTeam, on_delete=models.PROTECT, verbose_name="Audit Team Member")
     audit_location = models.CharField(max_length=200, verbose_name="Audit Location")
 
     def __str__(self):
-        return f"{self.get_selected_requirement()} - {self.audit_date} at {self.audit_time}"
+        return f"{self.requirement} - {self.audit_date} at {self.audit_time}" if self.requirement else f"Audit on {self.audit_date}"
 
     class Meta:
         db_table = 'tb_associated_elements'
@@ -316,58 +260,44 @@ class AssociatedElements(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.get_selected_requirement(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "audit_date": self.audit_date,
             "audit_time": self.audit_time,
             "audit_team_member": self.audit_team_member.as_dict(),
             "audit_location": self.audit_location,
         }
 
-    def get_selected_requirement(self):
-        if self.requirement_level1:
-            return self.requirement_level1.as_dict()
-        elif self.requirement_level2:
-            return self.requirement_level2.as_dict()
-        elif self.requirement_level3:
-            return self.requirement_level3.as_dict()
-        return None
-
 class Checklist(models.Model):
-    requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
-    objective_evidence = models.TextField(verbose_name="Objective Evidence")
-    compliance = models.TextField(verbose_name="Compliance")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
+    question_text = models.CharField(max_length=500, verbose_name="Question Text")
+    order = models.IntegerField(verbose_name="Order")
+
+    objective_evidence = models.TextField(verbose_name="Objective Evidence", null=True, blank=True)
+    compliance = models.TextField(verbose_name="Compliance", null=True, blank=True)
 
     def __str__(self):
-        return f"Checklist for {self.get_selected_requirement()}"
+        return self.question_text
 
     class Meta:
         db_table = 'tb_checklist'
+        ordering = ['order']
 
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.get_selected_requirement(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "question_text": self.question_text,
+            "order": self.order,
             "objective_evidence": self.objective_evidence,
             "compliance": self.compliance,
         }
 
-    def get_selected_requirement(self):
-        if self.requirement_level1:
-            return self.requirement_level1.as_dict()
-        elif self.requirement_level2:
-            return self.requirement_level2.as_dict()
-        elif self.requirement_level3:
-            return self.requirement_level3.as_dict()
-        return None
-
 class AuditorEvaluation(models.Model):
-    audited = models.ForeignKey(Audited, on_delete=models.PROTECT, related_name="auditor_evaluations", verbose_name="Audited")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     evaluation_date = models.DateField(verbose_name="Evaluation Date")
 
     def __str__(self):
-        return f"Evaluation for {self.audited.audited_person.first_name} {self.audited.audited_person.last_name}"
+        return f"Evaluation on {self.evaluation_date}"
 
     class Meta:
         db_table = 'tb_auditor_evaluation'
@@ -375,62 +305,36 @@ class AuditorEvaluation(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audited": self.audited.as_dict(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "evaluation_date": self.evaluation_date,
         }
-
-class FindingClassification(models.Model):
-    CLASSIFICATION_CHOICES = [
-        ('minor_non_conformity', 'Minor Non-Conformity'),
-        ('major_non_conformity', 'Major Non-Conformity'),
-        ('improvement_opportunity', 'Improvement Opportunity'),
-    ]
-
-    classification = models.CharField(max_length=50, choices=CLASSIFICATION_CHOICES, verbose_name="Classification")
-
-    def __str__(self):
-        return self.get_classification_display()
-
-    class Meta:
-        db_table = 'tb_finding_classification'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "classification": self.get_classification_display(),
-        }
-
+    
 class Findings(models.Model):
-    requirement_level1 = models.ForeignKey(RequirementLevel1, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 1")
-    requirement_level2 = models.ForeignKey(RequirementLevel2, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 2")
-    requirement_level3 = models.ForeignKey(RequirementLevel3, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement Level 3")
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     finding_text = models.TextField(verbose_name="Finding")
-    classification = models.ForeignKey(FindingClassification, on_delete=models.PROTECT, verbose_name="Finding Classification")
+    classification = models.IntegerField(verbose_name="Finding Classification", choices=[(i, str(i)) for i in range(6)])  
 
     def __str__(self):
-        return self.finding_text[:50]  
+        return self.finding_text[:50]
 
     class Meta:
         db_table = 'tb_findings'
 
+    def clean(self):
+        if self.classification < 0 or self.classification > 5:
+            raise ValidationError('Classification must be between 0 and 5.')
+
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.get_selected_requirement(),
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "finding_text": self.finding_text,
-            "classification": self.classification.as_dict(),
+            "classification": self.classification,
         }
 
-    def get_selected_requirement(self):
-        if self.requirement_level1:
-            return self.requirement_level1.as_dict()
-        elif self.requirement_level2:
-            return self.requirement_level2.as_dict()
-        elif self.requirement_level3:
-            return self.requirement_level3.as_dict()
-        return None
 
 class AuditReport(models.Model):
+    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
     summary = models.TextField(verbose_name="Summary of Audit Development")
     strengths = models.TextField(verbose_name="Strengths")
 
@@ -443,9 +347,7 @@ class AuditReport(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
+            "requirement": self.requirement.as_dict() if self.requirement else None,
             "summary": self.summary,
             "strengths": self.strengths,
         }
-
-
-
