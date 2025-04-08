@@ -33,18 +33,6 @@
                             </div>
                         </li> 
                         <!-- Fin Menu Comunicaciones -->
-                        <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="{% url 'pages:area_view' %}" role="button">
-                                <i class="bx bxs-message"></i> <span data-key="t-dashboards">Area</span>
-                            </a>
-                        </li> 
-                        <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="{% url 'pages:wellcome_view' %}" role="button">
-                                <i class="bx bxs-message"></i> <span data-key="t-dashboards">Inicio</span>
-                            </a>
-                        </li> 
                         <!--Menu Riesgos-->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse"
@@ -64,27 +52,38 @@
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
-                                <i class="bx bxs-dashboard"></i> <span data-key="t-dashboards">Auditorias Internas</span>
+                                <i class="bx bxs-dashboard"></i> <span data-key="t-dashboards">Auditorias</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="" class="nav-link" data-key="t-analytics"> Programación Anual </a>
+                                        <a href="{% url 'audits:audits_home' %}" class="nav-link" data-key="t-analytics"> Auditorias Internas</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="" class="nav-link" data-key="t-analytics"> Plan Anual </a>
+                                        <a href="{% url 'audits:annual_program' %}" class="nav-link" data-key="t-analytics"> Programa Anual</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="" class="nav-link" data-key="t-analytics"> Auditorias</a>
+                                        <a href="{% url 'audits:annual_plan' %}" class="nav-link" data-key="t-analytics"> Plan Anual </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="" class="nav-link" data-key="t-analytics"> Requisitos Norma </a>
+                                        <a href="{% url 'audits:conduct_audit' %}" class="nav-link" data-key="t-analytics"> Realizar Auditoría </a>
                                     </li>
                                 </ul>
                             </div>
                         </li> 
-                        <!-- Fin Menu Auditorias -->  
-                        <!-- Menu Autenticacion -->  
+                        <!-- Fin Menu Auditorias --> 
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="{% url 'pages:area_view' %}" role="button">
+                                <i class="bx bx-border-all"></i> <span data-key="t-dashboards">Area</span>
+                            </a>
+                        </li> 
+                        <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="{% url 'pages:wellcome_view' %}" role="button">
+                                <i class="bx bx-user"></i> <span data-key="t-dashboards">Inicio</span>
+                            </a>
+                        </li>  
+                        <!-- Menu Autenticacion  
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarAuth">
@@ -99,18 +98,15 @@
                                         <li class="nav-item">
                                             <a href="{% url 'authentication:authentication_sign_up' %}" class="nav-link" data-key="t-analytics"> Nuevo Usuario </a>
                                         </li>
-                                    </li>
-                                            </ul>
-                                        </div>
-                                    </li>
                                 </ul>
                             </div>
-                        </li>
+                        </li>--> 
                         <!-- Fin Menu Autenticacion --> 
                     </ul>
                 </div>
                 <!-- Sidebar -->
             </div>
+        </div>
 
 {% endblock sidebar %}
     
