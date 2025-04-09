@@ -351,31 +351,32 @@
                         </tr>
                     </thead>
                     <tbody>
-{% with evaluations_found=False %}
-    {% for evaluation in evaluations %}
-        {% if evaluation.risk.id == risk.id %}
-            <tr>
-                <td>{{ evaluation.severity }}</td>
-                <td>{{ evaluation.current_preventive_controls }}</td>
-                <td>{{ evaluation.occurrence }}</td>
-                <td>{{ evaluation.current_detection_controls }}</td>
-                <td>{{ evaluation.detection }}</td>
-                <td>{{ evaluation.risk_level.level }}</td>
-            </tr>
-            {% with evaluations_found=True %}{% endwith %}
-        {% endif %}
-    {% endfor %}
-    {% if not evaluations_found %}
-        <tr>
-            <td colspan="6" class="text-center">No evaluations available</td>
-        </tr>
-    {% endif %}
-{% endwith %}
+                        {% with risk_evaluations=evaluations|dictsort:"id" %}
+                            {% for evaluation in risk_evaluations %}
+                                {% if evaluation.risk.id == risk.id %}
+                                    <tr>
+                                        <td>{{ evaluation.severity }}</td>
+                                        <td>{{ evaluation.current_preventive_controls }}</td>
+                                        <td>{{ evaluation.occurrence }}</td>
+                                        <td>{{ evaluation.current_detection_controls }}</td>
+                                        <td>{{ evaluation.detection }}</td>
+                                        <td>{{ evaluation.risk_level.level }}</td>
+                                    </tr>
+                                {% endif %}
                             {% endfor %}
-                            {% if not found %}
+                            {% if evaluations|length == 0 or not evaluations|yesno:"1,0"|default_if_none:"0" %}
                                 <tr>
                                     <td colspan="6" class="text-center">No evaluations available</td>
                                 </tr>
+                            {% else %}
+                                {% if not evaluations|dictsort:"id"|yesno:"1,0"|default_if_none:"0" %}
+                                    {% if not evaluations|dictsort:"id"|yesno:"1,0"|default_if_none:"0" %}
+                                        {% comment %} If there were no matches for the current risk {% endcomment %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">No evaluations available</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
                             {% endif %}
                         {% endwith %}
                     </tbody>
