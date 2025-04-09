@@ -271,7 +271,7 @@
 {% block extra_js %}
 <script>
 document.getElementById("openAddFindingsModal").addEventListener("click", function() {
-    fetch("{% url 'components:add_findings' %}")
+    fetch("{% url 'audits:add_findings' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("findingsModalFormContent").innerHTML = html;
@@ -280,7 +280,7 @@ document.getElementById("openAddFindingsModal").addEventListener("click", functi
 });
 
 document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
-    fetch("{% url 'components:add_audit_report' %}")
+    fetch("{% url 'audits:add_audit_report' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("auditReportModalFormContent").innerHTML = html;
@@ -289,7 +289,7 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
 });
 
 document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'components:add_audited_evaluation_question' %}")
+    fetch("{% url 'audits:add_audited_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
@@ -298,7 +298,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
 });
 
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'components:add_lead_auditor_evaluation_question' %}")
+    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
@@ -308,7 +308,7 @@ document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventLis
 
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
-        fetch("{% url 'components:add_checklist' %}")  // Carga el formulario de add_checklist
+        fetch("{% url 'audits:add_checklist' %}")  // Carga el formulario de add_checklist
         .then(response => response.text())
         .then(html => {
             document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Abriendo modal para Requirement ID:", requirementId); // Debugging
 
         // Construir la URL correctamente
-        const url = `/components/get_checklist_data/${requirementId}/`; // Reemplaza con la URL correcta de Django
+        const url = `/audits/get_checklist_data/${requirementId}/`; // Reemplaza con la URL correcta de Django
 
         fetch(url)
             .then(response => {
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("🟢 Modal abierto - Cargando preguntas para requirement ID:", requirementId);
 
         // Hacer petición AJAX para obtener las preguntas del requirement
-        fetch(`/components/get-audited-questions/${requirementId}/`)
+        fetch(`/audits/get-audited-questions/${requirementId}/`)
             .then(response => {
                 console.log("📥 Respuesta recibida del servidor:", response);
                 return response.json();
@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("🟢 Cargando preguntas para Lead Auditor con requirement ID:", requirementId);
 
         // Hacer petición AJAX para obtener las preguntas
-        fetch(`/components/get-lead-auditor-questions/${requirementId}/`)
+        fetch(`/audits/get-lead-auditor-questions/${requirementId}/`)
             .then(response => response.json())
             .then(data => {
                 const leadAuditorEvaluationFields = document.getElementById('leadAuditorEvaluationFields');
