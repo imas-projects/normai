@@ -351,20 +351,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% with found=False %}
-                            {% for evaluation in evaluations %}
-                                {% if evaluation.risk.id == risk.id %}
-                                    {% with found=True %}
-                                        <tr>
-                                            <td>{{ evaluation.severity }}</td>
-                                            <td>{{ evaluation.current_preventive_controls }}</td>
-                                            <td>{{ evaluation.occurrence }}</td>
-                                            <td>{{ evaluation.current_detection_controls }}</td>
-                                            <td>{{ evaluation.detection }}</td>
-                                            <td>{{ evaluation.risk_level.level }}</td>
-                                        </tr>
-                                    {% endwith %}
-                                {% endif %}
+{% with evaluations_found=False %}
+    {% for evaluation in evaluations %}
+        {% if evaluation.risk.id == risk.id %}
+            <tr>
+                <td>{{ evaluation.severity }}</td>
+                <td>{{ evaluation.current_preventive_controls }}</td>
+                <td>{{ evaluation.occurrence }}</td>
+                <td>{{ evaluation.current_detection_controls }}</td>
+                <td>{{ evaluation.detection }}</td>
+                <td>{{ evaluation.risk_level.level }}</td>
+            </tr>
+            {% with evaluations_found=True %}{% endwith %}
+        {% endif %}
+    {% endfor %}
+    {% if not evaluations_found %}
+        <tr>
+            <td colspan="6" class="text-center">No evaluations available</td>
+        </tr>
+    {% endif %}
+{% endwith %}
                             {% endfor %}
                             {% if not found %}
                                 <tr>
