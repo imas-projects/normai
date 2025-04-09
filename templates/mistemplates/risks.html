@@ -330,65 +330,55 @@
 
 
                     <!-- MODALES -->
-                    <!-- Modal para Risk Evaluation -->
-                    <div class="modal fade" id="modalRiskEvaluation{{ risk.id }}" tabindex="-1" aria-labelledby="modalRiskEvaluationLabel{{ risk.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-xl modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="modalRiskEvaluationLabel{{ risk.id }}">Risk Evaluation - {{ risk.identified_risk }}</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <table class="table table-bordered table-hover">
-                                        <thead class="table-dark">
-                                            <tr>
-                                                <th>Severity</th>
-                                                <th>Current Preventive Controls</th>
-                                                <th>Occurrence</th>
-                                                <th>Current Detection Controls</th>
-                                                <th>Detection</th>
-                                                <th>Risk Level</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for department, risks in grouped_risks.items %}
-                                                <tr style="display:none;">
-                                                    <td colspan="6" class="text-center"><strong>Departamento: {{ department }}</strong></td>
-                                                </tr>
-                                                {% for risk in risks %}
-                                                    <tr style="display:none;">
-                                                        <td>{{ risk.id }}</td>
-                                                        <td>{{ risk.name }}</td>
-                                                        <td>{{ risk.description }}</td>
-                                                        <td>
-                                                            {% for evaluation in evaluations %}
-                                                                {% if evaluation.risk.id == risk.id %}
-                                                                    <p>Severidad: {{ evaluation.severity }}</p>
-                                                                    <p>Controles Preventivos: {{ evaluation.current_preventive_controls }}</p>
-                                                                    <p>Ocurrencia: {{ evaluation.occurrence }}</p>
-                                                                    <p>Controles de Detección: {{ evaluation.current_detection_controls }}</p>
-                                                                    <p>Detección: {{ evaluation.detection }}</p>
-                                                                    <p>Nivel de Riesgo: {{ evaluation.risk_level.level }}</p>
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr style="display:none;">
-                                                        <td colspan="6" class="text-center">No hay riesgos disponibles para este departamento</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            {% empty %}
-                                                <tr style="display:none;">
-                                                    <td colspan="6" class="text-center">No hay riesgos disponibles</td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<!-- Modal para Risk Evaluation -->
+<div class="modal fade" id="modalRiskEvaluation{{ risk.id }}" tabindex="-1" aria-labelledby="modalRiskEvaluationLabel{{ risk.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalRiskEvaluationLabel{{ risk.id }}">Risk Evaluation - {{ risk.identified_risk }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Severity</th>
+                            <th>Current Preventive Controls</th>
+                            <th>Occurrence</th>
+                            <th>Current Detection Controls</th>
+                            <th>Detection</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% with found=False %}
+                            {% for evaluation in evaluations %}
+                                {% if evaluation.risk.id == risk.id %}
+                                    {% with found=True %}
+                                        <tr>
+                                            <td>{{ evaluation.severity }}</td>
+                                            <td>{{ evaluation.current_preventive_controls }}</td>
+                                            <td>{{ evaluation.occurrence }}</td>
+                                            <td>{{ evaluation.current_detection_controls }}</td>
+                                            <td>{{ evaluation.detection }}</td>
+                                            <td>{{ evaluation.risk_level.level }}</td>
+                                        </tr>
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if not found %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No evaluations available</td>
+                                </tr>
+                            {% endif %}
+                        {% endwith %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 
                     <!-- Modal para Risk Treatment -->
                     <div class="modal fade" id="modalRiskTreatment{{ risk.id }}" tabindex="-1" aria-labelledby="modalRiskTreatmentLabel{{ risk.id }}" aria-hidden="true">
@@ -596,7 +586,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskIdentificationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/edit-risk-identification/${riskId}/`)
+            fetch(`/risks/edit-risk-identification/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskIdentificationContent${riskId}`).innerHTML = html;
@@ -609,7 +599,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskEvaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/edit-risk-evaluation/${riskId}/`)
+            fetch(`/risks/edit-risk-evaluation/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskEvaluationContent${riskId}`).innerHTML = html;
@@ -622,7 +612,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskTreatmentModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/edit-risk-treatment/${riskId}/`)
+            fetch(`/risks/edit-risk-treatment/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskTreatmentContent${riskId}`).innerHTML = html;
@@ -635,7 +625,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditContingencyPlanModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/edit-contingency-plan/${riskId}/`)
+            fetch(`/risks/edit-contingency-plan/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editContingencyPlanContent${riskId}`).innerHTML = html;
@@ -648,7 +638,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditReevaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/edit-reevaluation/${riskId}/`)
+            fetch(`/risks/edit-reevaluation/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editReevaluationContent${riskId}`).innerHTML = html;
