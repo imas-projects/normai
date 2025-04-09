@@ -262,10 +262,11 @@ def create_table(request):
 #@user_passes_test(communication_check)
 def user_received_messages(request):
     user = request.user
-    user_area = Area.objects.get(users=user)
+    user_areas = Area.objects.filter(users=user)
 
-    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct()  # Get all entries
-    all_communicationtables = [table for table in all_communicationtable]
+    all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
+    all_communicationtables = list(all_communicationtable)
+
 
     all_messages = Message.objects.filter(receivers=user).distinct()
     all_messages = [message for message in all_messages]
@@ -283,10 +284,11 @@ def user_received_messages(request):
 #@user_passes_test(communication_check)
 def user_sent_messages(request):
     user = request.user
-    user_area = Area.objects.get(users=user)
+    user_areas = Area.objects.filter(users=user)
 
-    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct() 
-    all_communicationtables = [table for table in all_communicationtable]
+    all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
+    all_communicationtables = list(all_communicationtable)
+
 
     all_messages = Message.objects.filter(transmitter=user).distinct()
     all_messages = [message for message in all_messages]
@@ -304,10 +306,11 @@ def user_sent_messages(request):
 #@user_passes_test(communication_check)
 def communication_table_review(request):
     user = request.user
-    user_area = Area.objects.get(users=user)
+    #user_area = Area.objects.get(users=user)
+    user_areas = Area.objects.filter(users=user)
 
-    all_communicationtable = CommunicationTable.objects.filter(area=user_area).distinct()  # Get all entries
-    all_communicationtables = [table for table in all_communicationtable]
+    all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
+    all_communicationtables = list(all_communicationtable)
 
     all_messages = Message.objects.filter(transmitter=user).distinct()
     all_messages = [message for message in all_messages]
