@@ -17,11 +17,11 @@ def audits_home(request):
 
 def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
-    audit_teams = AuditTeam.objects.all()
+    audit_teams = AuditTeam.objects.select_related('person', 'role')
 
     grouped_team = defaultdict(list)
     for team_member in audit_teams:
-        grouped_team[team_member.role].append(team_member.person)
+        grouped_team[team_member.role.name].append(team_member.person.get_full_name())
 
     today = datetime.today()
     start_month = today.month - 1 if today.month > 1 else 12
@@ -29,8 +29,9 @@ def annual_audit_program(request):
     month_range = [(start_year, start_month)]
 
     for _ in range(11):
-        next_month = (month_range[-1][1] % 12) + 1
-        next_year = month_range[-1][0] + (1 if next_month == 1 else 0)
+        last_year, last_month = month_range[-1]
+        next_month = (last_month % 12) + 1
+        next_year = last_year + (1 if next_month == 1 else 0)
         month_range.append((next_year, next_month))
 
     annual_programs = AnnualProgram.objects.filter(
@@ -69,31 +70,26 @@ def annual_audit_program(request):
     }
     return render(request, 'mistemplates/annual_audit_program.html', context)
 
+
 def annual_audit_plan(request):
     audit_headers = AuditProgramHeader.objects.all()
     audit_plans = AuditPlanHeader.objects.all()
-    audit_teams = AuditTeam.objects.all()
-    
+    audit_teams = AuditTeam.objects.select_related('person', 'role')
+
     audited_people = Audited.objects.select_related('audited_user', 'requirement')
     audit_data = []
 
     for audited in audited_people:
+        associated_elements = AssociatedElements.objects.filter(requirement=audited.requirement).first()
+
         audit_entry = {
             'requirement': audited.requirement,
             'audited_person': audited.audited_user,
-            'audit_date': None,  
-            'audit_time': None, 
-            'audit_team_member': None,
-            'audit_location': None, 
+            'audit_date': associated_elements.audit_date if associated_elements else None,
+            'audit_time': associated_elements.audit_time if associated_elements else None,
+            'audit_team_member': associated_elements.audit_team_member if associated_elements else None,
+            'audit_location': associated_elements.audit_location if associated_elements else None,
         }
-
-        associated_elements = AssociatedElements.objects.filter(requirement=audited.requirement).first()
-        if associated_elements:
-            audit_entry['audit_date'] = associated_elements.audit_date
-            audit_entry['audit_time'] = associated_elements.audit_time
-            audit_entry['audit_team_member'] = associated_elements.audit_team_member
-            audit_entry['audit_location'] = associated_elements.audit_location
-
         audit_data.append(audit_entry)
 
     grouped_team = defaultdict(list)
@@ -108,6 +104,7 @@ def annual_audit_plan(request):
     }
 
     return render(request, 'mistemplates/annual_audit_plan.html', context)
+
 
 def conduct_internal_audits(request):
     audited_list = Audited.objects.select_related("requirement", "audited_user")
