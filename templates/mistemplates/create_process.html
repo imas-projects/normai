@@ -1,0 +1,16 @@
+{% extends "mistemplates/mi_base.html" %}
+{% load static %}
+
+{% block title %}Create Process{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Create New Process</h2>
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Save</button>
+        <a href="{% url 'processes:list_processes' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock content %}

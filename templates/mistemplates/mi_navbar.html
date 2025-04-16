@@ -72,6 +72,21 @@
                             </div>
                         </li> 
                         <!-- Fin Menu Auditorias --> 
+                         <!--Menu Procesos-->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse"
+                                role="button" aria-expanded="false" aria-controls="sidebarApps">
+                                <i class="bx bx-layer"></i> <span data-key="t-apps">Procesos</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarApps">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{% url 'processes:list_processes' %}" class="nav-link" data-key="t-analytics"> Ver Procesos </a>
+                                    </li>
+                                </ul>
+                            </div>    
+                        </li> 
+                        <!-- Fin Menu Procesos -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="{% url 'pages:area_view' %}" role="button">
                                 <i class="bx bx-border-all"></i> <span data-key="t-dashboards">Area</span>

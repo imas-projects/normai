@@ -49,6 +49,7 @@ urlpatterns = [
     path('risks/', include('risks.urls')),
     path('authentication/', include('authentication.urls')),
     path('audits/', include('audits.urls')),
+    path('processes/', include('processes.urls')),
     
 ]
 
