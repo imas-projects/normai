@@ -24,7 +24,7 @@ def create_process(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Process created successfully.')
-            return redirect('processes:list_process')  # Ajusta al nombre real de tu URL
+            return redirect('processes:list_processes') 
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
