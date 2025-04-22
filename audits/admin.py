@@ -1,5 +1,7 @@
 from django.contrib import admin
 from . import models
+from company.models import Area
+from company.models import Requirement
 
 # Registrar los modelos del sistema de auditoría
 admin.site.register(models.AuditProgramHeader)
