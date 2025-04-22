@@ -1,8 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User, Group
-from company.models import Area
-from company.models import Requirement
-
+from django.contrib.auth.models import User
+from company.models import Area, Requirement  # Importación correcta del modelo Requirement
 
 class AuditProgramHeader(models.Model):
     year = models.IntegerField(verbose_name="Year")
@@ -30,7 +28,7 @@ class AuditProgramHeader(models.Model):
 class Process(models.Model):
     name = models.CharField(max_length=200, verbose_name="Process Name")
     requirements = models.ManyToManyField(
-        'Requirement',
+        'company.Requirement',  # Referencia correcta a 'company.Requirement'
         through='ProcessRequirement',
         related_name="processes",
         verbose_name="Associated Requirements"
@@ -55,7 +53,7 @@ class ProcessRequirement(models.Model):
         on_delete=models.CASCADE
     )
     requirement = models.ForeignKey(
-        'Requirement',
+        'company.Requirement',  # Correcto: Referencia a 'company.Requirement'
         on_delete=models.CASCADE
     )
 
@@ -212,7 +210,7 @@ class Findings(models.Model):
         verbose_name="Audit Report"
     )
     requirement = models.ForeignKey(
-        'Requirement',  # Relacionado con los requisitos de la norma
+        'company.Requirement',  # Referencia correcta a 'company.Requirement'
         on_delete=models.PROTECT,
         null=True, 
         blank=True,
