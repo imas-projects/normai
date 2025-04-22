@@ -1,3 +1,4 @@
+'''
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Process
 from django.contrib.auth.models import User
@@ -165,3 +166,4 @@ def edit_process(request, process_id):
         
     return render(request, 'mistemplates/edit_process.html', {'form': form, 'process': process})
 
+'''
