@@ -1,3 +1,4 @@
+'''
 from django import forms
 from django.contrib.auth.models import User
 from .models import AuditTeam, AuditedEvaluationQuestion, LeadAuditorEvaluationQuestion
@@ -201,3 +202,4 @@ class FindingsForm(forms.ModelForm):
             'finding_text': forms.Textarea(attrs={'placeholder': 'Describe the finding...', 'class': 'form-control', 'rows': 3}),
             'classification': forms.Select(choices=[(i, str(i)) for i in range(6)], attrs={'class': 'form-control'}),
         }
+'''
