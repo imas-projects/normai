@@ -46,6 +46,7 @@ LOCAL_APPS = [
     "layouts",
     "components",
     "pages",
+    "company",
     "communications",
     "risks",
     "authentication",
