@@ -1,345 +1,392 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 
-class ParentArea(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Parent Area Name", unique=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        db_table = 'tb_parent_area'
-
-    def as_dict(self):
-        return {"id": self.id, "name": self.name}
-
-class Area(models.Model):
-    parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="areas", verbose_name="Parent Area")
-    name = models.CharField(max_length=100, verbose_name="Area Name")
-    groups = models.ManyToManyField(Group, related_name="areas")
-    users = models.ManyToManyField(User, related_name="areas")  
-
-    def __str__(self):
-        return f"{self.name} ({self.parent_area.name})"
-
-    class Meta:
-        db_table = 'tb_area'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "parent_area": self.parent_area.as_dict(),
-            "name": self.name,
-            "groups": [{"id": g.id, "name": g.name} for g in self.groups.all()],
-            "users": [{
-                "id": u.id,
-                "username": u.username,
-                "first_name": u.first_name,
-                "last_name": u.last_name,
-                "email": u.email
-            } for u in self.users.all()],
-        }
-
-class Position(models.Model):
-    parent_area = models.ForeignKey(ParentArea, on_delete=models.PROTECT, related_name="positions", verbose_name="Parent Area")
-    area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="positions", verbose_name="Area")
-    title = models.CharField(max_length=100, verbose_name="Job Title")
-
-    def __str__(self):
-        return f"{self.title} ({self.area.name} - {self.parent_area.name})"
-
-    class Meta:
-        db_table = 'tb_position'
-
-    def as_dict(self):
-        return {"id": self.id, "parent_area": self.parent_area.as_dict(), "area": self.area.as_dict(), "title": self.title}
-
-class AuditRole(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Audit Team Role", unique=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        db_table = 'tb_audit_role'
-
-    def as_dict(self):
-        return {"id": self.id, "name": self.name}
-
-class AuditTeam(models.Model):
-    person = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audit_roles", verbose_name="User")
-    role = models.ForeignKey(AuditRole, on_delete=models.PROTECT, related_name="audit_members", verbose_name="Role")
-
-    def __str__(self):
-        return f"{self.person.get_full_name()} - {self.role.name}"
-
-    class Meta:
-        db_table = 'tb_audit_team'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "person": {
-                "id": self.person.id,
-                "username": self.person.username,
-                "first_name": self.person.first_name,
-                "last_name": self.person.last_name,
-                "email": self.person.email,
-            },
-            "role": self.role.as_dict()
-        }
-
-class Requirement(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Requirement Name")
-    parent = models.ForeignKey(
-        'self', 
-        on_delete=models.PROTECT, 
-        null=True, 
-        blank=True, 
-        related_name="sub_requirements"
-    )
-
-    def __str__(self):
-        return f"{self.name}" if not self.parent else f"{self.name} (under {self.parent.name})"
-
-    class Meta:
-        db_table = 'tb_requirement'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "parent": self.parent.as_dict() if self.parent else None,
-        }
-
-class Audited(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    audited_user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="audited", verbose_name="Audited User")
-
-    def __str__(self):
-        return f"{self.audited_user.get_full_name()}"
-
-    class Meta:
-        db_table = 'tb_audited'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
-            "audited_user": {
-                "id": self.audited_user.id,
-                "username": self.audited_user.username,
-                "first_name": self.audited_user.first_name,
-                "last_name": self.audited_user.last_name,
-                "email": self.audited_user.email,
-            }
-        }
-    
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
-
-class AuditedEvaluationQuestion(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    question_text = models.CharField(max_length=500, verbose_name="Question Text")
-    order = models.IntegerField(verbose_name="Order")
-    rating = models.CharField(max_length=200, verbose_name="Rating", null=True, blank=True)  
-
-    def __str__(self):
-        return self.question_text
-
-    class Meta:
-        db_table = 'tb_audited_evaluation_question'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
-            "question_text": self.question_text,
-            "order": self.order,
-            "rating": self.rating,  
-        }
-
-
-class LeadAuditorEvaluationQuestion(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    question_text = models.CharField(max_length=500, verbose_name="Question Text")
-    order = models.IntegerField(verbose_name="Order")
-    rating = models.CharField(max_length=200, verbose_name="Rating", null=True, blank=True) 
-
-    def __str__(self):
-        return self.question_text
-
-    class Meta:
-        db_table = 'tb_lead_auditor_evaluation_question'
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
-            "question_text": self.question_text,
-            "order": self.order,
-            "rating": self.rating,  
-        }
-
-
-class AuditProgramHeader(models.Model):
+ class AuditProgramHeader(models.Model):
+    year = models.IntegerField(verbose_name="Year")
     objective = models.TextField(verbose_name="Objective")
     scope = models.TextField(verbose_name="Scope")
     audit_criteria = models.TextField(verbose_name="Audit Criteria")
     security_standards = models.TextField(verbose_name="Security Standards")
 
     def __str__(self):
-        return self.objective[:50]
+        return f"{self.year} - {self.objective[:50]}"
 
     class Meta:
-        db_table = 'tb_audit_program_header'
+        db_table = 'tb_audit_annual_program_headers'
 
     def as_dict(self):
         return {
             "id": self.id,
+            "year": self.year,
             "objective": self.objective,
             "scope": self.scope,
             "audit_criteria": self.audit_criteria,
             "security_standards": self.security_standards,
         }
 
+class Process(models.Model):
+    name = models.CharField(max_length=200, verbose_name="Process Name")
+    requirements = models.ManyToManyField(
+        Requirement,
+        through='ProcessRequirement',
+        related_name="processes",
+        verbose_name="Associated Requirements"
+    )
+
+    class Meta:
+        db_table = 'tb_audit_process'
+
+    def __str__(self):
+        return self.name
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "requirements": [r.as_dict() for r in self.requirements.all()],
+        }
+
+class ProcessRequirement(models.Model):
+    process = models.ForeignKey(
+        Process,
+        on_delete=models.CASCADE
+    )
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        db_table = 'tb_audit_process_requirements'
+        unique_together = ('process', 'requirement')
+
+    def __str__(self):
+        return f"{self.process.name} ↔ {self.requirement.name}"
+
 class AnnualProgram(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    month = models.IntegerField(verbose_name="Month")
-    year = models.IntegerField(verbose_name="Year")
+    program_header = models.ForeignKey(
+        AuditProgramHeader,
+        on_delete=models.PROTECT,
+        related_name="annual_programs",
+        verbose_name="Program Header"
+    )
+    process = models.ForeignKey(
+        Process,
+        on_delete=models.PROTECT,
+        related_name="annual_programs",
+        verbose_name="Process"
+    )
+    month = models.PositiveSmallIntegerField(verbose_name="Month")
 
     def __str__(self):
-        return f"{self.requirement} - {self.month}/{self.year}" if self.requirement else f"Program for {self.month}/{self.year}"
+        return f"{self.process.name} - {self.month}/{self.program_header.year}"
 
     class Meta:
-        db_table = 'tb_annual_program'
+        db_table = 'tb_audit_annual_program'
 
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "program_header": self.program_header.as_dict(),
+            "process": self.process.as_dict(),  # Ya devuelve los requirements
             "month": self.month,
-            "year": self.year,
-        }
-
-class AuditPlanHeader(models.Model):
-    opening_meeting_location = models.CharField(max_length=200, verbose_name="Opening Meeting Location")
-    opening_meeting_date_time = models.DateTimeField(verbose_name="Opening Meeting Date and Time")
-    closing_meeting_location = models.CharField(max_length=200, verbose_name="Closing Meeting Location")
-    closing_meeting_date_time = models.DateTimeField(verbose_name="Closing Meeting Date and Time")
-
-    def __str__(self):
-        return self.opening_meeting_location
+        }  class AnnualProgramUser(models.Model):
+    annual_program = models.ForeignKey(
+        AnnualProgram,
+        on_delete=models.PROTECT,
+        related_name="users",
+        verbose_name="Annual Program"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="annual_programs",
+        verbose_name="User"
+    )
 
     class Meta:
-        db_table = 'tb_audit_plan_header'
+        db_table = 'tb_audit_annual_program_users'
+        unique_together = ('annual_program', 'user')  # Primary key compuesta
+
+    def __str__(self):
+        return f"{self.user.username} - {self.annual_program}"
 
     def as_dict(self):
         return {
             "id": self.id,
-            "opening_meeting_location": self.opening_meeting_location,
-            "opening_meeting_date_time": self.opening_meeting_date_time,
-            "closing_meeting_location": self.closing_meeting_location,
-            "closing_meeting_date_time": self.closing_meeting_date_time,
-        }
-
-class AssociatedElements(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    audit_date = models.DateField(verbose_name="Audit Date")
-    audit_time = models.CharField(max_length=50, verbose_name="Audit Time")
-    audit_team_member = models.ForeignKey(AuditTeam, on_delete=models.PROTECT, verbose_name="Audit Team Member")
-    audit_location = models.CharField(max_length=200, verbose_name="Audit Location")
+            "annual_program": self.annual_program.as_dict(),
+            "user": {
+                "id": self.user.id,
+                "username": self.user.username,
+                "first_name": self.user.first_name,
+                "last_name": self.user.last_name,
+                "email": self.user.email
+            }
+        }  class AnnualPlan(models.Model):
+    annual_program = models.ForeignKey(
+        AnnualProgram,
+        on_delete=models.PROTECT,
+        related_name="annual_plans",
+        verbose_name="Annual Program"
+    )
+    lider = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="annual_plans",
+        verbose_name="Audit Leader"
+    )
+    audit_opening_date = models.DateField(verbose_name="Audit Opening Date")
+    audit_opening_time = models.TimeField(verbose_name="Audit Opening Time")
+    audit_opening_location = models.TextField(verbose_name="Audit Opening Location")
+    audit_closing_date = models.DateField(verbose_name="Audit Closing Date")
+    audit_closing_time = models.TimeField(verbose_name="Audit Closing Time")
+    audit_closing_location = models.TextField(verbose_name="Audit Closing Location")
 
     def __str__(self):
-        return f"{self.requirement} - {self.audit_date} at {self.audit_time}" if self.requirement else f"Audit on {self.audit_date}"
+        return f"Audit Plan for {self.annual_program} ({self.audit_opening_date} to {self.audit_closing_date})"
 
     class Meta:
-        db_table = 'tb_associated_elements'
+        db_table = 'tb_audit_annual_plan'
 
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
-            "audit_date": self.audit_date,
-            "audit_time": self.audit_time,
-            "audit_team_member": self.audit_team_member.as_dict(),
-            "audit_location": self.audit_location,
+            "annual_program": self.annual_program.as_dict(),
+            "lider": {
+                "id": self.lider.id,
+                "username": self.lider.username,
+                "first_name": self.lider.first_name,
+                "last_name": self.lider.last_name,
+                "email": self.lider.email
+            },
+            "audit_opening_date": self.audit_opening_date,
+            "audit_opening_time": self.audit_opening_time,
+            "audit_opening_location": self.audit_opening_location,
+            "audit_closing_date": self.audit_closing_date,
+            "audit_closing_time": self.audit_closing_time,
+            "audit_closing_location": self.audit_closing_location,
+        }
+ class AnnualPlanAuditor(models.Model):
+    annual_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.PROTECT,
+        related_name="auditors",
+        verbose_name="Audit Plan"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="auditors",
+        verbose_name="Auditor"
+    )
+
+    class Meta:
+        db_table = 'tb_audit_annual_plan_auditors'
+        unique_together = ('annual_plan', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} is an auditor for {self.annual_plan}"
+
+    def as_dict(self):
+        return {
+            "audit_id": self.annual_plan.id,
+            "user_id": self.user.id,
+            "username": self.user.username,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "email": self.user.email,
+        }
+ class AnnualPlanAudited(models.Model):
+    annual_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.PROTECT,
+        related_name="audited_users",
+        verbose_name="Audit Plan"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="audited_users",
+        verbose_name="Audited User"
+    )
+
+    class Meta:
+        db_table = 'tb_audit_annual_plan_audited'
+        unique_together = ('annual_plan', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} is audited for {self.annual_plan}"
+
+    def as_dict(self):
+        return {
+            "audit_id": self.annual_plan.id,
+            "user_id": self.user.id,
+            "username": self.user.username,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "email": self.user.email,
+        }
+  class Checklist(models.Model):
+    audit_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.PROTECT,
+        related_name="checklists",
+        verbose_name="Audit Plan"
+    )
+    question = models.ForeignKey(
+        'ChecklistQuestion',  # Aquí asumimos que existe la tabla ChecklistQuestion
+        on_delete=models.PROTECT,
+        related_name="checklists",
+        verbose_name="Question"
+    )
+    orden = models.PositiveSmallIntegerField(verbose_name="Order")
+    compliance = models.BooleanField(verbose_name="Compliance")
+    evidence = models.TextField(verbose_name="Objective Evidence", null=True, blank=True)
+
+    def __str__(self):
+        return f"Checklist for {self.question.question_text}"
+
+    class Meta:
+        db_table = 'tb_audit_checklist'
+        ordering = ['orden']
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "audit_id": self.audit_plan.id,
+            "question_id": self.question.id,
+            "question_text": self.question.question_text,
+            "orden": self.orden,
+            "compliance": self.compliance,
+            "evidence": self.evidence,
         }
 
-class Checklist(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    question_text = models.CharField(max_length=500, verbose_name="Question Text")
-    order = models.IntegerField(verbose_name="Order")
 
-    objective_evidence = models.TextField(verbose_name="Objective Evidence", null=True, blank=True)
-    compliance = models.TextField(verbose_name="Compliance", null=True, blank=True)
+class AuditorEvaluation(models.Model):
+    audit = models.ForeignKey(
+        'AuditPlan',
+        on_delete=models.PROTECT,
+        related_name="auditor_evaluations",
+        verbose_name="Audit"
+    )
+    question = models.ForeignKey(
+        'AuditedEvaluationQuestion',
+        on_delete=models.PROTECT,
+        related_name="auditor_evaluations",
+        verbose_name="Question"
+    )
+    orden = models.SmallIntegerField(verbose_name="Order in Checklist")
+    rate = models.IntegerField(verbose_name="Assigned Rating")
+
+    def __str__(self):
+        return f"Evaluation for {self.question.question_text} on {self.audit}"
+
+    class Meta:
+        db_table = 'tb_audit_auditor_evaluation'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "audit": self.audit.as_dict(),
+            "question": self.question.as_dict(),
+            "orden": self.orden,
+            "rate": self.rate,
+        }
+  class AuditedEvaluationQuestion(models.Model):
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Requirement"
+    )
+    question_text = models.TextField(verbose_name="Question Text")
 
     def __str__(self):
         return self.question_text
 
     class Meta:
-        db_table = 'tb_checklist'
-        ordering = ['order']
+        db_table = 'tb_audit_checklist_questions'
 
     def as_dict(self):
         return {
             "id": self.id,
             "requirement": self.requirement.as_dict() if self.requirement else None,
             "question_text": self.question_text,
-            "order": self.order,
-            "objective_evidence": self.objective_evidence,
-            "compliance": self.compliance,
         }
 
-class AuditorEvaluation(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
-    evaluation_date = models.DateField(verbose_name="Evaluation Date")
+class LeadAuditorEvaluationQuestion(models.Model):
+    question_text = models.TextField(verbose_name="Question Text")
+    type = models.TextField(choices=[('AUDITADO', 'AUDITADO'), ('AUDITOR_LIDER', 'AUDITOR_LIDER')], verbose_name="Type")
 
     def __str__(self):
-        return f"Evaluation on {self.evaluation_date}"
+        return self.question_text
 
     class Meta:
-        db_table = 'tb_auditor_evaluation'
+        db_table = 'tb_audit_auditor_questions'
 
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
-            "evaluation_date": self.evaluation_date,
+            "question_text": self.question_text,
+            "type": self.type,
         }
     
 class Findings(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
+    report = models.ForeignKey(
+        'AuditReport',  # Relacionado con el modelo AuditReport
+        on_delete=models.PROTECT,
+        verbose_name="Audit Report"
+    )
+    requirement = models.ForeignKey(
+        'Requirement',  # Relacionado con los requisitos de la norma
+        on_delete=models.PROTECT,
+        null=True, 
+        blank=True,
+        verbose_name="Requirement"
+    )
     finding_text = models.TextField(verbose_name="Finding")
-    classification = models.IntegerField(verbose_name="Finding Classification", choices=[(i, str(i)) for i in range(6)])  
+    classification = models.CharField(
+        max_length=20,
+        verbose_name="Finding Classification",
+        choices=[
+            ('NC_MAYOR', 'NC_MAYOR'),
+            ('NC_MENOR', 'NC_MENOR'),
+            ('OPORTUNIDAD_MEJORA', 'OPORTUNIDAD_MEJORA'),
+        ]
+    )
 
     def __str__(self):
         return self.finding_text[:50]
 
     class Meta:
-        db_table = 'tb_findings'
+        db_table = 'tb_audit_findings'
 
     def clean(self):
-        if self.classification < 0 or self.classification > 5:
-            raise ValidationError('Classification must be between 0 and 5.')
+        if self.classification not in ['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']:
+            raise ValidationError('Invalid classification value.')
 
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "report_id": self.report.id,  # Relacionado con el ID del reporte de auditoría
+            "requirement_id": self.requirement.id if self.requirement else None,
             "finding_text": self.finding_text,
             "classification": self.classification,
         }
 
 
 class AuditReport(models.Model):
-    requirement = models.ForeignKey(Requirement, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Requirement")
+    audit = models.ForeignKey(
+        'AnnualProgram', 
+        on_delete=models.PROTECT,
+        verbose_name="Audit Plan"
+    )
     summary = models.TextField(verbose_name="Summary of Audit Development")
     strengths = models.TextField(verbose_name="Strengths")
 
     def __str__(self):
-        return self.summary[:50]  
+        return self.summary[:50]
 
     class Meta:
         db_table = 'tb_audit_report'
@@ -347,7 +394,7 @@ class AuditReport(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "audit_id": self.audit.id,  # Relacionado con el ID del plan de auditoría
             "summary": self.summary,
             "strengths": self.strengths,
         }
