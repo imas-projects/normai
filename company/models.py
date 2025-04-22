@@ -3,42 +3,6 @@ from django.contrib.auth.models import User
 
 # Modelos generales aplicables a varias aplicaciones.
 
-#Areas
-class Area(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Area Name")
-    users = models.ManyToManyField(User, related_name="users", verbose_name="Area Users")  # Un área puede tener varios usuarios y cada usuario estar en más de un area
-    
-    class Meta:
-        db_table = 'tb_company_area'
-    
-    def __str__(self):
-        return self.name
-    
-    def as_dict(self):
-        return {"id": self.id, "name": self.name}
-    
-#Posiciones
-class Position(models.Model):
-    name=models.TextField()
-    code=models.TextField()
-    area=models.ForeignKey(Area, on_delete=models.PROTECT, related_name="areas")
-
-    class Meta:
-        db_table = 'tb_company_position'
-
-    def __str__(self):
-        return self.name
-    
-#Roles
-class Rol(models.Model):
-    name=models.TextField()
-
-    class Meta:
-        db_table = 'tb_company_rol'
-
-    def __str__(self):
-        return self.name
-
 #Tipos de documentos
 class DocumentationType(models.Model):
     type = models.TextField()
@@ -93,19 +57,7 @@ class Area(models.Model):
     
     def as_dict(self):
         return {"id": self.id, "name": self.name}
-    
-#Posiciones
-class Position(models.Model):
-    name=models.TextField()
-    code=models.TextField()
-    area=models.ForeignKey(Area, on_delete=models.PROTECT, related_name="areas")
 
-    class Meta:
-        db_table = 'tb_company_position'
-
-    def __str__(self):
-        return self.name
-    
 #Roles
 class Rol(models.Model):
     name=models.TextField()
@@ -115,3 +67,17 @@ class Rol(models.Model):
 
     def __str__(self):
         return self.name
+
+#Posiciones
+class Position(models.Model):
+    name=models.TextField()
+    code=models.TextField()
+    area=models.ForeignKey(Area, on_delete=models.PROTECT, related_name="areas")
+    rol=models.ForeignKey(Rol, on_delete=models.PROTECT, related_name="roles", null=True)
+
+    class Meta:
+        db_table = 'tb_company_position'
+
+    def __str__(self):
+        return self.name
+    

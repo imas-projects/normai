@@ -1,6 +1,12 @@
 from django.contrib import admin
-#from .models import 
-# Register your models here.
-#areas, grupos, departamentos, documentacion
+from . import models
 
-#admin.site.register(Area)
+# Register your models here.
+
+admin.site.register(models.Area)
+admin.site.register(models.Position)
+admin.site.register(models.Rol)
+admin.site.register(models.ExternalClient)
+admin.site.register(models.ExternalSupplier)
+admin.site.register(models.Documentation)
+admin.site.register(models.DocumentationType)
