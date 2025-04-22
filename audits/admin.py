@@ -1,23 +1,13 @@
 from django.contrib import admin
-from .models import (
-    AuditRole, AuditTeam,
-    Requirement, Checklist, Audited, AuditedEvaluationQuestion,
-    LeadAuditorEvaluationQuestion, AuditProgramHeader, AnnualProgram,
-    AuditPlanHeader, AssociatedElements, AuditorEvaluation,
-    Findings, AuditReport
-)
+from . import models
 
-admin.site.register(Position)
-admin.site.register(AuditRole)
-admin.site.register(AuditTeam)
-admin.site.register(Checklist)
-admin.site.register(Audited)
-admin.site.register(AuditedEvaluationQuestion)
-admin.site.register(LeadAuditorEvaluationQuestion)
-admin.site.register(AuditProgramHeader)
-admin.site.register(AnnualProgram)
-admin.site.register(AuditPlanHeader)
-admin.site.register(AssociatedElements)
-admin.site.register(AuditorEvaluation)
-admin.site.register(Findings)
-admin.site.register(AuditReport)
+# Registrar los modelos del sistema de auditoría
+admin.site.register(models.AuditProgramHeader)
+admin.site.register(models.Process)
+admin.site.register(models.ProcessRequirement)
+admin.site.register(models.AnnualProgram)
+admin.site.register(models.AnnualProgramUser)
+admin.site.register(models.AnnualPlan)
+admin.site.register(models.AnnualPlanAuditor)
+admin.site.register(models.Findings)
+admin.site.register(models.AuditReport)
