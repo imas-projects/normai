@@ -1,3 +1,4 @@
+'''
 from django.urls import path
 from . import views
 from .views import audits_home, annual_audit_program, annual_audit_plan, conduct_internal_audits, add_audit_team, add_audited, add_audited_evaluation_question
@@ -28,3 +29,4 @@ urlpatterns = [
     path('get-audited-questions/<int:requirement_id>/', get_audited_questions, name='get_audited_questions'),
     path('get-lead-auditor-questions/<int:requirement_id>/', get_lead_auditor_questions, name='get_lead_auditor_questions'),
 ]
+'''
