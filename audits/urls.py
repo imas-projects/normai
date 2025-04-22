@@ -1,3 +1,12 @@
+# audits/urls.py
+from django.urls import path
+
+app_name = 'audits'
+
+# Deja la lista de URL vacía si no estás definiendo ninguna URL en este momento
+urlpatterns = []
+
+
 '''
 from django.urls import path
 from . import views
