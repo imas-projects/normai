@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
+from company.models import Area
+from company.models import Requirement
+
 
 class AuditProgramHeader(models.Model):
     year = models.IntegerField(verbose_name="Year")
