@@ -1,3 +1,4 @@
+'''
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation
 from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm, ContingencyPlanForm, ReevaluationForm
@@ -308,3 +309,4 @@ def generate_risks_pdf(request, department_name):
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"risks_{department.name}.pdf")
+    '''
