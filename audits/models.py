@@ -219,13 +219,13 @@ class AnnualPlanAudited(models.Model):
 
 class Checklist(models.Model):
     audit_plan = models.ForeignKey(
-        AnnualPlan,
+        AnnualPlan,  
         on_delete=models.PROTECT,
         related_name="checklists",
         verbose_name="Audit Plan"
     )
     question = models.ForeignKey(
-        'ChecklistQuestion',  
+        'AuditedEvaluationQuestion',  
         on_delete=models.PROTECT,
         related_name="checklists",
         verbose_name="Question"
@@ -251,6 +251,7 @@ class Checklist(models.Model):
             "compliance": self.compliance,
             "evidence": self.evidence,
         }
+
 class AuditedEvaluationQuestion(models.Model):
     requirement = models.ForeignKey(
         Requirement,
@@ -275,13 +276,13 @@ class AuditedEvaluationQuestion(models.Model):
         }
 class AuditorEvaluation(models.Model):
     audit = models.ForeignKey(
-        'AuditPlan',
+        'AnnualPlan',  
         on_delete=models.PROTECT,
         related_name="auditor_evaluations",
         verbose_name="Audit"
     )
     question = models.ForeignKey(
-        'AuditedEvaluationQuestion',
+        'AuditedEvaluationQuestion',  
         on_delete=models.PROTECT,
         related_name="auditor_evaluations",
         verbose_name="Question"
