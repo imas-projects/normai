@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-from company.models import Area, Requirement  # Importación correcta del modelo Requirement
+from company.models import Area, Requirement  
+from processes.models import Process
+
 
 class AuditProgramHeader(models.Model):
     year = models.IntegerField(verbose_name="Year")
@@ -25,35 +27,13 @@ class AuditProgramHeader(models.Model):
             "security_standards": self.security_standards,
         }
 
-class Process(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Process Name")
-    requirements = models.ManyToManyField(
-        'company.Requirement',  # Referencia correcta a 'company.Requirement'
-        through='ProcessRequirement',
-        related_name="processes",
-        verbose_name="Associated Requirements"
-    )
-
-    class Meta:
-        db_table = 'tb_audit_process'
-
-    def __str__(self):
-        return self.name
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "requirements": [r.as_dict() for r in self.requirements.all()],
-        }
-
 class ProcessRequirement(models.Model):
     process = models.ForeignKey(
         Process,
         on_delete=models.CASCADE
     )
     requirement = models.ForeignKey(
-        'company.Requirement',  # Correcto: Referencia a 'company.Requirement'
+        'company.Requirement',  
         on_delete=models.CASCADE
     )
 
@@ -74,7 +54,7 @@ class AnnualProgram(models.Model):
     process = models.ForeignKey(
         Process,
         on_delete=models.PROTECT,
-        related_name="annual_programs",
+        related_name="audit_annual_programs",
         verbose_name="Process"
     )
     month = models.PositiveSmallIntegerField(verbose_name="Month")
@@ -89,7 +69,11 @@ class AnnualProgram(models.Model):
         return {
             "id": self.id,
             "program_header": self.program_header.as_dict(),
-            "process": self.process.as_dict(),
+            "process": {
+                "id": self.process.id,
+                "name": self.process.name,
+                "code": self.process.process_code
+            }
             "month": self.month,
         }
 
@@ -202,15 +186,150 @@ class AnnualPlanAuditor(models.Model):
             "last_name": self.user.last_name,
             "email": self.user.email,
         }
+class AnnualPlanAudited(models.Model):
+    annual_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.PROTECT,
+        related_name="audited_users",
+        verbose_name="Audit Plan"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="audited_users",
+        verbose_name="Audited User"
+    )
+
+    class Meta:
+        db_table = 'tb_audit_annual_plan_audited'
+        unique_together = ('annual_plan', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} is audited for {self.annual_plan}"
+
+    def as_dict(self):
+        return {
+            "audit_id": self.annual_plan.id,
+            "user_id": self.user.id,
+            "username": self.user.username,
+            "first_name": self.user.first_name,
+            "last_name": self.user.last_name,
+            "email": self.user.email,
+        }
+
+class Checklist(models.Model):
+    audit_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.PROTECT,
+        related_name="checklists",
+        verbose_name="Audit Plan"
+    )
+    question = models.ForeignKey(
+        'ChecklistQuestion',  
+        on_delete=models.PROTECT,
+        related_name="checklists",
+        verbose_name="Question"
+    )
+    orden = models.PositiveSmallIntegerField(verbose_name="Order")
+    compliance = models.BooleanField(verbose_name="Compliance")
+    evidence = models.TextField(verbose_name="Objective Evidence", null=True, blank=True)
+
+    def __str__(self):
+        return f"Checklist for {self.question.question_text}"
+
+    class Meta:
+        db_table = 'tb_audit_checklist'
+        ordering = ['orden']
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "audit_id": self.audit_plan.id,
+            "question_id": self.question.id,
+            "question_text": self.question.question_text,
+            "orden": self.orden,
+            "compliance": self.compliance,
+            "evidence": self.evidence,
+        }
+class AuditedEvaluationQuestion(models.Model):
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name="Requirement"
+    )
+    question_text = models.TextField(verbose_name="Question Text")
+
+    def __str__(self):
+        return self.question_text
+
+    class Meta:
+        db_table = 'tb_audit_checklist_questions'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "question_text": self.question_text,
+        }
+class AuditorEvaluation(models.Model):
+    audit = models.ForeignKey(
+        'AuditPlan',
+        on_delete=models.PROTECT,
+        related_name="auditor_evaluations",
+        verbose_name="Audit"
+    )
+    question = models.ForeignKey(
+        'AuditedEvaluationQuestion',
+        on_delete=models.PROTECT,
+        related_name="auditor_evaluations",
+        verbose_name="Question"
+    )
+    orden = models.SmallIntegerField(verbose_name="Order in Checklist")
+    rate = models.IntegerField(verbose_name="Assigned Rating")
+
+    def __str__(self):
+        return f"Evaluation for {self.question.question_text} on {self.audit}"
+
+    class Meta:
+        db_table = 'tb_audit_auditor_evaluation'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "audit": self.audit.as_dict(),
+            "question": self.question.as_dict(),
+            "orden": self.orden,
+            "rate": self.rate,
+        }
+
+class LeadAuditorEvaluationQuestion(models.Model):
+    question_text = models.TextField(verbose_name="Question Text")
+    type = models.TextField(choices=[('AUDITADO', 'AUDITADO'), ('AUDITOR_LIDER', 'AUDITOR_LIDER')], verbose_name="Type")
+
+    def __str__(self):
+        return self.question_text
+
+    class Meta:
+        db_table = 'tb_audit_auditor_questions'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "question_text": self.question_text,
+            "type": self.type,
+        }
+
 
 class Findings(models.Model):
     report = models.ForeignKey(
-        'AuditReport',  # Relacionado con el modelo AuditReport
+        'AuditReport',  
         on_delete=models.PROTECT,
         verbose_name="Audit Report"
     )
     requirement = models.ForeignKey(
-        'company.Requirement',  # Referencia correcta a 'company.Requirement'
+        'company.Requirement', 
         on_delete=models.PROTECT,
         null=True, 
         blank=True,
@@ -240,7 +359,7 @@ class Findings(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "report_id": self.report.id,  # Relacionado con el ID del reporte de auditoría
+            "report_id": self.report.id,  
             "requirement_id": self.requirement.id if self.requirement else None,
             "finding_text": self.finding_text,
             "classification": self.classification,
@@ -264,7 +383,7 @@ class AuditReport(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audit_id": self.audit.id,  # Relacionado con el ID del plan de auditoría
+            "audit_id": self.audit.id,  
             "summary": self.summary,
             "strengths": self.strengths,
         }
