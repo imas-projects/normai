@@ -5,9 +5,8 @@ from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
-from audits.models import Area
+from company.models import Area
 from django.contrib.auth.models import Group, User
-from risks.models import Department
 from django.http import JsonResponse
 import json
 
@@ -29,6 +28,7 @@ def communication_check(user):
 @csrf_protect
 @login_required
 #@user_passes_test(communication_check)
+'''
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
@@ -347,3 +347,4 @@ def communication_table_review(request):
     #return JsonResponse({"success": False, "error": "Error al actualizar la tabla"})
 
     return render(request,"mistemplates/communication-tables-review.html", context)
+    '''
