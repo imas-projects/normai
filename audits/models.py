@@ -73,7 +73,7 @@ class AnnualProgram(models.Model):
                 "id": self.process.id,
                 "name": self.process.name,
                 "code": self.process.process_code
-            }
+            },
             "month": self.month,
         }
 
