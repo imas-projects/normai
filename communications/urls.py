@@ -7,6 +7,10 @@ app_name = 'communications'
 urlpatterns = [
    
     #path('com-table',views.communication_table_view,name='communication_table_view'),
+
+  ]
+
+
 '''
     path('all-messages', views.all_messages, name='all_messages'),
     path('received-messages', views.user_received_messages, name='received_messages'),
@@ -23,7 +27,3 @@ urlpatterns = [
     path('delete-message/<int:id>/', views.delete_message, name='delete-message'),
     path('create-message/', views.create_message, name='create-message'),
 '''
-
-  ]
-
-
