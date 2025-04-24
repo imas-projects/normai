@@ -6,6 +6,8 @@ from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluat
 app_name = 'risks'
 
 urlpatterns = [
+
+  ]
     '''
     path('download-risks-pdf/<str:department_name>/', generate_risks_pdf, name='download_risks_pdf'),
     path('', create_risk, name='risks'),
@@ -20,4 +22,3 @@ urlpatterns = [
     path('edit-contingency-plan/<int:risk_id>/', edit_contingency_plan, name='edit-contingency-plan'),
     path('edit-reevaluation/<int:risk_id>/', edit_reevaluation, name='edit-reevaluation'),
     '''
-  ]
