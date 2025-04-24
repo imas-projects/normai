@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation, Department
+from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation
 from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm, ContingencyPlanForm, ReevaluationForm
 from django.http import JsonResponse
 from django.contrib import messages
@@ -18,11 +18,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 
 def create_risk(request):
-    all_risks = RiskIdentification.objects.all()
-    
+    all_risks = RiskIdentification.objects.select_related('area__department').all()
+
     grouped_risks = {}
     for risk in all_risks:
-        department = risk.department
+        department = risk.area.department 
         if department not in grouped_risks:
             grouped_risks[department] = []
         grouped_risks[department].append(risk)
@@ -32,7 +32,6 @@ def create_risk(request):
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
     reevaluations = Reevaluation.objects.select_related('risk').all()
 
-    print(grouped_risks)
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
         'evaluations': evaluations,
@@ -40,6 +39,7 @@ def create_risk(request):
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
+
 
 def add_risk_identification(request):
     if request.method == 'POST':
