@@ -98,7 +98,7 @@ class ProcessMeasurement(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE)
     measurement_process_parameter = models.TextField()
     measurement_process_range = models.TextField(blank=True, null=True)
-    measurement_process_range = models.TextField(blank=True, null=True)
+    measurement_process_equipment = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'tb_process_measurement_process'
@@ -111,7 +111,7 @@ class ProductMeasurement(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE)
     measurement_product_parameter = models.TextField()
     measurement_product_range = models.TextField(blank=True, null=True)
-    measurement_product_range = models.TextField(blank=True, null=True)
+    measurement_product_equipment = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'tb_process_measurement_product'
