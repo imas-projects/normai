@@ -1,9 +1,10 @@
-'''
 from django import forms
 from django.contrib.auth.models import User
-from .models import AuditTeam, AuditedEvaluationQuestion, LeadAuditorEvaluationQuestion
-from .models import AuditProgramHeader, AnnualProgram, AuditPlanHeader, Audited, AssociatedElements
-from .models import Checklist, AuditorEvaluation, Findings, AuditReport, Requirement, Area
+from .models import (
+    AuditTeam, AuditProgramHeader, AnnualProgram, AuditPlanHeader,
+    Audited, AssociatedElements, Checklist, Findings, AuditReport,
+    Requirement, Area
+)
 
 
 class AuditTeamForm(forms.ModelForm):
@@ -15,118 +16,43 @@ class AuditTeamForm(forms.ModelForm):
 
     class Meta:
         model = AuditTeam
-        fields = ['person', 'role']
+        fields = ['person', 'role', 'is_lead']
         widgets = {
             'role': forms.Select(attrs={'class': 'form-control'}),
-        }
-
-
-class AuditedEvaluationQuestionForm(forms.ModelForm):
-    class Meta:
-        model = AuditedEvaluationQuestion
-        fields = ['requirement', 'question_text', 'order', 'rating']
-        widgets = {
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
-            'question_text': forms.Textarea(attrs={'placeholder': 'Enter question...', 'class': 'form-control', 'rows': 3}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rating': forms.TextInput(attrs={'placeholder': 'Enter rating...', 'class': 'form-control'}),
-        }
-
-
-class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
-    class Meta:
-        model = LeadAuditorEvaluationQuestion
-        fields = ['requirement', 'question_text', 'order', 'rating']
-        widgets = {
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
-            'question_text': forms.Textarea(attrs={'placeholder': 'Enter question...', 'class': 'form-control', 'rows': 3}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rating': forms.TextInput(attrs={'placeholder': 'Enter rating...', 'class': 'form-control'}),
+            'is_lead': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 
 class AuditProgramHeaderForm(forms.ModelForm):
     class Meta:
         model = AuditProgramHeader
-        fields = ['objective', 'scope', 'audit_criteria', 'security_standards']
+        fields = ['objective', 'scope', 'audit_criteria', 'security_standards', 'start_date', 'end_date']
         widgets = {
-            'objective': forms.Textarea(attrs={'placeholder': 'Enter objective...', 'class': 'form-control', 'rows': 3}),
-            'scope': forms.Textarea(attrs={'placeholder': 'Enter scope...', 'class': 'form-control', 'rows': 3}),
-            'audit_criteria': forms.Textarea(attrs={'placeholder': 'Enter audit criteria...', 'class': 'form-control', 'rows': 3}),
-            'security_standards': forms.Textarea(attrs={'placeholder': 'Enter security standards...', 'class': 'form-control', 'rows': 3}),
+            'objective': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'scope': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'audit_criteria': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'security_standards': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
 
 class AuditPlanHeaderForm(forms.ModelForm):
     class Meta:
         model = AuditPlanHeader
-        fields = ['opening_meeting_location', 'opening_meeting_date_time', 'closing_meeting_location', 'closing_meeting_date_time']
+        fields = [
+            'opening_meeting_location', 'opening_meeting_date_time',
+            'closing_meeting_location', 'closing_meeting_date_time',
+            'reviewed_by', 'approved_by'
+        ]
         widgets = {
-            'opening_meeting_location': forms.TextInput(attrs={'placeholder': 'Location of opening meeting', 'class': 'form-control'}),
+            'opening_meeting_location': forms.TextInput(attrs={'class': 'form-control'}),
             'opening_meeting_date_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'closing_meeting_location': forms.TextInput(attrs={'placeholder': 'Location of closing meeting', 'class': 'form-control'}),
+            'closing_meeting_location': forms.TextInput(attrs={'class': 'form-control'}),
             'closing_meeting_date_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'reviewed_by': forms.Select(attrs={'class': 'form-control'}),
+            'approved_by': forms.Select(attrs={'class': 'form-control'}),
         }
-
-
-class AuditorEvaluationForm(forms.ModelForm):
-    class Meta:
-        model = AuditorEvaluation
-        fields = ['requirement', 'evaluation_date']
-        widgets = {
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
-            'evaluation_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
-
-
-class AuditReportForm(forms.ModelForm):
-    class Meta:
-        model = AuditReport
-        fields = ['requirement', 'summary', 'strengths']
-        widgets = {
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
-            'summary': forms.Textarea(attrs={'placeholder': 'Summary of the audit...', 'class': 'form-control', 'rows': 3}),
-            'strengths': forms.Textarea(attrs={'placeholder': 'Strength', 'class': 'form-control', 'rows': 3}),
-        }
-
-
-class RequirementChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        prefix = ""
-        current = obj
-        while current:
-            prefix += "-- "
-            current = current.parent
-        return f"{prefix}{obj.name}"
-
-
-class UnifiedRequirementForm(forms.ModelForm):
-    new_requirement_name = forms.CharField(
-        max_length=200,
-        required=True,
-        label="New Requirement Name",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter new requirement...'})
-    )
-
-    parent = forms.ModelChoiceField(
-        queryset=Requirement.objects.all(),
-        required=False,
-        label="Parent Requirement",
-        widget=forms.Select(attrs={'class': 'form-control'}),
-    )
-
-    class Meta:
-        model = Requirement
-        fields = ['new_requirement_name', 'parent']
-
-    def save(self, commit=True):
-        new_requirement = Requirement(
-            name=self.cleaned_data['new_requirement_name'],
-            parent=self.cleaned_data['parent']
-        )
-        if commit:
-            new_requirement.save()
-        return new_requirement
 
 
 class AnnualProgramForm(forms.ModelForm):
@@ -183,23 +109,77 @@ class AssociatedElementsForm(forms.ModelForm):
 class ChecklistForm(forms.ModelForm):
     class Meta:
         model = Checklist
-        fields = ['requirement', 'question_text', 'order', 'objective_evidence', 'compliance']
+        fields = ['requirement', 'question_text', 'order', 'objective_evidence', 'compliance', 'rating']
         widgets = {
             'requirement': forms.Select(attrs={'class': 'form-control'}),
             'question_text': forms.Textarea(attrs={'placeholder': 'Enter question...', 'class': 'form-control', 'rows': 3}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'objective_evidence': forms.Textarea(attrs={'placeholder': 'Enter objective evidence...', 'class': 'form-control', 'rows': 3}),
             'compliance': forms.Textarea(attrs={'placeholder': 'Enter compliance details...', 'class': 'form-control', 'rows': 3}),
+            'rating': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Rating'}),
         }
 
 
 class FindingsForm(forms.ModelForm):
     class Meta:
         model = Findings
-        fields = ['requirement', 'finding_text', 'classification']
+        fields = ['requirement', 'finding_text', 'classification', 'corrective_action', 'root_cause']
         widgets = {
             'requirement': forms.Select(attrs={'class': 'form-control'}),
             'finding_text': forms.Textarea(attrs={'placeholder': 'Describe the finding...', 'class': 'form-control', 'rows': 3}),
-            'classification': forms.Select(choices=[(i, str(i)) for i in range(6)], attrs={'class': 'form-control'}),
+            'classification': forms.Select(attrs={'class': 'form-control'}),
+            'corrective_action': forms.Textarea(attrs={'placeholder': 'Corrective action...', 'class': 'form-control', 'rows': 3}),
+            'root_cause': forms.Textarea(attrs={'placeholder': 'Root cause...', 'class': 'form-control', 'rows': 3}),
         }
-'''
+
+
+class AuditReportForm(forms.ModelForm):
+    class Meta:
+        model = AuditReport
+        fields = ['requirement', 'summary', 'strengths', 'opportunities_for_improvement', 'nonconformities']
+        widgets = {
+            'requirement': forms.Select(attrs={'class': 'form-control'}),
+            'summary': forms.Textarea(attrs={'placeholder': 'Summary of the audit...', 'class': 'form-control', 'rows': 3}),
+            'strengths': forms.Textarea(attrs={'placeholder': 'Strengths...', 'class': 'form-control', 'rows': 3}),
+            'opportunities_for_improvement': forms.Textarea(attrs={'placeholder': 'Opportunities for improvement...', 'class': 'form-control', 'rows': 3}),
+            'nonconformities': forms.Textarea(attrs={'placeholder': 'Nonconformities...', 'class': 'form-control', 'rows': 3}),
+        }
+
+
+class RequirementChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        prefix = ""
+        current = obj
+        while current and current.parent:
+            prefix += "-- "
+            current = current.parent
+        return f"{prefix}{obj.name}"
+
+
+class UnifiedRequirementForm(forms.ModelForm):
+    new_requirement_name = forms.CharField(
+        max_length=200,
+        required=True,
+        label="New Requirement Name",
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter new requirement...'})
+    )
+
+    parent = RequirementChoiceField(
+        queryset=Requirement.objects.all(),
+        required=False,
+        label="Parent Requirement",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Requirement
+        fields = ['new_requirement_name', 'parent']
+
+    def save(self, commit=True):
+        new_requirement = Requirement(
+            name=self.cleaned_data['new_requirement_name'],
+            parent=self.cleaned_data['parent']
+        )
+        if commit:
+            new_requirement.save()
+        return new_requirement
