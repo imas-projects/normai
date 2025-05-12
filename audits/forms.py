@@ -1,26 +1,10 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    AuditTeam, AuditProgramHeader, AnnualProgram, AuditPlanHeader,
+    AuditProgramHeader, AnnualProgram, AuditPlanHeader,
     Audited, AssociatedElements, Checklist, Findings, AuditReport,
     Requirement, Area
 )
-
-
-class AuditTeamForm(forms.ModelForm):
-    person = forms.ModelChoiceField(
-        queryset=User.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label="Auditor"
-    )
-
-    class Meta:
-        model = AuditTeam
-        fields = ['person', 'role', 'is_lead']
-        widgets = {
-            'role': forms.Select(attrs={'class': 'form-control'}),
-            'is_lead': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
 
 
 class AuditProgramHeaderForm(forms.ModelForm):
@@ -89,15 +73,9 @@ class AuditedForm(forms.ModelForm):
 
 
 class AssociatedElementsForm(forms.ModelForm):
-    audit_team_member = forms.ModelChoiceField(
-        queryset=AuditTeam.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label="Audit Team Member"
-    )
-
     class Meta:
         model = AssociatedElements
-        fields = ['requirement', 'audit_date', 'audit_time', 'audit_team_member', 'audit_location']
+        fields = ['requirement', 'audit_date', 'audit_time', 'audit_location']
         widgets = {
             'requirement': forms.Select(attrs={'class': 'form-control'}),
             'audit_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -183,3 +161,4 @@ class UnifiedRequirementForm(forms.ModelForm):
         if commit:
             new_requirement.save()
         return new_requirement
+
