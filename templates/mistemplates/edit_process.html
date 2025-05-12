@@ -27,20 +27,16 @@
             {{ form.review_date }}
         </div>
         <div class="mb-3">
-            {{ form.sheet.label_tag }}
-            {{ form.sheet }}
-        </div>
-        <div class="mb-3">
             {{ form.responsible.label_tag }}
             {{ form.responsible }}
         </div>
         <div class="mb-3">
-            {{ form.positions.label_tag }}
-            {{ form.positions }}
+            {{ form.internal_suppliers.label_tag }}
+            {{ form.internal_suppliers }}
         </div>
         <div class="mb-3">
-            {{ form.suppliers.label_tag }}
-            {{ form.suppliers }}
+            {{ form.external_suppliers.label_tag }}
+            {{ form.external_suppliers }}
         </div>
         <div class="mb-3">
             {{ form.inputs.label_tag }}
@@ -51,28 +47,20 @@
             {{ form.outputs }}
         </div>
         <div class="mb-3">
-            {{ form.clients.label_tag }}
-            {{ form.clients }}
+            {{ form.internal_clients.label_tag }}
+            {{ form.internal_clients }}
         </div>
         <div class="mb-3">
-            {{ form.activities.label_tag }}
-            {{ form.activities }}
-        </div>
-        <div class="mb-3">
-            {{ form.resources.label_tag }}
-            {{ form.resources }}
+            {{ form.external_clients.label_tag }}
+            {{ form.external_clients }}
         </div>
         <div class="mb-3">
             {{ form.documents.label_tag }}
             {{ form.documents }}
         </div>
         <div class="mb-3">
-            {{ form.measurements.label_tag }}
-            {{ form.measurements }}
-        </div>
-        <div class="mb-3">
-            {{ form.indicators.label_tag }}
-            {{ form.indicators }}
+            {{ form.performance_indicators.label_tag }}
+            {{ form.performance_indicators }}
         </div>
 
         <button type="submit" class="btn btn-success">Save</button>

@@ -24,29 +24,13 @@ class CommunicationType(models.Model):
             "direction":self.direction,
         }
 
-'''
-# Tabla de departamentos
-class Department(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-       
-    class Meta:
-        db_table = 'tb_department'
-
-    def __str__(self):
-        return f"{self.name}"
-
-    def as_dict(self):
-        return {
-            "name":self.name,
-        }
-'''       
 
 # Tabla de canales de comunicacion
 class Channel(models.Model):
     name = models.CharField(max_length=50, unique=True)
        
     class Meta:
-        db_table = 'tb_channel'
+        db_table = 'tb_communication_channel'
 
     def __str__(self):
         return f"{self.name}"
@@ -62,7 +46,7 @@ class Periodicity(models.Model):
     name = models.CharField(max_length=50, unique=True)
        
     class Meta:
-        db_table = 'tb_periodicity'
+        db_table = 'tb_communication_periodicity'
 
     def __str__(self):
         return f"{self.name}"   
@@ -74,35 +58,54 @@ class Periodicity(models.Model):
 
 
 # Tabla de mensajes
-class Message(models.Model):
-    communication_type = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_type", verbose_name="Communication Type", null=False)
-    subject = models.CharField(max_length=240, verbose_name="Asunto del Mensaje", blank=False, null=False)
-    channels = models.ManyToManyField(Channel, related_name="channels", verbose_name="Communication Channel")
-    transmitter = models.ForeignKey(User, on_delete=models.PROTECT, related_name="transmitter", verbose_name="Emisor", null=False)
-    receivers = models.ManyToManyField(User, related_name="message_receivers", verbose_name="Receptor")
-    periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="message_periodicity", verbose_name="Periodicity of Communicaation", null=False)
-    creation_date = models.DateTimeField(auto_now_add=True, null=False)
-    update_date = models.DateTimeField(auto_now=True, null=True)
+class CommunicationMessage(models.Model):
+    type = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_type", verbose_name="Communication Type", null=False)
+    message = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_message", verbose_name="Communication Type", null=False)
+    table = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="Table", verbose_name="Table", null=False)
+    receiver = models.ForeignKey(User,on_delete=models.PROTECT,  related_name="communication_receivers", verbose_name="Receptor")
+    periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="communication_periodicity", verbose_name="Periodicity of Communication", null=False)
+    creation_date = models.DateTimeField(auto_now_add=True, null=True)
+    update_date = models.DateTimeField(auto_now_add=True, null=True)
     
     
     def __str__(self):
         return f"Message -> Subject:{self.subject}"
 
     class Meta:
-        db_table = 'tb_message'  # Nombre de la tabla
+        db_table = 'tb_communication_messages'  # Nombre de la tabla
         
 
     def as_dict(self):
         return {
             "id": self.id,
-            "communication_type": self.communication_type.as_dict(),
-            "subject": self.subject,
-            "channels": [channel.as_dict() for channel in self.channels.all()],
-            "transmitter": self.transmitter,
-            "receivers": [receiver for receiver in self.receivers.all()],
+            "type": self.type.as_dict(),
+            "table":self.table,
+            "message": self.message,
             "periodicity": self.periodicity.as_dict(),
         }
 
+class Message(models.Model):
+    name = models.CharField(max_length=240, verbose_name="Asunto del Mensaje", blank=False, null=False)
+    
+    def __str__(self):
+        return f"Message -> Subject:{self.name}"
+
+    class Meta:
+        db_table = 'tb_communication_message'  # Nombre de la tabla
+        
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+        }
+
+class MessageChanel(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message", verbose_name="Message", null=False)
+    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="channel", verbose_name="Channel", null=False)
+
+    class Meta:
+        db_table = 'tb_communication_channels'  # Nombre de la tabla
 
 # Tabla de tablas de comunicacion
 class CommunicationTable(models.Model):
@@ -122,12 +125,12 @@ class CommunicationTable(models.Model):
     code = models.CharField(max_length=50, validators=[code_validator], blank=False, unique=True) # Codigo de la tabla
     review_number = models.SmallIntegerField() # Revision
     review_date = models.DateField() # Fecha, formato estandar de Django y/m/d, esto se puede cambiar en html o formularios, pero no en modelo
-    messages = models.ManyToManyField(Message, related_name="messages") # Message. Relacion many-to-many para poder almacenar todos los mensajes necesarios
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="created_by", blank=False) # Elaborado por
     reviewed_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="reviewed_by", blank=True, null=True) # Revisado por
     approved_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="approved_by", blank=True, null=True) # Aprobado por
+    emiter = models.ForeignKey(User, on_delete=models.PROTECT, related_name="emiter", blank=True, null=True)
     area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="area", blank=True, null=True) 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')   
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', null=True)   
 
     class Meta:
         db_table = 'tb_communication_table'  # Nombre de la tabla
@@ -150,13 +153,13 @@ class CommunicationTable(models.Model):
             "code": self.code,
             "review_number": self.review_number,
             "review_date": self.review_date,
-            "messages": [message.as_dict() for message in self.messages.all()],
             "created_by": self.created_by,
             "reviewed_by": self.reviewed_by,
             "approved_by": self.approved_by,
         }    
 
 #Formularios
+'''
 class MessageForm(forms.ModelForm): #Crea un formulario a partir del modelo ya creado
     class Meta:
        model = Message
@@ -168,3 +171,4 @@ class MessageForm(forms.ModelForm): #Crea un formulario a partir del modelo ya c
            "receivers",
            "periodicity"
         ]
+'''

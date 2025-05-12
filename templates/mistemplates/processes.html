@@ -57,14 +57,19 @@
                     {% if process.review_date %}
                     <p><strong>Review:</strong> {{ process.review }} on {{ process.review_date }}</p>
                     {% endif %}
-                    <p><strong>Sheet:</strong> {{ process.sheet }}</p>
 
                     <hr>
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Suppliers:</h6>
+                            <h6>Internal Suppliers:</h6>
                             <ul>
-                                {% for supplier in process.suppliers.all %}
+                                {% for supplier in process.internal_suppliers.all %}
+                                <li>{{ supplier.name }}</li>
+                                {% endfor %}
+                            </ul>
+                            <h6>External Suppliers:</h6>
+                            <ul>
+                                {% for supplier in process.external_suppliers.all %}
                                 <li>{{ supplier.name }}</li>
                                 {% endfor %}
                             </ul>
@@ -74,29 +79,44 @@
                                 <li>{{ input.description }}</li>
                                 {% endfor %}
                             </ul>
-                            <h6>Resources:</h6>
-                            <ul>
-                                {% for resource in process.resources.all %}
-                                <li>{{ resource.description }} ({{ resource.type }})</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Clients:</h6>
-                            <ul>
-                                {% for client in process.clients.all %}
-                                <li>{{ client.name }}</li>
-                                {% endfor %}
-                            </ul>
                             <h6>Outputs:</h6>
                             <ul>
                                 {% for output in process.outputs.all %}
                                 <li>{{ output.description }}</li>
                                 {% endfor %}
                             </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Internal Clients:</h6>
+                            <ul>
+                                {% for client in process.internal_clients.all %}
+                                <li>{{ client.name }}</li>
+                                {% endfor %}
+                            </ul>
+                            <h6>External Clients:</h6>
+                            <ul>
+                                {% for client in process.external_clients.all %}
+                                <li>{{ client.name }}</li>
+                                {% endfor %}
+                            </ul>
+                            <h6>Staff Roles:</h6>
+                            <ul>{{ process.staff_roles }}</ul>
+                            <h6>Workspaces:</h6>
+                            <ul>{{ process.workspaces}}</ul>
+                            <h6>Facilities:</h6>
+                            <ul>{{ process.facilities}}</ul>
+                            <h6>Materials:</h6>
+                            <ul>{{ process.materials}}</ul>
+                            <h6>Transport Resources:</h6>
+                            <ul>{{ process.transport_resources}}</ul>
+                            <h6>Communications Technologies:</h6>
+                            <ul>{{ process.communications_technologies}}</ul>
+                            <h6>Operational Environment:</h6>
+                            <ul>{{ process.operational_environment}}</ul>
+
                             <h6>Indicators:</h6>
                             <ul>
-                                {% for indicator in process.indicators.all %}
+                                {% for indicator in process.performance_indicators.all %}
                                 <li>
                                     {{ indicator.name }}
                                     {% if indicator.effective %}<span class="badge bg-success ms-1">Effective</span>{% endif %}
@@ -112,8 +132,8 @@
                     <hr>
                     <h6>Activities:</h6>
                     <ol>
-                        {% for activity in process.activities.all|dictsort:"order" %}
-                        <li>{{ activity.description }}</li>
+                        {% for activity in process.processactivity_set.all|dictsort:"order" %}
+                        <li>{{ activity.order}}. {{ activity.activity }}</li>
                         {% endfor %}
                     </ol>
 
@@ -124,10 +144,10 @@
                         {% endfor %}
                     </ul>
 
-                    <h6>Measurements:</h6>
+                    <h6>Process Measurements:</h6>
                     <ul>
-                        {% for measure in process.measurements.all %}
-                        <li>{{ measure.description }} ({{ measure.measurement_type }}) | Equipment: {{ measure.equipment }}</li>
+                        {% for measurement in process.processmeasurement_set.all %}
+                            <li>{{ measurement.measurement_process_parameter }}</li>
                         {% endfor %}
                     </ul>
                 </div>

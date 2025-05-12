@@ -28,7 +28,7 @@ def communication_check(user):
 @csrf_protect
 @login_required
 #@user_passes_test(communication_check)
-'''
+
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
@@ -347,4 +347,4 @@ def communication_table_review(request):
     #return JsonResponse({"success": False, "error": "Error al actualizar la tabla"})
 
     return render(request,"mistemplates/communication-tables-review.html", context)
-    '''
+
