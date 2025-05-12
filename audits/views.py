@@ -15,8 +15,7 @@ from .forms import (
 '''
 
 from .models import (
-    AuditProgramHeader,
-    AnnualProgram,
+    AuditProgramHeader,ProcessRequirement, AnnualProgram, AnnualProgramUser, 
     AnnualPlan,
     Checklist,
     AuditReport,
@@ -50,13 +49,34 @@ def annual_audit_program(request):
         month__in={m for _, m in month_range}
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
+    program_ids = annual_programs.values_list("id", flat=True)
+
+    users_by_program = defaultdict(list)
+    for apu in AnnualProgramUser.objects.filter(annual_program_id__in=program_ids).select_related("user"):
+        users_by_program[apu.annual_program_id].append(apu.user)
+
+    requirements_by_process = defaultdict(list)
+    for pr in ProcessRequirement.objects.select_related("process", "requirement"):
+        requirements_by_process[pr.process_id].append(pr.requirement)
+
+    # Organizar programas por año y mes
     annual_programs_by_year = OrderedDict()
     for y, m in month_range:
         month_name = datetime(y, m, 1).strftime('%B')
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
+
         filtered = annual_programs.filter(program_header__year=y, month=m)
-        annual_programs_by_year[y][month_name] = filtered
+        enriched_programs = []
+
+        for program in filtered:
+            enriched_programs.append({
+                "program": program,
+                "users": users_by_program.get(program.id, []),
+                "requirements": requirements_by_process.get(program.process_id, [])
+            })
+
+        annual_programs_by_year[y][month_name] = enriched_programs
 
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
