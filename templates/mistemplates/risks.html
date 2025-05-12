@@ -123,23 +123,23 @@
 
 
 <div class="mt-3">
-    {% for department, risks in grouped_risks.items %}
-    <div class="accordion" id="accordion{{ department|slugify }}">
+    {% for area, risks in grouped_risks.items %}
+    <div class="accordion" id="accordion{{ area|slugify }}">
         <div class="accordion-item">
-            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ department|slugify }}">
+            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area|slugify }}">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#collapse{{ department|slugify }}" 
+                    data-bs-target="#collapse{{ area|slugify }}" 
                     aria-expanded="false" 
-                    aria-controls="collapse{{ department|slugify }}">
-                    {{ department }}
+                    aria-controls="collapse{{ area|slugify }}">
+                    {{ area.name }}  <!-- Asumiendo que 'area' tiene un atributo 'name' -->
                 </button>
-                <a href="{% url 'risks:download_risks_pdf' department %}" class="btn btn-danger btn-sm ms-2">
+                <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
                     <i class="ri-file-download-line"></i> Download PDF
                 </a>
             </h2>
 
-            <div id="collapse{{ department|slugify }}" class="accordion-collapse collapse"
-                aria-labelledby="heading{{ department|slugify }}">
+            <div id="collapse{{ area|slugify }}" class="accordion-collapse collapse"
+                aria-labelledby="heading{{ area|slugify }}">
                 <div class="accordion-body">
                     {% for risk in risks %}
                     <div class="card mb-3" style="background-color: #e9ecef; color: black;">
