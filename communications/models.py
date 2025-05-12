@@ -64,8 +64,6 @@ class CommunicationMessage(models.Model):
     table = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="Table", verbose_name="Table", null=False)
     receiver = models.ForeignKey(User,on_delete=models.PROTECT,  related_name="communication_receivers", verbose_name="Receptor")
     periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="communication_periodicity", verbose_name="Periodicity of Communication", null=False)
-    creation_date = models.DateTimeField(auto_now_add=True, null=True)
-    update_date = models.DateTimeField(auto_now_add=True, null=True)
     
     
     def __str__(self):
