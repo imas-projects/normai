@@ -11,7 +11,6 @@ urlpatterns = [
     path('conduct-internal-audits/', views.conduct_internal_audits, name='conduct_audit'),
 
     # Formularios para agregar datos
-    path('add-audit-team/', views.add_audit_team, name='add_audit_team'),
     path('add-audited/', views.add_audited, name='add_audited'),
     path('add-audited-evaluation-question/', views.add_audited_evaluation_question, name='add_audited_evaluation_question'),
     path('add-lead-auditor-evaluation-question/', views.add_lead_auditor_evaluation_question, name='add_lead_auditor_evaluation_question'),
