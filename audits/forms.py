@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    AuditProgramHeader, AnnualProgram, AnnualPlan, AnnualPlanUser,
+    AuditProgramHeader, AnnualProgram, AnnualPlan, AnnualProgramUser,
     AnnualPlanAuditor, AnnualPlanAudited, Checklist, Findings, AuditReport,
     ProcessRequirement, AuditedEvaluationQuestion, AuditorEvaluation, LeadAuditorEvaluationQuestion
 )
