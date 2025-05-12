@@ -59,7 +59,6 @@ def annual_audit_program(request):
     for pr in ProcessRequirement.objects.select_related("process", "requirement"):
         requirements_by_process[pr.process_id].append(pr.requirement)
 
-    # Organizar programas por año y mes
     annual_programs_by_year = OrderedDict()
     for y, m in month_range:
         month_name = datetime(y, m, 1).strftime('%B')
@@ -87,30 +86,34 @@ def annual_audit_program(request):
 
 def annual_audit_plan(request):
     plans = AnnualPlan.objects.select_related(
-        "annual_program__program_header", 
-        "annual_program__process", 
+        "annual_program__program_header",
+        "annual_program__process",
         "lider"
-    ).prefetch_related("auditors", "audited_users")
+    ).prefetch_related(
+        "auditors__user",
+        "audited_users__user"
+    )
 
     audit_data = []
     for plan in plans:
         audit_data.append({
             "plan_id": plan.id,
-            "process": plan.annual_program.process.name,
-            "year": plan.annual_program.program_header.year,
-            "month": plan.annual_program.month,
-            "lider": plan.lider.get_full_name(),
+            "process": plan.annual_program.process.name if plan.annual_program and plan.annual_program.process else None,
+            "year": plan.annual_program.program_header.year if plan.annual_program and plan.annual_program.program_header else None,
+            "month": plan.annual_program.month if plan.annual_program else None,
+            "lider": plan.lider.get_full_name() if plan.lider else "No leader assigned",
             "audit_opening_date": plan.audit_opening_date,
             "audit_closing_date": plan.audit_closing_date,
             "audit_opening_location": plan.audit_opening_location,
             "audit_closing_location": plan.audit_closing_location,
-            "auditors": [u.user.get_full_name() for u in plan.auditors.all()],
-            "audited_users": [u.user.get_full_name() for u in plan.audited_users.all()],
+            "auditors": [auditor.user.get_full_name() for auditor in plan.auditors.all()],
+            "audited_users": [audited.user.get_full_name() for audited in plan.audited_users.all()],
         })
 
     return render(request, 'mistemplates/annual_audit_plan.html', {
         "audit_data": audit_data,
     })
+
 
 # === CONDUCT INTERNAL AUDITS ===
 
