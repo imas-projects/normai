@@ -388,3 +388,4 @@ class AuditReport(models.Model):
             "summary": self.summary,
             "strengths": self.strengths,
         }
+

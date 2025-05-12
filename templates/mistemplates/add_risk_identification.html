@@ -3,8 +3,8 @@
     <form method="post" id="add-risk-identification-form" action="{% url 'risks:add_risk_identification' %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.department.label_tag }}
-            {{ form.department }}
+            {{ form.area.label_tag }} 
+            {{ form.area }} 
         </div>
         <div class="mb-3">
             {{ form.activity_name.label_tag }}

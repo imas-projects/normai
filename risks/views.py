@@ -1,4 +1,3 @@
-'''
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation
 from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm, ContingencyPlanForm, ReevaluationForm
@@ -17,16 +16,17 @@ from django.template.loader import render_to_string
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
+from company.models import Area
 
 def create_risk(request):
-    all_risks = RiskIdentification.objects.select_related('area__department').all()
+    all_risks = RiskIdentification.objects.select_related('area').all() 
 
     grouped_risks = {}
     for risk in all_risks:
-        department = risk.area.department 
-        if department not in grouped_risks:
-            grouped_risks[department] = []
-        grouped_risks[department].append(risk)
+        area = risk.area 
+        if area not in grouped_risks:
+            grouped_risks[area] = []
+        grouped_risks[area].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -40,7 +40,6 @@ def create_risk(request):
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
-
 
 def add_risk_identification(request):
     if request.method == 'POST':
@@ -174,8 +173,8 @@ def edit_reevaluation(request, risk_id):
 
     return render(request, 'mistemplates/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
 
-def generate_risks_pdf(request, department_name):
-    department = get_object_or_404(Department, name=department_name)
+def generate_risks_pdf(request, area_name): 
+    area = get_object_or_404(Area, name=area_name)  
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
     elements = []
@@ -183,13 +182,13 @@ def generate_risks_pdf(request, department_name):
     bold_style = ParagraphStyle(name='Bold', fontName='Helvetica-Bold', fontSize=12)
     normal_style = styles["BodyText"]
 
-    elements.append(Paragraph(f"Risk Report - {department.name}", styles["Title"]))
+    elements.append(Paragraph(f"Risk Report - {area.name}", styles["Title"]))  
     elements.append(Spacer(1, 12))
 
-    risks = RiskIdentification.objects.filter(department=department)
+    risks = RiskIdentification.objects.filter(area=area) 
 
     if not risks.exists():
-        elements.append(Paragraph("No risks found for this department.", normal_style))
+        elements.append(Paragraph("No risks found for this area.", normal_style))  
     else:
         for idx, risk in enumerate(risks, start=1):  
             try:
@@ -308,5 +307,4 @@ def generate_risks_pdf(request, department_name):
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename=f"risks_{department.name}.pdf")
-    '''
+    return FileResponse(buffer, as_attachment=True, filename=f"risks_{area.name}.pdf") 

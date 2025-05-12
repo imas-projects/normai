@@ -92,9 +92,25 @@
                                     <div class="card mb-3">
                                         <div class="card-header bg-dark text-white">{{ month }}</div>
                                         <ul class="list-group list-group-flush">
-                                            {% for program in programs %}
+                                            {% for item in programs %}
                                             <li class="list-group-item">
-                                                {{ program.requirement.name }}  
+                                                <strong>Process:</strong> {{ item.program.process.name }}<br>
+                                                <strong>Users:</strong>
+                                                {% if item.users %}
+                                                    {% for user in item.users %}
+                                                        {{ user.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <em>No users assigned</em>
+                                                {% endif %}<br>
+                                                <strong>Requirements:</strong>
+                                                {% if item.requirements %}
+                                                    {% for req in item.requirements %}
+                                                        {{ req.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <em>No requirements</em>
+                                                {% endif %}
                                             </li>
                                             {% empty %}
                                             <li class="list-group-item text-muted">No data available.</li>
