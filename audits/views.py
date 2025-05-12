@@ -6,14 +6,14 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime
 
 from .forms import (
-    AuditTeamForm, AuditedForm, AuditedEvaluationQuestionForm, 
+    AuditedForm, AuditedEvaluationQuestionForm, 
     LeadAuditorEvaluationQuestionForm, AuditProgramHeaderForm, 
     AnnualProgramForm, AuditPlanHeaderForm, AssociatedElementsForm, 
     FindingsForm, AuditReportForm, UnifiedRequirementForm, ChecklistForm
 )
 
 from .models import (
-    AuditTeam, Audited, AuditProgramHeader, AuditPlanHeader, AnnualProgram, 
+    Audited, AuditProgramHeader, AuditPlanHeader, AnnualProgram, 
     AssociatedElements, Checklist, UnifiedRequirement, AuditReport, Findings, 
     AuditedEvaluationQuestion, LeadAuditorEvaluationQuestion
 )
@@ -27,11 +27,6 @@ def audits_home(request):
 
 def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
-    audit_teams = AuditTeam.objects.select_related('person', 'role')
-
-    grouped_team = defaultdict(list)
-    for member in audit_teams:
-        grouped_team[member.role.name].append(member.person.get_full_name())
 
     today = datetime.today()
     start_month = today.month - 1 if today.month > 1 else 12
@@ -61,20 +56,12 @@ def annual_audit_program(request):
             if form.is_valid():
                 form.save()
                 return redirect('audits:annual_audit_program')
-        elif "add_team_member" in request.POST:
-            team_form = AuditTeamForm(request.POST)
-            if team_form.is_valid():
-                team_form.save()
-                return redirect('audits:annual_audit_program')
     else:
         form = AuditProgramHeaderForm()
-        team_form = AuditTeamForm()
 
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
         'header_form': form,
-        'team_form': team_form,
-        'grouped_team': grouped_team,
         'annual_programs_by_year': annual_programs_by_year,
     })
 
@@ -83,7 +70,6 @@ def annual_audit_program(request):
 def annual_audit_plan(request):
     audit_headers = AuditProgramHeader.objects.all()
     audit_plans = AuditPlanHeader.objects.all()
-    audit_teams = AuditTeam.objects.select_related('person', 'role')
     audited_people = Audited.objects.select_related('audited_user', 'requirement')
 
     audit_data = []
@@ -98,14 +84,9 @@ def annual_audit_plan(request):
             'audit_location': elements.audit_location if elements else None,
         })
 
-    grouped_team = defaultdict(list)
-    for member in audit_teams:
-        grouped_team[member.role.name].append(member.person.get_full_name())
-
     return render(request, 'mistemplates/annual_audit_plan.html', {
         'audit_headers': audit_headers,
         'audit_plans': audit_plans,
-        'grouped_team': grouped_team,
         'audit_data': audit_data,
     })
 
@@ -146,9 +127,6 @@ def conduct_internal_audits(request):
     return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": audit_data})
 
 # === ADD VIEWS ===
-
-def add_audit_team(request):
-    return _add_form_view(request, AuditTeamForm, 'audits:audits_home', 'add_audit_team.html')
 
 def add_audited(request):
     return _add_form_view(request, AuditedForm, 'audits:audits_home', 'add_audited.html', use_cleaned_user=True)
@@ -227,4 +205,3 @@ def _add_form_view(request, form_class, success_url_name, template_name, use_cle
     else:
         form = form_class()
     return render(request, f'mistemplates/{template_name}', {'form': form})
-
