@@ -174,20 +174,20 @@ def add_checklist(request):
 # === AJAX VIEWS ===
 
 def get_checklist_data(request, requirement_id):
-    data = list(Checklist.objects.filter(requirement_id=requirement_id).order_by('order').values(
-        'id', 'question_text', 'order', 'objective_evidence', 'compliance'
+    data = list(Checklist.objects.filter(requirement_id=requirement_id).order_by('orden').values(
+        'id', 'question_text', 'orden', 'evidence', 'compliance'
     ))
     return JsonResponse(data, safe=False)
 
 def get_audited_questions(request, requirement_id):
-    data = list(AuditedEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order').values(
-        'id', 'question_text', 'order', 'rating'
+    data = list(AuditedEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('orden').values(
+        'id', 'question_text', 'orden', 'rate'
     ))
     return JsonResponse(data, safe=False)
 
 def get_lead_auditor_questions(request, requirement_id):
-    data = list(LeadAuditorEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order').values(
-        'id', 'question_text', 'order', 'rating'
+    data = list(LeadAuditorEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('orden').values(
+        'id', 'question_text', 'orden', 'rate'
     ))
     return JsonResponse(data, safe=False)
 
@@ -205,3 +205,4 @@ def _add_form_view(request, form_class, success_url_name, template_name, use_cle
     else:
         form = form_class()
     return render(request, f'mistemplates/{template_name}', {'form': form})
+
