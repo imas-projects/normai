@@ -126,6 +126,7 @@ def conduct_internal_audits(request):
 
     return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": audit_data})
 
+'''
 # === ADD VIEWS ===
 
 def add_audited(request):
@@ -205,4 +206,4 @@ def _add_form_view(request, form_class, success_url_name, template_name, use_cle
     else:
         form = form_class()
     return render(request, f'mistemplates/{template_name}', {'form': form})
-
+'''
