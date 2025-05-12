@@ -1,111 +1,115 @@
-'''
 from django.shortcuts import render, get_object_or_404, redirect
-from .forms import AuditTeamForm, AuditedForm, AuditedEvaluationQuestionForm, LeadAuditorEvaluationQuestionForm, AuditProgramHeaderForm, AnnualProgramForm
-from .forms import AuditPlanHeaderForm, AssociatedElementsForm, FindingsForm, AuditReportForm, UnifiedRequirementForm, ChecklistForm
-from .models import AuditProgramHeader, AuditTeam, AuditPlanHeader, Audited, AnnualProgram, AssociatedElements, Checklist, Requirement, LeadAuditorEvaluationQuestion
-from .models import AuditedEvaluationQuestion, AuditReport, Findings
-from django.contrib.auth.models import User
-
-from collections import defaultdict, OrderedDict
-from datetime import datetime, timedelta
 from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.forms import modelformset_factory
+from collections import defaultdict, OrderedDict
+from datetime import datetime
+
+from .forms import (
+    AuditTeamForm, AuditedForm, AuditedEvaluationQuestionForm, 
+    LeadAuditorEvaluationQuestionForm, AuditProgramHeaderForm, 
+    AnnualProgramForm, AuditPlanHeaderForm, AssociatedElementsForm, 
+    FindingsForm, AuditReportForm, UnifiedRequirementForm, ChecklistForm
+)
+
+from .models import (
+    AuditTeam, Audited, AuditProgramHeader, AuditPlanHeader, AnnualProgram, 
+    AssociatedElements, Checklist, UnifiedRequirement, AuditReport, Findings, 
+    AuditedEvaluationQuestion, LeadAuditorEvaluationQuestion
+)
+
+# === BASIC VIEWS ===
 
 def audits_home(request):
     return render(request, 'mistemplates/audits.html')
+
+# === ANNUAL AUDIT PROGRAM ===
 
 def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
     audit_teams = AuditTeam.objects.select_related('person', 'role')
 
     grouped_team = defaultdict(list)
-    for team_member in audit_teams:
-        grouped_team[team_member.role.name].append(team_member.person.get_full_name())
+    for member in audit_teams:
+        grouped_team[member.role.name].append(member.person.get_full_name())
 
     today = datetime.today()
     start_month = today.month - 1 if today.month > 1 else 12
     start_year = today.year if today.month > 1 else today.year - 1
     month_range = [(start_year, start_month)]
-
     for _ in range(11):
-        last_year, last_month = month_range[-1]
-        next_month = (last_month % 12) + 1
-        next_year = last_year + (1 if next_month == 1 else 0)
+        y, m = month_range[-1]
+        next_month = (m % 12) + 1
+        next_year = y + (1 if next_month == 1 else 0)
         month_range.append((next_year, next_month))
 
     annual_programs = AnnualProgram.objects.filter(
-        year__in={year for year, _ in month_range},
-        month__in={month for _, month in month_range}
+        year__in={y for y, _ in month_range},
+        month__in={m for _, m in month_range}
     ).order_by('year', 'month')
 
     annual_programs_by_year = OrderedDict()
-    for year, month in month_range:
-        month_name = datetime(year, month, 1).strftime('%B')
-        if year not in annual_programs_by_year:
-            annual_programs_by_year[year] = OrderedDict()
-        annual_programs_by_year[year][month_name] = annual_programs.filter(year=year, month=month)
+    for y, m in month_range:
+        month_name = datetime(y, m, 1).strftime('%B')
+        if y not in annual_programs_by_year:
+            annual_programs_by_year[y] = OrderedDict()
+        annual_programs_by_year[y][month_name] = annual_programs.filter(year=y, month=m)
 
     if request.method == "POST":
         if "save_header" in request.POST:
-            header_form = AuditProgramHeaderForm(request.POST)
-            if header_form.is_valid():
-                header_form.save()
-                return redirect(reverse('audits:annual_audit_program'))
+            form = AuditProgramHeaderForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('audits:annual_audit_program')
         elif "add_team_member" in request.POST:
             team_form = AuditTeamForm(request.POST)
             if team_form.is_valid():
                 team_form.save()
-                return redirect(reverse('audits:annual_audit_program'))
+                return redirect('audits:annual_audit_program')
     else:
-        header_form = AuditProgramHeaderForm()
+        form = AuditProgramHeaderForm()
         team_form = AuditTeamForm()
 
-    context = {
+    return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
-        'header_form': header_form,
+        'header_form': form,
         'team_form': team_form,
         'grouped_team': grouped_team,
         'annual_programs_by_year': annual_programs_by_year,
-    }
-    return render(request, 'mistemplates/annual_audit_program.html', context)
+    })
 
+# === ANNUAL AUDIT PLAN ===
 
 def annual_audit_plan(request):
     audit_headers = AuditProgramHeader.objects.all()
     audit_plans = AuditPlanHeader.objects.all()
     audit_teams = AuditTeam.objects.select_related('person', 'role')
-
     audited_people = Audited.objects.select_related('audited_user', 'requirement')
+
     audit_data = []
-
     for audited in audited_people:
-        associated_elements = AssociatedElements.objects.filter(requirement=audited.requirement).first()
-
-        audit_entry = {
+        elements = AssociatedElements.objects.filter(requirement=audited.requirement).first()
+        audit_data.append({
             'requirement': audited.requirement,
             'audited_person': audited.audited_user,
-            'audit_date': associated_elements.audit_date if associated_elements else None,
-            'audit_time': associated_elements.audit_time if associated_elements else None,
-            'audit_team_member': associated_elements.audit_team_member if associated_elements else None,
-            'audit_location': associated_elements.audit_location if associated_elements else None,
-        }
-        audit_data.append(audit_entry)
+            'audit_date': elements.audit_date if elements else None,
+            'audit_time': elements.audit_time if elements else None,
+            'audit_team_member': elements.audit_team_member if elements else None,
+            'audit_location': elements.audit_location if elements else None,
+        })
 
     grouped_team = defaultdict(list)
-    for team_member in audit_teams:
-        grouped_team[team_member.role.name].append(team_member.person.get_full_name())
+    for member in audit_teams:
+        grouped_team[member.role.name].append(member.person.get_full_name())
 
-    context = {
+    return render(request, 'mistemplates/annual_audit_plan.html', {
         'audit_headers': audit_headers,
         'audit_plans': audit_plans,
         'grouped_team': grouped_team,
         'audit_data': audit_data,
-    }
+    })
 
-    return render(request, 'mistemplates/annual_audit_plan.html', context)
-
+# === CONDUCT INTERNAL AUDITS ===
 
 def conduct_internal_audits(request):
     audited_list = Audited.objects.select_related("requirement", "audited_user")
@@ -113,235 +117,114 @@ def conduct_internal_audits(request):
 
     audit_data = []
     for audited in audited_list:
-        requirement = audited.requirement
-        audit_entry = {
-            "requirement": requirement.name if requirement else "N/A",
-            "requirement_id": requirement.id if requirement else None,
-            "audited": f"{audited.audited_user.first_name} {audited.audited_user.last_name}",
+        req = audited.requirement
+        entry = {
+            "requirement": req.name if req else "N/A",
+            "requirement_id": req.id if req else None,
+            "audited": f"{audited.audited_user.get_full_name()}",
             "auditor": "N/A",
             "findings": [],
             "audit_report": None
         }
 
-        associated_element = associated_elements.filter(requirement=requirement).first()
-        if associated_element:
-            auditor = associated_element.audit_team_member.person
-            audit_entry["auditor"] = f"{auditor.first_name} {auditor.last_name}"
+        element = associated_elements.filter(requirement=req).first()
+        if element:
+            auditor = element.audit_team_member.person
+            entry["auditor"] = f"{auditor.get_full_name()}"
 
-        if requirement:
-            findings = Findings.objects.filter(requirement=requirement)
-            audit_entry["findings"] = [
-                {
-                    "finding_text": finding.finding_text,
-                    "classification": finding.classification
-                }
-                for finding in findings
+        if req:
+            entry["findings"] = [
+                {"finding_text": f.finding_text, "classification": f.classification}
+                for f in Findings.objects.filter(requirement=req)
             ]
+            report = AuditReport.objects.filter(requirement=req).first()
+            if report:
+                entry["audit_report"] = {"summary": report.summary, "strengths": report.strengths}
 
-            audit_report = AuditReport.objects.filter(requirement=requirement).first()
-            if audit_report:
-                audit_entry["audit_report"] = {
-                    "summary": audit_report.summary,
-                    "strengths": audit_report.strengths
-                }
+        audit_data.append(entry)
 
-        audit_data.append(audit_entry)
+    return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": audit_data})
 
-    context = {"audit_data": audit_data}
-    return render(request, "mistemplates/conduct_internal_audits.html", context)
+# === ADD VIEWS ===
 
 def add_audit_team(request):
-    if request.method == 'POST':
-        form = AuditTeamForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:audits_home')  
-    else:
-        form = AuditTeamForm()  
-
-    return render(request, 'mistemplates/add_audit_team.html', {'form': form})
+    return _add_form_view(request, AuditTeamForm, 'audits:audits_home', 'add_audit_team.html')
 
 def add_audited(request):
-    if request.method == 'POST':
-        form = AuditedForm(request.POST)
-        if form.is_valid():
-            audited_instance = form.save(commit=False)
-            audited_instance.audited_user = form.cleaned_data['audited_user']
-            audited_instance.save()
-            return redirect('audits:audits_home')
-    else:
-        form = AuditedForm()
-
-    return render(request, 'mistemplates/add_audited.html', {'form': form})
+    return _add_form_view(request, AuditedForm, 'audits:audits_home', 'add_audited.html', use_cleaned_user=True)
 
 def add_checklist_question(request):
-    if request.method == 'POST':
-        form = ChecklistQuestionForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:conduct_audit')  
-    else:
-        form = ChecklistQuestionForm()  
-
-    return render(request, 'mistemplates/add_checklist_question.html', {'form': form})
+    return _add_form_view(request, ChecklistForm, 'audits:conduct_audit', 'add_checklist_question.html')
 
 def add_audited_evaluation_question(request):
-    if request.method == 'POST':
-        form = AuditedEvaluationQuestionForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:conduct_audit')  
-    else:
-        form = AuditedEvaluationQuestionForm()  
-
-    return render(request, 'mistemplates/add_audited_evaluation_question.html', {'form': form})
+    return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_audit', 'add_audited_evaluation_question.html')
 
 def add_lead_auditor_evaluation_question(request):
-    if request.method == 'POST':
-        form = LeadAuditorEvaluationQuestionForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:conduct_audit')  
-    else:
-        form = LeadAuditorEvaluationQuestionForm()  
-
-    return render(request, 'mistemplates/add_lead_auditor_evaluation_question.html', {'form': form})
+    return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_audit', 'add_lead_auditor_evaluation_question.html')
 
 def add_audit_program_header(request):
-    if request.method == 'POST':
-        form = AuditProgramHeaderForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:annual_program')  
-    else:
-        form = AuditProgramHeaderForm()  
-
-    return render(request, 'mistemplates/add_audit_program_header.html', {'form': form})
+    return _add_form_view(request, AuditProgramHeaderForm, 'audits:annual_program', 'add_audit_program_header.html')
 
 def add_annual_program(request):
-    if request.method == 'POST':
-        form = AnnualProgramForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:annual_program')  
-    else:
-        form = AnnualProgramForm()  
-
-    return render(request, 'mistemplates/add_annual_program.html', {'form': form})
+    return _add_form_view(request, AnnualProgramForm, 'audits:annual_program', 'add_annual_program.html')
 
 def add_audit_plan_header(request):
-    if request.method == 'POST':
-        form = AuditPlanHeaderForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:annual_plan')  
-    else:
-        form = AuditPlanHeaderForm()  
-
-    return render(request, 'mistemplates/add_audit_plan_header.html', {'form': form})
+    return _add_form_view(request, AuditPlanHeaderForm, 'audits:annual_plan', 'add_audit_plan_header.html')
 
 def add_associated_elements(request):
-    if request.method == 'POST':
-        form = AssociatedElementsForm(request.POST)
-        if form.is_valid():
-            associated_element = form.save(commit=False)
-            associated_element.save()
-            return redirect('audits:annual_plan')
-    else:
-        form = AssociatedElementsForm()
-
-    return render(request, 'mistemplates/add_associated_elements.html', {'form': form})
+    return _add_form_view(request, AssociatedElementsForm, 'audits:annual_plan', 'add_associated_elements.html')
 
 def add_findings(request):
-    if request.method == 'POST':
-        form = FindingsForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:conduct_audit')  
-    else:
-        form = FindingsForm()  
-
-    return render(request, 'mistemplates/add_findings.html', {'form': form})
+    return _add_form_view(request, FindingsForm, 'audits:conduct_audit', 'add_findings.html')
 
 def add_audit_report(request):
-    if request.method == 'POST':
-        form = AuditReportForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('audits:conduct_audit')  
-    else:
-        form = AuditReportForm()
-
-    return render(request, 'mistemplates/add_audit_report.html', {'form': form})
+    return _add_form_view(request, AuditReportForm, 'audits:conduct_audit', 'add_audit_report.html')
 
 def add_requirement(request):
-    if request.method == 'POST':
-        form = UnifiedRequirementForm(request.POST)
-        if form.is_valid():
-            requirement = form.save(commit=False)
-            requirement.save()
-            return redirect('audits:audits_home')
-    else:
-        form = UnifiedRequirementForm()
-    
-    return render(request, 'mistemplates/add_requirement.html', {'form': form})
+    return _add_form_view(request, UnifiedRequirementForm, 'audits:audits_home', 'add_requirement.html')
 
 def add_checklist(request):
     if request.method == "POST":
         form = ChecklistForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('audits:conduct_audit') 
+            return redirect('audits:conduct_audit')
         else:
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
-    
-    form = ChecklistForm()
-    return render(request, "mistemplates/add_checklist.html", {"form": form})
+    return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
+
+# === AJAX VIEWS ===
 
 def get_checklist_data(request, requirement_id):
-    if request.method == "GET":
-        checklists = Checklist.objects.filter(requirement_id=requirement_id).order_by('order')
-        data = []
-
-        for checklist in checklists:
-            data.append({
-                'id': checklist.id,
-                'question_text': checklist.question_text,
-                'order': checklist.order,
-                'objective_evidence': checklist.objective_evidence,
-                'compliance': checklist.compliance,
-            })
-        
-        return JsonResponse(data, safe=False)
+    data = list(Checklist.objects.filter(requirement_id=requirement_id).order_by('order').values(
+        'id', 'question_text', 'order', 'objective_evidence', 'compliance'
+    ))
+    return JsonResponse(data, safe=False)
 
 def get_audited_questions(request, requirement_id):
-    questions = AuditedEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order')
-
-    data = [
-        {
-            "id": q.id,
-            "question_text": q.question_text,
-            "order": q.order,
-            "rating": q.rating,
-        }
-        for q in questions
-    ]
-    
+    data = list(AuditedEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order').values(
+        'id', 'question_text', 'order', 'rating'
+    ))
     return JsonResponse(data, safe=False)
 
 def get_lead_auditor_questions(request, requirement_id):
-    questions = LeadAuditorEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order')
-    
-    data = [
-        {
-            "id": q.id,
-            "question_text": q.question_text,
-            "order": q.order,
-            "rating": q.rating,
-        }
-        for q in questions
-    ]
-    
+    data = list(LeadAuditorEvaluationQuestion.objects.filter(requirement_id=requirement_id).order_by('order').values(
+        'id', 'question_text', 'order', 'rating'
+    ))
     return JsonResponse(data, safe=False)
 
-'''
+# === HELPER FUNCTION ===
+
+def _add_form_view(request, form_class, success_url_name, template_name, use_cleaned_user=False):
+    if request.method == 'POST':
+        form = form_class(request.POST)
+        if form.is_valid():
+            instance = form.save(commit=False)
+            if use_cleaned_user:
+                instance.audited_user = form.cleaned_data['audited_user']
+            instance.save()
+            return redirect(success_url_name)
+    else:
+        form = form_class()
+    return render(request, f'mistemplates/{template_name}', {'form': form})
+
