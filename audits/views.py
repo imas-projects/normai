@@ -5,17 +5,24 @@ from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 
+'''
 from .forms import (
     AuditedForm, AuditedEvaluationQuestionForm, 
     LeadAuditorEvaluationQuestionForm, AuditProgramHeaderForm, 
     AnnualProgramForm, AuditPlanHeaderForm, AssociatedElementsForm, 
     FindingsForm, AuditReportForm, UnifiedRequirementForm, ChecklistForm
 )
+'''
 
 from .models import (
-    Audited, AuditProgramHeader, AuditPlanHeader, AnnualProgram, 
-    AssociatedElements, Checklist, UnifiedRequirement, AuditReport, Findings, 
-    AuditedEvaluationQuestion, LeadAuditorEvaluationQuestion
+    AuditProgramHeader,
+    AnnualProgram,
+    AnnualPlan,
+    Checklist,
+    AuditReport,
+    Findings,
+    AuditedEvaluationQuestion,
+    LeadAuditorEvaluationQuestion
 )
 
 # === BASIC VIEWS ===
@@ -39,92 +46,95 @@ def annual_audit_program(request):
         month_range.append((next_year, next_month))
 
     annual_programs = AnnualProgram.objects.filter(
-        year__in={y for y, _ in month_range},
+        program_header__year__in={y for y, _ in month_range},
         month__in={m for _, m in month_range}
-    ).order_by('year', 'month')
+    ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
     annual_programs_by_year = OrderedDict()
     for y, m in month_range:
         month_name = datetime(y, m, 1).strftime('%B')
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
-        annual_programs_by_year[y][month_name] = annual_programs.filter(year=y, month=m)
-
-    if request.method == "POST":
-        if "save_header" in request.POST:
-            form = AuditProgramHeaderForm(request.POST)
-            if form.is_valid():
-                form.save()
-                return redirect('audits:annual_audit_program')
-    else:
-        form = AuditProgramHeaderForm()
+        filtered = annual_programs.filter(program_header__year=y, month=m)
+        annual_programs_by_year[y][month_name] = filtered
 
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
-        'header_form': form,
         'annual_programs_by_year': annual_programs_by_year,
     })
 
 # === ANNUAL AUDIT PLAN ===
 
 def annual_audit_plan(request):
-    audit_headers = AuditProgramHeader.objects.all()
-    audit_plans = AuditPlanHeader.objects.all()
-    audited_people = Audited.objects.select_related('audited_user', 'requirement')
+    plans = AnnualPlan.objects.select_related(
+        "annual_program__program_header", 
+        "annual_program__process", 
+        "lider"
+    ).prefetch_related("auditors", "audited_users")
 
     audit_data = []
-    for audited in audited_people:
-        elements = AssociatedElements.objects.filter(requirement=audited.requirement).first()
+    for plan in plans:
         audit_data.append({
-            'requirement': audited.requirement,
-            'audited_person': audited.audited_user,
-            'audit_date': elements.audit_date if elements else None,
-            'audit_time': elements.audit_time if elements else None,
-            'audit_team_member': elements.audit_team_member if elements else None,
-            'audit_location': elements.audit_location if elements else None,
+            "plan_id": plan.id,
+            "process": plan.annual_program.process.name,
+            "year": plan.annual_program.program_header.year,
+            "month": plan.annual_program.month,
+            "lider": plan.lider.get_full_name(),
+            "audit_opening_date": plan.audit_opening_date,
+            "audit_closing_date": plan.audit_closing_date,
+            "audit_opening_location": plan.audit_opening_location,
+            "audit_closing_location": plan.audit_closing_location,
+            "auditors": [u.user.get_full_name() for u in plan.auditors.all()],
+            "audited_users": [u.user.get_full_name() for u in plan.audited_users.all()],
         })
 
     return render(request, 'mistemplates/annual_audit_plan.html', {
-        'audit_headers': audit_headers,
-        'audit_plans': audit_plans,
-        'audit_data': audit_data,
+        "audit_data": audit_data,
     })
 
 # === CONDUCT INTERNAL AUDITS ===
 
 def conduct_internal_audits(request):
-    audited_list = Audited.objects.select_related("requirement", "audited_user")
-    associated_elements = AssociatedElements.objects.select_related("requirement", "audit_team_member__person")
+    plans = AnnualPlan.objects.select_related(
+        "annual_program__process",
+        "lider"
+    ).prefetch_related("auditors__user", "audited_users__user", "checklists", "checklists__question")
 
-    audit_data = []
-    for audited in audited_list:
-        req = audited.requirement
+    data = []
+    for plan in plans:
         entry = {
-            "requirement": req.name if req else "N/A",
-            "requirement_id": req.id if req else None,
-            "audited": f"{audited.audited_user.get_full_name()}",
-            "auditor": "N/A",
-            "findings": [],
-            "audit_report": None
+            "plan_id": plan.id,
+            "process": plan.annual_program.process.name,
+            "year": plan.annual_program.program_header.year,
+            "lider": plan.lider.get_full_name(),
+            "auditors": [a.user.get_full_name() for a in plan.auditors.all()],
+            "audited_users": [a.user.get_full_name() for a in plan.audited_users.all()],
+            "checklist": [{
+                "question": c.question.question_text,
+                "compliance": c.compliance,
+                "evidence": c.evidence,
+            } for c in plan.checklists.all()],
+            "report": None,
+            "findings": []
         }
 
-        element = associated_elements.filter(requirement=req).first()
-        if element:
-            auditor = element.audit_team_member.person
-            entry["auditor"] = f"{auditor.get_full_name()}"
+        report = AuditReport.objects.filter(audit=plan.annual_program).first()
+        if report:
+            entry["report"] = {
+                "summary": report.summary,
+                "strengths": report.strengths
+            }
 
-        if req:
-            entry["findings"] = [
-                {"finding_text": f.finding_text, "classification": f.classification}
-                for f in Findings.objects.filter(requirement=req)
-            ]
-            report = AuditReport.objects.filter(requirement=req).first()
-            if report:
-                entry["audit_report"] = {"summary": report.summary, "strengths": report.strengths}
+            findings = Findings.objects.filter(report=report).select_related("requirement")
+            entry["findings"] = [{
+                "requirement": f.requirement.name if f.requirement else "N/A",
+                "text": f.finding_text,
+                "classification": f.classification,
+            } for f in findings]
 
-        audit_data.append(entry)
+        data.append(entry)
 
-    return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": audit_data})
+    return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": data})
 
 '''
 # === ADD VIEWS ===
