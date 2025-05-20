@@ -80,7 +80,7 @@ class ProcessActivity(models.Model):
         db_table = 'tb_process_activities'
 
     def __str__(self):
-        return f"{self.id}"
+        return f"{self.activity}"
 
 class ProcessPosition(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE)

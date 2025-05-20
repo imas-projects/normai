@@ -32,31 +32,26 @@ def create_process(request):
 
 def load_form_options():
     responsible_options = list(User.objects.all().values('id', 'first_name', 'last_name'))
-    positions_options = list(Position.objects.select_related('position').values('id', 'role', 'position__name'))
     internal_suppliers_options = list(Area.objects.all().values('id', 'name'))
     external_suppliers_options = list(ExternalSupplier.objects.all().values('id', 'name'))
     internal_clients_options = list(Area.objects.all().values('id', 'name'))
     external_clients_options = list(ExternalClient.objects.all().values('id', 'name'))
-    inputs_options= list(ProcessInput.objects.all().values('id', 'description'))
-    outputs_options= list(ProcessOutput.objects.all().values('id', 'description'))
-    activities_options= list(ProcessActivity.objects.all().values('id', 'activity','order'))
-    documents_options= list(Documentation.objects.all().values('id', 'description','documentation_code','type'))
-    measurements_options= list(ProcessMeasurement.objects.all().values('id', 'description','measurement_type'))
+    inputs_options= list(ProcessInput.objects.all().values('id', 'name'))
+    outputs_options= list(ProcessOutput.objects.all().values('id', 'name'))
+    documents_options= list(Documentation.objects.all().values('id', 'document_description','document_code'))
+    measurements_options= list(ProcessMeasurement.objects.all().values('id','measurement_process_parameter'))
     indicators_options= list(PerformanceIndicator.objects.all().values('id', 'name'))
 
     return {
         'responsible_options' : responsible_options,
-        'positions_options' : positions_options,
         'internal_suppliers_options' : internal_suppliers_options,
         'external_suppliers_options' : external_suppliers_options,
         'internal_clients_options' : internal_clients_options,
         'external_clients_options' : external_clients_options,
         'inputs_options' : inputs_options,
         'outputs_options' : outputs_options,
-        'activities_options' : activities_options,
         'documents_options' : documents_options,
         'indicators_options' : indicators_options,
-        'activities_options' : activities_options,
         'measurements_options' : measurements_options,
     }
 
@@ -66,11 +61,11 @@ def get_process(request, id):
 
         current_process_internal_suppliers = list(current_process.internal_suppliers.all().values('id', 'name'))
         current_process_external_suppliers = list(current_process.external_suppliers.all().values('id', 'name'))
-        current_process_internal_clients = list(current_process.internal_clients.all().values('id', 'name'))
+        current_process_internal_clients = list(current_process.internal_clients.all().values('id', 'name')) 
         current_process_external_clients = list(current_process.external_clients.all().values('id', 'name'))
         current_process_inputs = list(current_process.inputs.all().values('id', 'name'))
         current_process_outputs = list(current_process.outputs.all().values('id', 'name'))
-        current_process_documents = list(current_process.documents.all().values('id', 'document_description','documentation_code'))
+        current_process_documents = list(current_process.documents.all().values('id', 'document_description','document_code'))
         current_process_indicators = list(current_process.performance_indicators.all().values('id', 'name'))
 
         form_options = load_form_options()
@@ -82,16 +77,16 @@ def get_process(request, id):
             'name' : current_process.name,
             'objective': current_process.objective,
             'responsible': current_process.responsible.id,
-            'review': current_process.review,
-            'review_date': current_process.review_date,
-            'staff_roles': current_process.staff_roles,
-            'workspaces': current_process.workspaces,
-            'facilities': current_process.facilities,
-            'equipment': current_process.equipment,
-            'materials': current_process.materials,
-            'transport_resources': current_process.transport_resources,
-            'communication_technologies': current_process.communication_technologies,
-            'operational_environment': current_process.operational_environment,
+            #'review': current_process.review,
+            #'review_date': current_process.review_date,
+            #'staff_roles': current_process.staff_roles,
+            #'workspaces': current_process.workspaces,
+            #'facilities': current_process.facilities,
+            #'equipment': current_process.equipment,
+            #'materials': current_process.materials,
+            #'transport_resources': current_process.transport_resources,
+            #'communication_technologies': current_process.communication_technologies,
+            #'operational_environment': current_process.operational_environment,
 
             # Campos manytomany
             'internal_suppliers': current_process_internal_suppliers,

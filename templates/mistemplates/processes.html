@@ -1,4 +1,4 @@
-{% extends "mistemplates/mi_base.html" %}
+<!--{% extends "mistemplates/mi_base.html" %}-->
 {% load static %}
 {% block content %}
 <div class="main-content">
@@ -47,7 +47,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content bg-white text-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="detailsModalLabel{{ process.id }}">Details - {{ process.name }}</h5>
+                    <h5 class="modal-title" id="detailsModalLabel{{ process.id }}">Detalles - {{ process.name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -76,17 +76,15 @@
                             <h6>Inputs:</h6>
                             <ul>
                                 {% for input in process.inputs.all %}
-                                <li>{{ input.description }}</li>
+                                <li>{{ input.name }}</li>
                                 {% endfor %}
                             </ul>
                             <h6>Outputs:</h6>
                             <ul>
                                 {% for output in process.outputs.all %}
-                                <li>{{ output.description }}</li>
+                                <li>{{ output.name }}</li>
                                 {% endfor %}
                             </ul>
-                        </div>
-                        <div class="col-md-6">
                             <h6>Internal Clients:</h6>
                             <ul>
                                 {% for client in process.internal_clients.all %}
@@ -99,6 +97,10 @@
                                 <li>{{ client.name }}</li>
                                 {% endfor %}
                             </ul>
+                            <h6>Staff Roles:</h6>
+                            <ul>{{ process.staff_roles }}</ul>
+                        </div>
+                        <div class="col-md-6">
                             <h6>Staff Roles:</h6>
                             <ul>{{ process.staff_roles }}</ul>
                             <h6>Workspaces:</h6>
@@ -114,7 +116,31 @@
                             <h6>Operational Environment:</h6>
                             <ul>{{ process.operational_environment}}</ul>
 
-                            <h6>Indicators:</h6>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6>Activities:</h6>
+                    <ol>
+                        {% for activity in process.processactivity_set.all|dictsort:"order" %}
+                        <li>{{ activity.activity }}</li>
+                        {% endfor %}
+                    </ol>
+
+                    <h6>Documents:</h6>
+                    <ul>
+                        {% for doc in process.documents.all %}
+                        <li>{{ doc.document_code }} - {{ doc.document_description }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <h6>Process Measurements:</h6>
+                    <ul>
+                        {% for measurement in process.processmeasurement_set.all %}
+                            <li>{{ measurement.measurement_process_parameter }}</li>
+                        {% endfor %}
+                    </ul>
+                    <h6>Indicators:</h6>
                             <ul>
                                 {% for indicator in process.performance_indicators.all %}
                                 <li>
@@ -126,30 +152,6 @@
                                 <li class="text-muted">No indicators available</li>
                                 {% endfor %}
                             </ul>
-                        </div>
-                    </div>
-
-                    <hr>
-                    <h6>Activities:</h6>
-                    <ol>
-                        {% for activity in process.processactivity_set.all|dictsort:"order" %}
-                        <li>{{ activity.order}}. {{ activity.activity }}</li>
-                        {% endfor %}
-                    </ol>
-
-                    <h6>Documents:</h6>
-                    <ul>
-                        {% for doc in process.documents.all %}
-                        <li>{{ doc.documentation_code }} - {{ doc.description }} ({{ doc.type }})</li>
-                        {% endfor %}
-                    </ul>
-
-                    <h6>Process Measurements:</h6>
-                    <ul>
-                        {% for measurement in process.processmeasurement_set.all %}
-                            <li>{{ measurement.measurement_process_parameter }}</li>
-                        {% endfor %}
-                    </ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -188,14 +190,14 @@
       
                 <!-- Campos many to many -->
                 <div class="mb-3">
-                    <label for="process-positions" class="form-label">Posiciones</label>
-                    <select id="process-positions" name="positions" class="form-control" multiple>
+                    <label for="process-internal-suppliers" class="form-label">Proveedores Internos</label>
+                    <select id="process-internal-suppliers" name="internalsuppliers" class="form-control" multiple>
                     </select>
                 </div>
 
                 <div class="mb-3">
-                    <label for="process-suppliers" class="form-label">Proveedores</label>
-                    <select id="process-suppliers" name="suppliers" class="form-control" multiple>
+                    <label for="process-external-suppliers" class="form-label">Proveedores Externos</label>
+                    <select id="process-external-suppliers" name="externalsuppliers" class="form-control" multiple>
                     </select>
                 </div>
 
@@ -212,20 +214,20 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="process-clients" class="form-label">Clientes</label>
-                    <select id="process-clients" name="clients" class="form-control" multiple>
+                    <label for="process-internal-clients" class="form-label">Clientes Internos</label>
+                    <select id="process-internal-clients" name="internalclients" class="form-control" multiple>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="process-external-clients" class="form-label">Clientes Externos</label>
+                    <select id="process-external-clients" name="externalclients" class="form-control" multiple>
                     </select>
                 </div>
 
                 <div class="mb-3">
                     <label for="process-activities" class="form-label">Actividades</label>
                     <select id="process-activities" name="activities" class="form-control" multiple>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="process-resources" class="form-label">Resources</label>
-                    <select id="process-resources" name="resources" class="form-control" multiple>
                     </select>
                 </div>
 
@@ -283,19 +285,17 @@
         document.querySelectorAll('.openEditProcessModal').forEach(button => {
             button.addEventListener('click', function () {
                 const id = button.getAttribute('data-process-id');
-                const positionsSelect = document.getElementById('process-positions')
                 const responsibleSelect = document.getElementById('process-responsible')
-                const suppliersSelect = document.getElementById('process-suppliers');
+                const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
+                const externalsuppliersSelect = document.getElementById('process-external-suppliers');
                 const inputsSelect = document.getElementById('process-inputs');
                 const outputsSelect = document.getElementById('process-outputs');
-                const clientsSelect = document.getElementById('process-clients');
+                const internalclientsSelect = document.getElementById('process-internal-clients');
+                const externalclientsSelect = document.getElementById('process-external-clients');
                 const activitiesSelect = document.getElementById('process-activities');
-                const resourcesSelect = document.getElementById('process-resources');
                 const documentsSelect = document.getElementById('process-documents');
                 const measurementsSelect = document.getElementById('process-measurements');
                 const indicatorsSelect = document.getElementById('process-indicators');
-                suppliersSelect.innerHTML = '';
-                //receiversSelect.innerHTML = '';
     
                 fetch(`/processes/get-process/${id}/`)
                     .then(response => response.json())
@@ -305,7 +305,9 @@
                             document.getElementById('process-name').value = data.name;
                             document.getElementById('process-objective').value = data.objective;
                             document.getElementById('process-responsible').value = data.responsible;
-                            console.log(data.responsible)
+                            
+                            console.log(data.internal_clients
+                                                           )
     
                             // Responsable 
                             data.responsible_options.forEach(responsibleOption => {
@@ -318,52 +320,94 @@
                                 responsibleSelect.appendChild(optionElement);
                             });
 
-                            // Positions (Many-to-Many)
-                            positionsSelect.innerHTML = '';
-                            data.positions_options.forEach(positionsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = positionsOption.id;
-                                optionElement.textContent = positionsOption.position__name + ' | ' + positionsOption.role;
 
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.positions_options.some(selectedPosition => selectedPosition.id === positionsOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                positionsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(positionsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                            // Suppliers (Many-to-Many)
-                            data.suppliers_options.forEach(SuppliersOption => {
+                            // Internal Suppliers (Many-to-Many)
+                            data.internal_suppliers_options.forEach(InternalSuppliersOption => {
                                     const optionElement = document.createElement('option');
-                                    optionElement.value = SuppliersOption.id;
-                                    optionElement.textContent = SuppliersOption.name;
+                                    optionElement.value = InternalSuppliersOption.id;
+                                    optionElement.textContent = InternalSuppliersOption.name;
 
                                     // Check if this channel is already selected (current channel in 'channels')
-                                    if (data.suppliers.some(selectedSupplier => selectedSupplier.id === SuppliersOption.id)) {
+                                    if (data.internal_suppliers.some(selectedInternalSupplier => selectedInternalSupplier.id === InternalSuppliersOption.id)) {
                                         optionElement.selected = true;  // Mark as selected
                                     }
 
                                     // Append the option to the select field
-                                    suppliersSelect.appendChild(optionElement);
+                                    internalsuppliersSelect.appendChild(optionElement);
                                 });
 
-                                new Choices(suppliersSelect, {
+                                new Choices(internalsuppliersSelect, {
                                     removeItemButton: true,
                                     closeDropdownOnSelect: true
                                 });
+
+                            // External Suppliers (Many-to-Many)
+                            data.external_suppliers_options.forEach(ExternalSuppliersOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = ExternalSuppliersOption.id;
+                                    optionElement.textContent = ExternalSuppliersOption.name;
+
+                                    // Check if this channel is already selected (current channel in 'channels')
+                                    if (data.external_suppliers.some(selectedExternalSupplier => selectedExternalSupplier.id === ExternalSuppliersOption.id)) {
+                                        optionElement.selected = true;  // Mark as selected
+                                    }
+
+                                    // Append the option to the select field
+                                    externalsuppliersSelect.appendChild(optionElement);
+                                });
+
+                                new Choices(externalsuppliersSelect, {
+                                    removeItemButton: true,
+                                    closeDropdownOnSelect: true
+                                });
+
+                            // Internal Clients(Many-to-Many)
+                            data.internal_clients_options.forEach(InternalClientsOption => {
+                                const optionElement = document.createElement('option');
+                                optionElement.value = InternalClientsOption.id;
+                                optionElement.textContent = InternalClientsOption.name;
+
+                                // Check if this channel is already selected (current channel in 'channels')
+                                if (data.internal_clients_options.some(selectedInternalClient => selectedInternalClient.id === InternalClientsOption.id)) {
+                                    optionElement.selected = true;  // Mark as selected
+                                }
+
+                                // Append the option to the select field
+                                internalclientsSelect.appendChild(optionElement);
+                            });
+
+                            new Choices(internalclientsSelect, {
+                                removeItemButton: true,
+                                closeDropdownOnSelect: true
+                            });
+
+                            // External Clients(Many-to-Many)
+                            data.external_clients_options.forEach(ExternalClientsOption => {
+                                const optionElement = document.createElement('option');
+                                optionElement.value = ExternalClientsOption.id;
+                                optionElement.textContent = ExternalClientsOption.name;
+
+                                // Check if this channel is already selected (current channel in 'channels')
+                                if (data.external_clients_options.some(selectedExternalClient => selectedExternalClient.id === ExternalClientsOption.id)) {
+                                    optionElement.selected = true;  // Mark as selected
+                                }
+
+                                // Append the option to the select field
+                                externalclientsSelect.appendChild(optionElement);
+                            });
+
+                            new Choices(externalclientsSelect, {
+                                removeItemButton: true,
+                                closeDropdownOnSelect: true
+                            });
+
+
 
                             // Inputs (Many-to-Many)
                             data.inputs_options.forEach(InputsOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = InputsOption.id;
-                                    optionElement.textContent = InputsOption.description;
+                                    optionElement.textContent = InputsOption.name;
 
                                     // Check if this channel is already selected (current channel in 'channels')
                                     if (data.inputs_options.some(selectedInput => selectedInput.id === InputsOption.id)) {
@@ -383,7 +427,7 @@
                             data.outputs_options.forEach(OutputsOption => {
                                 const optionElement = document.createElement('option');
                                 optionElement.value = OutputsOption.id;
-                                optionElement.textContent = OutputsOption.description;
+                                optionElement.textContent = OutputsOption.name;
 
                                 // Check if this channel is already selected (current channel in 'channels')
                                 if (data.outputs_options.some(selectedOutput => selectedOutput.id === OutputsOption.id)) {
@@ -399,71 +443,13 @@
                                 closeDropdownOnSelect: true
                             });
 
-                            // Clients(Many-to-Many)
-                            data.clients_options.forEach(ClientsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = ClientsOption.id;
-                                optionElement.textContent = ClientsOption.name;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.clients_options.some(selectedClient => selectedClient.id === ClientsOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                clientsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(clientsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                            // Activities(Many-to-Many)
-                            data.activities_options.forEach(ActivitiesOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = ActivitiesOption.id;
-                                optionElement.textContent = ActivitiesOption.order + '.' + ActivitiesOption.description;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.activities_options.some(selectedActivity => selectedActivity.id === ActivitiesOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                activitiesSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(activitiesSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                        // Resources (Many-to-Many)
-                         data.resources_options.forEach(ResourcesOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = ResourcesOption.id;
-                                optionElement.textContent = ResourcesOption.description;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.resources_options.some(selectedResource => selectedResource.id === ResourcesOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                resourcesSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(resourcesSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
+                            
+ 
                         // Documentation(Many-to-Many)
                         data.documents_options.forEach(DocumentOption => {
                                 const optionElement = document.createElement('option');
                                 optionElement.value = DocumentOption.id;
-                                optionElement.textContent = DocumentOption.documentation_code + ' | '+DocumentOption.type;
+                                optionElement.textContent = DocumentOption.document_code + ' | '+DocumentOption.document_description;
 
                                 // Check if this channel is already selected (current channel in 'channels')
                                 if (data.documents_options.some(selectedDocument => selectedDocument.id === DocumentOption.id)) {
@@ -483,7 +469,7 @@
                         data.measurements_options.forEach(MeasurementOption => {
                                 const optionElement = document.createElement('option');
                                 optionElement.value = MeasurementOption.id;
-                                optionElement.textContent = MeasurementOption.measurement_type +' | '+ MeasurementOption.description;
+                                optionElement.textContent = MeasurementOption.measurement_process_parameter;
 
                                 // Check if this channel is already selected (current channel in 'channels')
                                 if (data.measurements_options.some(selectedMeasurement => selectedMeasurement.id === MeasurementOption.id)) {
@@ -531,14 +517,14 @@
                 event.preventDefault();
 
                 
-                const positionsSelect = document.getElementById('process-positions')
-                const responsibleSelect = document.getElementById('process-responsible')
-                const suppliersSelect = document.getElementById('process-suppliers');
+                const positionsSelect = document.getElementById('process-positions');
+                const responsibleSelect = document.getElementById('process-responsible');
+                const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
+                const externalsuppliersSelect = document.getElementById('process-external-suppliers');
                 const inputsSelect = document.getElementById('process-inputs');
                 const outputsSelect = document.getElementById('process-outputs');
-                const clientsSelect = document.getElementById('process-clients');
-                const activitiesSelect = document.getElementById('process-activities');
-                const resourcesSelect = document.getElementById('process-resources');
+                const internalclientsSelect = document.getElementById('process-internal-clients');
+                const externalclientsSelect = document.getElementById('process-external-clients');
                 const documentsSelect = document.getElementById('process-documents');
                 const measurementsSelect = document.getElementById('process-measurements');
                 const indicatorsSelect = document.getElementById('process-indicators');
