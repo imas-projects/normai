@@ -7,7 +7,7 @@ urlpatterns = [
    
     #path('com-table',views.communication_table_view,name='communication_table_view'),
 
-    path('all-messages', views.all_messages, name='all_messages'),
+    path('communication-tables', views.all_messages, name='communication_tables'),
     path('received-messages', views.user_received_messages, name='received_messages'),
     path('sent-messages', views.user_sent_messages, name='sent_messages'),
     path('communication-table-review', views.communication_table_review, name='communication_table_review'),

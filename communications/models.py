@@ -56,32 +56,6 @@ class Periodicity(models.Model):
             "name":self.name,
         } 
 
-
-# Tabla de mensajes
-class CommunicationMessage(models.Model):
-    type = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_type", verbose_name="Communication Type", null=False)
-    message = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_message", verbose_name="Communication Type", null=False)
-    table = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="Table", verbose_name="Table", null=False)
-    receiver = models.ForeignKey(User,on_delete=models.PROTECT,  related_name="communication_receivers", verbose_name="Receptor")
-    periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="communication_periodicity", verbose_name="Periodicity of Communication", null=False)
-    
-    
-    def __str__(self):
-        return f"Message -> Subject:{self.subject}"
-
-    class Meta:
-        db_table = 'tb_communication_messages'  # Nombre de la tabla
-        
-
-    def as_dict(self):
-        return {
-            "id": self.id,
-            "type": self.type.as_dict(),
-            "table":self.table,
-            "message": self.message,
-            "periodicity": self.periodicity.as_dict(),
-        }
-
 class Message(models.Model):
     name = models.CharField(max_length=240, verbose_name="Asunto del Mensaje", blank=False, null=False)
     
@@ -97,6 +71,7 @@ class Message(models.Model):
             "id": self.id,
             "name": self.name,
         }
+ 
 
 class MessageChanel(models.Model):
     message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message", verbose_name="Message", null=False)
@@ -155,6 +130,29 @@ class CommunicationTable(models.Model):
             "reviewed_by": self.reviewed_by,
             "approved_by": self.approved_by,
         }    
+
+# Tabla de mensajes
+class CommunicationMessage(models.Model):
+    type = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_type", verbose_name="Communication Type", null=False)
+    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="communication_message", verbose_name="Message", null=False)
+    table = models.ForeignKey(CommunicationTable, on_delete=models.PROTECT, related_name="message", verbose_name="Table", null=False)
+    receiver = models.ForeignKey(User, on_delete=models.PROTECT, related_name="communication_receivers", verbose_name="Receptor")
+    periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="communication_periodicity", verbose_name="Periodicity of Communication", null=False)
+    
+    
+    class Meta:
+        db_table = 'tb_communication_messages'  # Nombre de la tabla
+        
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "type": self.type.as_dict(),
+            "table":self.table,
+            "message": self.message,
+            "periodicity": self.periodicity.as_dict(),
+        }
+
 
 #Formularios
 '''

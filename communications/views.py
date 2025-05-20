@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity
+from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity, CommunicationMessage, MessageChanel
 from company.models import Area
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
@@ -32,25 +32,19 @@ def communication_check(user):
 def all_messages(request):
     #user_in_comunicadores = request.user.groups.filter(name="comunicadores").exists()
 
-    all_communicationtable = CommunicationTable.objects.all()  # Get all entries
-    #all_communicationtables = list(CommunicationTable.objects.all().values('id', 'review_number', 'review_date', 'messages', 'created_by', 'reviewed_by', 'approved_by','area','code' )) 
-    all_communicationtables = [table for table in all_communicationtable]
-    #print(all_communicationtables)
-    all_messages = Message.objects.all()
-    message = [message for message in all_messages]
+    all_communicationtables = CommunicationTable.objects.prefetch_related(
+    'message__type',
+    'message__receiver',
+    'message__periodicity',
+    )
 
-    #message = list(Message.objects.all().values('id', 'communication_type', 'subject', 'channels', 'transmitter', 'receivers', 'periodicity','creation_date', 'update_date' )) 
-    #print(message)
-    all_channels = Channel.objects.all()
-    all_channels = [channel.as_dict() for channel in all_channels]
+    context = {
+        'all_communicationtables': all_communicationtables,
 
-    context ={
-        'message' : message,
-        'all_communicationtables' : all_communicationtables,
-        'all_channels' : all_channels,
-        #'user_in_comunicadores': user_in_comunicadores
     }
-    return render(request,"mistemplates/communication-tables.html",context)
+
+    return render(request, "mistemplates/communication-tables.html", context)
+    
 
 
 
@@ -172,14 +166,14 @@ def load_messageform_options_asJson(request):
 
 @login_required
 def load_addtableform_options_asJson(request):
-    all_departments = list(User.objects.all().values('id', 'first_name','last_name'))
+    all_emiter= list(User.objects.all().values('id', 'first_name','last_name'))
     all_areas = list(Area.objects.all().values('id','name'))
     # print(all_areas)
     #'departments_options' : all_departments,
     try:
         return JsonResponse({
                 'success' : True,
-                'departments_options' : all_departments, 
+                'emiter_options' : all_emiter, 
                 'areas_options' : all_areas,
                 })
     except:
@@ -194,30 +188,29 @@ def create_message(request):
             communication_table_id = data.get('communication_table_id')
             message_communication_type = data.get('message_communication_type')  # Foreign key
             message_subject = data.get('message_subject')  # Simple text field
-            message_transmitter = data.get('message_transmitter')  # Foreign key
             message_periodicity = data.get('message_periodicity')  # Foreign key
             selected_channels = data.get('message_channels', [])  # Many-to-Many
-            selected_receivers = data.get('message_receivers', [])  # Many-to-Many
+            message_receiver = data.get('message_receivers')  # Un receptor por mensaje
             
             # Crear el nuevo mensaje
-            new_message = Message(
-                communication_type=CommunicationType.objects.get(id=message_communication_type),
-                subject=message_subject,
-                transmitter=User.objects.get(id=message_transmitter),
-                periodicity=Periodicity.objects.get(id=message_periodicity),
-                )
+            message = Message.objects.create(name=message_subject)
             
-            # Hay que guardar el mensaje antes de asignarle los campos many-to-many y la tabla a la que pertenece
-            new_message.save()
-
-            # Campos many-to-many
-            new_message.channels.set(selected_channels)
-            new_message.receivers.set(selected_receivers)
-
-            # Se mete el nuevo mensaje en la tabla correspondiente    
-            table_new_message = CommunicationTable.objects.get(id=communication_table_id)
-            table_new_message.messages.add(new_message)
-
+             # Crear relaciones MessageChannel
+            for channel_id in selected_channels:
+                MessageChanel.objects.create(
+                    message_id=message.id,
+                    channel_id=channel_id
+            )
+            
+            # Crear relaciones CommunicationMessage (una por receptor)
+            CommunicationMessage.objects.create(
+                type_id=message_communication_type,
+                table_id=communication_table_id,
+                message_id=message.id,
+                receiver_id=message_receiver,
+                periodicity_id=message_periodicity
+            )
+            print('ok')
 
             return JsonResponse({'success': True})
         except Message.DoesNotExist:
@@ -238,16 +231,18 @@ def create_table(request):
             # Coger los valores introducidos en el formulario
             data = json.loads(request.body) 
             table_code = data.get('table_code')  # Simple text field
-            table_transmitter = data.get('table_transmitter')  # Foreign key
+            table_emiter = data.get('table_emiter')  # Foreign key
             table_area = data.get('table_area')
+            table_creator = data.get('table_creator')
             
             # Crear tabla
             new_table = CommunicationTable(
                 code=table_code,
-                created_by=User.objects.get(id=table_transmitter),
+                emiter=User.objects.get(id=table_emiter),
                 review_date=datetime.date.today(),
                 review_number=0,
-                area=Area.objects.get(id=table_area)
+                area=Area.objects.get(id=table_area),
+                created_by=User.objects.get(id=table_creator)
                 )
             # Guardar tabla
             new_table.save()  

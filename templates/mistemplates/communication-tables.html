@@ -58,7 +58,10 @@
                         </div>
                         <div class="hstack gap-4 w-auto">
                             <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Elaborado Por: {{ table.created_by.first_name }} {{ table.created_by.last_name}}</h4>
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Creada Por: {{ table.created_by.first_name }} {{ table.created_by.last_name}}</h4>
+                            </div>
+                            <div class="hstack gap-1 start-0 bottom-0">
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Emisor: {{ table.emiter.first_name }} {{ table.emiter.last_name}}</h4>
                             </div>
                             <div class="hstack gap-1 w-auto bottom-0">
                                 <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.first_name}} {{ table.reviewed_by.last_name}}</h4>
@@ -88,7 +91,6 @@
                                     <tr>
                                         <th>Comunicación</th>
                                         <th>Asunto</th>
-                                        <th>Emisor</th>
                                         <th>Receptor</th>
                                         <th>Canal</th>
                                         <th>Periodicidad</th>
@@ -96,37 +98,31 @@
                                     </tr>
                                 </thead>
                                 <tbody class="table-responsive bg-light text-dark">
-                                    {% for message in table.messages.all %}
+                                    {% for msg in table.message.all %}
                                     <tr>
-                                        <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
-                                        <td>{{ message.subject }}</td>
-                                        <td>{{ message.transmitter.first_name }} {{ message.transmitter.last_name }}</td>
+                                        <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
+                                        <td>{{ msg.message.name }}</td>
+                                        <td>{{ msg.receiver.first_name }} {{ msg.receiver.last_name }}</td>
                                         <td>
-                                            {% for receiver in message.receivers.all %}
-                                            <li>{{ receiver.first_name }} {{ receiver.last_name }}</li>
+                                            {% for ch in msg.message.messagechanel_set.all %}
+                                                <li>{{ ch.channel.name }}</li>
+                                            {% empty %}
+                                                <li class="text-muted">Sin canales</li>
                                             {% endfor %}
                                         </td>
+                                        <td>{{ msg.periodicity.name }}</td>
                                         <td>
-                                            {% for channel in message.channels.all %}
-                                            <li>{{ channel.name }}</li>
-                                            {% endfor %}
-                                        </td>
-                                        <td>
-                                            {{ message.periodicity.name }}
-                                        </td>
-                                        <td>
-                                            {% if user == message.transmitter and table.status == 'open' %}
-                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ message.id }}"
+                                            {% if user == table.emiter and table.status == 'open' %}
+                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ msg.message.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#editModal">
                                                 <i class="ri-edit-2-line" style="font-size: 18px;"></i>
                                             </button>
 
                                             <button class="btn open-delete-modal btn-ghost-danger"
-                                                data-id="{{ message.id }}" data-bs-toggle="modal"
+                                                data-id="{{ msg.message.id }}" data-bs-toggle="modal"
                                                 data-bs-target="#deleteModal">
                                                 <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
                                             </button>
-                                            {% else %}
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -166,14 +162,6 @@
                             <div class="mb-3">
                                 <label for="message-subject" class="form-label">Asunto</label>
                                 <input type="text" class="form-control" id="message-subject" name="subject">
-                            </div>
-                            <div class="mb-3">
-                                <label for="message-transmitter" class="form-label">Emisor</label>
-                                {% if user.is_authenticated %}
-                                <select class="form-select" id="message-transmitter" name="transmitter" disabled>
-                                <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
-                                </select>
-                                {% endif %}
                             </div>
                             <div class="mb-3">
                                 <label for="message-channel" class="form-label">Canales</label>
@@ -227,21 +215,13 @@
                                     maxlength="240" required>
                             </div>
                             <div class="mb-3">
-                                <label for="new-message-transmitter" class="form-label">Emisor</label>
-                                {% if user.is_authenticated %}
-                                <select class="form-select" id="new-message-transmitter" name="transmitter" disabled>
-                                <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
-                                </select>
-                                {% endif %}  
-                            </div>
-                            <div class="mb-3">
                                 <label for="new-message-channel" class="form-label">Canales</label>
                                 <select id="new-message-channel" name="channels" class="form-control" multiple required>
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="new-message-receiver" class="form-label">Receptor</label>
-                                <select id="new-message-receiver" name="receivers" class="form-control" multiple required>
+                                <select id="new-message-receiver" name="receivers" class="form-control" required>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -293,11 +273,16 @@
                                 <input type="text" class="form-control" id="new-table-code" name="code" maxlength="240" required></input>
                             </div>
                             <div class="mb-3">
-                                <label for="new-table-transmitter" class="form-label">Elaborado por:</label>
-                                <select class="form-select" id="new-table-transmitter" value="{{ user.id }}" name="new-table-transmitter" disabled>
+                                <label for="new-table-creator" class="form-label">Creada por:</label>
+                                <select class="form-select" id="new-table-creator" value="{{ user.id }}" name="new-table-creator" disabled>
                                     <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
                                 </select> 
-                            </div>     
+                            </div> 
+                            <div class="mb-3">
+                                <label for="new-table-emiter" class="form-label">Emisor</label>
+                                <select id="new-table-emiter" name="new-table-emiter" class="form-control" required>
+                                </select>
+                            </div>       
                             <div class="mb-3">
                                 <label for="new-table-area" class="form-label">Area</label>
                                 <select class="form-select" id="new-table-area" name="new-table-area" required>
@@ -355,7 +340,6 @@
                                 document.getElementById('message-id').value = data.id;
                                 document.getElementById('message-communication-type').value = data.communication_type;
                                 document.getElementById('message-subject').value = data.subject;
-                                document.getElementById('message-transmitter').value = data.transmitter;
                                 document.getElementById('message-periodicity').value = data.periodicity;
 
                                 console.log(data); //debug
@@ -683,19 +667,15 @@
                 //console.log('ID de tabla enviado:', tbId); //debug
 
                 const channelsSelect = document.getElementById('new-message-channel');
-                const receiversSelect = document.getElementById('new-message-receiver');
-
+               
                 const data = {
                     communication_table_id: tbId,
                     message_subject: document.getElementById('new-message-subject').value,
                     message_communication_type: document.getElementById('new-message-communication-type').value,
-                    message_transmitter: document.getElementById('new-message-transmitter').value,
                     message_periodicity: document.getElementById('new-message-periodicity').value,
                     message_channels: Array.from(channelsSelect.selectedOptions).map(option => option.value),
-                    message_receivers: Array.from(receiversSelect.selectedOptions).map(option => option.value),
-
+                    message_receivers: document.getElementById('new-message-receiver').value,
                 };
-
 
                 fetch('/communications/create-message/', {
                     method: 'POST',
@@ -737,11 +717,12 @@
             // COmporatmiento del botón de de nueva tabla
             document.querySelectorAll('.add-table-btn').forEach(button => {
                 button.addEventListener('click', function () {
-                    console.log('boton tabla'); //debug
+
 
                     const data = {
                         table_code: document.getElementById("new-table-code").value,
-                        table_transmitter: document.getElementById("new-table-transmitter").value,
+                        table_emiter: document.getElementById("new-table-emiter").value,
+                        table_creator: document.getElementById("new-table-creator").value,
                         table_area: document.getElementById("new-table-area").value,
                     };
 
@@ -763,8 +744,21 @@
                                         optionElement.selected = true; 
                                     }
                                     areaSelect.appendChild(optionElement);
-                                    console.log(data.first_name)
-                                });           
+                                }); 
+                                
+                                const emiterSelect = document.getElementById('new-table-emiter');
+                                emiterSelect.innerHTML = ''; // Clear existing options
+                                data.emiter_options.forEach(emiterOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = emiterOption.id;
+                                    optionElement.textContent = emiterOption.first_name + emiterOption.last_name;
+                                    if (emiterOption.id === data.emiter) {
+                                        optionElement.selected = true; 
+                                    }
+                                    emiterSelect.appendChild(optionElement);
+                                });   
+
+
                             }
                         });
                 });
@@ -779,10 +773,12 @@
 
                 const data = {
                     table_code: document.getElementById('new-table-code').value,
-                    table_transmitter: document.getElementById('new-table-transmitter').value,
+                    table_emiter: document.getElementById('new-table-emiter').value,
+                    table_creator: document.getElementById('new-table-creator').value,
                     table_area: document.getElementById('new-table-area').value,
                 };
 
+                console.log(data)
 
                 fetch('/communications/create-table/', {
                     method: 'POST',
