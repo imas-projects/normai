@@ -96,12 +96,12 @@
                                     {% for auditor in plan.auditors %}
                                     <tr>
                                         <td>{{ auditor }}</td>
-                                        <td>N/A</td>
+                                        <td></td>
                                     </tr>
                                     {% endfor %}
                                     {% for audited in plan.audited_users %}
                                     <tr>
-                                        <td>N/A</td>
+                                        <td></td>
                                         <td>{{ audited }}</td>
                                     </tr>
                                     {% endfor %}
@@ -115,10 +115,9 @@
                     </div>
                 </div>
 
-                <!-- Associated Elements no longer accessible directly unless passed in context -->
-                <div class="mt-5">
-                    <h3 class="text-center">Associated Elements</h3>
-                    <div class="text-center">Associated elements are not available in the current view context.</div>
+                <!-- Associated Elements removed since not available in context -->
+                <div class="mt-5 text-center text-muted">
+                    <em>Associated elements are not available in the current view context.</em>
                 </div>
             </div>
         </div>
@@ -162,5 +161,5 @@
 {% endblock content %}
 
 {% block extra_js %}
-<!-- You can include custom JavaScript here -->
+
 {% endblock extra_js %}
