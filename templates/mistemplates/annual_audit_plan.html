@@ -218,23 +218,5 @@
 </div>
 
 {% block extra_js %}
-<script>
-document.getElementById("openAddAuditPlanHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_plan_header' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditPlanHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditPlanHeaderModal")).show();
-    });
-});
 
-document.getElementById("openAddAssociatedElementsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_associated_elements' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("associatedElementsModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAssociatedElementsModal")).show();
-    });
-});
-</script>
 {% endblock extra_js %}
