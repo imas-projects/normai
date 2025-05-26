@@ -167,23 +167,5 @@
 {% endblock content %}
 
 {% block extra_js %}
-<script>
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
-    });
-});
 
-document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
-    });
-});
-</script>
 {% endblock extra_js %}
