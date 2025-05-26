@@ -60,12 +60,12 @@
                         <div>
                             <h3 class="text-center">Audit Team</h3>
                             <div class="row">
-                                {% if program_data.users %}
+                                {% if users %}
                                 <div class="col-12">
                                     <div class="card mb-3">
                                         <div class="card-header bg-primary text-white">Assigned Users</div>
                                         <ul class="list-group list-group-flush">
-                                            {% for user in program_data.users %}
+                                            {% for user in users %}
                                             <li class="list-group-item">{{ user.get_full_name }}</li>
                                             {% endfor %}
                                         </ul>
