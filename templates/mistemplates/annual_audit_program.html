@@ -27,7 +27,7 @@
 
             <div class="container mt-4">
                 <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-md-8 d-flex flex-column gap-4">
                         <div class="table-responsive">
                             <table class="table table-bordered mt-3">
                                 <thead class="table-dark">
@@ -54,6 +54,50 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <div>
+                            <h3 class="text-center">Annual Program</h3>
+                            <div class="row">
+                                {% for year, months in annual_programs_by_year.items %}
+                                    <div class="col-12">
+                                        <hr class="my-4 border-primary">
+                                        <h4 class="text-dark text-center">{{ year }}</h4>
+                                    </div>
+                                    {% for month, programs in months.items %}
+                                        <div class="col-md-6 col-lg-6">
+                                            <div class="card mb-3">
+                                                <div class="card-header bg-dark text-white">{{ month }}</div>
+                                                <ul class="list-group list-group-flush">
+                                                    {% for item in programs %}
+                                                    <li class="list-group-item">
+                                                        <strong>Process:</strong> {{ item.program.process.name }}<br>
+                                                        <strong>Users:</strong>
+                                                        {% if item.users %}
+                                                            {% for user in item.users %}
+                                                                {{ user.get_full_name }}{% if not forloop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <em>No users assigned</em>
+                                                        {% endif %}<br>
+                                                        <strong>Requirements:</strong>
+                                                        {% if item.requirements %}
+                                                            {% for req in item.requirements %}
+                                                                {{ req.name }}{% if not forloop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <em>No requirements</em>
+                                                        {% endif %}
+                                                    </li>
+                                                    {% empty %}
+                                                    <li class="list-group-item text-muted">No data available.</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-md-4 d-flex flex-column justify-content-between">
@@ -75,50 +119,6 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="col-md-8">
-                    <h3 class="text-center">Annual Program</h3>
-                    <div class="row">
-                        {% for year, months in annual_programs_by_year.items %}
-                            <div class="col-12">
-                                <hr class="my-4 border-primary">
-                                <h4 class="text-dark text-center">{{ year }}</h4>
-                            </div>
-                            {% for month, programs in months.items %}
-                                <div class="col-md-3">
-                                    <div class="card mb-3">
-                                        <div class="card-header bg-dark text-white">{{ month }}</div>
-                                        <ul class="list-group list-group-flush">
-                                            {% for item in programs %}
-                                            <li class="list-group-item">
-                                                <strong>Process:</strong> {{ item.program.process.name }}<br>
-                                                <strong>Users:</strong>
-                                                {% if item.users %}
-                                                    {% for user in item.users %}
-                                                        {{ user.get_full_name }}{% if not forloop.last %}, {% endif %}
-                                                    {% endfor %}
-                                                {% else %}
-                                                    <em>No users assigned</em>
-                                                {% endif %}<br>
-                                                <strong>Requirements:</strong>
-                                                {% if item.requirements %}
-                                                    {% for req in item.requirements %}
-                                                        {{ req.name }}{% if not forloop.last %}, {% endif %}
-                                                    {% endfor %}
-                                                {% else %}
-                                                    <em>No requirements</em>
-                                                {% endif %}
-                                            </li>
-                                            {% empty %}
-                                            <li class="list-group-item text-muted">No data available.</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% endfor %}
                     </div>
                 </div>
             </div>
