@@ -32,7 +32,7 @@
             <!-- Tarjeta para el Programa Anual de Auditorías -->
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="{% url 'audits:annual_program' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+                    <a href="{% url 'audits:annual_audit_program' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
                         <h3 class="mb-0">Annual Program of Internal Audits</h3>
                     </a>
                     <!-- Dropdown a la derecha -->
@@ -51,7 +51,7 @@
             <!-- Tarjeta para el Plan Anual de Auditorías -->
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="{% url 'audits:annual_plan' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+                    <a href="{% url 'audits:annual_audit_plan' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
                         <h3 class="mb-0">Annual Plan of Internal Audits</h3>
                     </a>
                     <!-- Dropdown a la derecha -->
@@ -70,7 +70,7 @@
             <!-- Tarjeta para Conduct Internal Audits -->
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="{% url 'audits:conduct_audit' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+                    <a href="{% url 'audits:conduct_internal_audits' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
                         <h3 class="mb-0">Conduct Internal Audits</h3>
                     </a>
 
@@ -330,116 +330,6 @@
 
 {% block extra_js %}
 
-<script>
-document.getElementById("openAddAuditedModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audited' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditedModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditedModal")).show();
-    });
-});
 
-document.getElementById("openAddAuditTeamModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_team' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditTeamModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditTeamModal")).show();
-    });
-});
-
-document.getElementById("openAddRequirement").addEventListener("click", function() {
-    fetch("{% url 'audits:add_requirement' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("requirementModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addRequirementModal")).show();
-    });
-});
-  
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
-    });
-});
-
-document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
-    });
-});
-
-document.getElementById("openAddAuditPlanHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_plan_header' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditPlanHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditPlanHeaderModal")).show();
-    });
-});
-
-document.getElementById("openAddAssociatedElementsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_associated_elements' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("associatedElementsModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAssociatedElementsModal")).show();
-    });
-});
-
-document.getElementById("openAddFindingsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_findings' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("findingsModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
-    });
-});
-
-document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_report' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditReportModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
-    });
-});
-
-document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audited_evaluation_question' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
-    });
-});
-
-document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addLeadAuditorEvaluationQuestionModal")).show();
-    });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
-        fetch("{% url 'audits:add_checklist' %}")  // Carga el formulario de add_checklist
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addChecklistQuestionModal")).show();
-        });
-    });
-});
-</script>
 
 {% endblock extra_js %}
