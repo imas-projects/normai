@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict, OrderedDict
 from datetime import datetime
+from itertools import zip_longest
 
 '''
 from .forms import (
@@ -101,6 +102,11 @@ def annual_audit_plan(request):
 
     audit_data = []
     for plan in plans:
+        auditors = [auditor.user.get_full_name() for auditor in plan.auditors.all()]
+        audited_users = [audited.user.get_full_name() for audited in plan.audited_users.all()]
+
+        paired_list = list(zip_longest(auditors, audited_users, fillvalue=None))
+
         audit_data.append({
             "plan_id": plan.id,
             "process": plan.annual_program.process.name if plan.annual_program and plan.annual_program.process else None,
@@ -111,8 +117,9 @@ def annual_audit_plan(request):
             "audit_closing_date": plan.audit_closing_date,
             "audit_opening_location": plan.audit_opening_location,
             "audit_closing_location": plan.audit_closing_location,
-            "auditors": [auditor.user.get_full_name() for auditor in plan.auditors.all()],
-            "audited_users": [audited.user.get_full_name() for audited in plan.audited_users.all()],
+            "auditors": auditors,
+            "audited_users": audited_users,
+            "paired_team": paired_list,
         })
 
     return render(request, 'mistemplates/annual_audit_plan.html', {
