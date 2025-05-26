@@ -81,45 +81,40 @@
                     </div>
                 </div>
 
-<div class="mt-5">
-    <h3 class="text-center">Audit Team & Audited People</h3>
-    <div class="table-responsive">
-        <table class="table table-bordered mt-3">
-            <thead class="table-dark">
-                <tr>
-                    <th>Auditor</th>
-                    <th>Audited Person</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for plan in audit_data %}
-                    {% with plan.auditors|length as len_auditors plan.audited_users|length as len_audited %}
-                    {% with len_auditors|add:len_audited as total %}
-                    {% for i in total|make_list %}
-                        <tr>
-                            <td>
-                                {% if i|add:"0" < len_auditors %}
-                                    {{ plan.auditors.i }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if i|add:"0" < len_audited %}
-                                    {{ plan.audited_users.i }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    {% endwith %}
-                    {% endwith %}
-                {% empty %}
-                <tr>
-                    <td colspan="2" class="text-center">No audit team or audited people available.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+                <div class="mt-5">
+                    <h3 class="text-center">Audit Team & Audited People</h3>
+                    <div class="table-responsive">
+                        <table class="table table-bordered mt-3">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Auditor</th>
+                                    <th>Audited Person</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan in audit_data %}
+                                    {% for auditor in plan.auditors %}
+                                    <tr>
+                                        <td>{{ auditor }}</td>
+                                        <td></td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% for audited in plan.audited_users %}
+                                    <tr>
+                                        <td></td>
+                                        <td>{{ audited }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center">No audit team or audited people available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
 
 
 
