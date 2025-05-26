@@ -7,7 +7,8 @@ from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluat
 app_name = 'risks'
 
 urlpatterns = [
-  path('', create_risk, name='risks')
+  path('', create_risk, name='risks'),
+  path('download-risks-pdf/<str:department_name>/', generate_risks_pdf, name='download_risks_pdf'),
   ]
 '''
     path('download-risks-pdf/<str:department_name>/', generate_risks_pdf, name='download_risks_pdf'),
