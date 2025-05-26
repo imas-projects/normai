@@ -1,9 +1,11 @@
 {% extends "mistemplates/mi_base.html" %}
 {% load static %}
 {% block title %}Annual Audit Plan{% endblock title %}
+
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 {% endblock extra_css %}
+
 {% block content %}
 <div class="main-content">
     <div class="page-content">
@@ -13,7 +15,7 @@
                 <h1 class="text-center flex-grow-1">Annual Plan of Internal Audits</h1>
                 <div class="dropdown">
                     <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                       Add
+                        Add
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li><a class="dropdown-item" href="#" id="openAddAuditPlanHeaderModal">Add Meetings</a></li>
@@ -32,24 +34,22 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Process</th>
-                                        <th>Objective</th>
-                                        <th>Scope</th>
-                                        <th>Audit Criteria</th>
-                                        <th>Security Standards</th>
+                                        <th>Year</th>
+                                        <th>Month</th>
+                                        <th>Leader</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for plan in audit_plans %}
+                                    {% for plan in audit_data %}
                                     <tr>
-                                        <td>{{ plan.annual_program.process.name }}</td>
-                                        <td>{{ plan.annual_program.program_header.objective }}</td>
-                                        <td>{{ plan.annual_program.program_header.scope }}</td>
-                                        <td>{{ plan.annual_program.program_header.audit_criteria }}</td>
-                                        <td>{{ plan.annual_program.program_header.security_standards }}</td>
+                                        <td>{{ plan.process }}</td>
+                                        <td>{{ plan.year }}</td>
+                                        <td>{{ plan.month }}</td>
+                                        <td>{{ plan.lider }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="5" class="text-center">No audit programs available.</td>
+                                        <td colspan="4" class="text-center">No audit programs available.</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -60,7 +60,7 @@
                     <div class="col-md-6 mt-5">
                         <h3 class="text-center">Audit Meetings</h3>
                         <div class="row">
-                            {% for plan in audit_plans %}
+                            {% for plan in audit_data %}
                             <div class="col-md-12">
                                 <div class="card mb-3">
                                     <div class="card-body">
@@ -92,17 +92,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for plan in audit_plans %}
-                                    {% for auditor in plan.auditors.all %}
+                                {% for plan in audit_data %}
+                                    {% for auditor in plan.auditors %}
                                     <tr>
-                                        <td>{{ auditor.user.get_full_name }}</td>
-                                        <td>N/A</td>  
+                                        <td>{{ auditor }}</td>
+                                        <td>N/A</td>
                                     </tr>
                                     {% endfor %}
-                                    {% for audited in plan.audited_users.all %}
+                                    {% for audited in plan.audited_users %}
                                     <tr>
-                                        <td>N/A</td>  
-                                        <td>{{ audited.user.get_full_name }}</td>
+                                        <td>N/A</td>
+                                        <td>{{ audited }}</td>
                                     </tr>
                                     {% endfor %}
                                 {% empty %}
@@ -115,71 +115,15 @@
                     </div>
                 </div>
 
+                <!-- Associated Elements no longer accessible directly unless passed in context -->
                 <div class="mt-5">
                     <h3 class="text-center">Associated Elements</h3>
-                    <div class="table-responsive">
-                        <table class="table table-bordered mt-3">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Requirement</th>
-                                    <th>Audited Person</th>
-                                    <th>Parent Area</th>
-                                    <th>Area</th>
-                                    <th>Position</th>
-                                    <th>Audit Date</th>
-                                    <th>Audit Time</th>
-                                    <th>Audit Team Member</th>
-                                    <th>Audit Location</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for plan in audit_plans %}
-                                    {% for requirement in plan.annual_program.process.requirements.all %}
-                                        {% for audited in plan.audited_users.all %}
-                                            <tr>
-                                                <td>{{ requirement.requirement.name }}</td>
-                                                <td>{{ audited.user.first_name }} {{ audited.user.last_name }}</td>
-                                                <td>
-                                                    {% if audited.user.profile and audited.user.profile.position %}
-                                                        {{ audited.user.profile.position.parent_area.name }}
-                                                    {% else %}
-                                                        N/A
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if audited.user.profile and audited.user.profile.position %}
-                                                        {{ audited.user.profile.position.area.name }}
-                                                    {% else %}
-                                                        N/A
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if audited.user.profile and audited.user.profile.position %}
-                                                        {{ audited.user.profile.position.title }}
-                                                    {% else %}
-                                                        N/A
-                                                    {% endif %}
-                                                </td>
-                                                <td>{{ plan.audit_opening_date|default:"N/A" }}</td>
-                                                <td>{{ plan.audit_opening_date|default:"N/A" }}</td> 
-                                                <td>{{ plan.auditors.first.user.get_full_name }}</td>  
-                                                <td>{{ plan.audit_opening_location|default:"N/A" }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    {% endfor %}
-                                {% empty %}
-                                <tr>
-                                    <td colspan="9" class="text-center">No associated elements available.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="text-center">Associated elements are not available in the current view context.</div>
                 </div>
             </div>
         </div>
 
-
+        <!-- Modals -->
         <div class="modal fade" id="addAuditPlanHeaderModal" tabindex="-1" aria-labelledby="addAuditPlanHeaderModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -213,9 +157,9 @@
         {% block footer %}
         {% include "partials/footer.html" %}
         {% endblock footer %}
-{% endblock content %}
     </div>
 </div>
+{% endblock content %}
 
 {% block extra_js %}
 
