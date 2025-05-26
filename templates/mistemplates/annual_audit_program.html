@@ -60,20 +60,20 @@
                         <div>
                             <h3 class="text-center">Audit Team</h3>
                             <div class="row">
-                                {% for role, members in grouped_team.items %}
+                                {% if program_data.users %}
                                 <div class="col-12">
                                     <div class="card mb-3">
-                                        <div class="card-header bg-primary text-white">{{ role }}</div>
+                                        <div class="card-header bg-primary text-white">Assigned Users</div>
                                         <ul class="list-group list-group-flush">
-                                            {% for member in members %}
-                                            <li class="list-group-item">{{ member }}</li>
+                                            {% for user in program_data.users %}
+                                            <li class="list-group-item">{{ user.get_full_name }}</li>
                                             {% endfor %}
                                         </ul>
                                     </div>
                                 </div>
-                                {% empty %}
+                                {% else %}
                                 <p class="text-center">No team members assigned.</p>
-                                {% endfor %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
