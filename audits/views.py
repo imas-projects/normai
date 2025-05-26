@@ -60,6 +60,9 @@ def annual_audit_program(request):
         requirements_by_process[pr.process_id].append(pr.requirement)
 
     annual_programs_by_year = OrderedDict()
+    
+    all_users = User.objects.all()
+
     for y, m in month_range:
         month_name = datetime(y, m, 1).strftime('%B')
         if y not in annual_programs_by_year:
@@ -80,6 +83,7 @@ def annual_audit_program(request):
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
         'annual_programs_by_year': annual_programs_by_year,
+        'users': all_users,
     })
 
 # === ANNUAL AUDIT PLAN ===
