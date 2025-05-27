@@ -130,42 +130,69 @@ def annual_audit_plan(request):
 # === CONDUCT INTERNAL AUDITS ===
 
 def conduct_internal_audits(request):
+    # Trae todos los planes de auditoría
     plans = AnnualPlan.objects.select_related(
-        "annual_program__process",
-        "lider"
-    ).prefetch_related("auditors__user", "audited_users__user", "checklists", "checklists__question")
+        "annual_program__process", "lider"
+    ).prefetch_related(
+        "auditors__user",
+        "audited_users__user",
+        "checklists__question",
+        "auditor_evaluations__question"
+    )
 
     data = []
-    for plan in plans:
-        entry = {
-            "plan_id": plan.id,
-            "process": plan.annual_program.process.name,
-            "year": plan.annual_program.program_header.year,
-            "lider": plan.lider.get_full_name(),
-            "auditors": [a.user.get_full_name() for a in plan.auditors.all()],
-            "audited_users": [a.user.get_full_name() for a in plan.audited_users.all()],
-            "checklist": [{
-                "question": c.question.question_text,
-                "compliance": c.compliance,
-                "evidence": c.evidence,
-            } for c in plan.checklists.all()],
-            "report": None,
-            "findings": []
-        }
 
+    for plan in plans:
+        # Obtener checklist ordenado
+        checklist_items = plan.checklists.select_related("question").all()
+
+        checklist = [{
+            "orden": item.orden,
+            "question": item.question.question_text,
+            "requirement": item.question.requirement.name if item.question.requirement else "N/A",
+            "compliance": item.compliance,
+            "evidence": item.evidence,
+        } for item in checklist_items]
+
+        # Evaluaciones de auditor
+        auditor_evals = plan.auditor_evaluations.select_related("question").all()
+        auditor_evaluation = [{
+            "orden": eval.orden,
+            "question": eval.question.question_text,
+            "rate": eval.rate
+        } for eval in auditor_evals]
+
+        # Reporte
         report = AuditReport.objects.filter(audit=plan.annual_program).first()
+        report_data = None
+        findings_data = []
+
         if report:
-            entry["report"] = {
+            report_data = {
                 "summary": report.summary,
                 "strengths": report.strengths
             }
 
+            # Hallazgos
             findings = Findings.objects.filter(report=report).select_related("requirement")
-            entry["findings"] = [{
+            findings_data = [{
                 "requirement": f.requirement.name if f.requirement else "N/A",
                 "text": f.finding_text,
                 "classification": f.classification,
             } for f in findings]
+
+        entry = {
+            "plan_id": plan.id,
+            "process": plan.annual_program.process.name,
+            "year": plan.annual_program.program_header.year,
+            "leader": plan.lider.get_full_name(),
+            "auditors": [aud.user.get_full_name() for aud in plan.auditors.all()],
+            "audited_users": [au.user.get_full_name() for au in plan.audited_users.all()],
+            "checklist": checklist,
+            "auditor_evaluation": auditor_evaluation,
+            "report": report_data,
+            "findings": findings_data,
+        }
 
         data.append(entry)
 
