@@ -176,11 +176,10 @@ def conduct_internal_audits(request):
                 "classification": f.classification,
             } for f in findings]
 
-        lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(plan=plan).select_related("question")
+        lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(type='AUDITOR_LIDER')
 
         lead_auditor_evaluation = [{
-            "question": eval.question.question_text,
-            "rate": eval.rate
+            "question": eval.question_text,
         } for eval in lead_eval_queryset]
 
         entry = {
