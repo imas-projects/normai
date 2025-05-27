@@ -38,58 +38,94 @@
             {% endblock pagetitle %}
 
             <!-- Lista de auditorías en formato vertical -->
-            <div class="row mt-5">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header bg-dark">
-                            <h5 class="mb-0 text-white text-center">Audit List</h5>
-                        </div>
-                        <div class="card-body">
-                            {% for audit in audit_data %}
-                            <div class="card mb-4 p-3 shadow">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <p class="fs-3"><strong>Requirement:</strong> {{ audit.requirement }}</p>
-                                            <p class="fs-3"><strong>Audited:</strong> {{ audit.audited }}</p>
-                                            <p class="fs-3"><strong>Auditor:</strong> {{ audit.auditor }}</p>
-                                        </div>
-                                        <div class="col-md-4 d-flex flex-column align-items-end">
-                                            {% if audit.requirement_id %}
-                                                <button class="btn btn-dark btn-lg mb-2 w-100" data-bs-toggle="modal" data-bs-target="#checklistModal" data-requirement-id="{{ audit.requirement_id }}">
-                                                    Make Checklist
-                                                </button>
-                                                <button class="btn btn-dark btn-lg mb-2 w-100 audited-evaluation-btn" data-bs-toggle="modal" data-bs-target="#auditedEvaluationModal" data-requirement-id="{{ audit.requirement_id }}">
-                                                    Evaluation by Audited
-                                                </button>
-                                                <button class="btn btn-dark btn-lg mb-2 w-100 lead-auditor-evaluation-btn" data-bs-toggle="modal" data-bs-target="#leadAuditorEvaluationModal" data-requirement-id="{{ audit.requirement_id }}">
-                                                    Evaluation by Lead Auditor
-                                                </button>
-                                                <button class="btn btn-dark btn-lg w-100 audit-report-btn" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#auditReportModal" 
-                                                        data-requirement-id="{{ audit.requirement_id }}">
-                                                    Audit Report
-                                                </button>
-                                            {% else %}
-                                                <button class="btn btn-dark btn-lg mb-2 w-100" disabled>
-                                                    No Requirement
-                                                </button>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <p class="text-center fs-4">No audits available</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
+      <div class="row mt-5">
+        <div class="col-lg-12">
+          {% for audit in audit_data %}
+          <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+              <h5>Audit: {{ audit.audit.name }}</h5>
             </div>
+            <div class="card-body">
+              <!-- Checklist -->
+              <h6>Checklist</h6>
+              {% if audit.checklist %}
+              <ul class="list-group mb-3">
+                {% for item in audit.checklist %}
+                <li class="list-group-item">
+                  <strong>Q{{ item.orden }}:</strong> {{ item.question_text }} <br>
+                  <strong>Compliance:</strong> {{ item.compliance|yesno:"Yes,No" }} <br>
+                  {% if item.evidence %}<strong>Evidence:</strong> {{ item.evidence }}{% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No checklist entries found.</p>
+              {% endif %}
+
+              <!-- Evaluation by Audited -->
+              <h6>Evaluation by Audited</h6>
+              {% if audit.audited_evaluation %}
+              <ul class="list-group mb-3">
+                {% for eval in audit.audited_evaluation %}
+                <li class="list-group-item">
+                  <strong>Q{{ eval.orden }}:</strong> {{ eval.question.question_text }} <br>
+                  <strong>Rating:</strong> {{ eval.rate }}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No evaluations by audited.</p>
+              {% endif %}
+
+              <!-- Evaluation by Lead Auditor -->
+              <h6>Evaluation by Lead Auditor</h6>
+              {% if audit.lead_auditor_evaluation %}
+              <ul class="list-group mb-3">
+                {% for eval in audit.lead_auditor_evaluation %}
+                <li class="list-group-item">
+                  <strong>Q:</strong> {{ eval.question_text }} <br>
+                  <strong>Rating:</strong> {{ eval.rate }}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No evaluations by lead auditor.</p>
+              {% endif %}
+
+              <!-- Findings -->
+              <h6>Findings</h6>
+              {% if audit.findings %}
+              <ul class="list-group mb-3">
+                {% for f in audit.findings %}
+                <li class="list-group-item">
+                  <strong>Classification:</strong> {{ f.classification }} <br>
+                  {{ f.finding_text }}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No findings recorded.</p>
+              {% endif %}
+
+              <!-- Audit Report -->
+              <h6>Audit Report</h6>
+              {% if audit.report %}
+              <p><strong>Summary:</strong> {{ audit.report.summary }}</p>
+              <p><strong>Strengths:</strong> {{ audit.report.strengths }}</p>
+              {% else %}
+              <p>No audit report submitted.</p>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-center fs-4">No audits available</p>
+          {% endfor %}
         </div>
+      </div>
     </div>
+  </div>
 </div>
+
 
 <!-- Modal para Add Findings -->
 <div class="modal fade" id="addFindingsModal" tabindex="-1" aria-labelledby="addFindingsModalLabel" aria-hidden="true">
