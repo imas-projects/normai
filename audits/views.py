@@ -176,7 +176,7 @@ def conduct_internal_audits(request):
                 "classification": f.classification,
             } for f in findings]
 
-        lead_eval_queryset = LeadAuditorEvaluation.objects.filter(plan=plan).select_related("question")
+        lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(plan=plan).select_related("question")
 
         lead_auditor_evaluation = [{
             "question": eval.question.question_text,
