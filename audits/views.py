@@ -130,7 +130,6 @@ def annual_audit_plan(request):
 # === CONDUCT INTERNAL AUDITS ===
 
 def conduct_internal_audits(request):
-    # Trae todos los planes de auditoría
     plans = AnnualPlan.objects.select_related(
         "annual_program__process", "lider"
     ).prefetch_related(
@@ -143,7 +142,6 @@ def conduct_internal_audits(request):
     data = []
 
     for plan in plans:
-        # Obtener checklist ordenado
         checklist_items = plan.checklists.select_related("question").all()
 
         checklist = [{
@@ -154,7 +152,6 @@ def conduct_internal_audits(request):
             "evidence": item.evidence,
         } for item in checklist_items]
 
-        # Evaluaciones de auditor
         auditor_evals = plan.auditor_evaluations.select_related("question").all()
         auditor_evaluation = [{
             "orden": eval.orden,
@@ -162,7 +159,6 @@ def conduct_internal_audits(request):
             "rate": eval.rate
         } for eval in auditor_evals]
 
-        # Reporte
         report = AuditReport.objects.filter(audit=plan.annual_program).first()
         report_data = None
         findings_data = []
@@ -173,13 +169,19 @@ def conduct_internal_audits(request):
                 "strengths": report.strengths
             }
 
-            # Hallazgos
             findings = Findings.objects.filter(report=report).select_related("requirement")
             findings_data = [{
                 "requirement": f.requirement.name if f.requirement else "N/A",
                 "text": f.finding_text,
                 "classification": f.classification,
             } for f in findings]
+
+        lead_eval_queryset = LeadAuditorEvaluation.objects.filter(plan=plan).select_related("question")
+
+        lead_auditor_evaluation = [{
+            "question": eval.question.question_text,
+            "rate": eval.rate
+        } for eval in lead_eval_queryset]
 
         entry = {
             "plan_id": plan.id,
@@ -190,6 +192,7 @@ def conduct_internal_audits(request):
             "audited_users": [au.user.get_full_name() for au in plan.audited_users.all()],
             "checklist": checklist,
             "auditor_evaluation": auditor_evaluation,
+            "lead_auditor_evaluation": lead_auditor_evaluation,
             "report": report_data,
             "findings": findings_data,
         }
