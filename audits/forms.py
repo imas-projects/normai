@@ -11,13 +11,12 @@ class AuditProgramHeaderForm(forms.ModelForm):
         model = AuditProgramHeader
         fields = ['year', 'objective', 'scope', 'audit_criteria', 'security_standards']
         widgets = {
+            'year': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}),
             'objective': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'scope': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'audit_criteria': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'security_standards': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'year': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'YYYY'}),
         }
-
 
 class AnnualProgramForm(forms.ModelForm):
     class Meta:
@@ -26,9 +25,8 @@ class AnnualProgramForm(forms.ModelForm):
         widgets = {
             'program_header': forms.Select(attrs={'class': 'form-control'}),
             'process': forms.Select(attrs={'class': 'form-control'}),
-            'month': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Month'}),
+            'month': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12, 'placeholder': 'Month (1-12)'}),
         }
-
 
 class AnnualProgramUserForm(forms.ModelForm):
     class Meta:
@@ -38,7 +36,6 @@ class AnnualProgramUserForm(forms.ModelForm):
             'annual_program': forms.Select(attrs={'class': 'form-control'}),
             'user': forms.Select(attrs={'class': 'form-control'}),
         }
-
 
 class AnnualPlanForm(forms.ModelForm):
     class Meta:
@@ -58,7 +55,6 @@ class AnnualPlanForm(forms.ModelForm):
             'audit_closing_location': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-
 class AnnualPlanAuditorForm(forms.ModelForm):
     class Meta:
         model = AnnualPlanAuditor
@@ -67,7 +63,6 @@ class AnnualPlanAuditorForm(forms.ModelForm):
             'annual_plan': forms.Select(attrs={'class': 'form-control'}),
             'user': forms.Select(attrs={'class': 'form-control'}),
         }
-
 
 class AnnualPlanAuditedForm(forms.ModelForm):
     class Meta:
@@ -78,7 +73,6 @@ class AnnualPlanAuditedForm(forms.ModelForm):
             'user': forms.Select(attrs={'class': 'form-control'}),
         }
 
-
 class ChecklistForm(forms.ModelForm):
     class Meta:
         model = Checklist
@@ -86,11 +80,10 @@ class ChecklistForm(forms.ModelForm):
         widgets = {
             'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'question': forms.Select(attrs={'class': 'form-control'}),
-            'orden': forms.NumberInput(attrs={'class': 'form-control'}),
+            'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'compliance': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'evidence': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-
 
 class FindingsForm(forms.ModelForm):
     class Meta:
@@ -103,7 +96,6 @@ class FindingsForm(forms.ModelForm):
             'classification': forms.Select(attrs={'class': 'form-control'}),
         }
 
-
 class AuditReportForm(forms.ModelForm):
     class Meta:
         model = AuditReport
@@ -114,7 +106,6 @@ class AuditReportForm(forms.ModelForm):
             'strengths': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-
 class ProcessRequirementForm(forms.ModelForm):
     class Meta:
         model = ProcessRequirement
@@ -123,7 +114,6 @@ class ProcessRequirementForm(forms.ModelForm):
             'process': forms.Select(attrs={'class': 'form-control'}),
             'requirement': forms.Select(attrs={'class': 'form-control'}),
         }
-
 
 class AuditedEvaluationQuestionForm(forms.ModelForm):
     class Meta:
@@ -134,7 +124,6 @@ class AuditedEvaluationQuestionForm(forms.ModelForm):
             'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-
 class AuditorEvaluationForm(forms.ModelForm):
     class Meta:
         model = AuditorEvaluation
@@ -142,10 +131,9 @@ class AuditorEvaluationForm(forms.ModelForm):
         widgets = {
             'audit': forms.Select(attrs={'class': 'form-control'}),
             'question': forms.Select(attrs={'class': 'form-control'}),
-            'orden': forms.NumberInput(attrs={'class': 'form-control'}),
-            'rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'rate': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 10}),  # Ajusta el rango si es necesario
         }
-
 
 class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
     class Meta:
@@ -155,5 +143,3 @@ class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
             'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'type': forms.Select(attrs={'class': 'form-control'}),
         }
-
-
