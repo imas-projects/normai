@@ -29,7 +29,7 @@
                         Add Questions
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist Question</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Add Audited Evaluation Question</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Add Lead Auditor Evaluation Question</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Add Auditor Evaluation</a></li>
@@ -176,7 +176,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Add Checklist Question</h5>
+                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Add Checklist</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -221,26 +221,6 @@
                 </div>
             </div>
             <div class="modal-footer"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para el Checklist -->
-<div class="modal fade" id="checklistModal" tabindex="-1" aria-labelledby="checklistModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="checklistModalLabel">Edit Checklist</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="checklistForm">
-                    <div id="checklistFields">
-                        <!-- Aquí se cargarán dinámicamente los campos del checklist -->
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </form>
-            </div>
         </div>
     </div>
 </div>
