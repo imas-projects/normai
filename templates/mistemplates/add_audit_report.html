@@ -1,20 +1,33 @@
 {% load static %}
-<div class="container">
-    <form method="post" action="{% url 'audits:add_audit_report' %}" id="add-audit-report-form">
-        {% csrf_token %}
-        <div class="mb-3">
-            {{ form.requirement.label_tag }}
-            {{ form.requirement }}
-        </div>
-        <div class="mb-3">
-            {{ form.summary.label_tag }}
-            {{ form.summary }}
-        </div>
-        <div class="mb-3">
-            {{ form.strengths.label_tag }}
-            {{ form.strengths }}
-        </div>
-        <button type="submit" class="btn btn-success">Save</button>
-    </form>
+<div class="container mt-4">
+  <h2>Agregar Informe de Auditoría</h2>
+  <form method="post" action="{% url 'audits:conduct_audit' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.audit.label_tag }}
+      {{ form.audit }}
+      {% if form.audit.errors %}
+        <div class="text-danger small">{{ form.audit.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.summary.label_tag }}
+      {{ form.summary }}
+      {% if form.summary.errors %}
+        <div class="text-danger small">{{ form.summary.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.strengths.label_tag }}
+      {{ form.strengths }}
+      {% if form.strengths.errors %}
+        <div class="text-danger small">{{ form.strengths.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
 </div>
- 
