@@ -1,60 +1,50 @@
 {% load static %}
-{% block content %}
-<div class="modal-body">
-    <form id="checklistForm" action="{% url 'audits:add_checklist' %}" method="POST">
-        {% csrf_token %}
-        
-        <div class="mb-3">
-            {{ form.requirement.label_tag }}
-            {{ form.requirement }}
-        </div>
-        <div class="mb-3">
-            {{ form.question_text.label_tag }}
-            {{ form.question_text }}
-        </div>
-        <div class="mb-3">
-            {{ form.order.label_tag }}
-            {{ form.order }}
-        </div>
+<div class="container mt-4">
+  <h2>Agregar Checklist</h2>
+  <form method="post" action="{% url 'audits:conduct_audit' %}">
+    {% csrf_token %}
 
-        <div class="modal-footer">
-            <button type="submit" class="btn btn-dark">Submit Checklist Question</button>
-        </div>
-    </form>
+    <div class="mb-3">
+      {{ form.audit_plan.label_tag }}
+      {{ form.audit_plan }}
+      {% if form.audit_plan.errors %}
+        <div class="text-danger small">{{ form.audit_plan.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.question.label_tag }}
+      {{ form.question }}
+      {% if form.question.errors %}
+        <div class="text-danger small">{{ form.question.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.orden.label_tag }}
+      {{ form.orden }}
+      {% if form.orden.errors %}
+        <div class="text-danger small">{{ form.orden.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-check mb-3">
+      {{ form.compliance }}
+      {{ form.compliance.label_tag }}
+      {% if form.compliance.errors %}
+        <div class="text-danger small">{{ form.compliance.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.evidence.label_tag }}
+      {{ form.evidence }}
+      {% if form.evidence.errors %}
+        <div class="text-danger small">{{ form.evidence.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const checklistForm = document.getElementById("checklistForm");
-
-    checklistForm.addEventListener("submit", function (e) {
-        e.preventDefault();
-
-        const formData = new FormData(checklistForm);
-        if (!formData.get("requirement")) {
-            alert("Please select a Requirement.");
-            return;
-        }
-        
-        fetch(checklistForm.action, {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-            },
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === "success") {
-                alert("Checklist saved successfully!");
-                window.location.href = data.redirect_url;
-            } else {
-                alert("Error saving checklist. Please check your input.");
-                console.error("Error details:", data.errors);
-            }
-        })
-        .catch(error => console.error("Error submitting checklist:", error));
-    });
-});
-</script>
-{% endblock %}
