@@ -19,6 +19,7 @@
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
                             <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramUserModal">Add Annual Program User</a></li>
                         </ul>
                     </div>
                 </div>
@@ -160,11 +161,56 @@
             </div>
         </div>
 
+        <!-- Modal for adding Annual Program User-->
+        <div class="modal fade" id="addAnnualProgramUserModal" tabindex="-1" aria-labelledby="addAnnualProgramUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAnnualProgramUserModalLabel">Add Annual Program User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="annualProgramUserModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
         {% block footer %}
         {% include "partials/footer.html" %}
         {% endblock footer %}
 {% endblock content %}
 
 {% block extra_js %}
+<script>
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audit_program_header' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+    });
+});
 
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_program' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualProgramModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_program_user' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
+    });
+});
+</script>
 {% endblock extra_js %}
