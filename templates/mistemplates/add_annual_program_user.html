@@ -1,0 +1,26 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Usuario a Programa Anual</h2>
+  <form method="post" action="{% url 'audits:annual_program' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.annual_program.label_tag }}
+      {{ form.annual_program }}
+      {% if form.annual_program.errors %}
+        <div class="text-danger small">{{ form.annual_program.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.user.label_tag }}
+      {{ form.user }}
+      {% if form.user.errors %}
+        <div class="text-danger small">{{ form.user.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
+
