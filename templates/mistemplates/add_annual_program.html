@@ -1,1 +1,35 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Programa Anual</h2>
+  <form method="post" action="{% url 'audits:annual_program' %}">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      {{ form.program_header.label_tag }}
+      {{ form.program_header }}
+      {% if form.program_header.errors %}
+        <div class="text-danger small">{{ form.program_header.errors }}</div>
+      {% endif %}
+    </div>
+    
+    <div class="mb-3">
+      {{ form.process.label_tag }}
+      {{ form.process }}
+      {% if form.process.errors %}
+        <div class="text-danger small">{{ form.process.errors }}</div>
+      {% endif %}
+    </div>
+    
+    <div class="mb-3">
+      {{ form.month.label_tag }}
+      {{ form.month }}
+      {% if form.month.errors %}
+        <div class="text-danger small">{{ form.month.errors }}</div>
+      {% endif %}
+      <div class="form-text">Ingrese un mes válido entre 1 y 12.</div>
+    </div>
+    
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
 
