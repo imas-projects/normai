@@ -1,0 +1,25 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Requisito de Proceso</h2>
+  <form method="post" action="{% url 'audits:annual_program' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.process.label_tag }}
+      {{ form.process }}
+      {% if form.process.errors %}
+        <div class="text-danger small">{{ form.process.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.requirement.label_tag }}
+      {{ form.requirement }}
+      {% if form.requirement.errors %}
+        <div class="text-danger small">{{ form.requirement.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
