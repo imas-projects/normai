@@ -1,0 +1,41 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Evaluación del Auditor</h2>
+  <form method="post" action="{% url 'audits:conduct_audit' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.audit.label_tag }}
+      {{ form.audit }}
+      {% if form.audit.errors %}
+        <div class="text-danger small">{{ form.audit.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.question.label_tag }}
+      {{ form.question }}
+      {% if form.question.errors %}
+        <div class="text-danger small">{{ form.question.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.orden.label_tag }}
+      {{ form.orden }}
+      {% if form.orden.errors %}
+        <div class="text-danger small">{{ form.orden.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.rate.label_tag }}
+      {{ form.rate }}
+      {% if form.rate.errors %}
+        <div class="text-danger small">{{ form.rate.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
