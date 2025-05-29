@@ -7,14 +7,12 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime
 from itertools import zip_longest
 
-'''
 from .forms import (
-    AuditedForm, AuditedEvaluationQuestionForm, 
-    LeadAuditorEvaluationQuestionForm, AuditProgramHeaderForm, 
-    AnnualProgramForm, AuditPlanHeaderForm, AssociatedElementsForm, 
-    FindingsForm, AuditReportForm, UnifiedRequirementForm, ChecklistForm
+    AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm, AnnualProgramUserForm,
+    AnnualPlanAuditorForm, AnnualPlanAuditedForm, ChecklistForm, FindingsForm, AuditReportForm,
+    ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm
 )
-'''
+
 
 from .models import (
     AuditProgramHeader,ProcessRequirement, AnnualProgram, AnnualProgramUser, 
@@ -200,20 +198,22 @@ def conduct_internal_audits(request):
 
     return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": data})
 
-'''
+
 # === ADD VIEWS ===
 
-def add_audited(request):
-    return _add_form_view(request, AuditedForm, 'audits:audits_home', 'add_audited.html', use_cleaned_user=True)
+def _add_form_view(request, form_class, redirect_url, template_name, use_cleaned_user=False):
+    if request.method == "POST":
+        form = form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(redirect_url)
+        else:
+            return render(request, template_name, {"form": form})
+    else:
+        form = form_class()
+    return render(request, template_name, {"form": form})
 
-def add_checklist_question(request):
-    return _add_form_view(request, ChecklistForm, 'audits:conduct_audit', 'add_checklist_question.html')
-
-def add_audited_evaluation_question(request):
-    return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_audit', 'add_audited_evaluation_question.html')
-
-def add_lead_auditor_evaluation_question(request):
-    return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_audit', 'add_lead_auditor_evaluation_question.html')
+# Vistas add actualizadas y limpias, con formularios correctos y URLs adecuadas
 
 def add_audit_program_header(request):
     return _add_form_view(request, AuditProgramHeaderForm, 'audits:annual_program', 'add_audit_program_header.html')
@@ -221,20 +221,17 @@ def add_audit_program_header(request):
 def add_annual_program(request):
     return _add_form_view(request, AnnualProgramForm, 'audits:annual_program', 'add_annual_program.html')
 
-def add_audit_plan_header(request):
-    return _add_form_view(request, AuditPlanHeaderForm, 'audits:annual_plan', 'add_audit_plan_header.html')
+def add_annual_plan(request):
+    return _add_form_view(request, AnnualPlanForm, 'audits:annual_plan', 'add_annual_plan.html')
 
-def add_associated_elements(request):
-    return _add_form_view(request, AssociatedElementsForm, 'audits:annual_plan', 'add_associated_elements.html')
+def add_annual_program_user(request):
+    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_program', 'add_annual_program_user.html')
 
-def add_findings(request):
-    return _add_form_view(request, FindingsForm, 'audits:conduct_audit', 'add_findings.html')
+def add_annual_plan_auditor(request):
+    return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_plan', 'add_annual_plan_auditor.html')
 
-def add_audit_report(request):
-    return _add_form_view(request, AuditReportForm, 'audits:conduct_audit', 'add_audit_report.html')
-
-def add_requirement(request):
-    return _add_form_view(request, UnifiedRequirementForm, 'audits:audits_home', 'add_requirement.html')
+def add_annual_plan_audited(request):
+    return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_plan', 'add_annual_plan_audited.html')
 
 def add_checklist(request):
     if request.method == "POST":
@@ -244,8 +241,27 @@ def add_checklist(request):
             return redirect('audits:conduct_audit')
         else:
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
-    return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
+    return render(request, "add_checklist.html", {"form": ChecklistForm()})
 
+def add_findings(request):
+    return _add_form_view(request, FindingsForm, 'audits:conduct_audit', 'add_findings.html')
+
+def add_audit_report(request):
+    return _add_form_view(request, AuditReportForm, 'audits:conduct_audit', 'add_audit_report.html')
+
+def add_process_requirement(request):
+    return _add_form_view(request, ProcessRequirementForm, 'audits:annual_program', 'add_process_requirement.html')
+
+def add_audited_evaluation_question(request):
+    return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_audit', 'add_audited_evaluation_question.html')
+
+def add_auditor_evaluation(request):
+    return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_audit', 'add_auditor_evaluation.html')
+
+def add_lead_auditor_evaluation_question(request):
+    return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_audit', 'add_lead_auditor_evaluation_question.html')
+
+'''
 # === AJAX VIEWS ===
 
 def get_checklist_data(request, requirement_id):
@@ -265,19 +281,4 @@ def get_lead_auditor_questions(request, requirement_id):
         'id', 'question_text', 'orden', 'rate'
     ))
     return JsonResponse(data, safe=False)
-
-# === HELPER FUNCTION ===
-
-def _add_form_view(request, form_class, success_url_name, template_name, use_cleaned_user=False):
-    if request.method == 'POST':
-        form = form_class(request.POST)
-        if form.is_valid():
-            instance = form.save(commit=False)
-            if use_cleaned_user:
-                instance.audited_user = form.cleaned_data['audited_user']
-            instance.save()
-            return redirect(success_url_name)
-    else:
-        form = form_class()
-    return render(request, f'mistemplates/{template_name}', {'form': form})
 '''
