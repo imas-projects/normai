@@ -18,8 +18,8 @@
                         Add
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" id="openAddAuditPlanHeaderModal">Add Meetings</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAssociatedElementsModal">Add Associated Elements</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Add Annual Plan</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Add Annual Plan Auditor</a></li>
                     </ul>
                 </div>
             </div>
@@ -110,36 +110,37 @@
 </div>
 
 
-        <!-- Modals -->
-        <div class="modal fade" id="addAuditPlanHeaderModal" tabindex="-1" aria-labelledby="addAuditPlanHeaderModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addAuditPlanHeaderModalLabel">Add Audit Plan Header</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="auditPlanHeaderModalFormContent"></div>
-                    </div>
-                    <div class="modal-footer"></div>
-                </div>
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanModal" tabindex="-1" aria-labelledby="addAnnualPlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAnnualPlanModalLabel">Add Annual Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div class="modal-body">
+                <div id="annualPlanModalFormContent"></div>
+            </div>
+            <div class="modal-footer"></div>
         </div>
+    </div>
+</div>
 
-        <div class="modal fade" id="addAssociatedElementsModal" tabindex="-1" aria-labelledby="addAssociatedElementsModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addAssociatedElementsModalLabel">Add Associated Elements</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="associatedElementsModalFormContent"></div>
-                    </div>
-                    <div class="modal-footer"></div>
-                </div>
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanAuditorModal" tabindex="-1" aria-labelledby="addAnnualPlanAuditorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Add Annual Plan Auditor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <div class="modal-body">
+                <div id="annualPlanAuditorModalFormContent"></div>
+            </div>
+            <div class="modal-footer"></div>
         </div>
+    </div>
+</div>
 
         {% block footer %}
         {% include "partials/footer.html" %}
@@ -149,5 +150,24 @@
 {% endblock content %}
 
 {% block extra_js %}
+<script>
+document.getElementById("openAddAnnualPlanModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan_auditor' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
+    });
+});
+</script>
 
 {% endblock extra_js %}
