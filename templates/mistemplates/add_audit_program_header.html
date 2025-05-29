@@ -1,1 +1,50 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Encabezado del Programa de Auditoría</h2>
+  <form method="post" action="{% url 'audits:annual_program' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.year.label_tag }}
+      {{ form.year }}
+      {% if form.year.errors %}
+        <div class="text-danger small">{{ form.year.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.objective.label_tag }}
+      {{ form.objective }}
+      {% if form.objective.errors %}
+        <div class="text-danger small">{{ form.objective.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.scope.label_tag }}
+      {{ form.scope }}
+      {% if form.scope.errors %}
+        <div class="text-danger small">{{ form.scope.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_criteria.label_tag }}
+      {{ form.audit_criteria }}
+      {% if form.audit_criteria.errors %}
+        <div class="text-danger small">{{ form.audit_criteria.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.security_standards.label_tag }}
+      {{ form.security_standards }}
+      {% if form.security_standards.errors %}
+        <div class="text-danger small">{{ form.security_standards.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
 
