@@ -1,0 +1,25 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Auditor al Plan Anual</h2>
+  <form method="post" action="{% url 'audits:annual_plan' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.annual_plan.label_tag }}
+      {{ form.annual_plan }}
+      {% if form.annual_plan.errors %}
+        <div class="text-danger small">{{ form.annual_plan.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.user.label_tag }}
+      {{ form.user }}
+      {% if form.user.errors %}
+        <div class="text-danger small">{{ form.user.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
