@@ -1,0 +1,74 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Plan Anual de Auditoría</h2>
+  <form method="post" action="{% url 'audits:annual_plan' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.annual_program.label_tag }}
+      {{ form.annual_program }}
+      {% if form.annual_program.errors %}
+        <div class="text-danger small">{{ form.annual_program.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.lider.label_tag }}
+      {{ form.lider }}
+      {% if form.lider.errors %}
+        <div class="text-danger small">{{ form.lider.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_opening_date.label_tag }}
+      {{ form.audit_opening_date }}
+      {% if form.audit_opening_date.errors %}
+        <div class="text-danger small">{{ form.audit_opening_date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_opening_time.label_tag }}
+      {{ form.audit_opening_time }}
+      {% if form.audit_opening_time.errors %}
+        <div class="text-danger small">{{ form.audit_opening_time.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_opening_location.label_tag }}
+      {{ form.audit_opening_location }}
+      {% if form.audit_opening_location.errors %}
+        <div class="text-danger small">{{ form.audit_opening_location.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_closing_date.label_tag }}
+      {{ form.audit_closing_date }}
+      {% if form.audit_closing_date.errors %}
+        <div class="text-danger small">{{ form.audit_closing_date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_closing_time.label_tag }}
+      {{ form.audit_closing_time }}
+      {% if form.audit_closing_time.errors %}
+        <div class="text-danger small">{{ form.audit_closing_time.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_closing_location.label_tag }}
+      {{ form.audit_closing_location }}
+      {% if form.audit_closing_location.errors %}
+        <div class="text-danger small">{{ form.audit_closing_location.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
+
