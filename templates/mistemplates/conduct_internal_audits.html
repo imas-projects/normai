@@ -32,6 +32,7 @@
                         <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist Question</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Add Audited Evaluation Question</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Add Lead Auditor Evaluation Question</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Add Auditor Evaluation</a></li>
                     </ul>
                 </div>
             </div>
@@ -304,12 +305,84 @@
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="addAuditorEvaluationModal" tabindex="-1" aria-labelledby="addAuditorEvaluationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Add Auditor Evaluation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="auditorEvaluationModalFormContent"></div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
 {% endblock content %}
 
 {% block extra_js %}
+<script>
+document.getElementById("openAddFindingsModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_findings' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("findingsModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
+    });
+});
 
+document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audit_report' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditReportModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
+    });
+});
+
+document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audited_evaluation_question' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
+    });
+});
+
+document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addLeadAuditorEvaluationQuestionModal")).show();
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
+        fetch("{% url 'audits:add_checklist' %}")  
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addChecklistQuestionModal")).show();
+        });
+    });
+});
+
+document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_auditor_evaluation' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditorEvaluationModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+    });
+});
+</script>
 {% endblock extra_js %}
 
