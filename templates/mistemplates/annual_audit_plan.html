@@ -20,6 +20,7 @@
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Add Annual Plan</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Add Annual Plan Auditor</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Add Annual Plan Audited</a></li>
                     </ul>
                 </div>
             </div>
@@ -142,6 +143,22 @@
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanAuditedModal" tabindex="-1" aria-labelledby="addAnnualPlanAuditedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Add Annual Plan Audited</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="annualPlanAuditedModalFormContent"></div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
         {% block footer %}
         {% include "partials/footer.html" %}
         {% endblock footer %}
@@ -168,6 +185,16 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
         new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
     });
 });
+
+document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan_audited' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+    });
+});
+
 </script>
 
 {% endblock extra_js %}
