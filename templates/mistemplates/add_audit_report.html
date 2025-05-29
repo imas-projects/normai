@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Informe de Auditoría</h2>
-  <form method="post" action="{% url 'audits:conduct_audit' %}">
+  <form method="post" action="{% url 'audits:conduct_internal_audits' %}">
     {% csrf_token %}
 
     <div class="mb-3">
