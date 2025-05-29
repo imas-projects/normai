@@ -1,21 +1,41 @@
 {% load static %}
-<div class="container">
-    <form method="post" action="{% url 'audits:add_findings' %}" id="add-findings-form">
-        {% csrf_token %}
-        
-        <div class="mb-3">
-            {{ form.requirement.label_tag }}
-            {{ form.requirement }}
-        </div>
-        <div class="mb-3">
-            {{ form.finding_text.label_tag }}
-            {{ form.finding_text }}
-        </div>
-        <div class="mb-3">
-            {{ form.classification.label_tag }}
-            {{ form.classification }}
-        </div>
+<div class="container mt-4">
+  <h2>Agregar Hallazgo</h2>
+  <form method="post" action="{% url 'audits:conduct_audit' %}">
+    {% csrf_token %}
 
-        <button type="submit" class="btn btn-success">Save</button>
-    </form>
+    <div class="mb-3">
+      {{ form.report.label_tag }}
+      {{ form.report }}
+      {% if form.report.errors %}
+        <div class="text-danger small">{{ form.report.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.requirement.label_tag }}
+      {{ form.requirement }}
+      {% if form.requirement.errors %}
+        <div class="text-danger small">{{ form.requirement.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.finding_text.label_tag }}
+      {{ form.finding_text }}
+      {% if form.finding_text.errors %}
+        <div class="text-danger small">{{ form.finding_text.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.classification.label_tag }}
+      {{ form.classification }}
+      {% if form.classification.errors %}
+        <div class="text-danger small">{{ form.classification.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
 </div>
