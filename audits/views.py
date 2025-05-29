@@ -216,50 +216,50 @@ def _add_form_view(request, form_class, redirect_url, template_name, use_cleaned
 # Vistas add actualizadas y limpias, con formularios correctos y URLs adecuadas
 
 def add_audit_program_header(request):
-    return _add_form_view(request, AuditProgramHeaderForm, 'audits:annual_program', 'mistemplates/add_audit_program_header.html')
+    return _add_form_view(request, AuditProgramHeaderForm, 'audits:annual_audit_program', 'mistemplates/add_audit_program_header.html')
 
 def add_annual_program(request):
-    return _add_form_view(request, AnnualProgramForm, 'audits:annual_program', 'mistemplates/add_annual_program.html')
+    return _add_form_view(request, AnnualProgramForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program.html')
 
 def add_annual_plan(request):
-    return _add_form_view(request, AnnualPlanForm, 'audits:annual_plan', 'mistemplates/add_annual_plan.html')
+    return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
 
 def add_annual_program_user(request):
-    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_program', 'mistemplates/add_annual_program_user.html')
+    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program_user.html')
 
 def add_annual_plan_auditor(request):
-    return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_plan', 'mistemplates/add_annual_plan_auditor.html')
+    return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
 
 def add_annual_plan_audited(request):
-    return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_plan', 'mistemplates/add_annual_plan_audited.html')
+    return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
 
 def add_checklist(request):
     if request.method == "POST":
         form = ChecklistForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('audits:conduct_audit')
+            return redirect('audits:conduct_internal_audits')
         else:
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
     return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
 
 def add_findings(request):
-    return _add_form_view(request, FindingsForm, 'audits:conduct_audit', 'mistemplates/add_findings.html')
+    return _add_form_view(request, FindingsForm, 'audits:conduct_internal_audits', 'mistemplates/add_findings.html')
 
 def add_audit_report(request):
-    return _add_form_view(request, AuditReportForm, 'audits:conduct_audit', 'mistemplates/add_audit_report.html')
+    return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
 
 def add_process_requirement(request):
-    return _add_form_view(request, ProcessRequirementForm, 'audits:annual_program', 'mistemplates/add_process_requirement.html')
+    return _add_form_view(request, ProcessRequirementForm, 'audits:annual_audit_program', 'mistemplates/add_process_requirement.html')
 
 def add_audited_evaluation_question(request):
-    return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_audit', 'mistemplates/add_audited_evaluation_question.html')
+    return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_audited_evaluation_question.html')
 
 def add_auditor_evaluation(request):
-    return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_audit', 'mistemplates/add_auditor_evaluation.html')
+    return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_internal_audits', 'mistemplates/add_auditor_evaluation.html')
 
 def add_lead_auditor_evaluation_question(request):
-    return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_audit', 'mistemplates/add_lead_auditor_evaluation_question.html')
+    return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_lead_auditor_evaluation_question.html')
 
 '''
 # === AJAX VIEWS ===
