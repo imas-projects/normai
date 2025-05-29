@@ -11,20 +11,10 @@
         <div class="container-fluid">
             {% block pagetitle %}
             <div class="d-flex justify-content-between align-items-center mt-5">
-                <div class="d-flex">
-                    <div class="dropdown me-2">  <!-- Botón de dropdown a la izquierda -->
-                        <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                            Add Member
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" id="openAddAuditTeamModal">Add Audit Team Member</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAuditedModal">Add Audited</a></li>
-                        </ul>
-                    </div>
                 </div>
                 <h1 class="text-center flex-grow-1">Internal Audits</h1>  <!-- Título centrado -->
                 <div>
-                    <button class="btn btn-dark" type="button" id="openAddRequirement">Add Requirement</button>  <!-- Botón a la derecha -->
+                    <button class="btn btn-dark" type="button" id="openAddProcessRequirementModal">Add Process Requirement</button>  <!-- Botón a la derecha -->
                 </div>
             </div>
             {% endblock pagetitle %}
@@ -43,6 +33,7 @@
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
                             <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramUserModal">Add Annual Program User</a></li>
                         </ul>
                     </div>
                 </div>
@@ -60,8 +51,9 @@
                             Add
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" id="openAddAuditPlanHeaderModal">Add Meetings</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAssociatedElementsModal">Add Associated Elements</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Add Annual Plan</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Add Annual Plan Auditor</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Add Annual Plan Audited</a></li>
                         </ul>
                     </div>
                 </div>
@@ -96,6 +88,7 @@
                                 <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist Question</a></li>
                                 <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Add Audited Evaluation Question</a></li>
                                 <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Add Lead Auditor Evaluation Question</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Add Auditor Evaluation</a></li>
                             </ul>
                         </div>
                     </div>
@@ -105,133 +98,128 @@
     </div>
 </div>
 
-<!-- Modal para Add Audit Team Member -->
-<div class="modal fade" id="addAuditTeamModal" tabindex="-1" aria-labelledby="addAuditTeamModalLabel" aria-hidden="true">
+
+<!-- Modal -->
+<div class="modal fade" id="addProcessRequirementModal" tabindex="-1" aria-labelledby="addProcessRequirementModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditTeamModalLabel">Add Audit Team Member</h5>
+                <h5 class="modal-title" id="addProcessRequirementModalLabel">Add Process Requirement</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="auditTeamModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
+                <div id="processRequirementModalFormContent"></div>
             </div>
             <div class="modal-footer"></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Add Audited -->
-<div class="modal fade" id="addAuditedModal" tabindex="-1" aria-labelledby="addAuditedModalLabel" aria-hidden="true">
+
+        <!-- Modal for adding Audit Program Header -->
+        <div class="modal fade" id="addAuditProgramHeaderModal" tabindex="-1" aria-labelledby="addAuditProgramHeaderModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Add Audit Program Header</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="auditProgramHeaderModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for adding Annual Program -->
+        <div class="modal fade" id="addAnnualProgramModal" tabindex="-1" aria-labelledby="addAnnualProgramModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Add Annual Program</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="annualProgramModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for adding Annual Program User-->
+        <div class="modal fade" id="addAnnualProgramUserModal" tabindex="-1" aria-labelledby="addAnnualProgramUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addAnnualProgramUserModalLabel">Add Annual Program User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="annualProgramUserModalFormContent">
+                            <!-- Aquí se cargará dinámicamente el formulario -->
+                        </div>
+                    </div>
+                    <div class="modal-footer"></div>
+                </div>
+            </div>
+        </div>
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanModal" tabindex="-1" aria-labelledby="addAnnualPlanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditedModalLabel">Add Audited</h5>
+                <h5 class="modal-title" id="addAnnualPlanModalLabel">Add Annual Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="auditedModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
+                <div id="annualPlanModalFormContent"></div>
             </div>
             <div class="modal-footer"></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Add Requirement -->
-<div class="modal fade" id="addRequirementModal" tabindex="-1" aria-labelledby="addRequirementModalLabel" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanAuditorModal" tabindex="-1" aria-labelledby="addAnnualPlanAuditorModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addRequirementModalLabel">Add Requirement</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Add Annual Plan Auditor</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="requirementModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Add Audit Program Header -->
-<div class="modal fade" id="addAuditProgramHeaderModal" tabindex="-1" aria-labelledby="addAuditProgramHeaderModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Add Audit Program Header</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="auditProgramHeaderModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
+                <div id="annualPlanAuditorModalFormContent"></div>
             </div>
             <div class="modal-footer"></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Add Annual Program -->
-<div class="modal fade" id="addAnnualProgramModal" tabindex="-1" aria-labelledby="addAnnualProgramModalLabel" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade" id="addAnnualPlanAuditedModal" tabindex="-1" aria-labelledby="addAnnualPlanAuditedModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualProgramModalLabel">Add Annual Program</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Add Annual Plan Audited</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="annualProgramModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
+                <div id="annualPlanAuditedModalFormContent"></div>
             </div>
             <div class="modal-footer"></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Add Audit Plan Header -->
-<div class="modal fade" id="addAuditPlanHeaderModal" tabindex="-1" aria-labelledby="addAuditPlanHeaderModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAuditPlanHeaderModalLabel">Add Audit Plan Header</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="auditPlanHeaderModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
-            </div>
-            <div class="modal-footer"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Add Associated Elements -->
-<div class="modal fade" id="addAssociatedElementsModal" tabindex="-1" aria-labelledby="addAssociatedElementsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addAssociatedElementsModalLabel">Add Associated Elements</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="associatedElementsModalFormContent">
-                    <!-- Aquí se cargará dinámicamente el formulario -->
-                </div>
-            </div>
-            <div class="modal-footer"></div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal para Add Findings -->
 <div class="modal fade" id="addFindingsModal" tabindex="-1" aria-labelledby="addFindingsModalLabel" aria-hidden="true">
@@ -323,12 +311,150 @@
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="addAuditorEvaluationModal" tabindex="-1" aria-labelledby="addAuditorEvaluationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Add Auditor Evaluation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="auditorEvaluationModalFormContent"></div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
 {% endblock content %}
 
 {% block extra_js %}
+<script>
+document.getElementById("openAddProcessRequirementModal").addEventListener("click", function () {
+    fetch("{% url 'audits:add_process_requirement' %}")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("processRequirementModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addProcessRequirementModal")).show();
+        });
+});
+
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audit_program_header' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_program' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualProgramModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_program_user' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualPlanModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan_auditor' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
+    });
+});
+
+document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_annual_plan_audited' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+    });
+});
+
+document.getElementById("openAddFindingsModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_findings' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("findingsModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
+    });
+});
+
+document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audit_report' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditReportModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
+    });
+});
+
+document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_audited_evaluation_question' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
+    });
+});
+
+document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addLeadAuditorEvaluationQuestionModal")).show();
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
+        fetch("{% url 'audits:add_checklist' %}")  
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addChecklistQuestionModal")).show();
+        });
+    });
+});
+
+document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_auditor_evaluation' %}")
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById("auditorEvaluationModalFormContent").innerHTML = html;
+        new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+    });
+});
+
+</script>
 
 
 
