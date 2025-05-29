@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Usuario a Programa Anual</h2>
-  <form method="post" action="{% url 'audits:annual_program' %}">
+  <form method="post" action="{% url 'audits:annual_audit_program' %}">
     {% csrf_token %}
 
     <div class="mb-3">
