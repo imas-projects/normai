@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Auditor al Plan Anual</h2>
-  <form method="post" action="{% url 'audits:annual_audit_plan' %}">
+  <form method="post" action="{% url 'audits:add_annual_plan_auditor' %}">
     {% csrf_token %}
 
     <div class="mb-3">
