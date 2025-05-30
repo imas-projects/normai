@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Checklist</h2>
-  <form method="post" action="{% url 'audits:conduct_internal_audits' %}">
+  <form method="post" action="{% url 'audits:add_checklist' %}">
     {% csrf_token %}
 
     <div class="mb-3">
