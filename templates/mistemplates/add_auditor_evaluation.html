@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Evaluación del Auditor</h2>
-  <form method="post" action="{% url 'audits:conduct_internal_audits' %}">
+  <form method="post" action="{% url 'audits:add_auditor_evaluation' %}">
     {% csrf_token %}
 
     <div class="mb-3">
