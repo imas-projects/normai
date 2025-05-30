@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Encabezado del Programa de Auditoría</h2>
-  <form method="post" action="{% url 'audits:annual_audit_program' %}">
+  <form method="post" action="{% url 'audits:add_audit_program_header' %}">
     {% csrf_token %}
 
     <div class="mb-3">
