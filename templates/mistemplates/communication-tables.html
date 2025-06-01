@@ -80,12 +80,16 @@
                                     <tr>
                                         <div class="hstack gap-3">
                                             <h3>Mensajes</h3>
+                                            {% if table.status == "open" %}
                                             <button type="button" class="btn btn-soft-info ms-auto add-btn"
                                                 id="add-message-btn" data-table-id="{{ table.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#addModal"><i
                                                     class="ri-add-line"></i>
                                                 Nuevo Mensaje
                                             </button>
+                                            {% else %}
+                                            
+                                            {% endif %}
                                         </div>
                                     </tr>
                                     <tr>
@@ -103,17 +107,12 @@
                                         <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
                                         <td>{{ msg.message.name }}</td>
                                         <td>{{ msg.receiver.first_name }} {{ msg.receiver.last_name }}</td>
-                                        <td>
-                                            {% for ch in msg.message.messagechanel_set.all %}
-                                                <li>{{ ch.channel.name }}</li>
-                                            {% empty %}
-                                                <li class="text-muted">Sin canales</li>
-                                            {% endfor %}
-                                        </td>
+                                        <td>{{ msg.message.message_channels.first.channel}}</td>
+
                                         <td>{{ msg.periodicity.name }}</td>
                                         <td>
                                             {% if user == table.emiter and table.status == 'open' %}
-                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ msg.message.id }}"
+                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ msg.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#editModal">
                                                 <i class="ri-edit-2-line" style="font-size: 18px;"></i>
                                             </button>
@@ -165,12 +164,12 @@
                             </div>
                             <div class="mb-3">
                                 <label for="message-channel" class="form-label">Canales</label>
-                                <select id="message-channel" name="channels" class="form-control" multiple>
+                                <select class="form-select" id="message-channel" name="channels" >
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="message-receiver" class="form-label">Receptor</label>
-                                <select id="message-receiver" name="receivers" class="form-control" multiple>
+                                <select class="form-select" id="message-receiver" name="receivers" >
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -325,137 +324,103 @@
 <!--JS Formularios Modales-->
     <!-- Edición Mensaje -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.edit-btn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const id = button.getAttribute('data-id');
-                    const channelsSelect = document.getElementById('message-channel');
-                    const receiversSelect = document.getElementById('message-receiver');
-                    channelsSelect.innerHTML = '';
-                    receiversSelect.innerHTML = '';
-                    fetch(`/communications/get-message/${id}/`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                document.getElementById('message-id').value = data.id;
-                                document.getElementById('message-communication-type').value = data.communication_type;
-                                document.getElementById('message-subject').value = data.subject;
-                                document.getElementById('message-periodicity').value = data.periodicity;
+    let receiverChoicesInstance = null;
+    let channelChoicesInstance = null;
+    let periodicityChoicesInstance = null;
+    let typeChoicesInstance = null;
 
-                                console.log(data); //debug
-                                //// Opciones selecionables en el formulario
-                                // Periodicity options
-                                const periodicitySelect = document.getElementById('message-periodicity');
-                                periodicitySelect.innerHTML = ''; // Clear existing options
-                                data.periodicity_options.forEach(periodicityOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = periodicityOption.id;
-                                    optionElement.textContent = periodicityOption.name; // Display periodicity name
-                                    if (periodicityOption.id === data.periodicity) {
-                                        optionElement.selected = true; // Mark current periodicity as selected
-                                    }
-                                    periodicitySelect.appendChild(optionElement);
-                                });
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.edit-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const id = button.getAttribute('data-id');
+                fetch(`/communications/get-message/${id}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('message-id').value = data.id;
+                            document.getElementById('message-subject').value = data.subject;
 
-                                new Choices(periodicitySelect, {
-                                    removeItemButton: true,
-                                    searchEnabled: false
-                                });
+                            // Periodicity 
+                            const periodicitySelect = document.getElementById('message-periodicity');
+                            periodicitySelect.innerHTML = '';
+                            data.periodicity_options.forEach(opt => {
+                                const option = document.createElement('option');
+                                option.value = opt.id;
+                                option.textContent = opt.name;
+                                periodicitySelect.appendChild(option);
+                            });
+                            if (periodicityChoicesInstance) periodicityChoicesInstance.destroy();
+                            periodicityChoicesInstance = new Choices(periodicitySelect, {
+                                removeItemButton: true,
+                                searchEnabled: false
+                            });
+                            periodicityChoicesInstance.setChoiceByValue(String(data.periodicity));
 
-                                // Communication Type options
-                                const communicationtypeSelect = document.getElementById('message-communication-type');
-                                communicationtypeSelect.innerHTML = ''; // Clear existing options
-                                data.communicationtype_options.forEach(communicationtypeOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = communicationtypeOption.id;
-                                    optionElement.textContent = communicationtypeOption.scope + ' ' + communicationtypeOption.direction;
-                                    if (communicationtypeOption.id === data.communication_type) {
-                                        optionElement.selected = true; // Mark current periodicity as selected
-                                    }
-                                    communicationtypeSelect.appendChild(optionElement);
-                                });
+                            // Communication Type
+                            const typeSelect = document.getElementById('message-communication-type');
+                            typeSelect.innerHTML = '';
+                            data.communicationtype_options.forEach(opt => {
+                                const option = document.createElement('option');
+                                option.value = opt.id;
+                                option.textContent = `${opt.scope} ${opt.direction}`;
+                                typeSelect.appendChild(option);
+                            });
+                            if (typeChoicesInstance) typeChoicesInstance.destroy();
+                            typeChoicesInstance = new Choices(typeSelect, {
+                                removeItemButton: true,
+                                searchEnabled: false
+                            });
+                            typeChoicesInstance.setChoiceByValue(String(data.communication_type));
 
-                                new Choices(communicationtypeSelect, {
-                                    removeItemButton: true,
-                                    searchEnabled: false
-                                });
+                            // --- Channel ---
+                            const channelSelect = document.getElementById('message-channel');
+                            channelSelect.innerHTML = '';
+                            data.channels_options.forEach(opt => {
+                                const option = document.createElement('option');
+                                option.value = opt.id;
+                                option.textContent = opt.name;
+                                channelSelect.appendChild(option);
+                            });
+                            if (channelChoicesInstance) channelChoicesInstance.destroy();
+                            channelChoicesInstance = new Choices(channelSelect, {
+                                removeItemButton: true,
+                                searchEnabled: false
+                            });
+                            channelChoicesInstance.setChoiceByValue(String(data.channels));
 
-                                // Emisor options
-                                const departmentsSelect = document.getElementById('message-transmitter');
-                                departmentsSelect.innerHTML = ''; // Clear existing options
-                                data.departments_options.forEach(departmentsOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = departmentsOption.id;
-                                    optionElement.textContent = departmentsOption.first_name + departmentsOption.last_name;
-                                    if (departmentsOption.id === data.transmitter) {
-                                        optionElement.selected = true; // Mark current periodicity as selected
-                                    }
-                                    departmentsSelect.appendChild(optionElement);
-                                });
-
-
-                                // Channels (Many-to-Many)
-                                // Loop through all available channels to populate the select field
-                                data.channels_options.forEach(channelOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = channelOption.id;
-                                    optionElement.textContent = channelOption.name;
-
-                                    // Check if this channel is already selected (current channel in 'channels')
-                                    if (data.channels.some(selectedChannel => selectedChannel.id === channelOption.id)) {
-                                        optionElement.selected = true;  // Mark as selected
-                                    }
-
-                                    // Append the option to the select field
-                                    channelsSelect.appendChild(optionElement);
-                                });
-
-                                new Choices(channelsSelect, {
-                                    removeItemButton: true,
-                                    closeDropdownOnSelect: true
-                                });
-
-
-                                // Receptores (many to many)
-                                data.departments_options.forEach(receiverOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = receiverOption.id;
-                                    optionElement.textContent = receiverOption.first_name + receiverOption.last_name ;
-
-                                    if (data.receivers.some(selectedReceiver => selectedReceiver.id === receiverOption.id)) {
-                                        optionElement.selected = true;
-                                    }
-
-                                    receiversSelect.appendChild(optionElement);
-                                });
-
-                                new Choices(receiversSelect, {
-                                    removeItemButton: true,
-                                    searchEnabled: true,
-                                    closeDropdownOnSelect: true,
-                                });
-                            }
-                        });
-                });
+                            // --- Receiver ---
+                            const receiverSelect = document.getElementById('message-receiver');
+                            receiverSelect.innerHTML = '';
+                            data.departments_options.forEach(opt => {
+                                const option = document.createElement('option');
+                                option.value = opt.id;
+                                option.textContent = `${opt.first_name} ${opt.last_name}`;
+                                receiverSelect.appendChild(option);
+                            });
+                            if (receiverChoicesInstance) receiverChoicesInstance.destroy();
+                            receiverChoicesInstance = new Choices(receiverSelect, {
+                                removeItemButton: true,
+                                searchEnabled: false
+                            });
+                            receiverChoicesInstance.setChoiceByValue(String(data.receivers));
+                        }
+                    });
             });
-
-
+        });
+        
+    
             // Click en el botón de guardar cambios dentro del modal de edición.
             document.getElementById('editForm').addEventListener('submit', function (event) {
-                console.log('editform submitted!'); //debug
                 event.preventDefault();
 
-                const channelsSelect = document.getElementById('message-channel');
                 const receiversSelect = document.getElementById('message-receiver');
                 const data = {
                     id: document.getElementById('message-id').value,
                     message_subject: document.getElementById('message-subject').value,
                     message_communication_type: document.getElementById('message-communication-type').value,
-                    message_transmitter: document.getElementById('message-transmitter').value,
                     message_periodicity: document.getElementById('message-periodicity').value,
-                    message_channel: Array.from(channelsSelect.selectedOptions).map(option => option.value),
-                    message_receiver: Array.from(receiversSelect.selectedOptions).map(option => option.value),
-
+                    message_channel: document.getElementById('message-channel').value,
+                    message_receiver: document.getElementById('message-receiver').value,
                 };
 
                 //const formData = new FormData(this);
@@ -612,12 +577,7 @@
                                     searchEnabled: false
                                 });
 
-                                //Emisor options
-                                
-
-
-
-                                // Channels (Many-to-Many)
+                                // Canales
                                 const channelsSelect = document.getElementById('new-message-channel');
                                 channelsSelect.innerHTML = '';
                                 data.channels_options.forEach(channelOption => {
@@ -633,7 +593,7 @@
                                     closeDropdownOnSelect: true
                                 });
 
-                                // Receptores (many to many)
+                                // Receptores
                                 const receiversSelect = document.getElementById('new-message-receiver');
                                 receiversSelect.innerHTML = '';
                                 data.departments_options.forEach(receiverOption => {
@@ -751,7 +711,7 @@
                                 data.emiter_options.forEach(emiterOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = emiterOption.id;
-                                    optionElement.textContent = emiterOption.first_name + emiterOption.last_name;
+                                    optionElement.textContent = emiterOption.first_name + ' ' + emiterOption.last_name;
                                     if (emiterOption.id === data.emiter) {
                                         optionElement.selected = true; 
                                     }

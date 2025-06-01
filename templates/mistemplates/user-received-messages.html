@@ -38,36 +38,10 @@
                         class="ri-add-line"></i>
                     Nueva Tabla
                 </button>-->
-                {% for table in all_communicationtables %}
+                
                 <div class="card border card-border-dark">
                     <div class="card-header">
-                        <div class="hstack gap-4 w-auto">
-                            <div class="hstack gap-1">
-                                <h4 class="card-title bg-dark text-light p-1 px-1 rounded-top"> Código Tabla: {{ table.code }}</h4>
-                            </div>
-                            <div class="hstack gap-1">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Área: {{ table.area.name }}</h4>
-                            </div>
-                            <div class="hstack gap-1">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Estado: {{ table.get_status_display }}</h4>
-                            </div>
-                            <!--<button type="button" class="btn btn-soft-success ms-auto add-btn" id="add-message-btn"
-                                data-table-id="{{ table.id }}" data-bs-toggle="modal" data-bs-target="#addModal"><i
-                                    class="ri-add-line"></i>
-                                Editar Tabla
-                            </button>-->
-                        </div>
-                        <div class="hstack gap-4 w-auto">
-                            <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Elaborado Por: {{ table.created_by.first_name }} {{ table.created_by.last_name}}</h4>
-                            </div>
-                            <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.first_name}} {{ table.reviewed_by.last_name}}</h4>
-                            </div>
-                            <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.first_name }} {{ table.approved_by.last_name }}</h4>
-                            </div>
-                        </div>
+                        
                     </div>
 
                     <!--Mostrar Mensajes-->
@@ -90,57 +64,29 @@
                                         <th>Comunicación</th>
                                         <th>Asunto</th>
                                         <th>Emisor</th>
-                                        <th>Receptor</th>
                                         <th>Canal</th>
                                         <th>Periodicidad</th>
                                         <th></th>
                                     </tr>
                                 </thead>
                                 <tbody class="table-responsive bg-light text-dark">
-                                    {% for message in all_messages %}
-                                    {% if message in table.messages.all %}
+                                    {% for msg in received_messages %}
+                                    
                                     <tr>
-                                        <td>{{ message.communication_type.scope }} {{ message.communication_type.direction }}</td>
-                                        <td>{{ message.subject }}</td>
-                                        <td>{{ message.transmitter.first_name }} {{ message.transmitter.last_name }}</td>
-                                        <td>
-                                            {% for receiver in message.receivers.all %}
-                                            <li>{{ receiver.first_name }} {{ receiver.last_name }}</li>
-                                            {% endfor %}
-                                        </td>
-                                        <td>
-                                            {% for channel in message.channels.all %}
-                                            <li>{{ channel.name }}</li>
-                                            {% endfor %}
-                                        </td>
-                                        <td>
-                                            {{ message.periodicity.name }}
-                                        </td>
-                                        <td>
-                                            {% if user == message.transmitter %}
-                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ message.id }}"
-                                                data-bs-toggle="modal" data-bs-target="#editModal">
-                                                <i class="ri-edit-2-line" style="font-size: 18px;"></i>
-                                            </button>
-
-                                            <button class="btn open-delete-modal btn-ghost-danger"
-                                                data-id="{{ message.id }}" data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal">
-                                                <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
-                                            </button>
-                                            {% else %}
-                                            {% endif %}
-                                        </td>
+                                        <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
+                                        <td>{{ msg.message.name }}</td>
+                                        <td>{{ msg.table.emiter.first_name }} {{ msg.table.emiter.last_name }}</td>  
+                                        <td>{{ msg.message.message_channels.first.channel}}</td>
+                                        <td>{{ msg.periodicity.name }}</td>                  
                                     </tr>
-                                    {% else %}
-                                    {% endif %}
+                                    
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+            
             <!--Fin tablas-->
             </body>
         </div>

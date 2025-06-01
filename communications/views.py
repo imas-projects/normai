@@ -69,29 +69,23 @@ def load_form_options():
 # Función para obtener la info del mensaje en el que hemos dado a editar y rellenar el formulario de edición.
 def get_message(request, id):
     try:
-        current_message = Message.objects.get(id=id)
+        current_message_info = CommunicationMessage.objects.select_related("message", "type", "receiver", "periodicity").get(id=id)
 
-        # Lista de los datos en los campos que pueden contener varios valores
-        current_message_channels = list(current_message.channels.all().values('id', 'name'))
-        current_message_receivers = list(current_message.receivers.all().values('id', 'first_name','last_name'))
+        message = current_message_info.message
 
-        # Cargar el resto de tablas
+        # Solo debe haber un canal por mensaje
+        message_channel = MessageChanel.objects.get(message=message)
+
         form_options = load_form_options()
 
         return JsonResponse({
-            'success': True, 
-            # Campos unicos o foreign key
-            'id': current_message.id,
-            'communication_type' : current_message.communication_type.id,
-            'subject': current_message.subject,
-            'transmitter': current_message.transmitter.id,
-            'periodicity': current_message.periodicity.id,
-
-            # Campos manytomany
-            'channels': current_message_channels,
-            'receivers': current_message_receivers,
-
-            # Opciones formulario
+            'success': True,
+            'id': current_message_info.id,  # id del CommunicationMessage
+            'communication_type': current_message_info.type.id,
+            'subject': message.name,
+            'periodicity': current_message_info.periodicity.id,
+            'receivers': current_message_info.receiver.id,
+            'channels': message_channel.channel.id,
             **form_options,
         })
     except Message.DoesNotExist:
@@ -104,31 +98,32 @@ def update_message(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            message_id = data.get('id')
-            message_communication_type = data.get('message_communication_type')  # Foreign key
-            message_subject = data.get('message_subject')  # Simple text field
-            message_transmitter = data.get('message_transmitter')  # Foreign key
-            message_periodicity = data.get('message_periodicity')  # Foreign key
-            selected_channels = data.get('message_channel', [])  # Many-to-Many
-            selected_receivers = data.get('message_receiver', [])  # Many-to-Many
-            print("mensaje", data)
-            # Get the message object
-            updated_message = Message.objects.get(id=message_id)
+            com_message_id = data.get('id')  # CommunicationMessage ID
+            communication_type_id = data.get('message_communication_type')
+            subject = data.get('message_subject')
+            periodicity_id = data.get('message_periodicity')
+            channel_id = data.get('message_channel')
+            receiver_id = data.get('message_receiver')
 
-            # Update foreign key fields
-            updated_message.communication_type = CommunicationType.objects.get(id=message_communication_type)  # Assign directly to FK field
-            updated_message.transmitter = User.objects.get(id=message_transmitter) 
-            updated_message.periodicity = Periodicity.objects.get(id=message_periodicity) 
-            
-            # Update simple fields
-            updated_message.subject = message_subject
+            # Obtener el CommunicationMessage y su Message relacionado
+            com_message = CommunicationMessage.objects.get(id=com_message)
+            message = com_message.message
 
-            # Update Many-to-Many fields
-            updated_message.channels.set(selected_channels)  # Set new channels
-            updated_message.receivers.set(selected_receivers)  # Set new receivers
+            # Actualizar campos
+            message.name = subject
+            com_message.type_id = communication_type_id
+            com_message.periodicity_id = periodicity_id
+            com_message.receiver_id = receiver_id
 
-            # Save the changes
-            updated_message.save()
+            # Actualizar canal (asumimos uno por mensaje)
+            message_channel = MessageChanel.objects.get(message=message)
+            message_channel.channel_id = channel_id
+
+            # Guardar cambios
+            message.save()
+            com_message.save()
+            message_channel.save()
+
 
             return JsonResponse({'success': True})
         except Message.DoesNotExist:
@@ -143,9 +138,10 @@ def update_message(request):
 def delete_message(request, id):
     if request.method == 'POST':
         try:
-            # Buscar y eliminar el mensaje
-            deleted_message = Message.objects.get(id=id)
-            deleted_message.delete()
+            message = Message.objects.get(id=id)
+            MessageChanel.objects.filter(message=message).delete()
+            CommunicationMessage.objects.filter(message=message).delete()
+            message.delete()
             return JsonResponse({'success': True})
         except Message.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Message not found'})
@@ -257,19 +253,14 @@ def create_table(request):
 #@user_passes_test(communication_check)
 def user_received_messages(request):
     user = request.user
-    user_areas = Area.objects.filter(users=user)
-
-    all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
-    all_communicationtables = list(all_communicationtable)
-
-
-    all_messages = Message.objects.filter(receivers=user).distinct()
-    all_messages = [message for message in all_messages]
+   
+    received_messages = CommunicationMessage.objects.filter(receiver=user).distinct()
+    received_messages = [message for message in received_messages]
+  
 
     # Contexto para la plantilla
     context = {
-        'all_messages' : all_messages,
-        'all_communicationtables': all_communicationtables
+        'received_messages' : received_messages,
     }
     return render(request,"mistemplates/user-received-messages.html", context)
 
@@ -279,19 +270,12 @@ def user_received_messages(request):
 #@user_passes_test(communication_check)
 def user_sent_messages(request):
     user = request.user
-    user_areas = Area.objects.filter(users=user)
 
-    all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
-    all_communicationtables = list(all_communicationtable)
-
-
-    all_messages = Message.objects.filter(transmitter=user).distinct()
-    all_messages = [message for message in all_messages]
-
+    sent_messages_table = CommunicationTable.objects.filter(emiter=user)
+    sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_table)
     # Contexto para la plantilla
     context = {
-        'all_messages' : all_messages,
-        'all_communicationtables': all_communicationtables
+        'sent_messages' : sent_messages,
     }
     return render(request,"mistemplates/user-sent-messages.html", context)
 
@@ -307,13 +291,9 @@ def communication_table_review(request):
     all_communicationtable = CommunicationTable.objects.filter(area__in=user_areas).distinct()
     all_communicationtables = list(all_communicationtable)
 
-    all_messages = Message.objects.filter(transmitter=user).distinct()
-    all_messages = [message for message in all_messages]
-
     all_status = list(CommunicationTable.STATUS_CHOICES)
 
     context = {
-        'all_messages' : all_messages,
         'all_communicationtables': all_communicationtables,
         'all_status' : all_status,
     }

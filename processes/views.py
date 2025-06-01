@@ -138,16 +138,6 @@ def update_process(request):
                 updated_process.review_date = process_review_date
                 updated_process.responsible = User.objects.get(id=process_responsible) 
 
-                updated_process.staff_roles.set(process_staff_roles)
-                updated_process.workspaces.set(process_workspaces)
-                updated_process.facilities.set(process_facilities)
-                updated_process.equipment.set(process_equipment)
-                updated_process.materials.set(process_materials)
-                updated_process.transport_resources.set(process_transport_resources)
-                updated_process.communication_technologies.set(process_communication_technologies)
-                updated_process.operational_environment.set(process_operational_environment)
-
-
                 updated_process.inputs.set(selected_inputs)
                 updated_process.outputs.set(selected_outputs)
                 updated_process.internal_clients.set(selected_internal_clients)
@@ -178,3 +168,6 @@ def edit_process(request, process_id):
         form = ProcessForm(instance=process)
         
     return render(request, 'mistemplates/edit_process.html', {'form': form, 'process': process})
+
+
+        

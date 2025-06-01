@@ -48,13 +48,7 @@ class Area(models.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "users": [{
-                "id": u.id,
-                "username": u.username,
-                "first_name": u.first_name,
-                "last_name": u.last_name,
-                "email": u.email
-            } for u in self.users.all()],
+            
         }
 
 class Requirement(models.Model):

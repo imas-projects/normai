@@ -1,4 +1,4 @@
-<!--{% extends "mistemplates/mi_base.html" %}-->
+{% extends "mistemplates/mi_base.html" %}
 {% load static %}
 {% block content %}
 <div class="main-content">
@@ -8,11 +8,6 @@
             {% block pagetitle %}
             {% include "partials/page-title.html" with pagetitle="Processes" title="Procesos" %}
             {% endblock pagetitle %}
-
-
-    <div class="d-flex justify-content-between align-items-left mb-4">
-        <a href="{% url 'processes:create_process' %}" class="btn btn-soft-success">Add Process</a>
-    </div>
 
     {% for process in processes %}
     <div class="card border card-border-dark">
@@ -226,12 +221,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="process-activities" class="form-label">Actividades</label>
-                    <select id="process-activities" name="activities" class="form-control" multiple>
-                    </select>
-                </div>
-
-                <div class="mb-3">
                     <label for="process-documents" class="form-label">Documentación</label>
                     <select id="process-documents" name="documents" class="form-control" multiple>
                     </select>
@@ -257,267 +246,32 @@
           </div>
         </div>
       </div>
-
     {% endfor %}
 </div>
+
 {% endblock content %}
 
 {% block extra_js %}
-<!--<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".openEditProcessModal").forEach(button => {
-            button.addEventListener("click", function () {
-                const processId = this.getAttribute("data-process-id");
-                fetch(`/processes/edit-process/${processId}/`)
-                    .then(response => response.text())
-                    .then(html => {
-                        const modalBody = document.getElementById(`editProcessContent${processId}`);
-                        modalBody.innerHTML = html;
-                        new bootstrap.Modal(document.getElementById(`editProcessModal${processId}`)).show();
-                    });
-            });
-        });
-    });
-</script>-->
 
+<!--JS Modal Edición-->
 <script>
+    let choicesInstances = {
+        responsible: null,
+        internalSuppliers: null,
+        externalSuppliers: null,
+        inputs: null,
+        outputs: null,
+        internalClients: null,
+        externalClients: null,
+        documents: null,
+        measurements: null,
+        indicators: null
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.openEditProcessModal').forEach(button => {
             button.addEventListener('click', function () {
                 const id = button.getAttribute('data-process-id');
-                const responsibleSelect = document.getElementById('process-responsible')
-                const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
-                const externalsuppliersSelect = document.getElementById('process-external-suppliers');
-                const inputsSelect = document.getElementById('process-inputs');
-                const outputsSelect = document.getElementById('process-outputs');
-                const internalclientsSelect = document.getElementById('process-internal-clients');
-                const externalclientsSelect = document.getElementById('process-external-clients');
-                const activitiesSelect = document.getElementById('process-activities');
-                const documentsSelect = document.getElementById('process-documents');
-                const measurementsSelect = document.getElementById('process-measurements');
-                const indicatorsSelect = document.getElementById('process-indicators');
-    
-                fetch(`/processes/get-process/${id}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('process-id').value = data.id;
-                            document.getElementById('process-name').value = data.name;
-                            document.getElementById('process-objective').value = data.objective;
-                            document.getElementById('process-responsible').value = data.responsible;
-                            
-                            console.log(data.internal_clients
-                                                           )
-    
-                            // Responsable 
-                            data.responsible_options.forEach(responsibleOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = responsibleOption.id;
-                                optionElement.textContent = responsibleOption.first_name + responsibleOption.last_name;
-                                if (responsibleOption.id === data.responsible) {
-                                    optionElement.selected = true; // Mark current periodicity as selected
-                                }
-                                responsibleSelect.appendChild(optionElement);
-                            });
-
-
-                            // Internal Suppliers (Many-to-Many)
-                            data.internal_suppliers_options.forEach(InternalSuppliersOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = InternalSuppliersOption.id;
-                                    optionElement.textContent = InternalSuppliersOption.name;
-
-                                    // Check if this channel is already selected (current channel in 'channels')
-                                    if (data.internal_suppliers.some(selectedInternalSupplier => selectedInternalSupplier.id === InternalSuppliersOption.id)) {
-                                        optionElement.selected = true;  // Mark as selected
-                                    }
-
-                                    // Append the option to the select field
-                                    internalsuppliersSelect.appendChild(optionElement);
-                                });
-
-                                new Choices(internalsuppliersSelect, {
-                                    removeItemButton: true,
-                                    closeDropdownOnSelect: true
-                                });
-
-                            // External Suppliers (Many-to-Many)
-                            data.external_suppliers_options.forEach(ExternalSuppliersOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = ExternalSuppliersOption.id;
-                                    optionElement.textContent = ExternalSuppliersOption.name;
-
-                                    // Check if this channel is already selected (current channel in 'channels')
-                                    if (data.external_suppliers.some(selectedExternalSupplier => selectedExternalSupplier.id === ExternalSuppliersOption.id)) {
-                                        optionElement.selected = true;  // Mark as selected
-                                    }
-
-                                    // Append the option to the select field
-                                    externalsuppliersSelect.appendChild(optionElement);
-                                });
-
-                                new Choices(externalsuppliersSelect, {
-                                    removeItemButton: true,
-                                    closeDropdownOnSelect: true
-                                });
-
-                            // Internal Clients(Many-to-Many)
-                            data.internal_clients_options.forEach(InternalClientsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = InternalClientsOption.id;
-                                optionElement.textContent = InternalClientsOption.name;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.internal_clients_options.some(selectedInternalClient => selectedInternalClient.id === InternalClientsOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                internalclientsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(internalclientsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                            // External Clients(Many-to-Many)
-                            data.external_clients_options.forEach(ExternalClientsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = ExternalClientsOption.id;
-                                optionElement.textContent = ExternalClientsOption.name;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.external_clients_options.some(selectedExternalClient => selectedExternalClient.id === ExternalClientsOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                externalclientsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(externalclientsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-
-
-                            // Inputs (Many-to-Many)
-                            data.inputs_options.forEach(InputsOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = InputsOption.id;
-                                    optionElement.textContent = InputsOption.name;
-
-                                    // Check if this channel is already selected (current channel in 'channels')
-                                    if (data.inputs_options.some(selectedInput => selectedInput.id === InputsOption.id)) {
-                                        optionElement.selected = true;  // Mark as selected
-                                    }
-
-                                    // Append the option to the select field
-                                    inputsSelect.appendChild(optionElement);
-                                });
-
-                                new Choices(inputsSelect, {
-                                    removeItemButton: true,
-                                    closeDropdownOnSelect: true
-                                });
-
-                            // Outputs (Many-to-Many)
-                            data.outputs_options.forEach(OutputsOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = OutputsOption.id;
-                                optionElement.textContent = OutputsOption.name;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.outputs_options.some(selectedOutput => selectedOutput.id === OutputsOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                outputsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(outputsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                            
- 
-                        // Documentation(Many-to-Many)
-                        data.documents_options.forEach(DocumentOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = DocumentOption.id;
-                                optionElement.textContent = DocumentOption.document_code + ' | '+DocumentOption.document_description;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.documents_options.some(selectedDocument => selectedDocument.id === DocumentOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                documentsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(documentsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                        // Measurements(Many-to-Many)
-                        data.measurements_options.forEach(MeasurementOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = MeasurementOption.id;
-                                optionElement.textContent = MeasurementOption.measurement_process_parameter;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.measurements_options.some(selectedMeasurement => selectedMeasurement.id === MeasurementOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                measurementsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(measurementsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-                        
-                        // Indicators(Many-to-Many)
-                        data.indicators_options.forEach(IndicatorOption => {
-                                const optionElement = document.createElement('option');
-                                optionElement.value = IndicatorOption.id;
-                                optionElement.textContent = IndicatorOption.name;
-
-                                // Check if this channel is already selected (current channel in 'channels')
-                                if (data.indicators_options.some(selectedIndicator => selectedIndicator.id === IndicatorOption.id)) {
-                                    optionElement.selected = true;  // Mark as selected
-                                }
-
-                                // Append the option to the select field
-                                indicatorsSelect.appendChild(optionElement);
-                            });
-
-                            new Choices(indicatorsSelect, {
-                                removeItemButton: true,
-                                closeDropdownOnSelect: true
-                            });
-
-                            new bootstrap.Modal(document.getElementById('editProcessModal')).show();
-                        }
-                    });
-            });
-        });
-    
-        // Click en el botón de guardar cambios dentro del modal de edición.
-        document.getElementById('editProcessForm').addEventListener('submit', function (event) {
-                console.log('editform submitted!'); //debug
-                event.preventDefault();
-
-                
-                const positionsSelect = document.getElementById('process-positions');
                 const responsibleSelect = document.getElementById('process-responsible');
                 const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
                 const externalsuppliersSelect = document.getElementById('process-external-suppliers');
@@ -529,56 +283,227 @@
                 const measurementsSelect = document.getElementById('process-measurements');
                 const indicatorsSelect = document.getElementById('process-indicators');
 
-                const data = {
-                    id: document.getElementById('process-id').value,
-                    process_name: document.getElementById('process-name').value,
-                    process_objective: document.getElementById('process-objective').value,
-                    process_responsible: document.getElementById('process-responsible').value,
+                const selects = [
+                    { el: responsibleSelect, key: 'responsible' },
+                    { el: internalsuppliersSelect, key: 'internalSuppliers' },
+                    { el: externalsuppliersSelect, key: 'externalSuppliers' },
+                    { el: inputsSelect, key: 'inputs' },
+                    { el: outputsSelect, key: 'outputs' },
+                    { el: internalclientsSelect, key: 'internalClients' },
+                    { el: externalclientsSelect, key: 'externalClients' },
+                    { el: documentsSelect, key: 'documents' },
+                    { el: measurementsSelect, key: 'measurements' },
+                    { el: indicatorsSelect, key: 'indicators' }
+                ];
 
-                    process_positions: Array.from(positionsSelect.selectedOptions).map(option => option.value),
-                    process_suppliers: Array.from(suppliersSelect.selectedOptions).map(option => option.value),
-                    process_outputs: Array.from(outputsSelect.selectedOptions).map(option => option.value),
-                    process_clients: Array.from(clientsSelect.selectedOptions).map(option => option.value),
-                    process_activities: Array.from(activitiesSelect.selectedOptions).map(option => option.value),
-                    process_resources: Array.from(resourcesSelect.selectedOptions).map(option => option.value),
-                    process_documents: Array.from(documentsSelect.selectedOptions).map(option => option.value),
-                    process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
-                    process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
-                };
+                selects.forEach(({ el, key }) => {
+                    if (choicesInstances[key]) {
+                        choicesInstances[key].destroy();
+                        choicesInstances[key] = null;
+                    }
+                    el.innerHTML = '';
+                });
 
-                fetch('/processes/update-process/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                    body: JSON.stringify(data),
-                })
+                fetch(`/processes/get-process/${id}/`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Proceso editado con éxito');
-                            location.reload();
-                        } else {
-                            alert('Ha ocurrido un error.');
+                            document.getElementById('process-id').value = data.id;
+                            document.getElementById('process-name').value = data.name;
+                            document.getElementById('process-objective').value = data.objective;
+
+                            // Responsable
+                            data.responsible_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.first_name + option.last_name;
+                                if (option.id === data.responsible) el.selected = true;
+                                responsibleSelect.appendChild(el);
+                            });
+                            choicesInstances.responsible = new Choices(responsibleSelect);
+
+                            // Internal Suppliers
+                            data.internal_suppliers_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.internal_suppliers.some(sel => sel.id === option.id)) el.selected = true;
+                                internalsuppliersSelect.appendChild(el);
+                            });
+                            choicesInstances.internalSuppliers = new Choices(internalsuppliersSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // External Suppliers
+                            data.external_suppliers_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.external_suppliers.some(sel => sel.id === option.id)) el.selected = true;
+                                externalsuppliersSelect.appendChild(el);
+                            });
+                            choicesInstances.externalSuppliers = new Choices(externalsuppliersSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Internal Clients
+                            data.internal_clients_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.internal_clients.some(sel => sel.id === option.id)) el.selected = true;
+                                internalclientsSelect.appendChild(el);
+                            });
+                            choicesInstances.internalClients = new Choices(internalclientsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // External Clients
+                            data.external_clients_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.external_clients.some(sel => sel.id === option.id)) el.selected = true;
+                                externalclientsSelect.appendChild(el);
+                            });
+                            choicesInstances.externalClients = new Choices(externalclientsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Inputs
+                            data.inputs_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.inputs.some(sel => sel.id === option.id)) el.selected = true;
+                                inputsSelect.appendChild(el);
+                            });
+                            choicesInstances.inputs = new Choices(inputsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Outputs
+                            data.outputs_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.outputs.some(sel => sel.id === option.id)) el.selected = true;
+                                outputsSelect.appendChild(el);
+                            });
+                            choicesInstances.outputs = new Choices(outputsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Documents
+                            data.documents.forEach(doc => {
+                                const el = document.createElement('option');
+                                el.value = doc.id;
+                                el.textContent = `${doc.document_description} | ${doc.document_code}`;
+                                el.selected = true;
+                                documentsSelect.appendChild(el);
+                            });
+                            choicesInstances.documents = new Choices(documentsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Measurements
+                            data.measurements_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.measurement_process_parameter;
+                                if (data.measurements.some(sel => sel.id === option.id)) el.selected = true;
+                                measurementsSelect.appendChild(el);
+                            });
+                            choicesInstances.measurements = new Choices(measurementsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Indicators
+                            data.indicators_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.indicators.some(sel => sel.id === option.id)) el.selected = true;
+                                indicatorsSelect.appendChild(el);
+                            });
+                            choicesInstances.indicators = new Choices(indicatorsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            new bootstrap.Modal(document.getElementById('editProcessModal')).show();
                         }
                     });
             });
         });
+    });
 
-        // Función para obtener el token CSRF si es necesario
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+    
+        // Click en el botón de guardar cambios dentro del modal de edición.
+    document.getElementById('editProcessForm').addEventListener('submit', function (event) {
+            //console.log('editform submitted!'); //debug
+            event.preventDefault();
+
+            const responsibleSelect = document.getElementById('process-responsible');
+            const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
+            const externalsuppliersSelect = document.getElementById('process-external-suppliers');
+            const inputsSelect = document.getElementById('process-inputs');
+            const outputsSelect = document.getElementById('process-outputs');
+            const internalclientsSelect = document.getElementById('process-internal-clients');
+            const externalclientsSelect = document.getElementById('process-external-clients');
+            const documentsSelect = document.getElementById('process-documents');
+            const measurementsSelect = document.getElementById('process-measurements');
+            const indicatorsSelect = document.getElementById('process-indicators');
+
+            const data = {
+                id: document.getElementById('process-id').value,
+                process_name: document.getElementById('process-name').value,
+                process_objective: document.getElementById('process-objective').value,
+                process_responsible: document.getElementById('process-responsible').value,
+                process_internal_suppliers: Array.from(internalsuppliersSelect.selectedOptions).map(option => option.value),
+                process_external_suppliers: Array.from(externalsuppliersSelect.selectedOptions).map(option => option.value),
+                process_outputs: Array.from(outputsSelect.selectedOptions).map(option => option.value),
+                process_internal_clients: Array.from(internalclientsSelect.selectedOptions).map(option => option.value),
+                process_external_clients: Array.from(externalclientsSelect.selectedOptions).map(option => option.value),
+                process_documents: Array.from(documentsSelect.selectedOptions).map(option => option.value),
+                process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
+                process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
+            };
+
+            fetch('/processes/update-process/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(data),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Proceso editado con éxito');
+                        location.reload();
+                    } else {
+                        alert('Ha ocurrido un error.');
                     }
+                });
+        });
+    
+
+    // Función para obtener el token CSRF si es necesario
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            return cookieValue;
         }
-    </script>
+        return cookieValue;
+    }
+</script>
+
+    
     
 {% endblock extra_js %}
     

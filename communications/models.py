@@ -58,9 +58,6 @@ class Periodicity(models.Model):
 
 class Message(models.Model):
     name = models.CharField(max_length=240, verbose_name="Asunto del Mensaje", blank=False, null=False)
-    
-    def __str__(self):
-        return f"Message -> Subject:{self.name}"
 
     class Meta:
         db_table = 'tb_communication_message'  # Nombre de la tabla
@@ -74,7 +71,7 @@ class Message(models.Model):
  
 
 class MessageChanel(models.Model):
-    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message", verbose_name="Message", null=False)
+    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Message", null=False)
     channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="channel", verbose_name="Channel", null=False)
 
     class Meta:
