@@ -51,6 +51,7 @@ urlpatterns = [
     path('authentication/', include('authentication.urls')),
     path('audits/', include('audits.urls')),
     path('processes/', include('processes.urls')),
+    path('ai_functions/', include('ai_functions.urls')),
     
 ]
 

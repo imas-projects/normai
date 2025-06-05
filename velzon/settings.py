@@ -51,7 +51,8 @@ LOCAL_APPS = [
     "risks",
     "authentication",
     "audits",
-    "processes"
+    "processes",
+    "ai_functions"
     ]
 THIRDPARTY_APPS = [
     
