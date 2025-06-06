@@ -31,7 +31,12 @@ Sugiéreme un posible riesgo identificado y sus consecuencias según:
 Área: {area_name}
 Actividad: {activity_name}
 
-Responde en JSON con las claves: 'identified_risk' y 'consequences'.
+Por favor responde ÚNICAMENTE con un objeto JSON válido con las claves EXACTAS: "identified_risk" y "consequences".
+Ejemplo:
+{{
+    "identified_risk": "Descripción del riesgo",
+    "consequences": "Descripción de las consecuencias"
+}}
         """
         prompt = fallback_prompt
     else:
@@ -53,18 +58,24 @@ Nueva entrada:
 Área: {area_name}
 Actividad: {activity_name}
 
-Responde en formato JSON con las claves 'identified_risk' y 'consequences'.
+Por favor responde ÚNICAMENTE con un objeto JSON válido con las claves EXACTAS: "identified_risk" y "consequences".
+Ejemplo:
+{{
+    "identified_risk": "Descripción del riesgo",
+    "consequences": "Descripción de las consecuencias"
+}}
         """
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",  # Cambié el modelo por uno disponible
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
             max_tokens=300,
         )
 
         content = response.choices[0].message.content.strip()
+        print("Respuesta cruda de IA:", repr(content))  # DEBUG: ver contenido recibido
 
         suggestion = json.loads(content)
         return {
@@ -72,6 +83,10 @@ Responde en formato JSON con las claves 'identified_risk' y 'consequences'.
             "consequences": suggestion.get("consequences", "")
         }
 
+    except json.JSONDecodeError as jde:
+        print("Error de JSONDecode:", str(jde))
+        print("Contenido no parseable:", repr(content))
+        return {"identified_risk": "", "consequences": ""}
     except Exception as e:
         print("Error al generar sugerencia IA:", str(e))
         return {"identified_risk": "", "consequences": ""}
