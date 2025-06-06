@@ -290,3 +290,4 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY_Alex")
