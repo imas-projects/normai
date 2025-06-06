@@ -520,17 +520,13 @@
 {% block extra_js %}
 <script>
 document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function() {
-    const areaName = document.getElementById("currentAreaName").value;
-    const activityName = document.getElementById("currentActivityName").value;
-
-    fetch(`{% url 'risks:add_risk_identification' %}?area_name=${encodeURIComponent(areaName)}&activity_name=${encodeURIComponent(activityName)}`)
+    fetch("{% url 'risks:add_risk_identification' %}")
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskIdentificationContent").innerHTML = html;
         new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
     });
 });
-
 
 document.getElementById("openAddStepsModal").addEventListener("click", function() {
     new bootstrap.Modal(document.getElementById("addStepsModal")).show();
