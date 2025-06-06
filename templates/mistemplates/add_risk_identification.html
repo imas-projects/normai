@@ -3,8 +3,8 @@
     <form method="post" id="add-risk-identification-form" action="{% url 'risks:add_risk_identification' %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.area.label_tag }} 
-            {{ form.area }} 
+            {{ form.area.label_tag }}
+            {{ form.area }}
         </div>
         <div class="mb-3">
             {{ form.activity_name.label_tag }}
@@ -21,23 +21,54 @@
         <button type="submit" class="btn btn-success">Save</button>
     </form>
 
-    {% if suggestion.identified_risk or suggestion.consequences %}
-    <div class="alert alert-info mt-4">
+    <button id="getSuggestionBtn" class="btn btn-info mt-3">Obtener sugerencia IA</button>
+
+    <div id="suggestionContainer" class="alert alert-info mt-4" style="display:none;">
         <strong>Sugerencia IA:</strong><br>
-        <strong>Riesgo:</strong> {{ suggestion.identified_risk }}<br>
-        <strong>Consecuencias:</strong> {{ suggestion.consequences }}
+        <strong>Riesgo:</strong> <span id="suggestedRisk"></span><br>
+        <strong>Consecuencias:</strong> <span id="suggestedConsequences"></span>
         <br><br>
-        <button type="button" class="btn btn-outline-primary btn-sm" onclick="fillSuggestion()">Usar sugerencia</button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="useSuggestionBtn">Usar sugerencia</button>
     </div>
-    {% endif %}
 </div>
 
 <script>
-function fillSuggestion() {
-    const riskField = document.getElementById("id_identified_risk");
-    const consequencesField = document.getElementById("id_consequences");
+document.addEventListener("DOMContentLoaded", function() {
+    const suggestionBtn = document.getElementById("getSuggestionBtn");
+    const useSuggestionBtn = document.getElementById("useSuggestionBtn");
+    const suggestionContainer = document.getElementById("suggestionContainer");
+    const suggestedRiskSpan = document.getElementById("suggestedRisk");
+    const suggestedConsequencesSpan = document.getElementById("suggestedConsequences");
 
-    riskField.value = "{{ suggestion.identified_risk|escapejs }}";
-    consequencesField.value = "{{ suggestion.consequences|escapejs }}";
-}
+    suggestionBtn.addEventListener("click", function() {
+        const area = document.getElementById("id_area").value;
+        const activity = document.getElementById("id_activity_name").value;
+
+        if (!area || !activity) {
+            alert("Por favor, rellena Área y Nombre de Actividad antes.");
+            return;
+        }
+
+        fetch(`{% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                suggestedRiskSpan.textContent = data.identified_risk || "(sin sugerencia)";
+                suggestedConsequencesSpan.textContent = data.consequences || "(sin sugerencia)";
+                suggestionContainer.style.display = "block";
+            })
+            .catch(() => {
+                alert("Error al obtener sugerencias IA.");
+            });
+    });
+
+    useSuggestionBtn.addEventListener("click", function() {
+        document.getElementById("id_identified_risk").value = suggestedRiskSpan.textContent;
+        document.getElementById("id_consequences").value = suggestedConsequencesSpan.textContent;
+        suggestionContainer.style.display = "none";
+    });
+});
 </script>
