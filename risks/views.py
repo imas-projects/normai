@@ -44,26 +44,35 @@ def create_risk(request):
     })
 
 def add_risk_identification(request):
-    suggestion = None
-
     if request.method == 'POST':
         form = RiskIdentificationForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('risks:risks')
-
     else:
         form = RiskIdentificationForm()
-        area = request.GET.get("area_name")
-        activity = request.GET.get("activity_name")
-
-        if area and activity:
-            suggestion = suggest_risk_fields(area, activity)
 
     return render(request, 'mistemplates/add_risk_identification.html', {
-        'form': form,
-        'suggestion': suggestion
+        'form': form
     })
+
+
+from django.http import JsonResponse
+
+def get_suggestions(request):
+    area = request.GET.get('area_name')
+    activity = request.GET.get('activity_name')
+
+    if not area or not activity:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    suggestion = suggest_risk_fields(area, activity)  
+
+    return JsonResponse({
+        'identified_risk': suggestion.identified_risk if suggestion else '',
+        'consequences': suggestion.consequences if suggestion else '',
+    })
+
 
 def add_risk_evaluation(request):
     if request.method == 'POST':
