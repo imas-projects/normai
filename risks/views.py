@@ -66,11 +66,11 @@ def get_suggestions(request):
     if not area or not activity:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
-    suggestion = suggest_risk_fields(area, activity)  
+    suggestion = suggest_risk_fields(area, activity)
 
     return JsonResponse({
-        'identified_risk': suggestion.identified_risk if suggestion else '',
-        'consequences': suggestion.consequences if suggestion else '',
+        'identified_risk': suggestion.get('identified_risk', '') if suggestion else '',
+        'consequences': suggestion.get('consequences', '') if suggestion else '',
     })
 
 
