@@ -18,6 +18,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 
+from ai_functions.monitoring_functions import suggest_risk_fields
+
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
 
@@ -42,15 +44,26 @@ def create_risk(request):
     })
 
 def add_risk_identification(request):
+    suggestion = None
+
     if request.method == 'POST':
         form = RiskIdentificationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('risks:risks')  
+            return redirect('risks:risks')
+
     else:
         form = RiskIdentificationForm()
+        area = request.GET.get("area_name")
+        activity = request.GET.get("activity_name")
 
-    return render(request, 'mistemplates/add_risk_identification.html', {'form': form})
+        if area and activity:
+            suggestion = suggest_risk_fields(area, activity)
+
+    return render(request, 'mistemplates/add_risk_identification.html', {
+        'form': form,
+        'suggestion': suggestion
+    })
 
 def add_risk_evaluation(request):
     if request.method == 'POST':
