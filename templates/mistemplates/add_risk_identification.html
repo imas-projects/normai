@@ -20,4 +20,24 @@
         </div>
         <button type="submit" class="btn btn-success">Save</button>
     </form>
+
+    {% if suggestion.identified_risk or suggestion.consequences %}
+    <div class="alert alert-info mt-4">
+        <strong>Sugerencia IA:</strong><br>
+        <strong>Riesgo:</strong> {{ suggestion.identified_risk }}<br>
+        <strong>Consecuencias:</strong> {{ suggestion.consequences }}
+        <br><br>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="fillSuggestion()">Usar sugerencia</button>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+function fillSuggestion() {
+    const riskField = document.getElementById("id_identified_risk");
+    const consequencesField = document.getElementById("id_consequences");
+
+    riskField.value = "{{ suggestion.identified_risk|escapejs }}";
+    consequencesField.value = "{{ suggestion.consequences|escapejs }}";
+}
+</script>
