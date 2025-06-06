@@ -1,10 +1,9 @@
-import openai
+from openai import OpenAI
 import json
-from django.conf import settings
 from risks.models import RiskIdentification
+from django.conf import settings
 
-# Configurar API key
-openai.api_key = settings.OPENAI_API_KEY
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def suggest_risk_fields(area_name, activity_name, max_results=1):
     """
@@ -24,7 +23,6 @@ def suggest_risk_fields(area_name, activity_name, max_results=1):
     # Extraer riesgos históricos
     historical_risks = RiskIdentification.objects.select_related('area').all()
 
-    # Si no hay datos previos, generar prompt genérico
     if not historical_risks.exists():
         fallback_prompt = f"""
 Eres un experto en gestión de calidad ISO 9001:2015 en industria aeroespacial.
@@ -59,8 +57,8 @@ Responde en formato JSON con las claves 'identified_risk' y 'consequences'.
         """
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",  
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
             max_tokens=300,
