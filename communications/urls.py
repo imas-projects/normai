@@ -21,4 +21,6 @@ urlpatterns = [
     path('update-message/', views.update_message, name='update_message'),
     path('delete-message/<int:id>/', views.delete_message, name='delete-message'),
     path('create-message/', views.create_message, name='create-message'),
+
+    path('summarize-table/', views.table_summarize_ia, name='table-summarize-ia'),
 ]

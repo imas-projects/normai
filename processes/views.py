@@ -170,4 +170,281 @@ def edit_process(request, process_id):
     return render(request, 'mistemplates/edit_process.html', {'form': form, 'process': process})
 
 
-        
+############## Views con IA
+from ai_functions import implementation_functions as ai
+
+def process_risk_detector_ia(request):
+    assistant_answer = None
+    open_details_modal_id = None
+
+    json_function_name = "risk_idetification_function"
+    json_function_description = "This function should identify 2 or more risks and its consequencies in a process" \
+                                "of a manufacturing plan according to ISO 9001:2015 norm and the given data."
+    json_schema_input = {
+    "type": "object",
+    "properties": {
+        "risks": {
+            "type": "array",
+            "description": "A list of identified risks with descriptions and consequences.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "risk": {
+                        "type": "string",
+                        "description": "Indicates a possible identified risk."
+                    },
+                    "risk_description": {
+                        "type": "string",
+                        "description": "Short description of the identified risk."
+                    },
+                    "consequence": {
+                        "type": "string",
+                        "description": "Consequence that the risk could have without explanation."
+                    },
+                    "consequence_description": {
+                        "type": "string",
+                        "description": "Short description of the consequence."
+                    }
+                },
+                "required": [
+                    "risk",
+                    "risk_description",
+                    "consequence",
+                    "consequence_description"
+                ],
+                "additionalProperties": False
+            },
+        }
+    },
+    "required": ["risks"],
+    "additionalProperties": False,
+    "strict": False,
+    "stream":True,
+    }
+
+    processes = Process.objects.all()
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "process_risk_detector_form" :
+            process_id = request.POST.get("process_id")
+
+            process= Process.objects.get(id=process_id)
+            activities = process.processactivity_set.all().order_by("order")
+            activity_list = "\n".join([f"{a.order}. {a.activity}" for a in activities])
+
+            process_data = f"""
+                Estos son los datos del proceso:
+                Nombre: {process.name}
+                Objetivo: {process.objective}
+                Pasos del proceso: {activity_list or "No especificados"}
+
+                Espacios de trabajo: {process.workspaces or "No especificados"}
+                Instalaciones: {process.facilities or "No especificadas"}
+                Equipamiento: {process.equipment or "No especificado"}
+                Materiales: {process.materials or "No especificados"}
+                Recursos de transporte: {process.transport_resources or "No especificados"}
+                Tecnologías de comunicación: {process.communication_technologies or "No especificadas"}
+                Entorno operativo: {process.operational_environment or "No especificado"}
+
+                Proveedores internos: {", ".join([a.name for a in process.internal_suppliers.all()]) or "Ninguno"}
+                Proveedores externos: {", ".join([e.name for e in process.external_suppliers.all()]) or "Ninguno"}
+                Clientes internos: {", ".join([a.name for a in process.internal_clients.all()]) or "Ninguno"}
+                Clientes externos: {", ".join([e.name for e in process.external_clients.all()]) or "Ninguno"}
+
+                Entradas del proceso: {", ".join([i.name for i in process.inputs.all()]) or "Ninguna"}
+                Salidas del proceso: {", ".join([o.name for o in process.outputs.all()]) or "Ninguna"}
+                Documentación: {", ".join([d.document_description for d in process.documents.all()]) or "Ninguna"}
+                Indicadores de desempeño: {", ".join([i.name for i in process.performance_indicators.all()]) or "Ninguno"}
+                """
+            
+            user_input = "Identify at least 3 specific risks and their potential consequences for the following process, focusing mainly on the provided process data. Use the ISO 9001:2015 standard only as a supporting framework to validate or guide your reasoning."\
+                        "Your response must reflect the unique characteristics of the process and not rely on generic assumptions. Structure the result as a list of risks"
+
+            assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
+
+            print(assistant_answer)
+
+            open_details_modal_id = f"detailsModal{process_id}"
+
+    context = {
+        'processes': processes,
+        'risk_answer': assistant_answer,
+        'open_details_modal_id':open_details_modal_id
+        }
+    
+    return render(request, 'mistemplates/processes.html',context)
+
+    
+
+def process_iso_compliance_ia(request):
+    assistant_answer = None
+    open_details_modal_id = None
+
+    json_function_name = "iso_compliance_analizer_function"
+    json_function_description = "Evaluate whether the following process complies with ISO 9001:2015. Identify specific aspects of the process that meet or align with the ISO 9001:2015 requirements and specific aspects that suggest potential non-compliance, gaps, or weaknesses according to the standard. There shoould be at least one of each."
+    json_schema_input = {
+        "type": "object",
+        "properties": {
+        "compliant_aspects": {
+            "type": "array",
+            "description": "Aspects of the process that are aligned with ISO 9001:2015",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "explanation": {"type": "string"}
+                },
+                "required": ["title", "explanation"],
+                "additionalProperties": False
+            }
+        },
+        "potential_noncompliances": {
+            "type": "array",
+            "description": "Aspects that may represent gaps or deviations from ISO 9001:2015",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "explanation": {"type": "string"}
+                },
+                "required": ["title", "explanation"],
+                "additionalProperties": False
+            }
+        },
+        "compliance_probability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Estimated probability (as a percentage) that the process complies with ISO 9001:2015"
+            }
+        },
+        "required": ["compliant_aspects", "potential_noncompliances", "compliance_probability"],
+        "additionalProperties": False
+    }
+
+    processes = Process.objects.all()
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "process_iso_compliance_form" :
+            process_id = request.POST.get("process_id")
+
+            process= Process.objects.get(id=process_id)
+            activities = process.processactivity_set.all().order_by("order")
+            activity_list = "\n".join([f"{a.order}. {a.activity}" for a in activities])
+
+            process_data = f"""
+                Estos son los datos del proceso:
+                Nombre: {process.name}
+                Objetivo: {process.objective}
+                Pasos del proceso: {activity_list or "No especificados"}
+
+                Espacios de trabajo: {process.workspaces or "No especificados"}
+                Instalaciones: {process.facilities or "No especificadas"}
+                Equipamiento: {process.equipment or "No especificado"}
+                Materiales: {process.materials or "No especificados"}
+                Recursos de transporte: {process.transport_resources or "No especificados"}
+                Tecnologías de comunicación: {process.communication_technologies or "No especificadas"}
+                Entorno operativo: {process.operational_environment or "No especificado"}
+
+                Proveedores internos: {", ".join([a.name for a in process.internal_suppliers.all()]) or "Ninguno"}
+                Proveedores externos: {", ".join([e.name for e in process.external_suppliers.all()]) or "Ninguno"}
+                Clientes internos: {", ".join([a.name for a in process.internal_clients.all()]) or "Ninguno"}
+                Clientes externos: {", ".join([e.name for e in process.external_clients.all()]) or "Ninguno"}
+
+                Entradas del proceso: {", ".join([i.name for i in process.inputs.all()]) or "Ninguna"}
+                Salidas del proceso: {", ".join([o.name for o in process.outputs.all()]) or "Ninguna"}
+                Documentación: {", ".join([d.document_description for d in process.documents.all()]) or "Ninguna"}
+                Indicadores de desempeño: {", ".join([i.name for i in process.performance_indicators.all()]) or "Ninguno"}
+                """
+            
+            user_input = "Evaluate whether the following process complies with ISO 9001:2015. Use the provided process data to identify.Your response must reflect the actual content of the process data. Avoid generic or fabricated insights. Do not leave either section empty."
+
+            assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
+
+            open_details_modal_id = f"detailsModal{process_id}"
+
+            print(assistant_answer )
+
+    context = {
+        'processes': processes,
+        'analysis_answer' : assistant_answer,
+        'open_details_modal_id':open_details_modal_id
+        }
+    
+    return render(request, 'mistemplates/processes.html',context)
+
+
+def process_flow_diagram_ia(request):
+    assistant_answer = None
+    open_details_modal_id = None
+
+    json_function_name = "process_flow_diagram_generator"
+    json_function_description = "Creates a flow diagram of a process according to its activities. If necessary, add connections and additional important considerations."
+    json_schema_input = {
+        "type": "object",
+        "properties": {
+            "flow": {
+                "type": "array",
+                "description": "Each of the steps of the process including its order, title and possible connextions or other considerations.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "order": {"type": "integer"},
+                        "title": {"type": "string"},
+                        "connections": {"type": "string"},
+                        "additional_considerations": {"type": "string"}
+                    },
+                    "required": [
+                        "order", 
+                        "title", 
+                        "connections", 
+                        "additional_considerations"
+                    ],
+                    "additionalProperties": False
+                }
+            }
+        },
+        "required": ["flow"],
+        "additionalProperties": False
+    }
+
+    processes = Process.objects.all()
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "process_flow_diagram_form" :
+            process_id = request.POST.get("process_id")
+
+            process= Process.objects.get(id=process_id)
+            activities = process.processactivity_set.all().order_by("order")
+            activity_list = "\n".join([f"{a.order}. {a.activity}" for a in activities])
+
+            process_data = f"""
+                Nombre: {process.name}
+                Objetivo: {process.objective}
+                Pasos del proceso: {activity_list or "No especificados"}
+
+                Entradas del proceso: {", ".join([i.name for i in process.inputs.all()]) or "Ninguna"}
+                Salidas del proceso: {", ".join([o.name for o in process.outputs.all()]) or "Ninguna"}
+                """
+            
+            user_input = "Your response must reflect the actual content of the process data. Avoid generic or fabricated insights."
+
+            assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
+
+            open_details_modal_id = f"detailsModal{process_id}"
+
+            print(assistant_answer)
+
+    context = {
+        'processes': processes,
+        'process_flow_answer' : assistant_answer,
+        'open_details_modal_id':open_details_modal_id
+        }
+    
+    return render(request, 'mistemplates/processes.html',context)

@@ -10,4 +10,9 @@ urlpatterns = [
     path('update-process/', views.update_process, name='update_process'),
     path('get-process/<int:id>/', views.get_process, name='get_process'),
     path('load-process-form-options/', views.load_form_options, name='load_form_options'),
+
+    path('process-risk-detector/', views.process_risk_detector_ia, name='process_risk_detector_ia'),
+    path('process-iso-compliance-ia/', views.process_iso_compliance_ia, name='process_iso_compliance_ia'),
+    path('process-flow-diagram-ia/', views.process_flow_diagram_ia, name='process_flow_diagram_ia')
 ]
+

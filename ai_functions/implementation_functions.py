@@ -6,13 +6,14 @@ OPENAI_KEY = 'sk-proj-khiPasGiFIxzg_xZiGANgovhPaFusFZrod2rqG2FW7IEbSjhtgICBjhOrQ
 client = OpenAI(api_key=OPENAI_KEY )
 
 MODEL = "gpt-4o-mini"
-SYSTEM_DEFAULT_PROPMT_CONTENT = "You are a helpful assistant to ensure ISO 9001:2015 compliance in a manufacturing company. Your answers should be professional, concise, and based only on your knowledge about the norm and the following data:\n\n"
+SYSTEM_DEFAULT_PROPMT_CONTENT = "You are a helpful assistant to ensure ISO 9001:2015 compliance in a manufacturing company. Your answers should be professional, in spanish, concise, and based only on your knowledge about the norm and the following data:\n\n"
 MAX_TOKENS_DEFAULT = 250
 
-def ai_text_function(data_input, user_input):
+
+def ai_text_function(data_input, user_input, max_tokens):
     response = client.chat.completions.create(
         model= MODEL,
-        max_tokens= MAX_TOKENS_DEFAULT,
+        #max_tokens= MAX_TOKENS_DEFAULT,
         messages=[
             {"role": "system", "content": SYSTEM_DEFAULT_PROPMT_CONTENT + f"{data_input}"},
             {"role": "user", "content": user_input}
@@ -124,3 +125,4 @@ ai_json_function.__doc__ = (
     "}"
     "For additional info about types (string, number, boolean...), additionalProperties and more, visit: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses"
 )
+

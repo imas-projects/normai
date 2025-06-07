@@ -323,3 +323,41 @@ def communication_table_review(request):
 
     return render(request,"mistemplates/communication-tables-review.html", context)
 
+
+
+############# Views con IA
+from ai_functions import implementation_functions as ai
+
+def table_summarize_ia(request):
+    assitant_answer = None
+    max_tokens= 250
+
+    all_communicationtables = CommunicationTable.objects.prefetch_related(
+        'message__type',
+        'message__receiver',
+        'message__periodicity',
+        )
+
+    if request.method == "POST":
+        table_id = request.POST.get("table_id")
+
+        table = CommunicationTable.objects.filter(id=table_id)
+        table_messages = CommunicationMessage.objects.filter(table__in=table).select_related("message")
+
+        messages = [msg.message.name for msg in table_messages]
+
+        data_input = "Messages:\n" + "\n".join(messages)
+    
+        user_input = "Summarize the following internal communication messages from a manufacturing company. Identify the general context, group messages by recurring topics if possible, and highlight the most relevant operational or quality-related issues. Be concise, avoid repetition, and focus on actionable or high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting"
+
+        assitant_answer= ai.ai_text_function(data_input,user_input,max_tokens)
+
+        print(assitant_answer)
+
+    context = {
+            "respuesta": assitant_answer,
+            'all_communicationtables': all_communicationtables,
+            "table_id": table_id
+        }
+
+    return render(request, "mistemplates/communication-tables.html", context)

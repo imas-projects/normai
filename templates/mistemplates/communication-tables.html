@@ -69,7 +69,44 @@
                             <div class="hstack gap-1 w-auto bottom-0">
                                 <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.first_name }} {{ table.approved_by.last_name }}</h4>
                             </div>
-                        </div>
+                            </div>
+                           <form method="post" id="summarize_form" action="{% url 'communications:table-summarize-ia' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="table_id" value="{{ table.id }}">
+                                <button type="submit" class="btn btn-secondary add-table-btn w-auto rounded-top">
+                                    <i class="bx bx-bulb"></i> Resumir con IA
+                                </button>
+                            </form>
+
+                            {% if respuesta and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-outline-secondary mb-2"
+                                            onclick="toggleResumen('{{ table.id }}')" id="toggle-btn-{{ table.id }}">
+                                        Ocultar resumen
+                                    </button>
+
+                                    <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                                        <label class="form-label"><strong>Resumen generado:</strong></label>
+                                        <textarea class="form-control" rows="6" readonly>{{ respuesta }}</textarea>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <script>
+                            function toggleResumen(tableId) {
+                                const resumenBox = document.getElementById(`summary-box-${tableId}`);
+                                const toggleBtn = document.getElementById(`toggle-btn-${tableId}`);
+
+                                if (resumenBox.style.display === "none") {
+                                    resumenBox.style.display = "block";
+                                    toggleBtn.innerText = "Ocultar resumen";
+                                } else {
+                                    resumenBox.style.display = "none";
+                                    toggleBtn.innerText = "Mostrar resumen";
+                                }
+                            }
+                            </script>
+                        
                     </div>
 
                     <!--Mostrar Mensajes-->
@@ -177,6 +214,7 @@
                                 <select class="form-select" id="message-periodicity" name="periodicity">
                                 </select>
                             </div>
+                            
                         </div>
                         <div class="modal-footer">
                             <button type="submit" id="saveChangesBtn" class="btn bg-success btn-primary add-btn">Guardar
@@ -297,6 +335,8 @@
             </div>
         </div>
         <!--Fin Modal Añadir Tabla-->
+
+        
         <!--Fin MOdales-->
     </div>
     <!-- End Page-content -->
@@ -775,6 +815,7 @@
         }
     </script>
 
+    
 {% endblock extra_js %}
 
 </body>
