@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import create_risk, edit_risk_identification, edit_risk_evaluation, edit_risk_treatment, edit_contingency_plan, edit_reevaluation
 from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluation, add_risk_treatment, add_contingency_plan, add_reevaluation
+from . import views
+
 
 app_name = 'risks'
 
@@ -8,6 +10,7 @@ urlpatterns = [
   path('', create_risk, name='risks'),
   path('download-risks-pdf/<str:area_name>/', generate_risks_pdf, name='download_risks_pdf'),
   path('add-risk-identification/', add_risk_identification, name='add_risk_identification'),
+  path('get_suggestions/', views.get_suggestions, name='get_suggestions'),
   path('add-risk-evaluation/', add_risk_evaluation, name='add_risk_evaluation'),
   path('add-risk-treatment/', add_risk_treatment, name='add_risk_treatment'),
   path('add-contingency-plan/', add_contingency_plan, name='add_contingency_plan'),

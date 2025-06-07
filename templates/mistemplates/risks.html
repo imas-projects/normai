@@ -524,9 +524,49 @@ document.getElementById("openAddRiskIdentificationModal").addEventListener("clic
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskIdentificationContent").innerHTML = html;
+        setupSuggestionButton(); 
         new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
     });
 });
+
+
+function setupSuggestionButton() {
+    const suggestionBtn = document.getElementById("getSuggestionBtn");
+    if (!suggestionBtn) return; 
+
+    suggestionBtn.addEventListener("click", function() {
+        const area = document.getElementById("id_area").value;
+        const activity = document.getElementById("id_activity_name").value;
+
+        if (!area || !activity) {
+            alert("Por favor, rellena Área y Nombre de Actividad antes.");
+            return;
+        }
+
+        fetch(`{% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                document.getElementById("suggestedRisk").textContent = data.identified_risk || "(sin sugerencia)";
+                document.getElementById("suggestedConsequences").textContent = data.consequences || "(sin sugerencia)";
+                document.getElementById("suggestionContainer").style.display = "block";
+            })
+            .catch(() => {
+                alert("Error al obtener sugerencias IA.");
+            });
+    });
+
+    document.getElementById("useSuggestionBtn").addEventListener("click", function() {
+        document.getElementById("id_identified_risk").value = document.getElementById("suggestedRisk").textContent;
+        document.getElementById("id_consequences").value = document.getElementById("suggestedConsequences").textContent;
+        document.getElementById("suggestionContainer").style.display = "none";
+    });
+}
+
+
 
 document.getElementById("openAddStepsModal").addEventListener("click", function() {
     new bootstrap.Modal(document.getElementById("addStepsModal")).show();
