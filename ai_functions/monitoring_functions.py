@@ -3,7 +3,7 @@ import json
 from risks.models import RiskIdentification
 from django.conf import settings
 
-client = OpenAI()
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 def suggest_risk_fields(area_name, activity_name, max_results=1):
     """
