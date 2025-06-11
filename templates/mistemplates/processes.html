@@ -27,6 +27,19 @@
                     View Details
                 </button>
 
+                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#riskModal{{ process.id }}">
+                    Detectar Riesgos
+                </button>
+
+                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#complianceModal{{ process.id }}">
+                    Analizar Cumplimiento ISO:9001
+                </button>
+
+                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#summarizeModal{{ process.id }}">
+                    Resumir Proceso
+                </button>
+                
+
                 <!-- (Opcional) Eliminar -->
                 <!--
                 <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ process.id }}">
@@ -144,34 +157,7 @@
                                     {% empty %}
                                     <li class="text-muted">No indicators available</li>
                                     {% endfor %}
-                                </ul>
-                        
-                        <div class="vstack gap-2">
-                                <form method="post" action="{% url 'processes:process_risk_detector_ia' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="form_name" value="process_risk_detector_form">
-                                    <input type="hidden" name="process_id" value="{{ process.id }}">
-                                    <button type="submit" class="btn btn-secondary w-auto rounded-top">
-                                        <i class="bx bx-bulb"></i> Detectar Riesgos con IA
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'processes:process_iso_compliance_ia' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="form_name" value="process_iso_compliance_form" >
-                                    <input type="hidden" name="process_id" value="{{ process.id }}">
-                                    <button type="submit" class="btn btn-secondary w-auto rounded-top">
-                                        <i class="bx bx-bulb"></i> Analizar Cumplimiento ISO9001 con IA
-                                    </button>
-                                </form>
-                                <form method="post" action="{% url 'processes:process_flow_diagram_ia' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="form_name" value="process_flow_diagram_form" >
-                                    <input type="hidden" name="process_id" value="{{ process.id }}">
-                                    <button type="submit" class="btn btn-secondary w-auto rounded-top">
-                                        <i class="bx bx-bulb"></i> Generador de Flujo de Proceso con IA
-                                    </button>
-                                </form>
-                        </div>        
+                                </ul>  
                         <div class="row">
                                 {% if analysis_answer %}
                                 <div class="mt-4 p-1">
@@ -198,21 +184,7 @@
                                 </div>
                                 {% endif %}
 
-                                {% if risk_answer %}
-                                <div class="mt-4">
-                                    <div class="alert alert-info" id="risks-box-{{ process.id }}">
-                                        <label class="form-label"><strong>Riesgos detectados</strong></label>
-                                        {% for risk in risk_answer.risks%}
-                                        <div class="border p-3 mb-3 bg-white text-dark rounded">
-                                            <p><strong>Posible Riesgo Detectado:</strong> {{ risk.risk }}</p>
-                                            <p><strong>Descripción del Riesgo:</strong> {{ risk.risk_description }}</p>
-                                            <p><strong>Posible Consecuencia:</strong> {{ risk.consequence }}</p>
-                                            <p><strong>Descripción de la Consecuencia:</strong> {{ risk.consequence_description }}</p>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endif %}
+                               
 
                                 {% if process_flow_answer %}
                                 <div class="mt-4" id="flow-container">
@@ -353,10 +325,162 @@
           </div>
         </div>
       </div>
-    {% endfor %}
+
+
+<!-- Modal Riesgos IA -->
+<div class="modal fade" id="riskModal{{ process.id }}" tabindex="-1" aria-labelledby="riskModalLabel{{ process.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content bg-white text-dark">
+      <div class="modal-header">
+        <h5 class="modal-title" id="riskModalLabel{{ process.id }}">Riesgos detectados - {{ process.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if risk_answer %}
+        <div class="mt-4">
+            <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                <label class="form-label"><strong>Riesgos detectados</strong></label>
+                {% for risk in risk_answer.risks%}
+                <div class="border p-3 mb-3 bg-white text-dark rounded">
+                    <p><strong>Posible Riesgo Detectado:</strong> {{ risk.risk }}</p>
+                    <p><strong>Descripción del Riesgo:</strong> {{ risk.risk_description }}</p>
+                    <p><strong>Posible Consecuencia:</strong> {{ risk.consequence }}</p>
+                    <p><strong>Descripción de la Consecuencia:</strong> {{ risk.consequence_description }}</p>
+                    <form method="post" action="{% url 'processes:add_risk_processes' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_name" value="add_risk_processes_form">
+                    <input type="hidden" name="process_id" value="{{ process.id }}">
+                    <input type="hidden" name="process_name" value="{{ process.name }}">
+                    <input type="hidden" name="process_risk" value="{{ risk.risk }}">
+                    <input type="hidden" name="process_consequence" value="{{ risk.consequence }}">
+                    <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <p><strong>Aún no se ha realizado el análisis de riesgos</strong> {{ risk.risk }}</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <form method="post" action="{% url 'processes:process_risk_detector_ia' %}">
+          {% csrf_token %}
+          <input type="hidden" name="form_name" value="process_risk_detector_form">
+          <input type="hidden" name="process_id" value="{{ process.id }}">
+          <button type="submit" class="btn btn-primary">
+            {% if risk_answer %}
+                Volver a analizar riesgos con IA
+            {% else %}
+                Analizar riesgos con IA
+            {% endif %}
+            </button>
+        </form>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 
+<!-- Modal Cumplimiento ISO -->
+<div class="modal fade" id="complianceModal{{ process.id }}" tabindex="-1" aria-labelledby="complianceModalLabel{{ process.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content bg-white text-dark">
+      <div class="modal-header">
+        <h5 class="modal-title">Análisis de Cumplimiento ISO9001 - {{ process.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if analysis_answer %}
+        <div class="mt-4 p-1">
+            <div class="alert alert-info" id="compliance-box-{{ process.id }}">
+                <label class="form-label"><strong>Analisis Cumplimiento ISO 9001:2015</strong></label>
+                <p><strong>Aspectos que podrían no estar alineados con ISO 9001:2015</strong></p>
+                {% for noncompliance in analysis_answer.potential_noncompliances %}
+                <div class="border p-3 mb-3 bg-white text-dark rounded">
+                    <p><strong>{{ noncompliance.title }}:</strong> {{ noncompliance.explanation }} </p>
+                </div>
+                {% endfor %}
+                <p><strong>Aspectos alineados con ISO 9001:2015</strong></p>
+                {% for compliance in analysis_answer.compliant_aspects %}
+                <div class="border p-3 mb-3 bg-white text-dark rounded">
+                    <p><strong>{{ compliance.title }}:</strong> {{ compliance.explanation }} </p>
+                </div>
+                {% endfor %}    
+            </div>
+            <div class="border p-3 mb-3 bg-white text-dark rounded">
+                <p>
+                    <strong>Este proceso cumpliría los estándares de calidad en un</strong> {{ analysis_answer.compliance_probability }} %
+                </p>
+            </div>
+        </div>
+        {% else %}
+        <p><strong>Aún no se ha realizado el análisis de cumplimiento</strong> {{ risk.risk }}</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <form method="post" action="{% url 'processes:process_iso_compliance_ia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_name" value="process_iso_compliance_form">
+            <input type="hidden" name="process_id" value="{{ process.id }}">
+            <button type="submit" class="btn btn-primary">
+            {% if analysis_answer %}
+                Volver a ejecutar IA
+            {% else %}
+                Ejecutar análisis IA
+            {% endif %}
+            </button>
+        </form>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resumen Proceso IA -->
+<div class="modal fade" id="summarizeModal{{ process.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ process.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content bg-white text-dark">
+      <div class="modal-header">
+        <h5 class="modal-title" id="summarizeModalLabel{{ process.id }}">Resumen Proceso - {{ process.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {% if process_summary %}
+        <div class="mt-4">
+            <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                    <label class="form-label"><strong>Resumen generado:</strong></label>
+                    <textarea class="form-control" rows="6" readonly>{{ process_summary  }}</textarea>
+            </div>
+        </div>
+        {% else %}
+        <p><strong>Aún no se ha generado un resumen</strong> {{ risk.risk }}</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <form method="post" action="{% url 'processes:process_summarize_ia' %}">
+          {% csrf_token %}
+          <input type="hidden" name="form_name" value="process_summarize_form">
+          <input type="hidden" name="process_id" value="{{ process.id }}">
+          <button type="submit" class="btn btn-primary">
+            {% if process_summary %}
+                Volver a resumir con IA
+            {% else %}
+                Resumir proceso con IA
+            {% endif %}
+            </button>
+        </form>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endfor %}
+</div>
+
+    
 {% endblock content %}
 
 {% block extra_js %}
@@ -618,7 +742,7 @@
     bootstrapModal.show();
 </script>
 {% endif %}
-    
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>   
+
+
 {% endblock extra_js %}
     

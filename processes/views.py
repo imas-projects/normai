@@ -169,6 +169,31 @@ def edit_process(request, process_id):
         
     return render(request, 'mistemplates/edit_process.html', {'form': form, 'process': process})
 
+from risks.models import RiskIdentification
+def add_risk_processes(request):
+    processes = Process.objects.all()
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "add_risk_processes_form" :
+            process_id = request.POST.get("process_id")
+            process_name = request.POST.get("process_name")
+            process_risk = request.POST.get("process_risk")
+            process_consequence = request.POST.get("process_consequence")
+            process_area_id = 9
+
+            new_risk_process = RiskIdentification.objects.create(
+                activity_name = process_name,
+                identified_risk = process_risk,
+                consequences = process_consequence,
+                area_id = process_area_id
+            )
+
+            new_risk_process.save
+
+    return render(request, 'mistemplates/processes.html', {'processes': processes})
+
 
 ############## Views con IA
 from ai_functions import implementation_functions as ai
@@ -266,7 +291,7 @@ def process_risk_detector_ia(request):
 
             print(assistant_answer)
 
-            open_details_modal_id = f"detailsModal{process_id}"
+            open_details_modal_id = f"riskModal{process_id}"
 
     context = {
         'processes': processes,
@@ -338,7 +363,7 @@ def process_iso_compliance_ia(request):
 
             process_data = f"""
                 Estos son los datos del proceso:
-                Nombre: {process.name}
+                Nombre: {process.name} \\
                 Objetivo: {process.objective}
                 Pasos del proceso: {activity_list or "No especificados"}
 
@@ -365,7 +390,7 @@ def process_iso_compliance_ia(request):
 
             assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
 
-            open_details_modal_id = f"detailsModal{process_id}"
+            open_details_modal_id = f"complianceModal{process_id}"
 
             print(assistant_answer )
 
@@ -378,46 +403,17 @@ def process_iso_compliance_ia(request):
     return render(request, 'mistemplates/processes.html',context)
 
 
-def process_flow_diagram_ia(request):
+def process_summarize_ia(request):
     assistant_answer = None
     open_details_modal_id = None
-
-    json_function_name = "process_flow_diagram_generator"
-    json_function_description = "Creates a flow diagram of a process according to its activities. If necessary, add connections and additional important considerations."
-    json_schema_input = {
-        "type": "object",
-        "properties": {
-            "flow": {
-                "type": "array",
-                "description": "Each of the steps of the process including its order, title and possible connextions or other considerations.",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "order": {"type": "integer"},
-                        "title": {"type": "string"},
-                        "connections": {"type": "string"},
-                        "additional_considerations": {"type": "string"}
-                    },
-                    "required": [
-                        "order", 
-                        "title", 
-                        "connections", 
-                        "additional_considerations"
-                    ],
-                    "additionalProperties": False
-                }
-            }
-        },
-        "required": ["flow"],
-        "additionalProperties": False
-    }
+    max_tokens= 250
 
     processes = Process.objects.all()
 
     if request.method == "POST":
         form_name = request.POST.get("form_name")
 
-        if form_name == "process_flow_diagram_form" :
+        if form_name == "process_summarize_form" :
             process_id = request.POST.get("process_id")
 
             process= Process.objects.get(id=process_id)
@@ -425,25 +421,41 @@ def process_flow_diagram_ia(request):
             activity_list = "\n".join([f"{a.order}. {a.activity}" for a in activities])
 
             process_data = f"""
-                Nombre: {process.name}
+                Estos son los datos del proceso:
+                Nombre: {process.name} \\
                 Objetivo: {process.objective}
                 Pasos del proceso: {activity_list or "No especificados"}
 
+                Espacios de trabajo: {process.workspaces or "No especificados"}
+                Instalaciones: {process.facilities or "No especificadas"}
+                Equipamiento: {process.equipment or "No especificado"}
+                Materiales: {process.materials or "No especificados"}
+                Recursos de transporte: {process.transport_resources or "No especificados"}
+                Tecnologías de comunicación: {process.communication_technologies or "No especificadas"}
+                Entorno operativo: {process.operational_environment or "No especificado"}
+
+                Proveedores internos: {", ".join([a.name for a in process.internal_suppliers.all()]) or "Ninguno"}
+                Proveedores externos: {", ".join([e.name for e in process.external_suppliers.all()]) or "Ninguno"}
+                Clientes internos: {", ".join([a.name for a in process.internal_clients.all()]) or "Ninguno"}
+                Clientes externos: {", ".join([e.name for e in process.external_clients.all()]) or "Ninguno"}
+
                 Entradas del proceso: {", ".join([i.name for i in process.inputs.all()]) or "Ninguna"}
                 Salidas del proceso: {", ".join([o.name for o in process.outputs.all()]) or "Ninguna"}
+                Documentación: {", ".join([d.document_description for d in process.documents.all()]) or "Ninguna"}
+                Indicadores de desempeño: {", ".join([i.name for i in process.performance_indicators.all()]) or "Ninguno"}
                 """
             
-            user_input = "Your response must reflect the actual content of the process data. Avoid generic or fabricated insights."
+            user_input = "Summarize this process of a manufacturing company. Your response must reflect the actual content of the process data. Avoid generic or fabricated insights."
 
-            assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
+            assistant_answer = ai.ai_text_function(process_data,user_input,max_tokens)
 
-            open_details_modal_id = f"detailsModal{process_id}"
+            open_details_modal_id = f"summarizeModal{process_id}"
 
             print(assistant_answer)
 
     context = {
         'processes': processes,
-        'process_flow_answer' : assistant_answer,
+        'process_summary' : assistant_answer,
         'open_details_modal_id':open_details_modal_id
         }
     

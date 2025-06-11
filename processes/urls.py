@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('process-risk-detector/', views.process_risk_detector_ia, name='process_risk_detector_ia'),
     path('process-iso-compliance-ia/', views.process_iso_compliance_ia, name='process_iso_compliance_ia'),
-    path('process-flow-diagram-ia/', views.process_flow_diagram_ia, name='process_flow_diagram_ia')
+    path('process-summarize-ia/', views.process_summarize_ia, name='process_summarize_ia'),
+    path('add-risk-processes/', views.add_risk_processes, name='add_risk_processes'),
 ]
 
