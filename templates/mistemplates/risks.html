@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const container = document.getElementById("riskIdentificationContent");
                     container.innerHTML = html;
 
-                    // Ejecutar scripts embebidos manualmente
+                    // Ejecutar scripts embebidos manualmente (opcional)
                     const scripts = container.querySelectorAll("script");
                     scripts.forEach(script => {
                         const newScript = document.createElement("script");
@@ -540,8 +540,11 @@ document.addEventListener("DOMContentLoaded", function() {
                             newScript.textContent = script.textContent;
                         }
                         document.body.appendChild(newScript);
-                        script.remove(); // Limpieza opcional
+                        script.remove();
                     });
+
+                    // Aquí llamas a la función para asignar los listeners
+                    setupSuggestionButton();
 
                     new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
                 });
@@ -549,12 +552,12 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-
-
-
 function setupSuggestionButton() {
     const suggestionBtn = document.getElementById("getSuggestionBtn");
-    if (!suggestionBtn) return; 
+    if (!suggestionBtn) return;
+
+    const suggestionContainer = document.getElementById("suggestionContainer");
+    const suggestionList = document.getElementById("suggestionList");
 
     suggestionBtn.addEventListener("click", function() {
         const area = document.getElementById("id_area").value;
@@ -568,25 +571,45 @@ function setupSuggestionButton() {
         fetch(`{% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)}`)
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    alert(data.error);
+                suggestionList.innerHTML = "";
+
+                if (data.length === 0) {
+                    alert("No se encontraron sugerencias.");
                     return;
                 }
-                document.getElementById("suggestedRisk").textContent = data.identified_risk || "(sin sugerencia)";
-                document.getElementById("suggestedConsequences").textContent = data.consequences || "(sin sugerencia)";
-                document.getElementById("suggestionContainer").style.display = "block";
+
+                suggestionContainer.style.display = "block";
+
+                data.forEach((suggestion, index) => {
+                    const risk = suggestion.identified_risk || "(sin riesgo)";
+                    const consequences = suggestion.consequences || "(sin consecuencias)";
+
+                    const card = document.createElement("div");
+                    card.className = "card mb-2";
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <strong>Riesgo ${index + 1}:</strong> ${risk}<br>
+                            <strong>Consecuencias:</strong> ${consequences}<br>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
+                        </div>
+                    `;
+
+                    const useBtn = card.querySelector("button");
+                    useBtn.addEventListener("click", function() {
+                        document.getElementById("id_identified_risk").value = risk;
+                        document.getElementById("id_consequences").value = consequences;
+                        suggestionContainer.style.display = "none";
+                    });
+
+                    suggestionList.appendChild(card);
+                });
             })
             .catch(() => {
                 alert("Error al obtener sugerencias IA.");
             });
     });
-
-    document.getElementById("useSuggestionBtn").addEventListener("click", function() {
-        document.getElementById("id_identified_risk").value = document.getElementById("suggestedRisk").textContent;
-        document.getElementById("id_consequences").value = document.getElementById("suggestedConsequences").textContent;
-        document.getElementById("suggestionContainer").style.display = "none";
-    });
 }
+
 
 
 
