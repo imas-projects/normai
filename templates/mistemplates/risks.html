@@ -583,8 +583,10 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
     .then(response => response.text())
     .then(html => {
         document.getElementById("riskEvaluationContent").innerHTML = html;
-        handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent"); // Agregar manejo de formulario
+        handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
+        initRiskEvaluationEvents(); 
     });
+
 
     fetch("{% url 'risks:add_risk_treatment' %}")
     .then(response => response.text())
