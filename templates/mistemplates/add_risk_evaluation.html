@@ -68,14 +68,10 @@
     </form>
 </div>
 
-<script>
-    // Definimos la URL una sola vez, correctamente evaluada por Django
-    const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
-</script>
-
+<!-- JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM completamente cargado");
+        console.log("✅ DOM completamente cargado");
 
         const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
 
@@ -108,7 +104,7 @@
         }
 
         document.getElementById('suggest-controls-btn').addEventListener('click', async () => {
-            console.log("Botón de controles clicado");
+            console.log("🛡 Botón de controles clicado");
             const data = await fetchSuggestions();
             if (!data) return;
 
@@ -121,7 +117,7 @@
         });
 
         document.getElementById('suggest-ranges-btn').addEventListener('click', async () => {
-            console.log("Botón de rangos clicado");
+            console.log("📊 Botón de rangos clicado");
             const data = await fetchSuggestions();
             if (!data) return;
 
@@ -131,7 +127,7 @@
         });
 
         document.getElementById('suggest-risk-level-btn').addEventListener('click', async () => {
-            console.log("Botón de nivel de riesgo clicado");
+            console.log("⚠️ Botón de nivel de riesgo clicado");
             const data = await fetchSuggestions();
             if (!data) return;
 
@@ -152,9 +148,4 @@
             }
         });
     });
-</script>
-
-
-// Ejecutamos la inicialización al cargar la página
-document.addEventListener('DOMContentLoaded', initRiskEvaluationEvents);
 </script>
