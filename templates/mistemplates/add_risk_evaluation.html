@@ -68,55 +68,62 @@
     </form>
 </div>
 
-<!-- JavaScript -->
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("✅ DOM completamente cargado");
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("✅ DOM completamente cargado");
 
-        const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
+    const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
 
-        function getRiskId() {
-            const riskSelect = document.getElementById('id_risk');
-            return riskSelect ? riskSelect.value : null;
+    function getRiskId() {
+        const riskSelect = document.getElementById('id_risk');
+        return riskSelect ? riskSelect.value : null;
+    }
+
+    async function fetchSuggestions() {
+        const riskId = getRiskId();
+        if (!riskId) {
+            alert("Selecciona un riesgo primero.");
+            return null;
         }
 
-        async function fetchSuggestions() {
-            const riskId = getRiskId();
-            if (!riskId) {
-                alert("Selecciona un riesgo primero.");
+        try {
+            const response = await fetch(`${evaluationSuggestionsUrl}?risk_id=${riskId}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert('Error al obtener sugerencias: ' + (data.error || response.statusText));
                 return null;
             }
 
-            try {
-                const response = await fetch(`${evaluationSuggestionsUrl}?risk_id=${riskId}`);
-                const data = await response.json();
-
-                if (!response.ok) {
-                    alert('Error al obtener sugerencias: ' + (data.error || response.statusText));
-                    return null;
-                }
-
-                return data;
-            } catch (err) {
-                alert("Error inesperado: " + err.message);
-                return null;
-            }
+            return data;
+        } catch (err) {
+            alert("Error inesperado: " + err.message);
+            return null;
         }
+    }
 
-        document.getElementById('suggest-controls-btn').addEventListener('click', async () => {
+    const suggestControlsBtn = document.getElementById('suggest-controls-btn');
+    if (suggestControlsBtn) {
+        suggestControlsBtn.addEventListener('click', async () => {
             console.log("🛡 Botón de controles clicado");
             const data = await fetchSuggestions();
             if (!data) return;
 
-            if (data.preventive_controls) {
-                document.getElementById('id_current_preventive_controls').value = data.preventive_controls.join('\n');
+            const preventive = document.getElementById('id_current_preventive_controls');
+            const detection = document.getElementById('id_current_detection_controls');
+
+            if (preventive && data.preventive_controls) {
+                preventive.value = data.preventive_controls.join('\n');
             }
-            if (data.detection_controls) {
-                document.getElementById('id_current_detection_controls').value = data.detection_controls.join('\n');
+            if (detection && data.detection_controls) {
+                detection.value = data.detection_controls.join('\n');
             }
         });
+    }
 
-        document.getElementById('suggest-ranges-btn').addEventListener('click', async () => {
+    const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
+    if (suggestRangesBtn) {
+        suggestRangesBtn.addEventListener('click', async () => {
             console.log("📊 Botón de rangos clicado");
             const data = await fetchSuggestions();
             if (!data) return;
@@ -125,8 +132,11 @@
             document.getElementById('occurrence_range').value = data.occurrence_range || '';
             document.getElementById('detection_range').value = data.detection_range || '';
         });
+    }
 
-        document.getElementById('suggest-risk-level-btn').addEventListener('click', async () => {
+    const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
+    if (suggestRiskLevelBtn) {
+        suggestRiskLevelBtn.addEventListener('click', async () => {
             console.log("⚠️ Botón de nivel de riesgo clicado");
             const data = await fetchSuggestions();
             if (!data) return;
@@ -147,5 +157,6 @@
                 }
             }
         });
-    });
+    }
+});
 </script>
