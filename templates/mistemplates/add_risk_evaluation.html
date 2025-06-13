@@ -69,6 +69,11 @@
 </div>
 
 <script>
+    // Definimos la URL una sola vez, correctamente evaluada por Django
+    const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
+</script>
+
+<script>
 function initRiskEvaluationEvents() {
     function getRiskId() {
         const riskSelect = document.getElementById('id_risk');
@@ -83,7 +88,7 @@ function initRiskEvaluationEvents() {
         }
 
         try {
-            const response = await fetch(`{% url 'risks:get_evaluation_suggestions' %}?risk_id=${riskId}`);
+            const response = await fetch(`${evaluationSuggestionsUrl}?risk_id=${riskId}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -140,4 +145,7 @@ function initRiskEvaluationEvents() {
         }
     });
 }
+
+// Ejecutamos la inicialización al cargar la página
+document.addEventListener('DOMContentLoaded', initRiskEvaluationEvents);
 </script>
