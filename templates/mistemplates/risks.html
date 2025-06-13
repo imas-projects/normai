@@ -519,15 +519,21 @@
 
 {% block extra_js %}
 <script>
-document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function() {
-    fetch("{% url 'risks:add_risk_identification' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("riskIdentificationContent").innerHTML = html;
-        setupSuggestionButton(); 
-        new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
-    });
+document.addEventListener("DOMContentLoaded", function() {
+    const openRiskModalBtn = document.getElementById("openAddRiskIdentificationModal");
+    if (openRiskModalBtn) {
+        openRiskModalBtn.addEventListener("click", function() {
+            fetch("{% url 'risks:add_risk_identification' %}")
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("riskIdentificationContent").innerHTML = html;
+                    setupSuggestionButton();
+                    new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
+                });
+        });
+    }
 });
+
 
 
 function setupSuggestionButton() {
