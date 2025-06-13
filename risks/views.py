@@ -66,12 +66,26 @@ def get_suggestions(request):
     if not area or not activity:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
-    suggestion = suggest_risk_fields(area, activity)
+    suggestion_raw = suggest_risk_fields(area, activity) 
+
+    if isinstance(suggestion_raw, str):
+        try:
+            suggestions = json.loads(suggestion_raw)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Error al parsear respuesta IA'}, status=500)
+    else:
+        suggestions = suggestion_raw
+
+    if not suggestions:
+        return JsonResponse({'error': 'No se encontraron sugerencias'}, status=404)
+
+    first_suggestion = suggestions[0]
 
     return JsonResponse({
-        'identified_risk': suggestion.get('identified_risk', '') if suggestion else '',
-        'consequences': suggestion.get('consequences', '') if suggestion else '',
+        'identified_risk': first_suggestion.get('identified_risk', ''),
+        'consequences': first_suggestion.get('consequences', ''),
     })
+
 
 def add_risk_evaluation(request):
     suggestion_data = None
