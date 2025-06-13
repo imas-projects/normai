@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 
-from ai_functions.monitoring_functions import suggest_risk_fields
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_evaluation_fields
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -73,8 +73,10 @@ def get_suggestions(request):
         'consequences': suggestion.get('consequences', '') if suggestion else '',
     })
 
-
 def add_risk_evaluation(request):
+    suggestion_data = None
+    risk_id = request.GET.get("risk_id")
+
     if request.method == 'POST':
         form = RiskEvaluationForm(request.POST)
         if form.is_valid():
@@ -84,8 +86,37 @@ def add_risk_evaluation(request):
             return JsonResponse({'error': form.errors}, status=400)
     else:
         form = RiskEvaluationForm()
+        if risk_id:
+            try:
+                suggestion_data = suggest_evaluation_fields(risk_id=int(risk_id))
+            except Exception as e:
+                suggestion_data = {"error": f"Error al generar sugerencias: {str(e)}"}
 
-    return render(request, 'mistemplates/add_risk_evaluation.html', {'form': form})
+    return render(
+        request,
+        'mistemplates/add_risk_evaluation.html',
+        {
+            'form': form,
+            'suggestion_data': suggestion_data,
+        }
+    )
+
+
+def get_evaluation_suggestions(request):
+    risk_id = request.GET.get('risk_id')
+
+    if not risk_id:
+        return JsonResponse({'error': 'Falta parámetro risk_id'}, status=400)
+
+    try:
+        suggestions = suggest_evaluation_fields(int(risk_id))
+        if "error" in suggestions:
+            return JsonResponse({'error': suggestions["error"]}, status=400)
+        return JsonResponse(suggestions)
+    except Exception as e:
+        return JsonResponse({'error': f'Error al generar sugerencias: {str(e)}'}, status=500)
+
+
 
 def add_risk_treatment(request):
     if request.method == 'POST':
