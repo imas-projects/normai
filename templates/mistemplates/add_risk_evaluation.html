@@ -69,8 +69,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-
+function initRiskEvaluationEvents() {
     function getRiskId() {
         const riskSelect = document.getElementById('id_risk');
         return riskSelect ? riskSelect.value : null;
@@ -140,38 +139,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    // Precarga inicial si `suggestion_data` está disponible
-    {% if suggestion_data %}
-        {% if suggestion_data.preventive_controls %}
-            document.getElementById('id_current_preventive_controls').value = `{{ suggestion_data.preventive_controls|join:"\n" }}`;
-        {% endif %}
-        {% if suggestion_data.detection_controls %}
-            document.getElementById('id_current_detection_controls').value = `{{ suggestion_data.detection_controls|join:"\n" }}`;
-        {% endif %}
-        {% if suggestion_data.severity_range %}
-            document.getElementById('severity_range').value = `{{ suggestion_data.severity_range }}`;
-        {% endif %}
-        {% if suggestion_data.occurrence_range %}
-            document.getElementById('occurrence_range').value = `{{ suggestion_data.occurrence_range }}`;
-        {% endif %}
-        {% if suggestion_data.detection_range %}
-            document.getElementById('detection_range').value = `{{ suggestion_data.detection_range }}`;
-        {% endif %}
-        {% if suggestion_data.risk_level %}
-            const container = document.getElementById('risk_level_suggestion');
-            container.innerHTML = `{{ suggestion_data.risk_level|safe }}`;
-            const select = document.getElementById('id_risk_level');
-            if (select) {
-                const cleanText = `{{ suggestion_data.risk_level }}`.replace(/[\u{1F7E5}\u{1F7E8}\u{1F7E9}]/gu, '').trim().toLowerCase();
-                for (const option of select.options) {
-                    if (option.text.toLowerCase().includes(cleanText)) {
-                        select.value = option.value;
-                        break;
-                    }
-                }
-            }
-        {% endif %}
-    {% endif %}
-});
+}
 </script>
