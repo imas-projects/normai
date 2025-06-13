@@ -11,6 +11,10 @@
         <fieldset class="mb-4">
             <legend>Controles preventivos y de detección</legend>
 
+            <button type="button" id="suggest-controls-btn" class="btn btn-primary mb-3">
+                Sugerir controles
+            </button>
+
             <div class="mb-3">
                 {{ form.current_preventive_controls.label_tag }}
                 {{ form.current_preventive_controls }}
@@ -20,14 +24,14 @@
                 {{ form.current_detection_controls.label_tag }}
                 {{ form.current_detection_controls }}
             </div>
-
-            <button type="button" id="suggest-controls-btn" class="btn btn-primary">
-                Sugerir controles
-            </button>
         </fieldset>
 
         <fieldset class="mb-4">
             <legend>Rangos sugeridos</legend>
+
+            <button type="button" id="suggest-ranges-btn" class="btn btn-primary mb-3">
+                Sugerir rangos
+            </button>
 
             <div class="mb-3">
                 {{ form.severity.label_tag }}
@@ -43,14 +47,14 @@
                 {{ form.detection.label_tag }}
                 <input type="text" id="detection_range" class="form-control" readonly>
             </div>
-
-            <button type="button" id="suggest-ranges-btn" class="btn btn-primary">
-                Sugerir rangos
-            </button>
         </fieldset>
 
         <fieldset class="mb-4">
             <legend>Nivel de riesgo</legend>
+
+            <button type="button" id="suggest-risk-level-btn" class="btn btn-primary mb-3">
+                Sugerir nivel de riesgo
+            </button>
 
             <div class="mb-3">
                 {{ form.risk_level.label_tag }}
@@ -58,10 +62,6 @@
             </div>
 
             <div id="risk_level_suggestion" style="font-weight: bold; font-size: 1.2em; margin-top: 0.5rem;"></div>
-
-            <button type="button" id="suggest-risk-level-btn" class="btn btn-primary">
-                Sugerir nivel de riesgo
-            </button>
         </fieldset>
 
         <button type="submit" class="btn btn-success">Guardar</button>
@@ -70,22 +70,33 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const riskIdField = document.querySelector('#id_risk');
-    const riskId = riskIdField ? riskIdField.value : null;
 
-    if (!riskId) {
-        alert("Para usar las sugerencias, primero selecciona un riesgo.");
-        return;
+    function getRiskId() {
+        const riskSelect = document.getElementById('id_risk');
+        return riskSelect ? riskSelect.value : null;
     }
 
     async function fetchSuggestions() {
-        const response = await fetch(`{% url 'risks:get_evaluation_suggestions' %}?risk_id=${riskId}`);
-        if (!response.ok) {
-            const err = await response.json();
-            alert('Error al obtener sugerencias: ' + (err.error || response.statusText));
+        const riskId = getRiskId();
+        if (!riskId) {
+            alert("Selecciona un riesgo primero.");
             return null;
         }
-        return await response.json();
+
+        try {
+            const response = await fetch(`{% url 'risks:get_evaluation_suggestions' %}?risk_id=${riskId}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert('Error al obtener sugerencias: ' + (data.error || response.statusText));
+                return null;
+            }
+
+            return data;
+        } catch (err) {
+            alert("Error inesperado: " + err.message);
+            return null;
+        }
     }
 
     document.getElementById('suggest-controls-btn').addEventListener('click', async () => {
@@ -93,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!data) return;
 
         if (data.preventive_controls) {
-            
             document.getElementById('id_current_preventive_controls').value = data.preventive_controls.join('\n');
         }
         if (data.detection_controls) {
@@ -115,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!data) return;
 
         if (data.risk_level) {
-            // Mostrar texto coloreado con emoji
             const container = document.getElementById('risk_level_suggestion');
             container.innerHTML = data.risk_level;
 
@@ -132,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Precarga inicial si `suggestion_data` está disponible
     {% if suggestion_data %}
         {% if suggestion_data.preventive_controls %}
             document.getElementById('id_current_preventive_controls').value = `{{ suggestion_data.preventive_controls|join:"\n" }}`;
@@ -151,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         {% if suggestion_data.risk_level %}
             const container = document.getElementById('risk_level_suggestion');
             container.innerHTML = `{{ suggestion_data.risk_level|safe }}`;
-            // Actualizar select igual que arriba
             const select = document.getElementById('id_risk_level');
             if (select) {
                 const cleanText = `{{ suggestion_data.risk_level }}`.replace(/[\u{1F7E5}\u{1F7E8}\u{1F7E9}]/gu, '').trim().toLowerCase();
