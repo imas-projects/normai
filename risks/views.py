@@ -60,13 +60,19 @@ def add_risk_identification(request):
 from django.http import JsonResponse
 
 def get_suggestions(request):
-    area = request.GET.get('area_name')
-    activity = request.GET.get('activity_name')
+    area_id = request.GET.get('area_name')
+    activity_name = request.GET.get('activity_name')
 
-    if not area or not activity:
+    if not area_id or not activity_name:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
-    suggestion_raw = suggest_risk_fields(area, activity) 
+    try:
+        area_obj = Area.objects.get(id=area_id)
+        area_name = area_obj.name
+    except Area.DoesNotExist:
+        return JsonResponse({'error': 'Área no encontrada'}, status=404)
+
+    suggestion_raw = suggest_risk_fields(area_name, activity_name)
 
     if isinstance(suggestion_raw, str):
         try:
@@ -85,6 +91,7 @@ def get_suggestions(request):
         'identified_risk': first_suggestion.get('identified_risk', ''),
         'consequences': first_suggestion.get('consequences', ''),
     })
+
 
 
 def add_risk_evaluation(request):
