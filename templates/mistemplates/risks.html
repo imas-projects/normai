@@ -527,13 +527,28 @@ document.addEventListener("DOMContentLoaded", function() {
             fetch("{% url 'risks:add_risk_identification' %}")
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById("riskIdentificationContent").innerHTML = html;
-                    setupSuggestionButton();
+                    const container = document.getElementById("riskIdentificationContent");
+                    container.innerHTML = html;
+
+                    // Ejecutar scripts embebidos manualmente
+                    const scripts = container.querySelectorAll("script");
+                    scripts.forEach(script => {
+                        const newScript = document.createElement("script");
+                        if (script.src) {
+                            newScript.src = script.src;
+                        } else {
+                            newScript.textContent = script.textContent;
+                        }
+                        document.body.appendChild(newScript);
+                        script.remove(); // Limpieza opcional
+                    });
+
                     new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
                 });
         });
     }
 });
+
 
 
 
