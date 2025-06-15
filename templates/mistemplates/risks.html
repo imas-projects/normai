@@ -622,8 +622,8 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
     .then(html => {
         document.getElementById("riskEvaluationContent").innerHTML = html;
         handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
-        initRiskEvaluationEvents(); 
     });
+
 
 
     fetch("{% url 'risks:add_risk_treatment' %}")
