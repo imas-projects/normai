@@ -11,7 +11,8 @@
         <fieldset class="mb-4">
             <legend>Controles preventivos y de detección</legend>
 
-            <button type="button" id="suggest-controls-btn" class="btn btn-primary mb-3">
+            <button type="button" id="suggest-controls-btn" class="btn btn-primary mb-3"
+                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
                 Sugerir controles
             </button>
 
@@ -29,7 +30,8 @@
         <fieldset class="mb-4">
             <legend>Rangos sugeridos</legend>
 
-            <button type="button" id="suggest-ranges-btn" class="btn btn-primary mb-3">
+            <button type="button" id="suggest-ranges-btn" class="btn btn-primary mb-3"
+                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
                 Sugerir rangos
             </button>
 
@@ -52,7 +54,8 @@
         <fieldset class="mb-4">
             <legend>Nivel de riesgo</legend>
 
-            <button type="button" id="suggest-risk-level-btn" class="btn btn-primary mb-3">
+            <button type="button" id="suggest-risk-level-btn" class="btn btn-primary mb-3"
+                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
                 Sugerir nivel de riesgo
             </button>
 
@@ -72,7 +75,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("✅ DOM completamente cargado");
 
-    const evaluationSuggestionsUrl = "{% url 'risks:get_evaluation_suggestions' %}";
+    function getEvaluationSuggestionsUrl() {
+        const controlsBtn = document.getElementById('suggest-controls-btn');
+        return controlsBtn?.dataset.evalUrl || '';
+    }
 
     function getRiskId() {
         const riskSelect = document.getElementById('id_risk');
@@ -81,6 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchSuggestions() {
         const riskId = getRiskId();
+        const evaluationSuggestionsUrl = getEvaluationSuggestionsUrl();
+
         if (!riskId) {
             alert("Selecciona un riesgo primero.");
             return null;
