@@ -72,26 +72,12 @@ def get_suggestions(request):
     except Area.DoesNotExist:
         return JsonResponse({'error': 'Área no encontrada'}, status=404)
 
-    suggestion_raw = suggest_risk_fields(area_name, activity_name)
+    suggestions = suggest_risk_fields(area_name, activity_name)
 
-    if isinstance(suggestion_raw, str):
-        try:
-            suggestions = json.loads(suggestion_raw)
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Error al parsear respuesta IA'}, status=500)
-    else:
-        suggestions = suggestion_raw
-
-    if not suggestions:
+    if not suggestions or not isinstance(suggestions, list):
         return JsonResponse({'error': 'No se encontraron sugerencias'}, status=404)
 
-    first_suggestion = suggestions[0]
-
-    return JsonResponse({
-        'identified_risk': first_suggestion.get('identified_risk', ''),
-        'consequences': first_suggestion.get('consequences', ''),
-    })
-
+    return JsonResponse(suggestions, safe=False)
 
 
 def add_risk_evaluation(request):
