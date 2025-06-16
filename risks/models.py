@@ -3,53 +3,6 @@ from django.contrib.auth.models import User
 from company.models import Area  
 from django.core.validators import RegexValidator
 
-# Tabla de roles
-class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-
-    class Meta:
-        db_table = 'tb_risks_role'
-
-    def __str__(self):
-        return self.name
-    
-    def as_dict(self):
-        return {
-            "name": self.name
-        }  
-
-# Tabla de acciones de contención
-class ContingencyAction(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-
-    class Meta:
-        db_table = 'tb_risks_contingency_action'
-
-    def __str__(self):
-        return self.name
-    
-    def as_dict(self):
-        return {
-            "name": self.name
-        }  
-
-# Tabla de niveles de riesgo
-class RiskLevel(models.Model):
-    level = models.CharField(max_length=50, unique=True)
-    color = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'tb_risks_level'
-
-    def __str__(self):
-        return self.level  
-    
-    def as_dict(self):
-        return {
-            "level": self.level,
-            "color": self.color
-        }  
-
 # Tabla de identificación de riesgo
 class RiskIdentification(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="risks")  
@@ -141,8 +94,22 @@ class RiskTreatment(models.Model):
 
 # Tabla de planes de contingencia
 class ContingencyPlan(models.Model):
+    ACTION_CHOICES = [
+        ("N/A", "N/A"),
+        ("ALT_PROCEDURES", "Establecer procedimientos alternativos"),
+        ("ALT_SUPPLIERS", "Identificar proveedores sustitutos"),
+        ("BACKUP_STAFF", "Asignar personal de respaldo"),
+        ("EMERGENCY_STOCK", "Mantener inventarios de emergencia"),
+        ("TECH_REDUNDANCY", "Implementar redundancias tecnológicas"),
+        ("CRISIS_COMM", "Establecer protocolos de comunicación de crisis"),
+        ("DRILLS", "Realizar simulacros y pruebas periódicas"),
+        ("INSURANCE", "Contratar seguros o coberturas específicas"),
+        ("OUTSOURCE", "Externalizar temporalmente operaciones críticas"),
+        ("MANUALS", "Crear manuales de operación ante fallos"),
+    ]
+
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='actions')
-    contingency_actions = models.ManyToManyField('ContingencyAction')
+    contingency_actions = MultiSelectField(choices=ACTION_CHOICES)
     responsible = models.ManyToManyField(User, related_name="responsible_for_contingency")
     communicate_to = models.ManyToManyField(User, related_name="communicate_to_contingency")
 
@@ -150,12 +117,12 @@ class ContingencyPlan(models.Model):
         db_table = 'tb_risks_contingency_plan'
 
     def __str__(self):
-        actions = ", ".join([action.name for action in self.contingency_actions.all()[:3]])
+        actions = ", ".join([dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions[:3]])
         return f"Contingency Plan: {actions}"
 
     def as_dict(self):
         return {
-            "contingency_actions": [action.as_dict() for action in self.contingency_actions.all()],
+            "contingency_actions": [dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions],
             "responsible": [{
                 "id": user.id,
                 "username": user.username,
