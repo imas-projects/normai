@@ -81,11 +81,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return document.getElementById('id_risk')?.value || null;
     }
 
+    // 🔧 AÑADIDO: validación extra de `type` para prevenir errores 400
     async function fetchSuggestion(type, extraParams = {}) {
         const riskId = getRiskId();
         const url = getEvaluationSuggestionsUrl();
+
         if (!riskId) {
             alert("Selecciona un riesgo primero.");
+            return null;
+        }
+        if (!type) {
+            alert("Tipo de sugerencia no especificado.");
             return null;
         }
 
@@ -109,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 🔧 AÑADIDO: `type = 'controls'`
     document.getElementById('suggest-controls-btn')?.addEventListener('click', async () => {
         const data = await fetchSuggestion('controls');
         if (!data) return;
@@ -119,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detection && data.detection_controls) detection.value = data.detection_controls.join('\n');
     });
 
+    // 🔧 AÑADIDO: `type = 'ranges'`
     document.getElementById('suggest-ranges-btn')?.addEventListener('click', async () => {
         const preventive = document.getElementById('id_current_preventive_controls')?.value || '';
         const detection = document.getElementById('id_current_detection_controls')?.value || '';
@@ -133,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detection_range').value = data.detection_range || '';
     });
 
-    // 👉 Botón de sugerir nivel de riesgo
+    // 🔧 AÑADIDO: `type = 'level'`
     document.getElementById('suggest-risk-level-btn')?.addEventListener('click', async () => {
         const preventive = document.getElementById('id_current_preventive_controls')?.value || '';
         const detection = document.getElementById('id_current_detection_controls')?.value || '';
