@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -165,13 +165,40 @@ def add_risk_treatment(request):
         form = RiskTreatmentForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Risk treatment saved successfully'}, status=200)  
+            return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
         else:
             return JsonResponse({'error': form.errors}, status=400)
     else:
         form = RiskTreatmentForm()
 
     return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
+
+def get_treatment_suggestions(request):
+    """
+    Endpoint para obtener sugerencias de acciones correctivas de tratamiento para un riesgo específico.
+    Parámetro esperado: risk_id (en GET)
+    """
+
+    risk_id = request.GET.get('risk_id')
+    max_results = request.GET.get('max_results', 1)
+
+    if not risk_id:
+        return JsonResponse({'error': 'Falta parámetro risk_id'}, status=400)
+
+    try:
+        max_results = int(max_results)
+        if max_results < 1:
+            max_results = 1
+    except ValueError:
+        max_results = 1
+
+    suggestions = suggest_treatment_action(risk_id, max_results=max_results)
+
+    if not suggestions or not isinstance(suggestions, list):
+        return JsonResponse({'error': 'No se encontraron sugerencias'}, status=404)
+
+    return JsonResponse(suggestions, safe=False)
+
 
 def add_contingency_plan(request):
     if request.method == 'POST':
