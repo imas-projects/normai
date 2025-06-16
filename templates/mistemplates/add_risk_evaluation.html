@@ -12,7 +12,7 @@
             <legend>Controles preventivos y de detección</legend>
 
             <button type="button" id="suggest-controls-btn" class="btn btn-primary mb-3"
-                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
+                data-url="{% url 'risks:get_controls_suggestions' %}">
                 Sugerir controles
             </button>
 
@@ -31,7 +31,7 @@
             <legend>Rangos sugeridos</legend>
 
             <button type="button" id="suggest-ranges-btn" class="btn btn-primary mb-3"
-                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
+                data-url="{% url 'risks:get_ranges_suggestions' %}">
                 Sugerir rangos
             </button>
 
@@ -55,7 +55,7 @@
             <legend>Nivel de riesgo</legend>
 
             <button type="button" id="suggest-risk-level-btn" class="btn btn-primary mb-3"
-                data-eval-url="{% url 'risks:get_evaluation_suggestions' %}">
+                data-url="{% url 'risks:get_level_suggestions' %}">
                 Sugerir nivel de riesgo
             </button>
 
@@ -71,3 +71,134 @@
     </form>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Botones
+    const controlsBtn = document.getElementById("suggest-controls-btn");
+    const rangesBtn = document.getElementById("suggest-ranges-btn");
+    const riskLevelBtn = document.getElementById("suggest-risk-level-btn");
+
+    controlsBtn.addEventListener("click", function() {
+        const riskId = document.getElementById("id_risk").value;
+        if (!riskId) {
+            alert("Por favor selecciona un Riesgo antes.");
+            return;
+        }
+
+        const url = controlsBtn.dataset.url + `?risk_id=${encodeURIComponent(riskId)}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+                // Suponiendo que las sugerencias de controles vienen en listas para preventivos y detección
+                // O simplemente texto. Ajusta según cómo devuelve suggest_controls
+                if (data.preventive_controls) {
+                    document.getElementById("id_current_preventive_controls").value = data.preventive_controls.join("\n");
+                } else if (data.controls) {
+                    // En caso de devolver con otro nombre
+                    document.getElementById("id_current_preventive_controls").value = data.controls.join("\n");
+                }
+
+                if (data.detection_controls) {
+                    document.getElementById("id_current_detection_controls").value = data.detection_controls.join("\n");
+                } else if (data.controls_detection) {
+                    document.getElementById("id_current_detection_controls").value = data.controls_detection.join("\n");
+                }
+            })
+            .catch(() => alert("Error al obtener sugerencias de controles."));
+    });
+
+    rangesBtn.addEventListener("click", function() {
+        const riskId = document.getElementById("id_risk").value;
+        const preventive = document.getElementById("id_current_preventive_controls").value;
+        const detection = document.getElementById("id_current_detection_controls").value;
+
+        if (!riskId) {
+            alert("Por favor selecciona un Riesgo antes.");
+            return;
+        }
+
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            preventive_controls: preventive,
+            detection_controls: detection
+        });
+
+        const url = rangesBtn.dataset.url + `?${params.toString()}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                // Se espera que data contenga severity, occurrence y detection (rangos)
+                if (data.severity !== undefined) {
+                    document.getElementById("severity_range").value = data.severity;
+                }
+                if (data.occurrence !== undefined) {
+                    document.getElementById("occurrence_range").value = data.occurrence;
+                }
+                if (data.detection !== undefined) {
+                    document.getElementById("detection_range").value = data.detection;
+                }
+            })
+            .catch(() => alert("Error al obtener sugerencias de rangos."));
+    });
+
+    riskLevelBtn.addEventListener("click", function() {
+        const riskId = document.getElementById("id_risk").value;
+        const preventive = document.getElementById("id_current_preventive_controls").value;
+        const detection = document.getElementById("id_current_detection_controls").value;
+        const severity = document.getElementById("severity_range").value;
+        const occurrence = document.getElementById("occurrence_range").value;
+        const detectionScore = document.getElementById("detection_range").value;
+
+        if (!riskId) {
+            alert("Por favor selecciona un Riesgo antes.");
+            return;
+        }
+
+        if (!severity || !occurrence || !detectionScore) {
+            alert("Por favor genera primero los rangos.");
+            return;
+        }
+
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            preventive_controls: preventive,
+            detection_controls: detection,
+            severity: severity,
+            occurrence: occurrence,
+            detection: detectionScore
+        });
+
+        const url = riskLevelBtn.dataset.url + `?${params.toString()}`;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                // Suponemos que el nivel de riesgo se devuelve en alguna propiedad, por ejemplo 'risk_level'
+                if (data.risk_level !== undefined) {
+                    document.getElementById("id_risk_level").value = data.risk_level;
+                    document.getElementById("risk_level_suggestion").textContent = `Nivel sugerido: ${data.risk_level}`;
+                } else {
+                    // Si la respuesta es otro formato, ajusta aquí
+                    document.getElementById("risk_level_suggestion").textContent = JSON.stringify(data);
+                }
+            })
+            .catch(() => alert("Error al obtener sugerencias de nivel de riesgo."));
+    });
+});
+</script>
