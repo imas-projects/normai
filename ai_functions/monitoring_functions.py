@@ -126,54 +126,35 @@ Ejemplo:
         return []
 
 
-
-def suggest_evaluation_fields(risk_id, max_controls=3):
-    """
-    Genera sugerencias de IA para una evaluación de riesgo basada en el RiskIdentification asociado.
-
-    Retorna un dict con:
-    - preventive_controls: lista de 3 sugerencias
-    - detection_controls: lista de 3 sugerencias
-    - severity_range: texto con rango sugerido
-    - occurrence_range: texto con rango sugerido
-    - detection_range: texto con rango sugerido
-    - risk_level: texto coloreado con nivel sugerido (🟥 High, 🟨 Moderate, 🟩 Low)
-    """
-
+def suggest_controls(risk_id, max_controls=3):
     try:
         risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
-        return {
-            "error": "No se encontró el riesgo especificado."
-        }
+        return {"error": "No se encontró el riesgo especificado."}
 
-    # Obtener histórico similar
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
     ).select_related("risk_level")
 
-    # Construir prompt
     if similar_evaluations.exists():
-        historical_lines = []
-        for eval in similar_evaluations[:10]:
-            historical_lines.append(
-                f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+        historical_lines = [
+            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
 Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
 Nivel: {eval.risk_level.name}"""
-            )
+            for eval in similar_evaluations[:10]
+        ]
+
         prompt = f"""
 Eres un experto en gestión de calidad y riesgos bajo ISO 9001:2015 en industria aeroespacial.
 
 Con base en evaluaciones anteriores, sugiere:
 - 3 controles preventivos
 - 3 controles de detección
-- Rangos sugeridos de severidad, ocurrencia y detección (ej: entre 6 y 8)
-- Nivel de riesgo: High 🟥, Moderate 🟨, Low 🟩
 
 Histórico:
 {chr(10).join(historical_lines)}
@@ -184,20 +165,9 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Devuélvelo como un JSON con claves:
-"preventive_controls", "detection_controls", 
-"severity_range", "occurrence_range", "detection_range", "risk_level"
-
-Ejemplo:
-{{
-  "preventive_controls": ["Control 1", "Control 2", "Control 3"],
-  "detection_controls": ["Control A", "Control B", "Control C"],
-  "severity_range": "Severidad sugerida entre 6 y 8",
-  "occurrence_range": "Ocurrencia sugerida entre 4 y 6",
-  "detection_range": "Detección sugerida entre 3 y 5",
-  "risk_level": "🟨 Riesgo Moderado"
-}}
-        """
+Devuélvelo como JSON:
+{{"preventive_controls": [...], "detection_controls": [...]}}
+"""
     else:
         prompt = f"""
 Eres un consultor experto en calidad ISO 9001:2015 para riesgos operativos.
@@ -208,43 +178,194 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Sugiere:
-- 3 controles preventivos
-- 3 controles de detección
-- Rangos sugeridos para severidad, ocurrencia y detección
-- Nivel estimado de riesgo con color emoji: 🟥, 🟨, 🟩
+Sugiere 3 controles preventivos y 3 de detección.
 
-Formato JSON con claves:
-"preventive_controls", "detection_controls", 
-"severity_range", "occurrence_range", "detection_range", "risk_level"
-        """
+Formato JSON:
+{{"preventive_controls": [...], "detection_controls": [...]}}
+"""
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.4,
-            max_tokens=800,
+            max_tokens=600,
         )
-
-        content = response.choices[0].message.content.strip()
-        print("IA RESPONSE:", content)
-
-        data = json.loads(content)
-
+        data = json.loads(response.choices[0].message.content.strip())
         return {
             "preventive_controls": data.get("preventive_controls", [])[:max_controls],
-            "detection_controls": data.get("detection_controls", [])[:max_controls],
-            "severity_range": data.get("severity_range", ""),
-            "occurrence_range": data.get("occurrence_range", ""),
-            "detection_range": data.get("detection_range", ""),
-            "risk_level": data.get("risk_level", "")
+            "detection_controls": data.get("detection_controls", [])[:max_controls]
         }
-
     except json.JSONDecodeError:
         return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
-        return {"error": f"Error al consultar IA: {str(e)}"}
+        return {"error": str(e)}
 
+
+def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
+    try:
+        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+    except RiskIdentification.DoesNotExist:
+        return {"error": "No se encontró el riesgo especificado."}
+
+    similar_evaluations = RiskEvaluation.objects.filter(
+        risk__area=risk.area,
+        risk__activity_name=risk.activity_name,
+        risk__identified_risk=risk.identified_risk
+    ).select_related("risk_level")
+
+    controls_text = f"""
+Controles preventivos escritos por el usuario:
+{chr(10).join(preventive_controls)}
+
+Controles de detección escritos por el usuario:
+{chr(10).join(detection_controls)}
+"""
+
+    if similar_evaluations.exists():
+        historical_lines = [
+            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
+Controles de detección: {eval.current_detection_controls or "N/A"} | 
+Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
+Nivel: {eval.risk_level.name}"""
+            for eval in similar_evaluations[:10]
+        ]
+        prompt = f"""
+Eres un experto en análisis de riesgos ISO 9001:2015.
+
+Basándote en el histórico y los controles introducidos, sugiere rangos adecuados para:
+- Severidad
+- Ocurrencia
+- Detección
+
+Histórico:
+{chr(10).join(historical_lines)}
+
+{controls_text}
+
+Devuélvelo como JSON:
+{{"severity_range": "...", "occurrence_range": "...", "detection_range": "..."}}        
+"""
+    else:
+        prompt = f"""
+Eres un consultor en riesgos operativos ISO 9001:2015.
+
+Dado:
+Área: {risk.area.name}
+Actividad: {risk.activity_name}
+Riesgo: {risk.identified_risk}
+Consecuencias: {risk.consequences}
+
+{controls_text}
+
+Sugiere rangos aproximados (ej: "entre 2 y 5") para:
+- Severidad
+- Ocurrencia
+- Detección
+
+Formato JSON:
+{{"severity_range": "...", "occurrence_range": "...", "detection_range": "..."}}        
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=600,
+        )
+        data = json.loads(response.choices[0].message.content.strip())
+        return {
+            "severity_range": data.get("severity_range", ""),
+            "occurrence_range": data.get("occurrence_range", ""),
+            "detection_range": data.get("detection_range", "")
+        }
+    except json.JSONDecodeError:
+        return {"error": "No se pudo interpretar la respuesta de IA."}
+    except Exception as e:
+        return {"error": str(e)}
+        
+
+def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
+    try:
+        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+    except RiskIdentification.DoesNotExist:
+        return {"error": "No se encontró el riesgo especificado."}
+
+    similar_evaluations = RiskEvaluation.objects.filter(
+        risk__area=risk.area,
+        risk__activity_name=risk.activity_name,
+        risk__identified_risk=risk.identified_risk
+    ).select_related("risk_level")
+
+    controls_text = f"""
+Controles preventivos:
+{chr(10).join(preventive_controls)}
+
+Controles de detección:
+{chr(10).join(detection_controls)}
+
+Valores ingresados:
+Severidad: {severity}
+Ocurrencia: {occurrence}
+Detección: {detection}
+"""
+
+    if similar_evaluations.exists():
+        historical_lines = [
+            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
+Controles de detección: {eval.current_detection_controls or "N/A"} | 
+Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
+Nivel: {eval.risk_level.name}"""
+            for eval in similar_evaluations[:10]
+        ]
+        prompt = f"""
+Eres un analista experto en riesgos bajo ISO 9001:2015.
+
+Basándote en las entradas del usuario y en el histórico, sugiere el **nivel de riesgo** más probable: 🟥, 🟨, 🟩.
+
+Histórico:
+{chr(10).join(historical_lines)}
+
+{controls_text}
+
+Devuelve solo:
+{{"risk_level": "🟨 Riesgo Moderado"}}
+"""
+    else:
+        prompt = f"""
+Eres un experto consultor en evaluación de riesgos ISO 9001:2015.
+
+Dado:
+Área: {risk.area.name}
+Actividad: {risk.activity_name}
+Riesgo: {risk.identified_risk}
+Consecuencias: {risk.consequences}
+
+{controls_text}
+
+Estima el nivel de riesgo general (🟥, 🟨, 🟩) según tu experiencia.
+
+Formato JSON:
+{{"risk_level": "🟥 Riesgo Alto"}}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=300,
+        )
+        data = json.loads(response.choices[0].message.content.strip())
+        return {"risk_level": data.get("risk_level", "")}
+    except json.JSONDecodeError:
+        return {"error": "No se pudo interpretar la respuesta de IA."}
+    except Exception as e:
+        return {"error": str(e)}
 
 
