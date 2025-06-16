@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_risk_ranges, suggest_risk_level
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -123,7 +123,7 @@ def get_evaluation_suggestions(request):
             preventive_list = preventive.split("\n")
             detection_list = detection.split("\n")
 
-            suggestions = suggest_risk_ranges(int(risk_id), preventive_list, detection_list)
+            suggestions = suggest_rating_ranges(int(risk_id), preventive_list, detection_list)
 
         elif suggestion_type == "level":
             preventive = request.GET.get("preventive_controls", "")
