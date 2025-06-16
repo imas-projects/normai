@@ -568,7 +568,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 return;
             }
 
-            fetch(`{% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)}`)
+            fetch({% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)})
                 .then(response => response.json())
                 .then(data => {
                     suggestionList.innerHTML = "";
@@ -586,13 +586,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
                         const card = document.createElement("div");
                         card.className = "card mb-2";
-                        card.innerHTML = `
+                        card.innerHTML = 
                             <div class="card-body">
                                 <strong>Riesgo ${index + 1}:</strong> ${risk}<br>
                                 <strong>Consecuencias:</strong> ${consequences}<br>
                                 <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
                             </div>
-                        `;
+                        ;
 
                         const useBtn = card.querySelector("button");
                         useBtn.addEventListener("click", function() {
@@ -610,86 +610,67 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-function setupRiskEvaluationFormListeners() {
-    const getRiskId = () => document.getElementById("id_risk")?.value;
+    // Setup listeners para el formulario de evaluación de riesgo
+    function setupRiskEvaluationFormListeners() {
+        const suggestControlsBtn = document.getElementById('suggest-controls-btn');
+        if (suggestControlsBtn) {
+            suggestControlsBtn.addEventListener('click', async () => {
+                // lógica para sugerir controles
+            });
+        }
 
-    const suggestControlsBtn = document.getElementById('suggest-controls-btn');
-    if (suggestControlsBtn) {
-        suggestControlsBtn.addEventListener('click', () => {
-            const evalUrl = suggestControlsBtn.dataset.evalUrl;
-            const riskId = getRiskId();
+        const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
+        if (suggestRangesBtn) {
+            suggestRangesBtn.addEventListener('click', async () => {
+                // lógica para sugerir rangos
+            });
+        }
 
-            if (!riskId) {
-                alert("Por favor, selecciona un riesgo primero.");
-                return;
-            }
-
-            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.current_preventive_controls) {
-                        document.getElementById("id_current_preventive_controls").value = data.current_preventive_controls;
-                    }
-                    if (data.current_detection_controls) {
-                        document.getElementById("id_current_detection_controls").value = data.current_detection_controls;
-                    }
-                })
-                .catch(() => alert("Error al obtener sugerencias de controles."));
-        });
+        const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
+        if (suggestRiskLevelBtn) {
+            suggestRiskLevelBtn.addEventListener('click', async () => {
+                // lógica para sugerir nivel de riesgo
+            });
+        }
     }
 
-    const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
-    if (suggestRangesBtn) {
-        suggestRangesBtn.addEventListener('click', () => {
-            const evalUrl = suggestRangesBtn.dataset.evalUrl;
-            const riskId = getRiskId();
+    // Abrir modal y cargar formularios para pasos
+    const openAddStepsBtn = document.getElementById("openAddStepsModal");
+    if (openAddStepsBtn) {
+        openAddStepsBtn.addEventListener("click", function() {
+            new bootstrap.Modal(document.getElementById("addStepsModal")).show();
 
-            if (!riskId) {
-                alert("Por favor, selecciona un riesgo primero.");
-                return;
-            }
+            fetch("{% url 'risks:add_risk_evaluation' %}")
+                .then(response => response.text())
+                .then(html => {
+                    const container = document.getElementById("riskEvaluationContent");
+                    container.innerHTML = html;
+                    setupRiskEvaluationFormListeners();
+                    setupFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
+                });
 
-            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.severity !== undefined) {
-                        document.getElementById("severity_range").value = data.severity;
-                    }
-                    if (data.occurrence !== undefined) {
-                        document.getElementById("occurrence_range").value = data.occurrence;
-                    }
-                    if (data.detection !== undefined) {
-                        document.getElementById("detection_range").value = data.detection;
-                    }
-                })
-                .catch(() => alert("Error al obtener sugerencias de rangos."));
+            fetch("{% url 'risks:add_risk_treatment' %}")
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("riskTreatmentContent").innerHTML = html;
+                    setupFormSubmit("add-risk-treatment-form", "riskTreatmentContent");
+                });
+
+            fetch("{% url 'risks:add_contingency_plan' %}")
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("contingencyPlanContent").innerHTML = html;
+                    setupFormSubmit("add-contingency-plan-form", "contingencyPlanContent");
+                });
+
+            fetch("{% url 'risks:add_reevaluation' %}")
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("reevaluationContent").innerHTML = html;
+                    setupFormSubmit("add-reevaluation-form", "reevaluationContent");
+                });
         });
     }
-
-    const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener('click', () => {
-            const evalUrl = suggestRiskLevelBtn.dataset.evalUrl;
-            const riskId = getRiskId();
-
-            if (!riskId) {
-                alert("Por favor, selecciona un riesgo primero.");
-                return;
-            }
-
-            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.risk_level) {
-                        document.getElementById("id_risk_level").value = data.risk_level;
-                        document.getElementById("risk_level_suggestion").textContent = `Nivel sugerido: ${data.risk_level}`;
-                    }
-                })
-                .catch(() => alert("Error al obtener sugerencia de nivel de riesgo."));
-        });
-    }
-}
-
 
     // Función para manejar el envío del formulario sin recargar página
     function setupFormSubmit(formId, contentId) {
@@ -726,11 +707,11 @@ function setupRiskEvaluationFormListeners() {
         document.querySelectorAll(selectorClass).forEach(button => {
             button.addEventListener("click", function() {
                 const riskId = this.getAttribute("data-risk-id");
-                fetch(`${urlPrefix}${riskId}/`)
+                fetch(${urlPrefix}${riskId}/)
                     .then(response => response.text())
                     .then(html => {
-                        document.getElementById(`${contentIdPrefix}${riskId}`).innerHTML = html;
-                        new bootstrap.Modal(document.getElementById(`${modalIdPrefix}${riskId}`)).show();
+                        document.getElementById(${contentIdPrefix}${riskId}).innerHTML = html;
+                        new bootstrap.Modal(document.getElementById(${modalIdPrefix}${riskId})).show();
                     });
             });
         });
@@ -749,3 +730,4 @@ function setupRiskEvaluationFormListeners() {
 
 </script>
 {% endblock extra_js %}
+
