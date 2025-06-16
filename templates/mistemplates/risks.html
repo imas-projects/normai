@@ -617,9 +617,25 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
     fetch("{% url 'risks:add_risk_evaluation' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("riskEvaluationContent").innerHTML = html;
+        const container = document.getElementById("riskEvaluationContent");
+        container.innerHTML = html;
+
         handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
+
+        // Ejecutar scripts embebidos manualmente (necesario si el HTML incluye <script>)
+        const scripts = container.querySelectorAll("script");
+        scripts.forEach(script => {
+            const newScript = document.createElement("script");
+            if (script.src) {
+                newScript.src = script.src;
+            } else {
+                newScript.textContent = script.textContent;
+            }
+            document.body.appendChild(newScript);
+            script.remove();
+        });
     });
+
 
 
     fetch("{% url 'risks:add_risk_treatment' %}")
