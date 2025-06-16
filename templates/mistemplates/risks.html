@@ -610,67 +610,86 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Setup listeners para el formulario de evaluación de riesgo
-    function setupRiskEvaluationFormListeners() {
-        const suggestControlsBtn = document.getElementById('suggest-controls-btn');
-        if (suggestControlsBtn) {
-            suggestControlsBtn.addEventListener('click', async () => {
-                // lógica para sugerir controles
-            });
-        }
+function setupRiskEvaluationFormListeners() {
+    const getRiskId = () => document.getElementById("id_risk")?.value;
 
-        const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
-        if (suggestRangesBtn) {
-            suggestRangesBtn.addEventListener('click', async () => {
-                // lógica para sugerir rangos
-            });
-        }
+    const suggestControlsBtn = document.getElementById('suggest-controls-btn');
+    if (suggestControlsBtn) {
+        suggestControlsBtn.addEventListener('click', () => {
+            const evalUrl = suggestControlsBtn.dataset.evalUrl;
+            const riskId = getRiskId();
 
-        const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
-        if (suggestRiskLevelBtn) {
-            suggestRiskLevelBtn.addEventListener('click', async () => {
-                // lógica para sugerir nivel de riesgo
-            });
-        }
-    }
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo primero.");
+                return;
+            }
 
-    // Abrir modal y cargar formularios para pasos
-    const openAddStepsBtn = document.getElementById("openAddStepsModal");
-    if (openAddStepsBtn) {
-        openAddStepsBtn.addEventListener("click", function() {
-            new bootstrap.Modal(document.getElementById("addStepsModal")).show();
-
-            fetch("{% url 'risks:add_risk_evaluation' %}")
-                .then(response => response.text())
-                .then(html => {
-                    const container = document.getElementById("riskEvaluationContent");
-                    container.innerHTML = html;
-                    setupRiskEvaluationFormListeners();
-                    setupFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
-                });
-
-            fetch("{% url 'risks:add_risk_treatment' %}")
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById("riskTreatmentContent").innerHTML = html;
-                    setupFormSubmit("add-risk-treatment-form", "riskTreatmentContent");
-                });
-
-            fetch("{% url 'risks:add_contingency_plan' %}")
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById("contingencyPlanContent").innerHTML = html;
-                    setupFormSubmit("add-contingency-plan-form", "contingencyPlanContent");
-                });
-
-            fetch("{% url 'risks:add_reevaluation' %}")
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById("reevaluationContent").innerHTML = html;
-                    setupFormSubmit("add-reevaluation-form", "reevaluationContent");
-                });
+            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.current_preventive_controls) {
+                        document.getElementById("id_current_preventive_controls").value = data.current_preventive_controls;
+                    }
+                    if (data.current_detection_controls) {
+                        document.getElementById("id_current_detection_controls").value = data.current_detection_controls;
+                    }
+                })
+                .catch(() => alert("Error al obtener sugerencias de controles."));
         });
     }
+
+    const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
+    if (suggestRangesBtn) {
+        suggestRangesBtn.addEventListener('click', () => {
+            const evalUrl = suggestRangesBtn.dataset.evalUrl;
+            const riskId = getRiskId();
+
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo primero.");
+                return;
+            }
+
+            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.severity !== undefined) {
+                        document.getElementById("severity_range").value = data.severity;
+                    }
+                    if (data.occurrence !== undefined) {
+                        document.getElementById("occurrence_range").value = data.occurrence;
+                    }
+                    if (data.detection !== undefined) {
+                        document.getElementById("detection_range").value = data.detection;
+                    }
+                })
+                .catch(() => alert("Error al obtener sugerencias de rangos."));
+        });
+    }
+
+    const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
+    if (suggestRiskLevelBtn) {
+        suggestRiskLevelBtn.addEventListener('click', () => {
+            const evalUrl = suggestRiskLevelBtn.dataset.evalUrl;
+            const riskId = getRiskId();
+
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo primero.");
+                return;
+            }
+
+            fetch(`${evalUrl}?risk_id=${encodeURIComponent(riskId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.risk_level) {
+                        document.getElementById("id_risk_level").value = data.risk_level;
+                        document.getElementById("risk_level_suggestion").textContent = `Nivel sugerido: ${data.risk_level}`;
+                    }
+                })
+                .catch(() => alert("Error al obtener sugerencia de nivel de riesgo."));
+        });
+    }
+}
+
 
     // Función para manejar el envío del formulario sin recargar página
     function setupFormSubmit(formId, contentId) {
