@@ -369,3 +369,108 @@ Formato JSON:
         return {"error": str(e)}
 
 
+def suggest_treatment_action(risk_id, max_results=1):
+    """
+    Sugiere acciones correctivas de tratamiento para un riesgo específico basado en:
+    - Datos históricos del riesgo y sus evaluaciones
+    - Criterios de la norma ISO 9001:2015
+
+    Retorna una lista con diccionarios con la clave "treatment_action" con la acción sugerida.
+    """
+
+    try:
+        risk = RiskIdentification.objects.get(id=risk_id)
+        evaluations = risk.evaluations.all()
+    except RiskIdentification.DoesNotExist:
+        return []
+
+    # Construir contexto histórico con ejemplos similares (máx 5)
+    historical_treatments = []
+    for other_risk in RiskIdentification.objects.filter(area=risk.area).exclude(id=risk.id)[:5]:
+        for eval in other_risk.evaluations.all():
+            historical_treatments.append(
+                f"Área: {other_risk.area.name} | Riesgo: {other_risk.description} | "
+                f"Evaluación: Severidad {eval.severity}, Ocurrencia {eval.occurrence}, Detección {eval.detection}, "
+                f"Nivel de riesgo {eval.risk_level}."
+            )
+
+    historical_text = "\n".join(historical_treatments) if historical_treatments else "No hay datos históricos relevantes."
+
+    # Info del riesgo actual y evaluaciones
+    risk_info = (
+        f"Descripción del riesgo: {risk.description}\n"
+        f"Área: {risk.area.name}\n"
+        f"Tipo: {risk.risk_type}\n"
+        f"Causa: {risk.cause}\n"
+        f"Impacto: {risk.impact}\n"
+        f"Probabilidad: {risk.probability}\n"
+    )
+
+    eval_info = ""
+    if evaluations.exists():
+        for i, ev in enumerate(evaluations, 1):
+            eval_info += (
+                f"Evaluación {i}:\n"
+                f"  Severidad: {ev.severity}\n"
+                f"  Ocurrencia: {ev.occurrence}\n"
+                f"  Detección: {ev.detection}\n"
+                f"  Nivel de riesgo: {ev.risk_level}\n"
+                f"  Controles preventivos actuales: {ev.current_preventive_controls or 'Ninguno'}\n"
+                f"  Controles de detección actuales: {ev.current_detection_controls or 'Ninguno'}\n"
+            )
+    else:
+        eval_info = "No hay evaluaciones disponibles para este riesgo."
+
+    prompt = f"""
+Eres un experto en gestión de riesgos y en la norma ISO 9001:2015.
+
+Con base en la siguiente información, sugiere hasta {max_results} acciones correctivas de tratamiento para el riesgo indicado.
+La sugerencia debe ser clara, precisa y en lenguaje natural.
+
+Información histórica de riesgos similares:
+{historical_text}
+
+Información del riesgo actual:
+{risk_info}
+
+Evaluaciones asociadas:
+{eval_info}
+
+Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con la clave EXACTA "treatment_action", por ejemplo:
+
+[
+  {{
+    "treatment_action": "Implementar capacitación específica en seguridad de la información para el área afectada."
+  }}
+]
+"""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.6,
+            max_tokens=400,
+        )
+
+        content = response.choices[0].message['content'].strip()
+        print("Respuesta cruda de IA:", repr(content))
+
+        suggestions = json.loads(content)
+
+        if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
+            return [
+                {"treatment_action": item.get("treatment_action", "").strip()}
+                for item in suggestions[:max_results]
+            ]
+
+        print("Formato inesperado:", type(suggestions))
+        return []
+
+    except json.JSONDecodeError as jde:
+        print("Error de JSONDecode:", str(jde))
+        print("Contenido no parseable:", repr(content))
+        return []
+    except Exception as e:
+        print("Error al generar sugerencia IA:", str(e))
+        return []
