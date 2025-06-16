@@ -1,6 +1,9 @@
 from django import forms
-from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation, Role
-from company.models import Area
+from django.contrib.auth.models import User
+from .models import (
+    RiskIdentification, RiskEvaluation, RiskTreatment,
+    ContingencyPlan, Reevaluation
+)
 
 class RiskIdentificationForm(forms.ModelForm):
     class Meta:
@@ -14,11 +17,6 @@ class RiskIdentificationForm(forms.ModelForm):
         }
 
 class RiskEvaluationForm(forms.ModelForm):
-    risk = forms.ModelChoiceField(
-        queryset=RiskIdentification.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_risk'}),  # <-- Aquí el cambio
-        label="Select Risk"
-    )
     class Meta:
         model = RiskEvaluation
         fields = [
@@ -31,24 +29,19 @@ class RiskEvaluationForm(forms.ModelForm):
             'risk_level',
         ]
         widgets = {
+            'risk': forms.Select(attrs={'class': 'form-select'}),
             'severity': forms.Select(attrs={'class': 'form-select'}),
             'occurrence': forms.Select(attrs={'class': 'form-select'}),
             'detection': forms.Select(attrs={'class': 'form-select'}),
-            'current_preventive_controls': forms.Textarea(attrs={'class': 'form-control'}),
-            'current_detection_controls': forms.Textarea(attrs={'class': 'form-control'}),
+            'current_preventive_controls': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'current_detection_controls': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'risk_level': forms.Select(attrs={'class': 'form-select'}),
         }
 
-
 class RiskTreatmentForm(forms.ModelForm):
-    risk = forms.ModelChoiceField(
-        queryset=RiskIdentification.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Select Risk"
-    )
     responsible = forms.ModelMultipleChoiceField(
-        queryset=Role.objects.all(),
-        widget=forms.CheckboxSelectMultiple(), 
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
         label="Responsible"
     )
 
@@ -56,40 +49,46 @@ class RiskTreatmentForm(forms.ModelForm):
         model = RiskTreatment
         fields = ['risk', 'treatment_action', 'responsible', 'target_date', 'actual_date']
         widgets = {
-            'treatment_action': forms.TextInput(attrs={'class': 'form-control'}),
+            'risk': forms.Select(attrs={'class': 'form-select'}),
+            'treatment_action': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'target_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'actual_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
-
 class ContingencyPlanForm(forms.ModelForm):
-    risk = forms.ModelChoiceField(
-        queryset=RiskIdentification.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Select Risk"
+    contingency_actions = forms.MultipleChoiceField(
+        choices=ContingencyPlan.ACTION_CHOICES,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        label="Contingency Actions"
     )
+
+    responsible = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        label="Responsible"
+    )
+
+    communicate_to = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        label="Communicate To"
+    )
+
     class Meta:
         model = ContingencyPlan
         fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']
         widgets = {
-            'contingency_actions': forms.CheckboxSelectMultiple(),
-            'responsible': forms.CheckboxSelectMultiple(),
-            'communicate_to': forms.CheckboxSelectMultiple(),
+            'risk': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class ReevaluationForm(forms.ModelForm):
-    risk = forms.ModelChoiceField(
-        queryset=RiskIdentification.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label="Select Risk"
-    )
     class Meta:
         model = Reevaluation
         fields = ['risk', 'severity', 'occurrence', 'detection', 'risk_level']
         widgets = {
+            'risk': forms.Select(attrs={'class': 'form-select'}),
             'severity': forms.Select(attrs={'class': 'form-select'}),
             'occurrence': forms.Select(attrs={'class': 'form-select'}),
             'detection': forms.Select(attrs={'class': 'form-select'}),
-            'risk_level': forms.Select(attrs={'class': 'form-select'}),  
+            'risk_level': forms.Select(attrs={'class': 'form-select'}),
         }
-
