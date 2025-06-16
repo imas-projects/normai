@@ -610,6 +610,19 @@ function setupSuggestionButton() {
     });
 }
 
+function executeScriptsFromHTML(container) {
+    const scripts = container.querySelectorAll("script");
+    scripts.forEach(script => {
+        const newScript = document.createElement("script");
+        if (script.src) {
+            newScript.src = script.src;
+        } else {
+            newScript.textContent = script.textContent;
+        }
+        document.body.appendChild(newScript);
+        script.remove();
+    });
+}
 
 document.getElementById("openAddStepsModal").addEventListener("click", function() {
     new bootstrap.Modal(document.getElementById("addStepsModal")).show();
@@ -619,25 +632,10 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
         .then(html => {
             const container = document.getElementById("riskEvaluationContent");
             container.innerHTML = html;
+            executeScriptsFromHTML(container);  // Aquí ejecutas los scripts embebidos
 
-            // Ejecutar los scripts embebidos dentro del HTML cargado
-            const scripts = container.querySelectorAll("script");
-            scripts.forEach(script => {
-                const newScript = document.createElement("script");
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.textContent = script.textContent;
-                }
-                document.body.appendChild(newScript);
-                script.remove();
-            });
-
-            // Asegurar que también se maneje el formulario después de cargar
             handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
         });
-
-
 
     fetch("{% url 'risks:add_risk_treatment' %}")
     .then(response => response.text())
