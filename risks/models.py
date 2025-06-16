@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from company.models import Area  
 from django.core.validators import RegexValidator
+from multiselectfield import MultiSelectField
+
 
 # Tabla de identificación de riesgo
 class RiskIdentification(models.Model):
