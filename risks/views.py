@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_evaluation_fields
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_preventive_and_detection_controls, suggest_risk_ranges, suggest_risk_level
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -55,9 +55,6 @@ def add_risk_identification(request):
     return render(request, 'mistemplates/add_risk_identification.html', {
         'form': form
     })
-
-
-from django.http import JsonResponse
 
 def get_suggestions(request):
     area_id = request.GET.get('area_name')
@@ -111,15 +108,53 @@ def add_risk_evaluation(request):
 
 def get_evaluation_suggestions(request):
     risk_id = request.GET.get('risk_id')
+    suggestion_type = request.GET.get('type')  # "controls", "ranges", "level"
 
-    if not risk_id:
-        return JsonResponse({'error': 'Falta parámetro risk_id'}, status=400)
+    if not risk_id or not suggestion_type:
+        return JsonResponse({'error': 'Faltan parámetros obligatorios (risk_id, type)'}, status=400)
 
     try:
-        suggestions = suggest_evaluation_fields(int(risk_id))
+        if suggestion_type == "controls":
+            suggestions = suggest_preventive_and_detection_controls(int(risk_id))
+
+        elif suggestion_type == "ranges":
+            preventive = request.GET.get("preventive_controls", "")
+            detection = request.GET.get("detection_controls", "")
+            preventive_list = preventive.split("\n")
+            detection_list = detection.split("\n")
+
+            suggestions = suggest_risk_ranges(int(risk_id), preventive_list, detection_list)
+
+        elif suggestion_type == "level":
+            preventive = request.GET.get("preventive_controls", "")
+            detection = request.GET.get("detection_controls", "")
+            preventive_list = preventive.split("\n")
+            detection_list = detection.split("\n")
+
+            severity = request.GET.get("severity")
+            occurrence = request.GET.get("occurrence")
+            detection_score = request.GET.get("detection")
+
+            if not all([severity, occurrence, detection_score]):
+                return JsonResponse({'error': 'Faltan datos para calcular el nivel de riesgo'}, status=400)
+
+            suggestions = suggest_risk_level(
+                int(risk_id),
+                preventive_list,
+                detection_list,
+                int(severity),
+                int(occurrence),
+                int(detection_score)
+            )
+
+        else:
+            return JsonResponse({'error': 'Tipo de sugerencia no válido'}, status=400)
+
         if "error" in suggestions:
             return JsonResponse({'error': suggestions["error"]}, status=400)
+
         return JsonResponse(suggestions)
+
     except Exception as e:
         return JsonResponse({'error': f'Error al generar sugerencias: {str(e)}'}, status=500)
 
