@@ -16,7 +16,7 @@ class RiskIdentificationForm(forms.ModelForm):
 class RiskEvaluationForm(forms.ModelForm):
     risk = forms.ModelChoiceField(
         queryset=RiskIdentification.objects.all(),
-        widget=forms.Select(attrs={'class': 'form-select'}),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_risk'}),  # <-- Aquí el cambio
         label="Select Risk"
     )
     class Meta:
@@ -38,6 +38,7 @@ class RiskEvaluationForm(forms.ModelForm):
             'current_detection_controls': forms.Textarea(attrs={'class': 'form-control'}),
             'risk_level': forms.Select(attrs={'class': 'form-select'}),
         }
+
 
 class RiskTreatmentForm(forms.ModelForm):
     risk = forms.ModelChoiceField(
