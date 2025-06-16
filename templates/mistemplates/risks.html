@@ -615,11 +615,28 @@ document.getElementById("openAddStepsModal").addEventListener("click", function(
     new bootstrap.Modal(document.getElementById("addStepsModal")).show();
     
     fetch("{% url 'risks:add_risk_evaluation' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("riskEvaluationContent").innerHTML = html;
-        handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
-    });
+        .then(response => response.text())
+        .then(html => {
+            const container = document.getElementById("riskEvaluationContent");
+            container.innerHTML = html;
+
+            // Ejecutar los scripts embebidos dentro del HTML cargado
+            const scripts = container.querySelectorAll("script");
+            scripts.forEach(script => {
+                const newScript = document.createElement("script");
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                document.body.appendChild(newScript);
+                script.remove();
+            });
+
+            // Asegurar que también se maneje el formulario después de cargar
+            handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
+        });
+
 
 
     fetch("{% url 'risks:add_risk_treatment' %}")
