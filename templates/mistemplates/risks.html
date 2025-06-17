@@ -640,10 +640,9 @@ function attachSuggestionHandler() {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
                 }
-                return response.text(); // IA puede enviar texto, no JSON directamente
+                return response.text();
             })
             .then(rawText => {
-                // Limpiar bloques ```json y parsear como JSON real
                 const cleaned = rawText.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
                 let data;
 
@@ -665,11 +664,27 @@ function attachSuggestionHandler() {
                 }
 
                 list.innerHTML = "";
+
                 data.forEach(item => {
                     const div = document.createElement("div");
                     div.className = "alert alert-secondary";
-                    div.innerHTML = `<strong>Riesgo:</strong> ${item.identified_risk}<br><strong>Consecuencia:</strong> ${item.consequences}`;
+
+                    div.innerHTML = `
+                        <strong>Riesgo:</strong> ${item.identified_risk}<br>
+                        <strong>Consecuencia:</strong> ${item.consequences}<br>
+                        <button type="button" class="btn btn-sm btn-primary mt-2 select-suggestion-btn">Usar esta sugerencia</button>
+                    `;
+
                     list.appendChild(div);
+
+                    const selectBtn = div.querySelector(".select-suggestion-btn");
+                    selectBtn.addEventListener("click", () => {
+                        const form = document.getElementById("add-risk-identification-form");
+                        form.querySelector("input[name='identified_risk']").value = item.identified_risk;
+                        form.querySelector("textarea[name='consequences']").value = item.consequences;
+
+                        container.style.display = "none";
+                    });
                 });
 
                 container.style.display = "block";
@@ -680,6 +695,5 @@ function attachSuggestionHandler() {
             });
     });
 }
-
 </script>
 {% endblock extra_js %}
