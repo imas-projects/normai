@@ -57,7 +57,7 @@ def add_risk_identification(request):
     })
 
 def get_suggestions(request):
-    area_id = request.GET.get('area_name')
+    area_id = request.GET.get('area')
     activity_name = request.GET.get('activity_name')
 
     if not area_id or not activity_name:
