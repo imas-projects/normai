@@ -11,7 +11,7 @@
         <fieldset class="mb-4">
             <legend>Controles preventivos y de detección</legend>
 
-            <button type="button" id="suggest-controls-btn" class="btn btn-primary mb-3"
+            <button type="button" id="suggest-controls-btn" class="btn btn-info mb-3"
                 data-url="{% url 'risks:get_controls_suggestions' %}">
                 Sugerir controles
             </button>
@@ -30,31 +30,31 @@
         <fieldset class="mb-4">
             <legend>Rangos sugeridos</legend>
 
-            <button type="button" id="suggest-ranges-btn" class="btn btn-primary mb-3"
+            <button type="button" id="suggest-ranges-btn" class="btn btn-info mb-3"
                 data-url="{% url 'risks:get_ranges_suggestions' %}">
                 Sugerir rangos
             </button>
 
             <div class="mb-3">
                 {{ form.severity.label_tag }}
-                <input type="text" id="severity_range" class="form-control" readonly>
+                {{ form.severity }}
             </div>
 
             <div class="mb-3">
                 {{ form.occurrence.label_tag }}
-                <input type="text" id="occurrence_range" class="form-control" readonly>
+                {{ form.occurrence }}
             </div>
 
             <div class="mb-3">
                 {{ form.detection.label_tag }}
-                <input type="text" id="detection_range" class="form-control" readonly>
+                {{ form.detection }}
             </div>
         </fieldset>
 
         <fieldset class="mb-4">
             <legend>Nivel de riesgo</legend>
 
-            <button type="button" id="suggest-risk-level-btn" class="btn btn-primary mb-3"
+            <button type="button" id="suggest-risk-level-btn" class="btn btn-info mb-3"
                 data-url="{% url 'risks:get_level_suggestions' %}">
                 Sugerir nivel de riesgo
             </button>
@@ -70,135 +70,3 @@
         <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Botones
-    const controlsBtn = document.getElementById("suggest-controls-btn");
-    const rangesBtn = document.getElementById("suggest-ranges-btn");
-    const riskLevelBtn = document.getElementById("suggest-risk-level-btn");
-
-    controlsBtn.addEventListener("click", function() {
-        const riskId = document.getElementById("id_risk").value;
-        if (!riskId) {
-            alert("Por favor selecciona un Riesgo antes.");
-            return;
-        }
-
-        const url = controlsBtn.dataset.url + `?risk_id=${encodeURIComponent(riskId)}`;
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error: " + data.error);
-                    return;
-                }
-                // Suponiendo que las sugerencias de controles vienen en listas para preventivos y detección
-                // O simplemente texto. Ajusta según cómo devuelve suggest_controls
-                if (data.preventive_controls) {
-                    document.getElementById("id_current_preventive_controls").value = data.preventive_controls.join("\n");
-                } else if (data.controls) {
-                    // En caso de devolver con otro nombre
-                    document.getElementById("id_current_preventive_controls").value = data.controls.join("\n");
-                }
-
-                if (data.detection_controls) {
-                    document.getElementById("id_current_detection_controls").value = data.detection_controls.join("\n");
-                } else if (data.controls_detection) {
-                    document.getElementById("id_current_detection_controls").value = data.controls_detection.join("\n");
-                }
-            })
-            .catch(() => alert("Error al obtener sugerencias de controles."));
-    });
-
-    rangesBtn.addEventListener("click", function() {
-        const riskId = document.getElementById("id_risk").value;
-        const preventive = document.getElementById("id_current_preventive_controls").value;
-        const detection = document.getElementById("id_current_detection_controls").value;
-
-        if (!riskId) {
-            alert("Por favor selecciona un Riesgo antes.");
-            return;
-        }
-
-        const params = new URLSearchParams({
-            risk_id: riskId,
-            preventive_controls: preventive,
-            detection_controls: detection
-        });
-
-        const url = rangesBtn.dataset.url + `?${params.toString()}`;
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error: " + data.error);
-                    return;
-                }
-
-                // Se espera que data contenga severity, occurrence y detection (rangos)
-                if (data.severity !== undefined) {
-                    document.getElementById("severity_range").value = data.severity;
-                }
-                if (data.occurrence !== undefined) {
-                    document.getElementById("occurrence_range").value = data.occurrence;
-                }
-                if (data.detection !== undefined) {
-                    document.getElementById("detection_range").value = data.detection;
-                }
-            })
-            .catch(() => alert("Error al obtener sugerencias de rangos."));
-    });
-
-    riskLevelBtn.addEventListener("click", function() {
-        const riskId = document.getElementById("id_risk").value;
-        const preventive = document.getElementById("id_current_preventive_controls").value;
-        const detection = document.getElementById("id_current_detection_controls").value;
-        const severity = document.getElementById("severity_range").value;
-        const occurrence = document.getElementById("occurrence_range").value;
-        const detectionScore = document.getElementById("detection_range").value;
-
-        if (!riskId) {
-            alert("Por favor selecciona un Riesgo antes.");
-            return;
-        }
-
-        if (!severity || !occurrence || !detectionScore) {
-            alert("Por favor genera primero los rangos.");
-            return;
-        }
-
-        const params = new URLSearchParams({
-            risk_id: riskId,
-            preventive_controls: preventive,
-            detection_controls: detection,
-            severity: severity,
-            occurrence: occurrence,
-            detection: detectionScore
-        });
-
-        const url = riskLevelBtn.dataset.url + `?${params.toString()}`;
-
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error: " + data.error);
-                    return;
-                }
-
-                // Suponemos que el nivel de riesgo se devuelve en alguna propiedad, por ejemplo 'risk_level'
-                if (data.risk_level !== undefined) {
-                    document.getElementById("id_risk_level").value = data.risk_level;
-                    document.getElementById("risk_level_suggestion").textContent = `Nivel sugerido: ${data.risk_level}`;
-                } else {
-                    // Si la respuesta es otro formato, ajusta aquí
-                    document.getElementById("risk_level_suggestion").textContent = JSON.stringify(data);
-                }
-            })
-            .catch(() => alert("Error al obtener sugerencias de nivel de riesgo."));
-    });
-});
-</script>
