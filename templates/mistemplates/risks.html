@@ -561,26 +561,25 @@ function setupAddStepsModal() {
             { url: "/risks/add-reevaluation/", target: "reevaluationContent" }
         ];
 
-    steps.forEach(step => {
-        fetch(step.url)
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById(step.target).innerHTML = html;
-                attachFormSubmit(`#${step.target} form`);
+        const fetches = steps.map(step =>
+            fetch(step.url)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(step.target).innerHTML = html;
+                    attachFormSubmit(`#${step.target} form`);
+                    if (step.target === "riskEvaluationContent") {
+                        attachEvaluationSuggestions();
+                    }
+                })
+                .catch(err => {
+                    console.error(`Error cargando ${step.url}:`, err);
+                })
+        );
 
-                // Activar sugerencias para evaluación de riesgo
-                if (step.target === "riskEvaluationContent") {
-                    attachEvaluationSuggestions();
-                }
-            })
-            .catch(err => {
-                console.error(`Error cargando ${step.url}:`, err);
-            });
-    });
-
-
-        const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
-        modal.show();
+        Promise.all(fetches).then(() => {
+            const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
+            modal.show();
+        });
     });
 }
 
@@ -720,32 +719,30 @@ function attachEvaluationSuggestions() {
     const preventiveList = document.getElementById("preventiveSuggestionsList");
     const detectionList = document.getElementById("detectionSuggestionsList");
 
-    // Sugerir controles
     const suggestControlsBtn = document.getElementById("suggest-controls-btn");
     if (suggestControlsBtn) {
         suggestControlsBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            fetch(${suggestControlsBtn.dataset.url}?risk_id=${riskId})
+            fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
 
-                    // Limpiar sugerencias anteriores
                     preventiveList.innerHTML = "";
                     detectionList.innerHTML = "";
 
                     data.preventive_controls.forEach(control => {
                         const div = document.createElement("div");
                         div.className = "alert alert-info mb-2";
-                        div.innerHTML = 
+                        div.innerHTML = `
                             <strong>Preventivo:</strong> ${control}<br>
                             <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
-                        ;
+                        `;
                         div.querySelector("button").addEventListener("click", () => {
                             if (preventiveControlsField.value) {
-                                preventiveControlsField.value += \n${control};
+                                preventiveControlsField.value += `\n${control}`;
                             } else {
                                 preventiveControlsField.value = control;
                             }
@@ -757,13 +754,13 @@ function attachEvaluationSuggestions() {
                     data.detection_controls.forEach(control => {
                         const div = document.createElement("div");
                         div.className = "alert alert-warning mb-2";
-                        div.innerHTML = 
+                        div.innerHTML = `
                             <strong>Detección:</strong> ${control}<br>
                             <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
-                        ;
+                        `;
                         div.querySelector("button").addEventListener("click", () => {
                             if (detectionControlsField.value) {
-                                detectionControlsField.value += \n${control};
+                                detectionControlsField.value += `\n${control}`;
                             } else {
                                 detectionControlsField.value = control;
                             }
@@ -781,7 +778,6 @@ function attachEvaluationSuggestions() {
         });
     }
 
-    // Sugerir rangos
     const suggestRangesBtn = document.getElementById("suggest-ranges-btn");
     if (suggestRangesBtn) {
         suggestRangesBtn.addEventListener("click", () => {
@@ -794,7 +790,7 @@ function attachEvaluationSuggestions() {
                 detection_controls: detectionControlsField.value
             });
 
-            fetch(${suggestRangesBtn.dataset.url}?${params.toString()})
+            fetch(`${suggestRangesBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
@@ -807,7 +803,6 @@ function attachEvaluationSuggestions() {
         });
     }
 
-    // Sugerir nivel de riesgo
     const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
     if (suggestRiskLevelBtn) {
         suggestRiskLevelBtn.addEventListener("click", () => {
@@ -823,17 +818,18 @@ function attachEvaluationSuggestions() {
                 detection: detectionField.value
             });
 
-            fetch(${suggestRiskLevelBtn.dataset.url}?${params.toString()})
+            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
                     riskLevelField.value = data.level;
-                    riskLevelDisplay.textContent = Nivel sugerido: ${data.level};
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.level}`;
                 })
                 .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
         });
     }
 }
+
 
 </script>
 {% endblock extra_js %}
