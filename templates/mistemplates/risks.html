@@ -716,6 +716,10 @@ function attachEvaluationSuggestions() {
     const riskLevelField = form.querySelector("select[name='risk_level']");
     const riskLevelDisplay = document.getElementById("risk_level_suggestion");
 
+    const suggestionsContainer = document.getElementById("controlSuggestionsContainer");
+    const preventiveList = document.getElementById("preventiveSuggestionsList");
+    const detectionList = document.getElementById("detectionSuggestionsList");
+
     // Sugerir controles
     const suggestControlsBtn = document.getElementById("suggest-controls-btn");
     if (suggestControlsBtn) {
@@ -723,14 +727,57 @@ function attachEvaluationSuggestions() {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            fetch(${suggestControlsBtn.dataset.url}?risk_id=${riskId})
+            fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
-                    preventiveControlsField.value = data.preventive_controls.join("\n");
-                    detectionControlsField.value = data.detection_controls.join("\n");
+
+                    // Limpiar sugerencias anteriores
+                    preventiveList.innerHTML = "";
+                    detectionList.innerHTML = "";
+
+                    data.preventive_controls.forEach(control => {
+                        const div = document.createElement("div");
+                        div.className = "alert alert-info mb-2";
+                        div.innerHTML = `
+                            <strong>Preventivo:</strong> ${control}<br>
+                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
+                        `;
+                        div.querySelector("button").addEventListener("click", () => {
+                            if (preventiveControlsField.value) {
+                                preventiveControlsField.value += `\n${control}`;
+                            } else {
+                                preventiveControlsField.value = control;
+                            }
+                            div.remove();
+                        });
+                        preventiveList.appendChild(div);
+                    });
+
+                    data.detection_controls.forEach(control => {
+                        const div = document.createElement("div");
+                        div.className = "alert alert-warning mb-2";
+                        div.innerHTML = `
+                            <strong>Detección:</strong> ${control}<br>
+                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
+                        `;
+                        div.querySelector("button").addEventListener("click", () => {
+                            if (detectionControlsField.value) {
+                                detectionControlsField.value += `\n${control}`;
+                            } else {
+                                detectionControlsField.value = control;
+                            }
+                            div.remove();
+                        });
+                        detectionList.appendChild(div);
+                    });
+
+                    suggestionsContainer.style.display = "block";
                 })
-                .catch(err => console.error("Error obteniendo controles:", err));
+                .catch(err => {
+                    console.error("Error obteniendo controles:", err);
+                    alert("Ocurrió un error al obtener controles sugeridos.");
+                });
         });
     }
 
@@ -747,7 +794,7 @@ function attachEvaluationSuggestions() {
                 detection_controls: detectionControlsField.value
             });
 
-            fetch(${suggestRangesBtn.dataset.url}?${params.toString()})
+            fetch(`${suggestRangesBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
@@ -776,17 +823,18 @@ function attachEvaluationSuggestions() {
                 detection: detectionField.value
             });
 
-            fetch(${suggestRiskLevelBtn.dataset.url}?${params.toString()})
+            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
                     riskLevelField.value = data.level;
-                    riskLevelDisplay.textContent = Nivel sugerido: ${data.level};
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.level}`;
                 })
                 .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
         });
     }
 }
+
 
 
 
