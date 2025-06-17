@@ -540,6 +540,9 @@ function setupAddRiskIdentificationModal() {
 
                 attachFormSubmit("#riskIdentificationContent form");
                 attachSuggestionHandler(); // activamos IA
+            })
+            .catch(err => {
+                console.error("Error cargando el modal de identificación de riesgos:", err);
             });
     });
 }
@@ -564,6 +567,9 @@ function setupAddStepsModal() {
                 .then(html => {
                     document.getElementById(step.target).innerHTML = html;
                     attachFormSubmit(`#${step.target} form`);
+                })
+                .catch(err => {
+                    console.error(`Error cargando ${step.url}:`, err);
                 });
         });
 
@@ -631,15 +637,30 @@ function attachSuggestionHandler() {
 
         fetch(url)
             .then(response => {
-                if (!response.ok) throw new Error("Error en la solicitud");
-                return response.json();
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
+                }
+                return response.text(); // IA puede enviar texto, no JSON directamente
             })
-            .then(data => {
+            .then(rawText => {
+                // Limpiar bloques ```json y parsear como JSON real
+                const cleaned = rawText.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+                let data;
+
+                try {
+                    data = JSON.parse(cleaned);
+                } catch (error) {
+                    console.error("Error parseando JSON:", error);
+                    console.warn("Contenido recibido:", rawText);
+                    alert("Error al interpretar las sugerencias. Intenta nuevamente.");
+                    return;
+                }
+
                 const container = document.getElementById("suggestionContainer");
                 const list = document.getElementById("suggestionList");
 
                 if (!Array.isArray(data)) {
-                    alert("No se encontraron sugerencias.");
+                    alert("No se encontraron sugerencias válidas.");
                     return;
                 }
 
