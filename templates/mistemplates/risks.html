@@ -595,83 +595,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 });
-
-document.addEventListener("DOMContentLoaded", function () {
-    // Cargar el formulario de edición de Risk Identification
-    document.querySelectorAll(".openEditRiskIdentificationModal").forEach(button => {
-        button.addEventListener("click", function () {
-            let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-identification/${riskId}/)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById(editRiskIdentificationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskIdentificationModal${riskId})).show();
-                });
-        });
-    });
-
-    // Cargar el formulario de edición de Risk Evaluation
-    document.querySelectorAll(".openEditRiskEvaluationModal").forEach(button => {
-        button.addEventListener("click", function () {
-            let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-evaluation/${riskId}/)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById(editRiskEvaluationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskEvaluationModal${riskId})).show();
-                });
-        });
-    });
-
-    // Cargar el formulario de edición de Risk Treatment
-    document.querySelectorAll(".openEditRiskTreatmentModal").forEach(button => {
-        button.addEventListener("click", function () {
-            let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-treatment/${riskId}/)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById(editRiskTreatmentContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskTreatmentModal${riskId})).show();
-                });
-        });
-    });
-
-    // Cargar el formulario de edición de Contingency Plan
-    document.querySelectorAll(".openEditContingencyPlanModal").forEach(button => {
-        button.addEventListener("click", function () {
-            let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-contingency-plan/${riskId}/)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById(editContingencyPlanContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editContingencyPlanModal${riskId})).show();
-                });
-        });
-    });
-
-    // Cargar el formulario de edición de Reevaluation
-    document.querySelectorAll(".openEditReevaluationModal").forEach(button => {
-        button.addEventListener("click", function () {
-            let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-reevaluation/${riskId}/)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById(editReevaluationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editReevaluationModal${riskId})).show();
-                });
-        });
-    });
-});
-
-
-
-// Agregar eventos de envío para los formularios
-handleFormSubmit("add-risk-identification-form", "riskIdentificationContent");
-handleFormSubmit("add-risk-evaluation-form", "riskEvaluationContent");
-handleFormSubmit("add-risk-treatment-form", "riskTreatmentContent");
-handleFormSubmit("add-contingency-plan-form", "contingencyPlanContent");
-handleFormSubmit("add-reevaluation-form", "reevaluationContent");
-
 </script>  
 {% endblock extra_js %}
 
