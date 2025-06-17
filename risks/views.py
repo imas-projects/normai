@@ -116,11 +116,13 @@ def get_controls_suggestions(request):
         suggestions = suggest_controls(int(risk_id))
 
         if "error" in suggestions:
+            print(f"Error en suggest_controls: {suggestions['error']}")  # <-- DEBUG
             return JsonResponse({'error': suggestions["error"]}, status=400)
 
         return JsonResponse(suggestions)
 
     except Exception as e:
+        print(f"Excepción en get_controls_suggestions: {e}")  # <-- DEBUG
         return JsonResponse({'error': f'Error al generar sugerencias de controles: {str(e)}'}, status=500)
 
 def get_ranges_suggestions(request):
