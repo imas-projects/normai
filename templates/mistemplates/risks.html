@@ -520,180 +520,83 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const openRiskModalBtn = document.getElementById("openAddRiskIdentificationModal");
-    if (openRiskModalBtn) {
-        openRiskModalBtn.addEventListener("click", function() {
-            fetch("{% url 'risks:add_risk_identification' %}")
-                .then(response => response.text())
-                .then(html => {
-                    const container = document.getElementById("riskIdentificationContent");
-                    container.innerHTML = html;
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-                    // Ejecutar scripts embebidos manualmente (opcional)
-                    const scripts = container.querySelectorAll("script");
-                    scripts.forEach(script => {
-                        const newScript = document.createElement("script");
-                        if (script.src) {
-                            newScript.src = script.src;
-                        } else {
-                            newScript.textContent = script.textContent;
-                        }
-                        document.body.appendChild(newScript);
-                        script.remove();
-                    });
-
-                    // Aquí llamas a la función para asignar los listeners
-                    setupSuggestionButton();
-
-                    new bootstrap.Modal(document.getElementById("addRiskIdentificationModal")).show();
-                });
-        });
-    }
-});
-
-function setupSuggestionButton() {
-    const suggestionBtn = document.getElementById("getSuggestionBtn");
-    if (!suggestionBtn) return;
-
-    const suggestionContainer = document.getElementById("suggestionContainer");
-    const suggestionList = document.getElementById("suggestionList");
-
-    suggestionBtn.addEventListener("click", function() {
-        const area = document.getElementById("id_area").value;
-        const activity = document.getElementById("id_activity_name").value;
-
-        if (!area || !activity) {
-            alert("Por favor, rellena Área y Nombre de Actividad antes.");
-            return;
-        }
-
-        fetch({% url 'risks:get_suggestions' %}?area_name=${encodeURIComponent(area)}&activity_name=${encodeURIComponent(activity)})
-            .then(response => response.json())
-            .then(data => {
-                suggestionList.innerHTML = "";
-
-                if (data.length === 0) {
-                    alert("No se encontraron sugerencias.");
-                    return;
-                }
-
-                suggestionContainer.style.display = "block";
-
-                data.forEach((suggestion, index) => {
-                    const risk = suggestion.identified_risk || "(sin riesgo)";
-                    const consequences = suggestion.consequences || "(sin consecuencias)";
-
-                    const card = document.createElement("div");
-                    card.className = "card mb-2";
-                    card.innerHTML = 
-                        <div class="card-body">
-                            <strong>Riesgo ${index + 1}:</strong> ${risk}<br>
-                            <strong>Consecuencias:</strong> ${consequences}<br>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
-                        </div>
-                    ;
-
-                    const useBtn = card.querySelector("button");
-                    useBtn.addEventListener("click", function() {
-                        document.getElementById("id_identified_risk").value = risk;
-                        document.getElementById("id_consequences").value = consequences;
-                        suggestionContainer.style.display = "none";
-                    });
-
-                    suggestionList.appendChild(card);
-                });
-            })
-            .catch(() => {
-                alert("Error al obtener sugerencias IA.");
+    // Carga y muestra el modal de Add Risk Identification
+    document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function (e) {
+        e.preventDefault();
+        fetch("/risks/add-risk-identification/")
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("riskIdentificationContent").innerHTML = html;
+                const modal = new bootstrap.Modal(document.getElementById("addRiskIdentificationModal"));
+                modal.show();
+                attachFormSubmit("#riskIdentificationContent form");
             });
     });
-}
 
-function setupRiskEvaluationFormListeners() {
-    const suggestControlsBtn = document.getElementById('suggest-controls-btn');
-    if (suggestControlsBtn) {
-        suggestControlsBtn.addEventListener('click', async () => {
-            // tu lógica aquí (fetchSuggestion, etc)
+    // Carga y muestra el modal de Add Steps con todos los acordeones
+    document.getElementById("openAddStepsModal").addEventListener("click", function (e) {
+        e.preventDefault();
+
+        const steps = [
+            { url: "/risks/add-risk-evaluation/", target: "riskEvaluationContent" },
+            { url: "/risks/add-risk-treatment/", target: "riskTreatmentContent" },
+            { url: "/risks/add-contingency-plan/", target: "contingencyPlanContent" },
+            { url: "/risks/add-reevaluation/", target: "reevaluationContent" }
+        ];
+
+        steps.forEach(step => {
+            fetch(step.url)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(step.target).innerHTML = html;
+                    attachFormSubmit(`#${step.target} form`);
+                });
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
+        modal.show();
+    });
+
+    // Función para manejar el envío AJAX de formularios
+    function attachFormSubmit(selector) {
+        const form = document.querySelector(selector);
+        if (!form) return;
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Form submitted successfully!");
+                    // Aquí podrías cerrar el modal si quieres:
+                    // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
+                } else {
+                    alert("There was an error submitting the form.");
+                    console.error(data.errors || "Unknown error");
+                }
+            })
+            .catch(err => {
+                console.error("Submission error:", err);
+            });
         });
     }
 
-    const suggestRangesBtn = document.getElementById('suggest-ranges-btn');
-    if (suggestRangesBtn) {
-        suggestRangesBtn.addEventListener('click', async () => {
-            // lógica para rangos
-        });
-    }
-
-    const suggestRiskLevelBtn = document.getElementById('suggest-risk-level-btn');
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener('click', async () => {
-            // lógica para nivel de riesgo
-        });
-    }
-}
-
-
-document.getElementById("openAddStepsModal").addEventListener("click", function() {
-    new bootstrap.Modal(document.getElementById("addStepsModal")).show();
-    
-    fetch("{% url 'risks:add_risk_evaluation' %}")
-        .then(response => response.text())
-        .then(html => {
-            const container = document.getElementById("riskEvaluationContent");
-            container.innerHTML = html;
-            setupRiskEvaluationFormListeners();  // Asigna los listeners al contenido cargado
-        });
-
-
-    fetch("{% url 'risks:add_risk_treatment' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("riskTreatmentContent").innerHTML = html;
-        handleFormSubmit("add-risk-treatment-form", "riskTreatmentContent"); // Agregar manejo de formulario
-    });
-
-    fetch("{% url 'risks:add_contingency_plan' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("contingencyPlanContent").innerHTML = html;
-        handleFormSubmit("add-contingency-plan-form", "contingencyPlanContent"); // Agregar manejo de formulario
-    });
-
-    fetch("{% url 'risks:add_reevaluation' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("reevaluationContent").innerHTML = html;
-    });
 });
-
-// Función para manejar el envío del formulario sin cerrar el modal
-function handleFormSubmit(formId, contentId) {
-    const form = document.getElementById(formId);
-    form.addEventListener("submit", function(event) {
-        event.preventDefault(); // Evitar que se recargue la página
-
-        const formData = new FormData(form);
-        const actionUrl = form.getAttribute("action");
-
-        fetch(actionUrl, {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-Requested-With": "XMLHttpRequest", // Indicar que es AJAX
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert(data.message); // Mensaje de éxito
-            } else if (data.error) {
-                alert("Error: " + JSON.stringify(data.error)); // Mostrar errores
-            }
-        })
-        .catch(error => console.error("Error:", error));
-    });
-}
 
 document.addEventListener("DOMContentLoaded", function () {
     // Cargar el formulario de edición de Risk Identification
