@@ -152,7 +152,7 @@ Nivel: {eval.risk_level.name}"""
         prompt = f"""
 Eres un experto en gestión de calidad y riesgos bajo ISO 9001:2015 en industria aeroespacial.
 
-Con base en evaluaciones anteriores, sugiere:
+Con base en evaluaciones anteriores, sugiere exactamente:
 - 3 controles preventivos
 - 3 controles de detección
 
@@ -165,7 +165,8 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Devuélvelo como JSON:
+Responde SOLO con un objeto JSON, sin explicaciones, sin texto adicional.
+Formato:
 {{"preventive_controls": [...], "detection_controls": [...]}}
 """
     else:
@@ -178,9 +179,9 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Sugiere 3 controles preventivos y 3 de detección.
+Sugiere exactamente 3 controles preventivos y 3 de detección.
 
-Formato JSON:
+Responde SOLO con un objeto JSON, sin texto adicional. Formato:
 {{"preventive_controls": [...], "detection_controls": [...]}}
 """
 
@@ -191,13 +192,23 @@ Formato JSON:
             temperature=0.4,
             max_tokens=600,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        content = response.choices[0].message.content.strip()
+        # Limpia posibles markdown
+        content = content.replace("```json", "").replace("```", "").strip()
+
+        data = json.loads(content)
+
         return {
             "preventive_controls": data.get("preventive_controls", [])[:max_controls],
             "detection_controls": data.get("detection_controls", [])[:max_controls]
         }
+
     except json.JSONDecodeError:
+        # Opcional: print para depurar
+        print("Respuesta no válida de IA:", response.choices[0].message.content)
         return {"error": "No se pudo interpretar la respuesta de IA."}
+
     except Exception as e:
         return {"error": str(e)}
 
