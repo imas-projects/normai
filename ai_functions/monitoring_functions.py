@@ -1,5 +1,6 @@
 from openai import OpenAI
 import json
+import re
 from risks.models import RiskIdentification, RiskEvaluation
 from django.conf import settings
 from collections import Counter
@@ -194,24 +195,26 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
         )
 
         content = response.choices[0].message.content.strip()
-        # Limpia posibles markdown
-        content = content.replace("```json", "").replace("```", "").strip()
 
-        data = json.loads(content)
+        # Extraer el primer bloque JSON válido
+        match = re.search(r"\{.*?\}", content, re.DOTALL)
+        if not match:
+            print("Respuesta no contiene JSON válido:", content)
+            return {"error": "La IA no devolvió un JSON válido."}
+
+        try:
+            data = json.loads(match.group())
+        except json.JSONDecodeError:
+            print("No se pudo interpretar el JSON:", match.group())
+            return {"error": "No se pudo interpretar la respuesta de IA."}
 
         return {
             "preventive_controls": data.get("preventive_controls", [])[:max_controls],
             "detection_controls": data.get("detection_controls", [])[:max_controls]
         }
 
-    except json.JSONDecodeError:
-        # Opcional: print para depurar
-        print("Respuesta no válida de IA:", response.choices[0].message.content)
-        return {"error": "No se pudo interpretar la respuesta de IA."}
-
     except Exception as e:
         return {"error": str(e)}
-
 
 def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
     try:
