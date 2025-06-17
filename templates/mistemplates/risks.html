@@ -521,9 +521,15 @@
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    setupAddRiskIdentificationModal();
+    setupAddStepsModal();
+});
 
-    // === Modal Add Risk Identification ===
-    document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function (e) {
+function setupAddRiskIdentificationModal() {
+    const btn = document.getElementById("openAddRiskIdentificationModal");
+    if (!btn) return;
+
+    btn.addEventListener("click", function (e) {
         e.preventDefault();
         fetch("/risks/add-risk-identification/")
             .then(response => response.text())
@@ -533,12 +539,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 modal.show();
 
                 attachFormSubmit("#riskIdentificationContent form");
-                attachSuggestionHandler();  // <== activamos IA
+                attachSuggestionHandler(); // activamos IA
             });
     });
+}
 
-    // === Modal Add Steps ===
-    document.getElementById("openAddStepsModal").addEventListener("click", function (e) {
+function setupAddStepsModal() {
+    const btn = document.getElementById("openAddStepsModal");
+    if (!btn) return;
+
+    btn.addEventListener("click", function (e) {
         e.preventDefault();
 
         const steps = [
@@ -560,96 +570,95 @@ document.addEventListener("DOMContentLoaded", function () {
         const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
         modal.show();
     });
+}
 
-    // === Envío genérico de formularios vía AJAX ===
-    function attachFormSubmit(selector) {
-        const form = document.querySelector(selector);
-        if (!form) return;
+function attachFormSubmit(selector) {
+    const form = document.querySelector(selector);
+    if (!form) return;
 
-        form.addEventListener("submit", function (e) {
-            e.preventDefault();
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
 
-            const url = form.action;
-            const formData = new FormData(form);
+        const url = form.action;
+        const formData = new FormData(form);
 
-            fetch(url, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Formulario enviado correctamente.");
+                // Puedes cerrar el modal aquí si quieres:
+                // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
+            } else {
+                alert("Error al enviar el formulario.");
+                console.error(data.errors || "Error desconocido");
+            }
+        })
+        .catch(err => {
+            console.error("Error al enviar:", err);
+        });
+    });
+}
+
+function attachSuggestionHandler() {
+    const btn = document.getElementById("getSuggestionBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+        const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
+        const activityInput = document.querySelector("#add-risk-identification-form input[name='activity_name']");
+
+        if (!areaSelect || !activityInput) {
+            alert("No se encontraron los campos requeridos.");
+            return;
+        }
+
+        const areaValue = areaSelect.value;
+        const activityValue = activityInput.value;
+
+        if (!areaValue || !activityValue) {
+            alert("Por favor, completa el área y la actividad.");
+            return;
+        }
+
+        const url = `/risks/get_suggestions/?area_name=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Error en la solicitud");
+                return response.json();
             })
-            .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert("Form submitted successfully!");
-                    // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
-                } else {
-                    alert("There was an error submitting the form.");
-                    console.error(data.errors || "Unknown error");
+                const container = document.getElementById("suggestionContainer");
+                const list = document.getElementById("suggestionList");
+
+                if (!Array.isArray(data)) {
+                    alert("No se encontraron sugerencias.");
+                    return;
                 }
-            })
-            .catch(err => {
-                console.error("Submission error:", err);
-            });
-        });
-    }
 
-    // === Lógica para el botón de obtener sugerencias IA ===
-    function attachSuggestionHandler() {
-        const btn = document.getElementById("getSuggestionBtn");
-        if (!btn) return;
-
-        btn.addEventListener("click", function () {
-            const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
-            const activityInput = document.querySelector("#add-risk-identification-form input[name='activity_name']");
-
-            if (!areaSelect || !activityInput) {
-                alert("No se encontraron los campos requeridos.");
-                return;
-            }
-
-            const areaValue = areaSelect.value;
-            const activityValue = activityInput.value;
-
-            if (!areaValue || !activityValue) {
-                alert("Por favor, completa el área y la actividad.");
-                return;
-            }
-
-            const url = `/risks/get_suggestions/?area_name=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
-
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) throw new Error("Error en la solicitud");
-                    return response.json();
-                })
-                .then(data => {
-                    const container = document.getElementById("suggestionContainer");
-                    const list = document.getElementById("suggestionList");
-
-                    if (!Array.isArray(data)) {
-                        alert("No se encontraron sugerencias.");
-                        return;
-                    }
-
-                    list.innerHTML = "";
-                    data.forEach(item => {
-                        const div = document.createElement("div");
-                        div.className = "alert alert-secondary";
-                        div.innerHTML = `<strong>Riesgo:</strong> ${item.risk}<br><strong>Consecuencia:</strong> ${item.consequence}`;
-                        list.appendChild(div);
-                    });
-
-                    container.style.display = "block";
-                })
-                .catch(error => {
-                    alert("Error al obtener sugerencias.");
-                    console.error(error);
+                list.innerHTML = "";
+                data.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "alert alert-secondary";
+                    div.innerHTML = `<strong>Riesgo:</strong> ${item.identified_risk}<br><strong>Consecuencia:</strong> ${item.consequences}`;
+                    list.appendChild(div);
                 });
-        });
-    }
 
-});
+                container.style.display = "block";
+            })
+            .catch(error => {
+                alert("Error al obtener sugerencias.");
+                console.error(error);
+            });
+    });
+}
+
 </script>
 {% endblock extra_js %}
