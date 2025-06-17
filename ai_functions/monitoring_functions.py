@@ -93,7 +93,7 @@ Ejemplo:
 ]
         """
 
-    try:
+try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
@@ -102,9 +102,11 @@ Ejemplo:
         )
 
         content = response.choices[0].message.content.strip()
-        print("Respuesta cruda de IA:", repr(content))  
+        print("Respuesta cruda de IA:", repr(content))
 
-        suggestions = json.loads(content)
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+
+        suggestions = json.loads(clean_content)
 
         if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
             return [
@@ -120,11 +122,12 @@ Ejemplo:
 
     except json.JSONDecodeError as jde:
         print("Error de JSONDecode:", str(jde))
-        print("Contenido no parseable:", repr(content))
+        print("Contenido no parseable:", repr(clean_content))
         return []
     except Exception as e:
         print("Error al generar sugerencia IA:", str(e))
         return []
+
 
 
 def suggest_controls(risk_id, max_controls=3):
