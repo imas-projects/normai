@@ -93,7 +93,7 @@ Ejemplo:
 ]
         """
 
-try:
+    try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
@@ -104,6 +104,7 @@ try:
         content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
+        # Limpiar posibles delimitadores markdown
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
 
         suggestions = json.loads(clean_content)
