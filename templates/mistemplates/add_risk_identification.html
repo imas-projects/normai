@@ -15,6 +15,11 @@
             <button type="button" id="getSuggestionBtn" class="btn btn-info">Obtener sugerencias IA</button>
         </div>
 
+        <div id="suggestionContainer" class="mt-4" style="display:none;">
+            <strong>Sugerencias de la IA:</strong>
+            <div id="suggestionList" class="mt-2"></div>
+        </div>     
+        
         <div class="mb-3">
             {{ form.identified_risk.label_tag }}
             {{ form.identified_risk }}
@@ -26,9 +31,6 @@
         <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 
-    <div id="suggestionContainer" class="mt-4" style="display:none;">
-        <strong>Sugerencias de la IA:</strong>
-        <div id="suggestionList" class="mt-2"></div>
-    </div>
+
 </div>
 
