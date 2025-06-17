@@ -638,7 +638,7 @@ function attachSuggestionHandler() {
             return;
         }
 
-        const url = `/risks/get_suggestions/?area_name=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
+        const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
 
         fetch(url)
             .then(response => {
