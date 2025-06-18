@@ -414,8 +414,13 @@ Formato JSON:
 
 
 def suggest_treatment_action(risk_id, max_results=1):
-    from openai import OpenAI
-    import json
+    """
+    Sugiere acciones correctivas de tratamiento para un riesgo específico basado en:
+    - Datos históricos del riesgo y sus evaluaciones
+    - Criterios de la norma ISO 9001:2015
+
+    Retorna una lista con diccionarios con la clave "treatment_action" con la acción sugerida.
+    """
 
     try:
         risk = RiskIdentification.objects.get(id=risk_id)
@@ -438,8 +443,8 @@ def suggest_treatment_action(risk_id, max_results=1):
     # Info del riesgo actual y evaluaciones
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
-        f"Actividad: {risk.activity_name}\n"
         f"Área: {risk.area.name}\n"
+        f"Actividad: {risk.activity_name}\n"
         f"Consecuencias: {risk.consequences}\n"
     )
 
