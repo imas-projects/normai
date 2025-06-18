@@ -715,6 +715,10 @@ function attachEvaluationSuggestions() {
     const riskLevelField = form.querySelector("select[name='risk_level']");
     const riskLevelDisplay = document.getElementById("risk_level_suggestion");
 
+    const severitySuggestionDisplay = document.getElementById("severity_suggestion");
+    const occurrenceSuggestionDisplay = document.getElementById("occurrence_suggestion");
+    const detectionSuggestionDisplay = document.getElementById("detection_suggestion");
+
     const suggestionsContainer = document.getElementById("controlSuggestionsContainer");
     const preventiveList = document.getElementById("preventiveSuggestionsList");
     const detectionList = document.getElementById("detectionSuggestionsList");
@@ -799,9 +803,32 @@ function attachEvaluationSuggestions() {
                 .then(data => {
                     if (data.error) return alert(data.error);
 
-                    if (data.severity_range) severityField.value = data.severity_range;
-                    if (data.occurrence_range) occurrenceField.value = data.occurrence_range;
-                    if (data.detection_range) detectionField.value = data.detection_range;
+                    if (severitySuggestionDisplay)
+                        severitySuggestionDisplay.textContent = `Sugerencia: ${data.severity_range}`;
+                    if (occurrenceSuggestionDisplay)
+                        occurrenceSuggestionDisplay.textContent = `Sugerencia: ${data.occurrence_range}`;
+                    if (detectionSuggestionDisplay)
+                        detectionSuggestionDisplay.textContent = `Sugerencia: ${data.detection_range}`;
+
+                    const extractMidValue = (rangeStr) => {
+                        const match = rangeStr.match(/(\d+)/g);
+                        if (match && match.length >= 2) {
+                            const min = parseInt(match[0]);
+                            const max = parseInt(match[1]);
+                            return Math.round((min + max) / 2);
+                        } else if (match && match.length === 1) {
+                            return parseInt(match[0]);
+                        }
+                        return null;
+                    };
+
+                    const sev = extractMidValue(data.severity_range);
+                    const occ = extractMidValue(data.occurrence_range);
+                    const det = extractMidValue(data.detection_range);
+
+                    if (sev !== null) severityField.value = sev;
+                    if (occ !== null) occurrenceField.value = occ;
+                    if (det !== null) detectionField.value = det;
                 })
                 .catch(err => {
                     console.error("Error obteniendo rangos:", err);
