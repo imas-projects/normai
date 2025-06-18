@@ -318,6 +318,9 @@ Formato JSON:
         return {"error": str(e)}
 
 
+import json
+import re  # Asegúrate de tener esto importado si no lo tienes ya
+
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
         risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
@@ -391,8 +394,19 @@ Formato JSON:
             temperature=0.4,
             max_tokens=300,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        raw_response = response.choices[0].message.content.strip()
+
+        # Extraer el primer objeto JSON del texto de la IA
+        json_text_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
+        if not json_text_match:
+            raise ValueError("No se encontró un objeto JSON válido en la respuesta.")
+
+        json_text = json_text_match.group(0)
+        data = json.loads(json_text)
+
         return {"risk_level": data.get("risk_level", "")}
+
     except json.JSONDecodeError:
         return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
