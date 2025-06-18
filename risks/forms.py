@@ -45,10 +45,6 @@ class RiskTreatmentForm(forms.ModelForm):
         label="Responsible"
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['risk'].empty_label = None  
-
     class Meta:
         model = RiskTreatment
         fields = ['risk', 'treatment_action', 'responsible', 'target_date', 'actual_date']
