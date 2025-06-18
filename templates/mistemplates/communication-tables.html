@@ -70,43 +70,20 @@
                                 <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.first_name }} {{ table.approved_by.last_name }}</h4>
                             </div>
                             </div>
-                           <form method="post" id="summarize_form" action="{% url 'communications:table-summarize-ia' %}">
+                            
+                            <button type="button" class="btn btn-secondary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#summarizeModal{{ table.id }}">
+                                <i class="ri-add-line"></i> Resumir tabla
+                            </button>
+
+                           <!--<form method="post" id="summarize_form" action="{% url 'communications:table-summarize-ia' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="table_id" value="{{ table.id }}">
                                 <button type="submit" class="btn btn-secondary add-table-btn w-auto rounded-top">
                                     <i class="bx bx-bulb"></i> Resumir con IA
                                 </button>
-                            </form>
-
-                            {% if respuesta and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                                <div class="mt-3">
-                                    <button type="button" class="btn btn-outline-secondary mb-2"
-                                            onclick="toggleResumen('{{ table.id }}')" id="toggle-btn-{{ table.id }}">
-                                        Ocultar resumen
-                                    </button>
-
-                                    <div class="alert alert-info" id="summary-box-{{ table.id }}">
-                                        <label class="form-label"><strong>Resumen generado:</strong></label>
-                                        <textarea class="form-control" rows="6" readonly>{{ respuesta }}</textarea>
-                                    </div>
-                                </div>
-                            {% endif %}
-
-                            <script>
-                            function toggleResumen(tableId) {
-                                const resumenBox = document.getElementById(`summary-box-${tableId}`);
-                                const toggleBtn = document.getElementById(`toggle-btn-${tableId}`);
-
-                                if (resumenBox.style.display === "none") {
-                                    resumenBox.style.display = "block";
-                                    toggleBtn.innerText = "Ocultar resumen";
-                                } else {
-                                    resumenBox.style.display = "none";
-                                    toggleBtn.innerText = "Mostrar resumen";
-                                }
-                            }
-                            </script>
-                        
+                            </form>  -->               
                     </div>
 
                     <!--Mostrar Mensajes-->
@@ -164,6 +141,62 @@
                                     </tr>
                                     {% endfor %}
                                 </tbody>
+            <!-- Modal Resumen Tabla IA -->
+                <div class="modal fade" id="summarizeModal{{ table.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ table.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content bg-white text-dark">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="summarizeModalLabel{{ table.id }}">Resumen Tabla</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                {% if table.summary %}
+                                    <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                                        <label class="form-label"><strong>Resumen Previo:</strong></label>
+                                        <textarea class="form-control" readonly>{{ table.summary }}</textarea>
+                                    </div>
+                                {% else %}
+                                    <p>Aún no hay resumen para esta tabla</p>
+                                {% endif %}
+
+                                {% if table_summary and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                                    <div class="mt-3">
+                                        <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                                            <label class="form-label"><strong>Resumen generado:</strong></label>
+                                            <textarea class="form-control" rows="9" readonly>{{ table_summary }}</textarea>
+                                        </div>
+
+                                        <form method="post" action="{% url 'communications:save_table_summarize_ia' %}" class="mt-3">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="form_name" value="save_table_summarize_form">
+                                            <input type="hidden" name="table_id" value="{{ table.id }}">
+                                            <input type="hidden" name="summary" value="{{ table_summary }}">
+                                            <button type="submit" class="btn btn-secondary">Guardar resumen</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="modal-footer">
+                                <form method="post" action="{% url 'communications:table-summarize-ia' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="form_name" value="table_summarize_form">
+                                    <input type="hidden" name="table_id" value="{{ table.id }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        {% if table.summary %} Generar Nuevo Resumen con IA {% else %} Resumir tabla con IA {% endif %}
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+        
+                <!--Fin MOdales-->
                             </table>
                         </div>
                     </div>
@@ -253,7 +286,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="new-message-channel" class="form-label">Canales</label>
-                                <select id="new-message-channel" name="channels" class="form-control" multiple required>
+                                <select id="new-message-channel" name="channels" class="form-control" required>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -337,7 +370,20 @@
         <!--Fin Modal Añadir Tabla-->
 
         
+
         <!--Fin MOdales-->
+        {% if open_summary_modal and table_id %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modalId = "summarizeModal{{ table_id }}";
+                const modalElement = document.getElementById(modalId);
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            });
+        </script>
+        {% endif %}
     </div>
     <!-- End Page-content -->
 
@@ -673,7 +719,8 @@
                     message_subject: document.getElementById('new-message-subject').value,
                     message_communication_type: document.getElementById('new-message-communication-type').value,
                     message_periodicity: document.getElementById('new-message-periodicity').value,
-                    message_channels: Array.from(channelsSelect.selectedOptions).map(option => option.value),
+                    message_channels: document.getElementById('new-message-channel').value,
+                    //Array.from(channelsSelect.selectedOptions).map(option => option.value),
                     message_receivers: document.getElementById('new-message-receiver').value,
                 };
 

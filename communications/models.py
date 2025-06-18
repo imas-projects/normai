@@ -2,6 +2,7 @@ from django.db import models
 from django import forms
 from django.core.validators import RegexValidator
 from audits.models import Area
+from company.models import Position
 from django.contrib.auth.models import Group, User
 # Create your models here.
 
@@ -70,12 +71,6 @@ class Message(models.Model):
         }
  
 
-class MessageChanel(models.Model):
-    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Message", null=False)
-    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="channel", verbose_name="Channel", null=False)
-
-    class Meta:
-        db_table = 'tb_communication_channels'  # Nombre de la tabla
 
 # Tabla de tablas de comunicacion
 class CommunicationTable(models.Model):
@@ -92,15 +87,16 @@ class CommunicationTable(models.Model):
         ('open', 'Abierta (Aceptando Mensajes)'),
     ]
 
-    code = models.CharField(max_length=50, validators=[code_validator], blank=False, unique=True) # Codigo de la tabla
+    code = models.CharField(max_length=50, validators=[code_validator], blank=False, unique=False) # Codigo de la tabla
     review_number = models.SmallIntegerField() # Revision
     review_date = models.DateField() # Fecha, formato estandar de Django y/m/d, esto se puede cambiar en html o formularios, pero no en modelo
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="created_by", blank=False) # Elaborado por
-    reviewed_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="reviewed_by", blank=True, null=True) # Revisado por
-    approved_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name="approved_by", blank=True, null=True) # Aprobado por
+    created_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="created_by", blank=False) # Elaborado por
+    reviewed_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="reviewed_by", blank=True, null=True) # Revisado por
+    approved_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="approved_by", blank=True, null=True) # Aprobado por
     emiter = models.ForeignKey(User, on_delete=models.PROTECT, related_name="emiter", blank=True, null=True)
     area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="area", blank=True, null=True) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', null=True)   
+    summary = models.CharField(max_length=1000, verbose_name="Resumen", blank=True, null=True)
 
     class Meta:
         db_table = 'tb_communication_table'  # Nombre de la tabla
@@ -126,7 +122,16 @@ class CommunicationTable(models.Model):
             "created_by": self.created_by,
             "reviewed_by": self.reviewed_by,
             "approved_by": self.approved_by,
-        }    
+        }   
+
+
+class MessageChanel(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Message", null=False)
+    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="channel", verbose_name="Channel", null=False)
+
+    class Meta:
+        db_table = 'tb_communication_channels'  # Nombre de la tabla
+
 
 # Tabla de mensajes
 class CommunicationMessage(models.Model):

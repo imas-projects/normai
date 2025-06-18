@@ -23,4 +23,5 @@ urlpatterns = [
     path('create-message/', views.create_message, name='create-message'),
 
     path('summarize-table/', views.table_summarize_ia, name='table-summarize-ia'),
+    path('save-summarize-table/', views.save_table_summarize_ia, name='save_table_summarize_ia'),
 ]

@@ -185,33 +185,38 @@ def create_message(request):
             message_communication_type = data.get('message_communication_type')  # Foreign key
             message_subject = data.get('message_subject')  # Simple text field
             message_periodicity = data.get('message_periodicity')  # Foreign key
-            selected_channels = data.get('message_channels', [])  # Many-to-Many
+            selected_channels = data.get('message_channels')  # Many-to-Many
             message_receiver = data.get('message_receivers')  # Un receptor por mensaje
             
             # Crear el nuevo mensaje
             message = Message.objects.create(name=message_subject)
+            message.save()
             
+
              # Crear relaciones MessageChannel
-            for channel_id in selected_channels:
-                MessageChanel.objects.create(
-                    message_id=message.id,
-                    channel_id=channel_id
+            message_channel = MessageChanel.objects.create(
+                message_id=message.id,
+                channel_id=selected_channels,
             )
+            message_channel.save()
             
             # Crear relaciones CommunicationMessage (una por receptor)
-            CommunicationMessage.objects.create(
+            com_message = CommunicationMessage.objects.create(
                 type_id=message_communication_type,
                 table_id=communication_table_id,
                 message_id=message.id,
                 receiver_id=message_receiver,
                 periodicity_id=message_periodicity
             )
-            print('ok')
+            com_message.save()
+
 
             return JsonResponse({'success': True})
         except Message.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Row not found.'})
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
@@ -324,13 +329,28 @@ def communication_table_review(request):
     return render(request,"mistemplates/communication-tables-review.html", context)
 
 
+def save_table_summarize_ia(request):
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "save_table_summarize_form" :
+            table_id = request.POST.get("table_id")
+            new_summary = request.POST.get("summary")
+            print('oki1')
+            updated_table = CommunicationTable.objects.get(id=table_id)
+            updated_table.summary=new_summary[:1000]
+            updated_table.save() 
+            print('oki2', updated_table.summary)
+
+    return redirect('communications:communication_tables')
 
 ############# Views con IA
 from ai_functions import implementation_functions as ai
 
 def table_summarize_ia(request):
     assitant_answer = None
-    max_tokens= 250
+    max_tokens= 50
 
     all_communicationtables = CommunicationTable.objects.prefetch_related(
         'message__type',
@@ -340,6 +360,7 @@ def table_summarize_ia(request):
 
     if request.method == "POST":
         table_id = request.POST.get("table_id")
+        print("id tabla:", table_id)
 
         table = CommunicationTable.objects.filter(id=table_id)
         table_messages = CommunicationMessage.objects.filter(table__in=table).select_related("message")
@@ -348,16 +369,17 @@ def table_summarize_ia(request):
 
         data_input = "Messages:\n" + "\n".join(messages)
     
-        user_input = "Summarize the following internal communication messages from a manufacturing company. Identify the general context, group messages by recurring topics if possible, and highlight the most relevant operational or quality-related issues. Be concise, avoid repetition, and focus on actionable or high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting"
+        user_input = "Summarize using less than 1000 characters the following  internal communication messages from a manufacturing company. Identify the general context, group messages by recurring topics if possible, and highlight the most relevant operational or quality-related issues. Be concise, avoid repetition, and focus on actionable or high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting or symbols, just text string."
 
         assitant_answer= ai.ai_text_function(data_input,user_input,max_tokens)
 
         print(assitant_answer)
 
     context = {
-            "respuesta": assitant_answer,
+            "table_summary": assitant_answer,
             'all_communicationtables': all_communicationtables,
-            "table_id": table_id
+            "table_id": table_id,
+            "open_summary_modal": True,
         }
 
     return render(request, "mistemplates/communication-tables.html", context)
