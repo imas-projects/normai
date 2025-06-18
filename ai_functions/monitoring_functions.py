@@ -489,14 +489,14 @@ Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con 
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.6,
             max_tokens=400,
         )
 
-        content = response.choices[0].message['content'].strip()
+        content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
         suggestions = json.loads(content)
