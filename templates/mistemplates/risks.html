@@ -521,9 +521,15 @@
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    setupAddRiskIdentificationModal();
+    setupAddStepsModal();
+});
 
-    // Carga y muestra el modal de Add Risk Identification
-    document.getElementById("openAddRiskIdentificationModal").addEventListener("click", function (e) {
+function setupAddRiskIdentificationModal() {
+    const btn = document.getElementById("openAddRiskIdentificationModal");
+    if (!btn) return;
+
+    btn.addEventListener("click", function (e) {
         e.preventDefault();
         fetch("/risks/add-risk-identification/")
             .then(response => response.text())
@@ -531,12 +537,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("riskIdentificationContent").innerHTML = html;
                 const modal = new bootstrap.Modal(document.getElementById("addRiskIdentificationModal"));
                 modal.show();
+
                 attachFormSubmit("#riskIdentificationContent form");
+                attachSuggestionHandler(); // activamos IA
+            })
+            .catch(err => {
+                console.error("Error cargando el modal de identificación de riesgos:", err);
             });
     });
+}
 
-    // Carga y muestra el modal de Add Steps con todos los acordeones
-    document.getElementById("openAddStepsModal").addEventListener("click", function (e) {
+function setupAddStepsModal() {
+    const btn = document.getElementById("openAddStepsModal");
+    if (!btn) return;
+
+    btn.addEventListener("click", function (e) {
         e.preventDefault();
 
         const steps = [
@@ -546,56 +561,429 @@ document.addEventListener("DOMContentLoaded", function () {
             { url: "/risks/add-reevaluation/", target: "reevaluationContent" }
         ];
 
-        steps.forEach(step => {
+        const fetches = steps.map(step =>
             fetch(step.url)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(step.target).innerHTML = html;
                     attachFormSubmit(`#${step.target} form`);
-                });
+                    if (step.target === "riskEvaluationContent") {
+                        attachEvaluationSuggestions();
+                    }
+                    if (step.target === "riskTreatmentContent") {
+                    attachTreatmentSuggestions();
+                    }
+                })
+                .catch(err => {
+                    console.error(`Error cargando ${step.url}:`, err);
+                })
+        );
+
+        Promise.all(fetches).then(() => {
+            const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
+            modal.show();
         });
-
-        const modal = new bootstrap.Modal(document.getElementById("addStepsModal"));
-        modal.show();
     });
+}
 
-    // Función para manejar el envío AJAX de formularios
-    function attachFormSubmit(selector) {
-        const form = document.querySelector(selector);
-        if (!form) return;
+function attachFormSubmit(selector) {
+    const form = document.querySelector(selector);
+    if (!form) return;
 
-        form.addEventListener("submit", function (e) {
-            e.preventDefault();
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
 
-            const url = form.action;
-            const formData = new FormData(form);
+        const url = form.action;
+        const formData = new FormData(form);
 
-            fetch(url, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+        fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Formulario enviado correctamente.");
+                // Puedes cerrar el modal aquí si quieres:
+                // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
+            } else {
+                alert("Error al enviar el formulario.");
+                console.error(data.errors || "Error desconocido");
+            }
+        })
+        .catch(err => {
+            console.error("Error al enviar:", err);
+        });
+    });
+}
+
+function attachSuggestionHandler() {
+    const btn = document.getElementById("getSuggestionBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+        const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
+        const activityInput = document.querySelector("#add-risk-identification-form input[name='activity_name']");
+
+        if (!areaSelect || !activityInput) {
+            alert("No se encontraron los campos requeridos.");
+            return;
+        }
+
+        const areaValue = areaSelect.value;
+        const activityValue = activityInput.value;
+
+        if (!areaValue || !activityValue) {
+            alert("Por favor, completa el área y la actividad.");
+            return;
+        }
+
+        const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
                 }
+                return response.text();
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("Form submitted successfully!");
-                    // Aquí podrías cerrar el modal si quieres:
-                    // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
-                } else {
-                    alert("There was an error submitting the form.");
-                    console.error(data.errors || "Unknown error");
+            .then(rawText => {
+                const cleaned = rawText.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+                let data;
+
+                try {
+                    data = JSON.parse(cleaned);
+                } catch (error) {
+                    console.error("Error parseando JSON:", error);
+                    console.warn("Contenido recibido:", rawText);
+                    alert("Error al interpretar las sugerencias. Intenta nuevamente.");
+                    return;
                 }
+
+                const container = document.getElementById("suggestionContainer");
+                const list = document.getElementById("suggestionList");
+
+                if (!Array.isArray(data)) {
+                    alert("No se encontraron sugerencias válidas.");
+                    return;
+                }
+
+                list.innerHTML = "";
+
+                data.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "alert alert-secondary";
+
+                    div.innerHTML = `
+                        <strong>Riesgo:</strong> ${item.identified_risk}<br>
+                        <strong>Consecuencia:</strong> ${item.consequences}<br>
+                        <button type="button" class="btn btn-sm btn-primary mt-2 select-suggestion-btn">Usar esta sugerencia</button>
+                    `;
+
+                    list.appendChild(div);
+
+                    const selectBtn = div.querySelector(".select-suggestion-btn");
+                    selectBtn.addEventListener("click", () => {
+                        const form = document.getElementById("add-risk-identification-form");
+                        form.querySelector("input[name='identified_risk']").value = item.identified_risk;
+                        form.querySelector("textarea[name='consequences']").value = item.consequences;
+
+                        container.style.display = "none";
+                    });
+                });
+
+                container.style.display = "block";
             })
-            .catch(err => {
-                console.error("Submission error:", err);
+            .catch(error => {
+                alert("Error al obtener sugerencias.");
+                console.error(error);
             });
+    });
+}
+
+function attachEvaluationSuggestions() {
+    const form = document.querySelector("#add-risk-evaluation-form");
+    if (!form) return;
+
+    const riskSelect = form.querySelector("select[name='risk']");
+    const preventiveControlsField = form.querySelector("textarea[name='current_preventive_controls']");
+    const detectionControlsField = form.querySelector("textarea[name='current_detection_controls']");
+
+    const severityField = form.querySelector("select[name='severity']");
+    const occurrenceField = form.querySelector("select[name='occurrence']");
+    const detectionField = form.querySelector("select[name='detection']");
+    const riskLevelField = form.querySelector("select[name='risk_level']");
+    const riskLevelDisplay = document.getElementById("risk_level_suggestion");
+
+    const severitySuggestionDisplay = document.getElementById("severity_suggestion");
+    const occurrenceSuggestionDisplay = document.getElementById("occurrence_suggestion");
+    const detectionSuggestionDisplay = document.getElementById("detection_suggestion");
+
+    const suggestionsContainer = document.getElementById("controlSuggestionsContainer");
+    const preventiveList = document.getElementById("preventiveSuggestionsList");
+    const detectionList = document.getElementById("detectionSuggestionsList");
+
+    const suggestControlsBtn = document.getElementById("suggest-controls-btn");
+    if (suggestControlsBtn) {
+        suggestControlsBtn.addEventListener("click", () => {
+            const riskId = riskSelect.value;
+            if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    preventiveList.innerHTML = "";
+                    detectionList.innerHTML = "";
+
+                    data.preventive_controls.forEach(control => {
+                        const div = document.createElement("div");
+                        div.className = "alert alert-info mb-2";
+                        div.innerHTML = `
+                            <strong>Preventivo:</strong> ${control}<br>
+                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
+                        `;
+                        div.querySelector("button").addEventListener("click", () => {
+                            if (preventiveControlsField.value) {
+                                preventiveControlsField.value += `\n${control}`;
+                            } else {
+                                preventiveControlsField.value = control;
+                            }
+                            div.remove();
+                        });
+                        preventiveList.appendChild(div);
+                    });
+
+                    data.detection_controls.forEach(control => {
+                        const div = document.createElement("div");
+                        div.className = "alert alert-warning mb-2";
+                        div.innerHTML = `
+                            <strong>Detección:</strong> ${control}<br>
+                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
+                        `;
+                        div.querySelector("button").addEventListener("click", () => {
+                            if (detectionControlsField.value) {
+                                detectionControlsField.value += `\n${control}`;
+                            } else {
+                                detectionControlsField.value = control;
+                            }
+                            div.remove();
+                        });
+                        detectionList.appendChild(div);
+                    });
+
+                    suggestionsContainer.style.display = "block";
+                })
+                .catch(err => {
+                    console.error("Error obteniendo controles:", err);
+                    alert("Ocurrió un error al obtener controles sugeridos.");
+                });
         });
     }
 
-});
-</script>  
+    const suggestRangesBtn = document.getElementById("suggest-ranges-btn");
+    if (suggestRangesBtn) {
+        suggestRangesBtn.addEventListener("click", () => {
+            const riskId = riskSelect.value;
+            if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            fetch(suggestRangesBtn.dataset.url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    risk_id: riskId,
+                    preventive_controls: preventiveControlsField.value,
+                    detection_controls: detectionControlsField.value
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    if (severitySuggestionDisplay)
+                        severitySuggestionDisplay.textContent = `Sugerencia: ${data.severity_range}`;
+                    if (occurrenceSuggestionDisplay)
+                        occurrenceSuggestionDisplay.textContent = `Sugerencia: ${data.occurrence_range}`;
+                    if (detectionSuggestionDisplay)
+                        detectionSuggestionDisplay.textContent = `Sugerencia: ${data.detection_range}`;
+
+                    const extractMidValue = (rangeStr) => {
+                        const match = rangeStr.match(/(\d+)/g);
+                        if (match && match.length >= 2) {
+                            const min = parseInt(match[0]);
+                            const max = parseInt(match[1]);
+                            return Math.round((min + max) / 2);
+                        } else if (match && match.length === 1) {
+                            return parseInt(match[0]);
+                        }
+                        return null;
+                    };
+
+                    const sev = extractMidValue(data.severity_range);
+                    const occ = extractMidValue(data.occurrence_range);
+                    const det = extractMidValue(data.detection_range);
+
+                    if (sev !== null) severityField.value = sev;
+                    if (occ !== null) occurrenceField.value = occ;
+                    if (det !== null) detectionField.value = det;
+                })
+                .catch(err => {
+                    console.error("Error obteniendo rangos:", err);
+                    alert("Ocurrió un error al obtener sugerencias de rangos.");
+                });
+        });
+    }
+
+    const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
+    if (suggestRiskLevelBtn) {
+        suggestRiskLevelBtn.addEventListener("click", () => {
+            const riskId = riskSelect.value;
+            if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const params = new URLSearchParams({
+                risk_id: riskId,
+                preventive_controls: preventiveControlsField.value,
+                detection_controls: detectionControlsField.value,
+                severity: severityField.value,
+                occurrence: occurrenceField.value,
+                detection: detectionField.value
+            });
+
+            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Respuesta nivel de riesgo:", data); // Opcional para depuración
+                    if (data.error) return alert(data.error);
+                    riskLevelField.value = data.risk_level;
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
+                })
+                .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
+        });
+    }
+}
+
+function attachTreatmentSuggestions() {
+    const form = document.querySelector("#add-risk-treatment-form");
+    if (!form) return;
+
+    // ✅ Añadimos manejador de submit si no lo tienes
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw err;
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                form.reset();  // Opcional: limpia el formulario
+            } else {
+                alert("Formulario enviado, pero sin mensaje de confirmación.");
+            }
+        })
+        .catch(err => {
+            console.error("Error al enviar el formulario:", err);
+            alert("Error al enviar el formulario.");
+        });
+    });
+
+    const btn = form.querySelector("#getTreatmentSuggestionBtn");
+    if (!btn) return;
+
+    const riskSelect = form.querySelector("select[name='risk']");
+    const treatmentActionInput = form.querySelector("textarea[name='treatment_action']");
+    const suggestionContainer = form.querySelector("#treatmentSuggestionContainer");
+    const suggestionList = form.querySelector("#treatmentSuggestionList");
+
+    btn.addEventListener("click", function () {
+        const riskId = riskSelect ? riskSelect.value : null;
+
+        if (!riskId) {
+            alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+            return;
+        }
+
+        // Mostrar el contenedor y cargar texto provisional
+        suggestionContainer.style.display = "block";
+        suggestionList.innerHTML = "Obteniendo sugerencias...";
+
+        const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error al obtener sugerencias de IA.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                suggestionList.innerHTML = "";
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    suggestionList.innerHTML = "No se encontraron sugerencias.";
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const action = item.treatment_action || "(sin acción sugerida)";
+                    const card = document.createElement("div");
+                    card.className = "card mb-2";
+
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <strong>Acción sugerida ${index + 1}:</strong> ${action}<br>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
+                        </div>
+                    `;
+
+                    // ✅ Auto-asignar la primera sugerencia al textarea
+                    if (index === 0 && treatmentActionInput) {
+                        treatmentActionInput.value = action;
+                    }
+
+                    const useBtn = card.querySelector("button");
+                    useBtn.addEventListener("click", function () {
+                        if (treatmentActionInput) {
+                            treatmentActionInput.value = action;
+                            suggestionContainer.style.display = "none";
+                        }
+                    });
+
+                    suggestionList.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error(error);
+                suggestionList.innerHTML = "Error al obtener sugerencias.";
+            });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
+
+
+
+
+
+</script>
 {% endblock extra_js %}
-
-

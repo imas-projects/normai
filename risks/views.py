@@ -17,6 +17,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
+import json
 
 from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action
 
@@ -57,7 +58,7 @@ def add_risk_identification(request):
     })
 
 def get_suggestions(request):
-    area_id = request.GET.get('area_name')
+    area_id = request.GET.get('area')
     activity_name = request.GET.get('activity_name')
 
     if not area_id or not activity_name:
@@ -85,9 +86,10 @@ def add_risk_evaluation(request):
         form = RiskEvaluationForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Risk evaluation saved successfully'}, status=200)
+            return JsonResponse({'success': True, 'message': 'Risk evaluation saved successfully'}, status=200)
         else:
-            return JsonResponse({'error': form.errors}, status=400)
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
     else:
         form = RiskEvaluationForm()
         if risk_id:
@@ -106,6 +108,9 @@ def add_risk_evaluation(request):
     )
 
 
+
+
+
 def get_controls_suggestions(request):
     risk_id = request.GET.get('risk_id')
 
@@ -116,21 +121,32 @@ def get_controls_suggestions(request):
         suggestions = suggest_controls(int(risk_id))
 
         if "error" in suggestions:
+            print(f"Error en suggest_controls: {suggestions['error']}")  # <-- DEBUG
             return JsonResponse({'error': suggestions["error"]}, status=400)
 
         return JsonResponse(suggestions)
 
     except Exception as e:
+        print(f"Excepción en get_controls_suggestions: {e}")  # <-- DEBUG
         return JsonResponse({'error': f'Error al generar sugerencias de controles: {str(e)}'}, status=500)
 
+@csrf_exempt
 def get_ranges_suggestions(request):
-    risk_id = request.GET.get('risk_id')
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-    if not risk_id:
-        return JsonResponse({'error': 'Falta el parámetro obligatorio risk_id'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
 
-    preventive = request.GET.get("preventive_controls", "")
-    detection = request.GET.get("detection_controls", "")
+    risk_id = data.get('risk_id')
+    preventive = data.get("preventive_controls", "")
+    detection = data.get("detection_controls", "")
+
+    if not risk_id or not preventive or not detection:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
     preventive_list = preventive.split("\n")
     detection_list = detection.split("\n")
 
@@ -189,6 +205,7 @@ def add_risk_treatment(request):
             form.save()
             return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
         else:
+            print("ERRORES DEL FORMULARIO:", form.errors)  
             return JsonResponse({'error': form.errors}, status=400)
     else:
         form = RiskTreatmentForm()

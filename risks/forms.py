@@ -55,6 +55,7 @@ class RiskTreatmentForm(forms.ModelForm):
             'actual_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
+
 class ContingencyPlanForm(forms.ModelForm):
     contingency_actions = forms.MultipleChoiceField(
         choices=ContingencyPlan.ACTION_CHOICES,

@@ -1,8 +1,11 @@
 from openai import OpenAI
+import openai
 import json
+import re
 from risks.models import RiskIdentification, RiskEvaluation
 from django.conf import settings
 from collections import Counter
+from openai import OpenAIError
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -101,9 +104,12 @@ Ejemplo:
         )
 
         content = response.choices[0].message.content.strip()
-        print("Respuesta cruda de IA:", repr(content))  
+        print("Respuesta cruda de IA:", repr(content))
 
-        suggestions = json.loads(content)
+        # Limpiar posibles delimitadores markdown
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+
+        suggestions = json.loads(clean_content)
 
         if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
             return [
@@ -119,11 +125,12 @@ Ejemplo:
 
     except json.JSONDecodeError as jde:
         print("Error de JSONDecode:", str(jde))
-        print("Contenido no parseable:", repr(content))
+        print("Contenido no parseable:", repr(clean_content))
         return []
     except Exception as e:
         print("Error al generar sugerencia IA:", str(e))
         return []
+
 
 
 def suggest_controls(risk_id, max_controls=3):
@@ -136,7 +143,7 @@ def suggest_controls(risk_id, max_controls=3):
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     if similar_evaluations.exists():
         historical_lines = [
@@ -145,14 +152,14 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""  # Aquí sin .name
             for eval in similar_evaluations[:10]
         ]
 
         prompt = f"""
 Eres un experto en gestión de calidad y riesgos bajo ISO 9001:2015 en industria aeroespacial.
 
-Con base en evaluaciones anteriores, sugiere:
+Con base en evaluaciones anteriores, sugiere exactamente:
 - 3 controles preventivos
 - 3 controles de detección
 
@@ -165,7 +172,8 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Devuélvelo como JSON:
+Responde SOLO con un objeto JSON, sin explicaciones, sin texto adicional.
+Formato:
 {{"preventive_controls": [...], "detection_controls": [...]}}
 """
     else:
@@ -178,9 +186,9 @@ Actividad: {risk.activity_name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
-Sugiere 3 controles preventivos y 3 de detección.
+Sugiere exactamente 3 controles preventivos y 3 de detección.
 
-Formato JSON:
+Responde SOLO con un objeto JSON, sin texto adicional. Formato:
 {{"preventive_controls": [...], "detection_controls": [...]}}
 """
 
@@ -191,16 +199,28 @@ Formato JSON:
             temperature=0.4,
             max_tokens=600,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        content = response.choices[0].message.content.strip()
+
+        # Extraer el primer bloque JSON válido
+        match = re.search(r"\{.*?\}", content, re.DOTALL)
+        if not match:
+            print("Respuesta no contiene JSON válido:", content)
+            return {"error": "La IA no devolvió un JSON válido."}
+
+        try:
+            data = json.loads(match.group())
+        except json.JSONDecodeError:
+            print("No se pudo interpretar el JSON:", match.group())
+            return {"error": "No se pudo interpretar la respuesta de IA."}
+
         return {
             "preventive_controls": data.get("preventive_controls", [])[:max_controls],
             "detection_controls": data.get("detection_controls", [])[:max_controls]
         }
-    except json.JSONDecodeError:
-        return {"error": "No se pudo interpretar la respuesta de IA."}
+
     except Exception as e:
         return {"error": str(e)}
-
 
 def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
     try:
@@ -212,7 +232,7 @@ def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     controls_text = f"""
 Controles preventivos escritos por el usuario:
@@ -229,7 +249,7 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
         prompt = f"""
@@ -276,17 +296,27 @@ Formato JSON:
             temperature=0.4,
             max_tokens=600,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        raw_content = response.choices[0].message.content.strip()
+        print("🔍 Respuesta cruda de IA:", raw_content)
+
+        # Extraer solo el JSON de la respuesta
+        match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+        if not match:
+            return {"error": "No se pudo interpretar la respuesta de IA."}
+
+        data = json.loads(match.group(0))
+
         return {
             "severity_range": data.get("severity_range", ""),
             "occurrence_range": data.get("occurrence_range", ""),
             "detection_range": data.get("detection_range", "")
         }
+
     except json.JSONDecodeError:
         return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
         return {"error": str(e)}
-        
 
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
@@ -298,7 +328,7 @@ def suggest_risk_level(risk_id, preventive_controls, detection_controls, severit
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     controls_text = f"""
 Controles preventivos:
@@ -320,7 +350,7 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
         prompt = f"""
@@ -361,10 +391,25 @@ Formato JSON:
             temperature=0.4,
             max_tokens=300,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        raw_response = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", raw_response)  # Útil para debug
+
+        try:
+            # Primero intenta decodificar directamente
+            data = json.loads(raw_response)
+        except json.JSONDecodeError:
+            # Si falla, intenta extraer el JSON del texto completo
+            json_text_match = re.search(r'\{[^}]*risk_level[^}]*\}', raw_response, re.DOTALL)
+            if not json_text_match:
+                return {"error": f"No se encontró un objeto JSON válido en la respuesta: {raw_response}"}
+            try:
+                data = json.loads(json_text_match.group(0))
+            except json.JSONDecodeError as e:
+                return {"error": f"Error al decodificar JSON: {str(e)} | Respuesta: {raw_response}"}
+
         return {"risk_level": data.get("risk_level", "")}
-    except json.JSONDecodeError:
-        return {"error": "No se pudo interpretar la respuesta de IA."}
+
     except Exception as e:
         return {"error": str(e)}
 
@@ -389,7 +434,7 @@ def suggest_treatment_action(risk_id, max_results=1):
     for other_risk in RiskIdentification.objects.filter(area=risk.area).exclude(id=risk.id)[:5]:
         for eval in other_risk.evaluations.all():
             historical_treatments.append(
-                f"Área: {other_risk.area.name} | Riesgo: {other_risk.description} | "
+                f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk} | "
                 f"Evaluación: Severidad {eval.severity}, Ocurrencia {eval.occurrence}, Detección {eval.detection}, "
                 f"Nivel de riesgo {eval.risk_level}."
             )
@@ -398,12 +443,10 @@ def suggest_treatment_action(risk_id, max_results=1):
 
     # Info del riesgo actual y evaluaciones
     risk_info = (
-        f"Descripción del riesgo: {risk.description}\n"
+        f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Tipo: {risk.risk_type}\n"
-        f"Causa: {risk.cause}\n"
-        f"Impacto: {risk.impact}\n"
-        f"Probabilidad: {risk.probability}\n"
+        f"Actividad: {risk.activity_name}\n"
+        f"Consecuencias: {risk.consequences}\n"
     )
 
     eval_info = ""
@@ -446,14 +489,14 @@ Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con 
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.6,
             max_tokens=400,
         )
 
-        content = response.choices[0].message['content'].strip()
+        content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
         suggestions = json.loads(content)
