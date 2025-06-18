@@ -855,14 +855,16 @@ function attachEvaluationSuggestions() {
             fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
+                    console.log("Respuesta nivel de riesgo:", data); // Opcional para depuración
                     if (data.error) return alert(data.error);
-                    riskLevelField.value = data.level;
-                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.level}`;
+                    riskLevelField.value = data.risk_level;
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
                 })
                 .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
         });
     }
 }
+
 
 
 </script>
