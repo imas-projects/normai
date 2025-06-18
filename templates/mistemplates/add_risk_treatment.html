@@ -16,6 +16,11 @@
             {{ form.treatment_action.label_tag }}
             {{ form.treatment_action }}
         </div>
+        
+        <div id="treatmentSuggestionContainer" class="mt-4" style="display:none;">
+            <strong>Sugerencias de la IA:</strong>
+            <div id="treatmentSuggestionList" class="mt-2"></div>
+        </div>
 
         <div class="mb-3">
             {{ form.responsible.label_tag }}
@@ -40,68 +45,6 @@
         <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 
-    <div id="treatmentSuggestionContainer" class="mt-4" style="display:none;">
-        <strong>Sugerencias de la IA:</strong>
-        <div id="treatmentSuggestionList" class="mt-2"></div>
-    </div>
+
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const suggestionBtn = document.getElementById("getTreatmentSuggestionBtn");
-    const suggestionContainer = document.getElementById("treatmentSuggestionContainer");
-    const suggestionList = document.getElementById("treatmentSuggestionList");
-
-    suggestionBtn.addEventListener("click", function() {
-        // Obtener el risk_id del campo risk (asumiendo que es select)
-        const riskSelect = document.getElementById("id_risk");
-        const riskId = riskSelect ? riskSelect.value : null;
-
-        if (!riskId) {
-            alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
-            return;
-        }
-
-        // Limpiar y ocultar mientras carga
-        suggestionList.innerHTML = "Cargando sugerencias...";
-        suggestionContainer.style.display = "block";
-
-        fetch(`{% url 'risks:get_treatment_suggestions' %}?risk_id=${encodeURIComponent(riskId)}&max_results=3`)
-            .then(response => response.json())
-            .then(data => {
-                suggestionList.innerHTML = "";
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    alert("No se encontraron sugerencias.");
-                    suggestionContainer.style.display = "none";
-                    return;
-                }
-
-                data.forEach((suggestion, index) => {
-                    const action = suggestion.treatment_action || "(sin acción sugerida)";
-
-                    const card = document.createElement("div");
-                    card.className = "card mb-2";
-                    card.innerHTML = `
-                        <div class="card-body">
-                            <strong>Acción ${index + 1}:</strong> ${action}<br>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
-                        </div>
-                    `;
-
-                    const useBtn = card.querySelector("button");
-                    useBtn.addEventListener("click", function() {
-                        document.getElementById("id_treatment_action").value = action;
-                        suggestionContainer.style.display = "none";
-                    });
-
-                    suggestionList.appendChild(card);
-                });
-            })
-            .catch(() => {
-                alert("Error al obtener sugerencias IA.");
-                suggestionContainer.style.display = "none";
-            });
-    });
-});
-</script>
