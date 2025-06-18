@@ -151,7 +151,7 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""  # Aquí sin .name
             for eval in similar_evaluations[:10]
         ]
 
@@ -248,7 +248,7 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
         prompt = f"""
@@ -349,7 +349,7 @@ Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level.name}"""
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
         prompt = f"""
