@@ -205,6 +205,7 @@ def add_risk_treatment(request):
             form.save()
             return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
         else:
+            print("ERRORES DEL FORMULARIO:", form.errors)  
             return JsonResponse({'error': form.errors}, status=400)
     else:
         form = RiskTreatmentForm()
