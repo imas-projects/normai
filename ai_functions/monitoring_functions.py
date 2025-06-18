@@ -1,4 +1,5 @@
 from openai import OpenAI
+import openai
 import json
 import re
 from risks.models import RiskIdentification, RiskEvaluation
