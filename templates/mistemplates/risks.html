@@ -784,22 +784,29 @@ function attachEvaluationSuggestions() {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const params = new URLSearchParams({
-                risk_id: riskId,
-                preventive_controls: preventiveControlsField.value,
-                detection_controls: detectionControlsField.value
-            });
-
-            fetch(`${suggestRangesBtn.dataset.url}?${params.toString()}`)
+            fetch(suggestRangesBtn.dataset.url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    risk_id: riskId,
+                    preventive_controls: preventiveControlsField.value,
+                    detection_controls: detectionControlsField.value
+                })
+            })
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) return alert(data.error);
 
-                    severityField.value = data.severity.toString();
-                    occurrenceField.value = data.occurrence.toString();
-                    detectionField.value = data.detection.toString();
+                    if (data.severity_range) severityField.value = data.severity_range;
+                    if (data.occurrence_range) occurrenceField.value = data.occurrence_range;
+                    if (data.detection_range) detectionField.value = data.detection_range;
                 })
-                .catch(err => console.error("Error obteniendo rangos:", err));
+                .catch(err => {
+                    console.error("Error obteniendo rangos:", err);
+                    alert("Ocurrió un error al obtener sugerencias de rangos.");
+                });
         });
     }
 
