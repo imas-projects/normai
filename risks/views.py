@@ -17,6 +17,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
+import json
 
 from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action
 
@@ -125,14 +126,23 @@ def get_controls_suggestions(request):
         print(f"Excepción en get_controls_suggestions: {e}")  # <-- DEBUG
         return JsonResponse({'error': f'Error al generar sugerencias de controles: {str(e)}'}, status=500)
 
+@csrf_exempt
 def get_ranges_suggestions(request):
-    risk_id = request.GET.get('risk_id')
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-    if not risk_id:
-        return JsonResponse({'error': 'Falta el parámetro obligatorio risk_id'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
 
-    preventive = request.GET.get("preventive_controls", "")
-    detection = request.GET.get("detection_controls", "")
+    risk_id = data.get('risk_id')
+    preventive = data.get("preventive_controls", "")
+    detection = data.get("detection_controls", "")
+
+    if not risk_id or not preventive or not detection:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
     preventive_list = preventive.split("\n")
     detection_list = detection.split("\n")
 
