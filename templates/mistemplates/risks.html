@@ -921,6 +921,11 @@ function attachTreatmentSuggestions() {
                         </div>
                     `;
 
+                    // ✅ Auto-asignar la primera sugerencia al textarea
+                    if (index === 0 && treatmentActionInput) {
+                        treatmentActionInput.value = action;
+                    }
+
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
                         if (treatmentActionInput) {
@@ -938,6 +943,9 @@ function attachTreatmentSuggestions() {
             });
     });
 }
+
+document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
+
 
 
 
