@@ -414,13 +414,8 @@ Formato JSON:
 
 
 def suggest_treatment_action(risk_id, max_results=1):
-    """
-    Sugiere acciones correctivas de tratamiento para un riesgo específico basado en:
-    - Datos históricos del riesgo y sus evaluaciones
-    - Criterios de la norma ISO 9001:2015
-
-    Retorna una lista con diccionarios con la clave "treatment_action" con la acción sugerida.
-    """
+    from openai import OpenAI
+    import json
 
     try:
         risk = RiskIdentification.objects.get(id=risk_id)
@@ -433,7 +428,7 @@ def suggest_treatment_action(risk_id, max_results=1):
     for other_risk in RiskIdentification.objects.filter(area=risk.area).exclude(id=risk.id)[:5]:
         for eval in other_risk.evaluations.all():
             historical_treatments.append(
-                f"Área: {other_risk.area.name} | Riesgo: {other_risk.description} | "
+                f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk} | "
                 f"Evaluación: Severidad {eval.severity}, Ocurrencia {eval.occurrence}, Detección {eval.detection}, "
                 f"Nivel de riesgo {eval.risk_level}."
             )
@@ -442,12 +437,10 @@ def suggest_treatment_action(risk_id, max_results=1):
 
     # Info del riesgo actual y evaluaciones
     risk_info = (
-        f"Descripción del riesgo: {risk.description}\n"
+        f"Riesgo identificado: {risk.identified_risk}\n"
+        f"Actividad: {risk.activity_name}\n"
         f"Área: {risk.area.name}\n"
-        f"Tipo: {risk.risk_type}\n"
-        f"Causa: {risk.cause}\n"
-        f"Impacto: {risk.impact}\n"
-        f"Probabilidad: {risk.probability}\n"
+        f"Consecuencias: {risk.consequences}\n"
     )
 
     eval_info = ""
