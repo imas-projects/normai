@@ -869,14 +869,18 @@ function attachEvaluationSuggestions() {
 }
 
 function attachTreatmentSuggestions() {
-    const btn = document.getElementById("getTreatmentSuggestionBtn");
+    const form = document.querySelector("#add-risk-treatment-form");
+    if (!form) return;
+
+    const btn = form.querySelector("#getTreatmentSuggestionBtn");
     if (!btn) return;
 
-    const suggestionContainer = document.getElementById("treatmentSuggestionContainer");
-    const suggestionList = document.getElementById("treatmentSuggestionList");
+    const riskSelect = form.querySelector("select[name='risk']");
+    const treatmentActionInput = form.querySelector("textarea[name='treatment_action']");
+    const suggestionContainer = form.querySelector("#treatmentSuggestionContainer");
+    const suggestionList = form.querySelector("#treatmentSuggestionList");
 
     btn.addEventListener("click", function () {
-        const riskSelect = document.getElementById("id_risk");
         const riskId = riskSelect ? riskSelect.value : null;
 
         if (!riskId) {
@@ -919,9 +923,8 @@ function attachTreatmentSuggestions() {
 
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
-                        const input = document.getElementById("id_treatment_action");
-                        if (input) {
-                            input.value = action;
+                        if (treatmentActionInput) {
+                            treatmentActionInput.value = action;
                             suggestionContainer.style.display = "none";
                         }
                     });
@@ -935,6 +938,7 @@ function attachTreatmentSuggestions() {
             });
     });
 }
+
 
 
 </script>
