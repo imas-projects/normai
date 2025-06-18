@@ -86,9 +86,9 @@ def add_risk_evaluation(request):
         form = RiskEvaluationForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'success': True, 'message': 'Risk evaluation saved successfully'}, status=200)
+            return JsonResponse({'message': 'Risk evaluation saved successfully'}, status=200)
         else:
-            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            return JsonResponse({'error': form.errors}, status=400)
     else:
         form = RiskEvaluationForm()
         if risk_id:
@@ -105,6 +105,7 @@ def add_risk_evaluation(request):
             'suggestion_data': suggestion_data,
         }
     )
+
 
 
 
