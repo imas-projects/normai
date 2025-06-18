@@ -142,7 +142,7 @@ def suggest_controls(risk_id, max_controls=3):
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     if similar_evaluations.exists():
         historical_lines = [
@@ -231,7 +231,7 @@ def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     controls_text = f"""
 Controles preventivos escritos por el usuario:
@@ -327,7 +327,7 @@ def suggest_risk_level(risk_id, preventive_controls, detection_controls, severit
         risk__area=risk.area,
         risk__activity_name=risk.activity_name,
         risk__identified_risk=risk.identified_risk
-    ).select_related("risk_level")
+    )
 
     controls_text = f"""
 Controles preventivos:
