@@ -4,6 +4,7 @@ import re
 from risks.models import RiskIdentification, RiskEvaluation
 from django.conf import settings
 from collections import Counter
+from openai import OpenAIError
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -294,17 +295,28 @@ Formato JSON:
             temperature=0.4,
             max_tokens=600,
         )
-        data = json.loads(response.choices[0].message.content.strip())
+
+        raw_content = response.choices[0].message.content.strip()
+        print("🔍 Respuesta cruda de IA:", raw_content)
+
+        # Extraer solo el JSON de la respuesta
+        match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+        if not match:
+            return {"error": "No se pudo interpretar la respuesta de IA."}
+
+        data = json.loads(match.group(0))
+
         return {
             "severity_range": data.get("severity_range", ""),
             "occurrence_range": data.get("occurrence_range", ""),
             "detection_range": data.get("detection_range", "")
         }
+
     except json.JSONDecodeError:
         return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
         return {"error": str(e)}
-        
+
 
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
