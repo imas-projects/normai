@@ -45,6 +45,10 @@ class RiskTreatmentForm(forms.ModelForm):
         label="Responsible"
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['risk'].empty_label = None  
+
     class Meta:
         model = RiskTreatment
         fields = ['risk', 'treatment_action', 'responsible', 'target_date', 'actual_date']
@@ -54,6 +58,7 @@ class RiskTreatmentForm(forms.ModelForm):
             'target_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'actual_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
+
 
 class ContingencyPlanForm(forms.ModelForm):
     contingency_actions = forms.MultipleChoiceField(
