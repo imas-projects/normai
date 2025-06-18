@@ -317,10 +317,6 @@ Formato JSON:
     except Exception as e:
         return {"error": str(e)}
 
-
-import json
-import re  # Asegúrate de tener esto importado si no lo tienes ya
-
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
         risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
@@ -396,19 +392,23 @@ Formato JSON:
         )
 
         raw_response = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", raw_response)  # Útil para debug
 
-        # Extraer el primer objeto JSON del texto de la IA
-        json_text_match = re.search(r'\{.*?\}', raw_response, re.DOTALL)
-        if not json_text_match:
-            raise ValueError("No se encontró un objeto JSON válido en la respuesta.")
-
-        json_text = json_text_match.group(0)
-        data = json.loads(json_text)
+        try:
+            # Primero intenta decodificar directamente
+            data = json.loads(raw_response)
+        except json.JSONDecodeError:
+            # Si falla, intenta extraer el JSON del texto completo
+            json_text_match = re.search(r'\{[^}]*risk_level[^}]*\}', raw_response, re.DOTALL)
+            if not json_text_match:
+                return {"error": f"No se encontró un objeto JSON válido en la respuesta: {raw_response}"}
+            try:
+                data = json.loads(json_text_match.group(0))
+            except json.JSONDecodeError as e:
+                return {"error": f"Error al decodificar JSON: {str(e)} | Respuesta: {raw_response}"}
 
         return {"risk_level": data.get("risk_level", "")}
 
-    except json.JSONDecodeError:
-        return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
         return {"error": str(e)}
 
