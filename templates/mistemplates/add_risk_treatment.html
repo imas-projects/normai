@@ -11,16 +11,18 @@
         <div class="mb-3">
             <button type="button" id="getTreatmentSuggestionBtn" class="btn btn-info">Obtener sugerencias IA</button>
         </div>
-
-        <div class="mb-3">
-            {{ form.treatment_action.label_tag }}
-            {{ form.treatment_action }}
-        </div>
         
         <div id="treatmentSuggestionContainer" class="mt-4" style="display:none;">
             <strong>Sugerencias de la IA:</strong>
             <div id="treatmentSuggestionList" class="mt-2"></div>
         </div>
+
+        
+        <div class="mb-3">
+            {{ form.treatment_action.label_tag }}
+            {{ form.treatment_action }}
+        </div>
+        
 
         <div class="mb-3">
             {{ form.responsible.label_tag }}
