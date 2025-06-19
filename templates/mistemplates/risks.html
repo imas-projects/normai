@@ -872,9 +872,7 @@ function attachTreatmentSuggestions() {
     const form = document.querySelector("#add-risk-treatment-form");
     if (!form) return;
 
-    // ⛔️ Quitamos el submit automático para no interceptarlo por defecto
-    // ✅ En su lugar, usamos el botón específico de envío
-    const submitBtn = document.querySelector("#submitTreatmentForm"); // Asegúrate de tener este botón en el HTML
+    const submitBtn = document.querySelector("#submitTreatmentForm");
     if (submitBtn) {
         submitBtn.addEventListener("click", function (e) {
             e.preventDefault();
@@ -888,13 +886,21 @@ function attachTreatmentSuggestions() {
                     "X-Requested-With": "XMLHttpRequest"
                 }
             })
-            .then(response => {
+            .then(async response => {
+                const contentType = response.headers.get("Content-Type") || "";
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw err;
-                    });
+                    if (contentType.includes("application/json")) {
+                        const errorData = await response.json();
+                        throw errorData;
+                    } else {
+                        throw new Error("Respuesta no válida del servidor.");
+                    }
                 }
-                return response.json();
+                if (contentType.includes("application/json")) {
+                    return response.json();
+                } else {
+                    throw new Error("Respuesta inesperada del servidor.");
+                }
             })
             .then(data => {
                 if (data.message) {
@@ -959,10 +965,6 @@ function attachTreatmentSuggestions() {
                         </div>
                     `;
 
-                    if (index === 0 && treatmentActionInput) {
-                        treatmentActionInput.value = action;
-                    }
-
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
                         if (treatmentActionInput) {
@@ -982,6 +984,7 @@ function attachTreatmentSuggestions() {
 }
 
 document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
+
 
 
 
