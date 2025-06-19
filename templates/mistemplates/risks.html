@@ -872,40 +872,44 @@ function attachTreatmentSuggestions() {
     const form = document.querySelector("#add-risk-treatment-form");
     if (!form) return;
 
-    // ✅ Añadimos manejador de submit si no lo tienes
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();
+    // ⛔️ Quitamos el submit automático para no interceptarlo por defecto
+    // ✅ En su lugar, usamos el botón específico de envío
+    const submitBtn = document.querySelector("#submitTreatmentForm"); // Asegúrate de tener este botón en el HTML
+    if (submitBtn) {
+        submitBtn.addEventListener("click", function (e) {
+            e.preventDefault();
 
-        const formData = new FormData(form);
+            const formData = new FormData(form);
 
-        fetch(form.action, {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw err;
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.message) {
-                alert(data.message);
-                form.reset();  // Opcional: limpia el formulario
-            } else {
-                alert("Formulario enviado, pero sin mensaje de confirmación.");
-            }
-        })
-        .catch(err => {
-            console.error("Error al enviar el formulario:", err);
-            alert("Error al enviar el formulario.");
+            fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw err;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    form.reset();
+                } else {
+                    alert("Formulario enviado, pero sin mensaje de confirmación.");
+                }
+            })
+            .catch(err => {
+                console.error("Error al enviar el formulario:", err);
+                alert("Error al enviar el formulario.");
+            });
         });
-    });
+    }
 
     const btn = form.querySelector("#getTreatmentSuggestionBtn");
     if (!btn) return;
@@ -923,7 +927,6 @@ function attachTreatmentSuggestions() {
             return;
         }
 
-        // Mostrar el contenedor y cargar texto provisional
         suggestionContainer.style.display = "block";
         suggestionList.innerHTML = "Obteniendo sugerencias...";
 
@@ -956,7 +959,6 @@ function attachTreatmentSuggestions() {
                         </div>
                     `;
 
-                    // ✅ Auto-asignar la primera sugerencia al textarea
                     if (index === 0 && treatmentActionInput) {
                         treatmentActionInput.value = action;
                     }
@@ -980,6 +982,7 @@ function attachTreatmentSuggestions() {
 }
 
 document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
+
 
 
 
