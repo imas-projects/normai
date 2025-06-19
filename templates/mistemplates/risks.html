@@ -989,67 +989,68 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskIdentificationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-identification/${riskId}/)
+            fetch(`/risks/edit-risk-identification/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(editRiskIdentificationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskIdentificationModal${riskId})).show();
+                    document.getElementById(`editRiskIdentificationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskIdentificationModal${riskId}`)).show();
                 });
         });
     });
 
-    // Cargar el formulario de edición de Risk Evaluation
+    // Risk Evaluation
     document.querySelectorAll(".openEditRiskEvaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-evaluation/${riskId}/)
+            fetch(`/risks/edit-risk-evaluation/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(editRiskEvaluationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskEvaluationModal${riskId})).show();
+                    document.getElementById(`editRiskEvaluationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskEvaluationModal${riskId}`)).show();
                 });
         });
     });
 
-    // Cargar el formulario de edición de Risk Treatment
+    // Risk Treatment
     document.querySelectorAll(".openEditRiskTreatmentModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-risk-treatment/${riskId}/)
+            fetch(`/risks/edit-risk-treatment/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(editRiskTreatmentContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editRiskTreatmentModal${riskId})).show();
+                    document.getElementById(`editRiskTreatmentContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskTreatmentModal${riskId}`)).show();
                 });
         });
     });
 
-    // Cargar el formulario de edición de Contingency Plan
+    // Contingency Plan
     document.querySelectorAll(".openEditContingencyPlanModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-contingency-plan/${riskId}/)
+            fetch(`/risks/edit-contingency-plan/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(editContingencyPlanContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editContingencyPlanModal${riskId})).show();
+                    document.getElementById(`editContingencyPlanContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editContingencyPlanModal${riskId}`)).show();
                 });
         });
     });
 
-    // Cargar el formulario de edición de Reevaluation
+    // Reevaluation
     document.querySelectorAll(".openEditReevaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(/risks/edit-reevaluation/${riskId}/)
+            fetch(`/risks/edit-reevaluation/${riskId}/`)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(editReevaluationContent${riskId}).innerHTML = html;
-                    new bootstrap.Modal(document.getElementById(editReevaluationModal${riskId})).show();
+                    document.getElementById(`editReevaluationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editReevaluationModal${riskId}`)).show();
                 });
         });
     });
 });
+
 
 
 </script>
