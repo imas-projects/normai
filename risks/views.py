@@ -201,12 +201,21 @@ def get_level_suggestions(request):
 def add_risk_treatment(request):
     if request.method == 'POST':
         form = RiskTreatmentForm(request.POST)
+
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+            else:
+                return redirect('risks:add_risk_treatment') 
+
         else:
-            print("ERRORES DEL FORMULARIO:", form.errors)  
-            return JsonResponse({'error': form.errors}, status=400)
+            print("ERRORES DEL FORMULARIO:", form.errors)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'error': form.errors}, status=400)
+            else:
+                return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
+
     else:
         form = RiskTreatmentForm()
 
