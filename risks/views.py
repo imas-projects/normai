@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 import json
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions, suggest_reevaluation_rating_ranges, suggest_reevaluation_risk_level
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -305,7 +305,7 @@ def add_reevaluation(request):
         form = ReevaluationForm()
         if risk_id:
             try:
-                suggestion_data = suggest_reevaluation_ranges(risk_id=int(risk_id))
+                suggestion_data = suggest_reevaluation_rating_ranges(risk_id=int(risk_id))
             except Exception as e:
                 suggestion_data = {"error": f"Error al generar sugerencias: {str(e)}"}
 
@@ -329,17 +329,12 @@ def get_reevaluation_ranges_suggestions(request):
         return JsonResponse({'error': 'JSON inválido'}, status=400)
 
     risk_id = data.get('risk_id')
-    preventive = data.get("preventive_controls", "")
-    detection = data.get("detection_controls", "")
 
-    if not risk_id or not preventive or not detection:
-        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
-
-    preventive_list = preventive.split("\n")
-    detection_list = detection.split("\n")
+    if not risk_id:
+        return JsonResponse({'error': 'Falta el parámetro risk_id'}, status=400)
 
     try:
-        suggestions = suggest_reevaluation_ranges(int(risk_id), preventive_list, detection_list)
+        suggestions = suggest_reevaluation_rating_ranges(int(risk_id))
 
         if "error" in suggestions:
             return JsonResponse({'error': suggestions["error"]}, status=400)
@@ -348,17 +343,13 @@ def get_reevaluation_ranges_suggestions(request):
 
     except Exception as e:
         return JsonResponse({'error': f'Error al generar sugerencias de rangos: {str(e)}'}, status=500)
+        
 
 def get_reevaluation_level_suggestions(request):
     risk_id = request.GET.get('risk_id')
 
     if not risk_id:
         return JsonResponse({'error': 'Falta el parámetro obligatorio risk_id'}, status=400)
-
-    preventive = request.GET.get("preventive_controls", "")
-    detection = request.GET.get("detection_controls", "")
-    preventive_list = preventive.split("\n")
-    detection_list = detection.split("\n")
 
     severity = request.GET.get("severity")
     occurrence = request.GET.get("occurrence")
@@ -370,8 +361,6 @@ def get_reevaluation_level_suggestions(request):
     try:
         suggestions = suggest_reevaluation_risk_level(
             int(risk_id),
-            preventive_list,
-            detection_list,
             int(severity),
             int(occurrence),
             int(detection_score)
