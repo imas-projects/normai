@@ -290,15 +290,102 @@ def get_contingency_suggestions(request):
 
 
 def add_reevaluation(request):
+    suggestion_data = None
+    risk_id = request.GET.get("risk_id")
+
     if request.method == 'POST':
         form = ReevaluationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('risks:risks')
+            return JsonResponse({'success': True, 'message': 'Reevaluación guardada correctamente'}, status=200)
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
     else:
         form = ReevaluationForm()
+        if risk_id:
+            try:
+                suggestion_data = suggest_reevaluation_ranges(risk_id=int(risk_id))
+            except Exception as e:
+                suggestion_data = {"error": f"Error al generar sugerencias: {str(e)}"}
 
-    return render(request, 'mistemplates/add_reevaluation.html', {'form': form})
+    return render(
+        request,
+        'mistemplates/add_reevaluation.html',
+        {
+            'form': form,
+            'suggestion_data': suggestion_data,
+            'risk_id': risk_id 
+        }
+    )
+
+def get_reevaluation_ranges_suggestions(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    risk_id = data.get('risk_id')
+    preventive = data.get("preventive_controls", "")
+    detection = data.get("detection_controls", "")
+
+    if not risk_id or not preventive or not detection:
+        return JsonResponse({'error': 'Faltan parámetros'}, status=400)
+
+    preventive_list = preventive.split("\n")
+    detection_list = detection.split("\n")
+
+    try:
+        suggestions = suggest_reevaluation_ranges(int(risk_id), preventive_list, detection_list)
+
+        if "error" in suggestions:
+            return JsonResponse({'error': suggestions["error"]}, status=400)
+
+        return JsonResponse(suggestions)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error al generar sugerencias de rangos: {str(e)}'}, status=500)
+
+def get_reevaluation_level_suggestions(request):
+    risk_id = request.GET.get('risk_id')
+
+    if not risk_id:
+        return JsonResponse({'error': 'Falta el parámetro obligatorio risk_id'}, status=400)
+
+    preventive = request.GET.get("preventive_controls", "")
+    detection = request.GET.get("detection_controls", "")
+    preventive_list = preventive.split("\n")
+    detection_list = detection.split("\n")
+
+    severity = request.GET.get("severity")
+    occurrence = request.GET.get("occurrence")
+    detection_score = request.GET.get("detection")
+
+    if not all([severity, occurrence, detection_score]):
+        return JsonResponse({'error': 'Faltan datos para calcular el nivel de riesgo'}, status=400)
+
+    try:
+        suggestions = suggest_reevaluation_risk_level(
+            int(risk_id),
+            preventive_list,
+            detection_list,
+            int(severity),
+            int(occurrence),
+            int(detection_score)
+        )
+
+        if "error" in suggestions:
+            return JsonResponse({'error': suggestions["error"]}, status=400)
+
+        return JsonResponse(suggestions)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error al generar sugerencias de nivel de riesgo: {str(e)}'}, status=500)
+
+
 
 def edit_risk_identification(request, risk_id):
     risk = get_object_or_404(RiskIdentification, id=risk_id)
