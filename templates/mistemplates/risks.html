@@ -973,12 +973,10 @@ function attachTreatmentSuggestions() {
             return;
         }
 
-        // Muestra estado de carga
         const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
 
-
-        suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = "Obteniendo sugerencias...";
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -1060,9 +1058,6 @@ function attachContingencySuggestions() {
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
-
-        suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = "Obteniendo sugerencias...";
 
         const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
