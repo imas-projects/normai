@@ -675,7 +675,7 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         return []
 
 
-def suggest_reevaluation_rating_ranges(risk_id, preventive_controls, detection_controls):
+def suggest_reevaluation_rating_ranges(risk_id):
     try:
         risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
@@ -689,7 +689,7 @@ def suggest_reevaluation_rating_ranges(risk_id, preventive_controls, detection_c
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
     )
 
-    # Evaluaciones iniciales
+    # Evaluaciones iniciales del riesgo actual
     evaluations = risk.evaluations.all()
     eval_info = ""
     for i, ev in enumerate(evaluations, 1):
@@ -699,11 +699,12 @@ def suggest_reevaluation_rating_ranges(risk_id, preventive_controls, detection_c
             f"  Ocurrencia: {ev.occurrence}\n"
             f"  Detección: {ev.detection}\n"
             f"  Nivel de riesgo: {ev.risk_level}\n"
-            f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
-            f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
         )
 
-    # Tratamientos
+    if not eval_info:
+        eval_info = "No hay evaluaciones disponibles"
+
+    # Tratamientos del riesgo actual
     treatments = risk.treatments.all()
     treatment_info = ""
     for i, tr in enumerate(treatments, 1):
@@ -713,34 +714,54 @@ def suggest_reevaluation_rating_ranges(risk_id, preventive_controls, detection_c
             f"  Fecha objetivo: {tr.target_date}\n"
             f"  Fecha real: {tr.actual_date}\n"
         )
+
     if not treatment_info:
         treatment_info = "No hay tratamientos registrados para este riesgo."
 
-    # Acciones de contingencia
+    # Planes de contingencia del riesgo actual
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
     contingency_info = ""
     for plan in contingency_plans:
         actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
+
     if not contingency_info:
         contingency_info = "No hay acciones de contingencia registradas."
 
-    # Recolección de reevaluaciones históricas
-    historical_reevaluations = Reevaluation.objects.exclude(risk=risk)
-    reevaluation_info = ""
-    for ree in historical_reevaluations[:10]:
-        reevaluation_info += (
-            f"Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
-            f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+    # Contexto histórico de otros riesgos
+    historical_context = ""
+    other_risks = RiskIdentification.objects.exclude(id=risk.id)[:5]
+
+    for other_risk in other_risks:
+        historical_context += (
+            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
-    # Construcción del prompt para IA
-    controls_text = f"""
-Controles actuales provistos por el usuario:
-- Preventivos: {chr(10).join(preventive_controls)}
-- Detección: {chr(10).join(detection_controls)}
-"""
+        for ev in other_risk.evaluations.all():
+            historical_context += (
+                f"  Evaluación - Severidad: {ev.severity}, Ocurrencia: {ev.occurrence}, "
+                f"Detección: {ev.detection}, Nivel: {ev.risk_level}\n"
+            )
 
+        for tr in other_risk.treatments.all():
+            historical_context += f"  Tratamiento: {tr.treatment_action}\n"
+
+        for plan in ContingencyPlan.objects.filter(risk=other_risk):
+            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
+
+        for ree in other_risk.reevaluations.all():
+            historical_context += (
+                f"  Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
+                f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+            )
+
+        historical_context += "\n"
+
+    if not historical_context:
+        historical_context = "No hay registros históricos disponibles para comparar."
+
+    # Construcción del prompt para IA (sin controles preventivos/detección)
     prompt = f"""
 Eres un experto en gestión de riesgos conforme a la norma ISO 9001:2015.
 
@@ -753,7 +774,7 @@ Información del riesgo:
 {risk_info}
 
 Evaluaciones iniciales:
-{eval_info or "No hay evaluaciones disponibles"}
+{eval_info}
 
 Tratamientos aplicados:
 {treatment_info}
@@ -761,10 +782,8 @@ Tratamientos aplicados:
 Planes de contingencia:
 {contingency_info}
 
-Reevaluaciones históricas similares:
-{reevaluation_info or "No hay reevaluaciones históricas"}
-
-{controls_text}
+Contexto histórico de otros riesgos:
+{historical_context}
 
 Responde únicamente en el siguiente formato JSON:
 {{
@@ -799,13 +818,13 @@ Responde únicamente en el siguiente formato JSON:
     except Exception as e:
         return {"error": str(e)}
 
-def suggest_reevaluation_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
+def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     try:
         risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
-    # Reutilizamos el mismo contexto que antes
+    # Información del riesgo
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
@@ -813,6 +832,7 @@ def suggest_reevaluation_risk_level(risk_id, preventive_controls, detection_cont
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
     )
 
+    # Evaluaciones propias del riesgo
     evaluations = risk.evaluations.all()
     eval_info = ""
     for i, ev in enumerate(evaluations, 1):
@@ -826,6 +846,7 @@ def suggest_reevaluation_risk_level(risk_id, preventive_controls, detection_cont
             f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
         )
 
+    # Tratamientos del riesgo
     treatments = risk.treatments.all()
     treatment_info = ""
     for i, tr in enumerate(treatments, 1):
@@ -836,20 +857,49 @@ def suggest_reevaluation_risk_level(risk_id, preventive_controls, detection_cont
             f"  Fecha real: {tr.actual_date}\n"
         )
 
+    # Planes de contingencia
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
     contingency_info = ""
     for plan in contingency_plans:
         actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
 
-    reevaluation_info = ""
-    historical_reevaluations = Reevaluation.objects.exclude(risk=risk)
-    for ree in historical_reevaluations[:10]:
-        reevaluation_info += (
-            f"Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
-            f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+    # Contexto histórico (otros riesgos similares)
+    historical_context = ""
+    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+        other_evals = other_risk.evaluations.all()
+        other_treatments = other_risk.treatments.all()
+        other_plans = ContingencyPlan.objects.filter(risk=other_risk)
+        other_reevs = other_risk.reevaluations.all()
+
+        historical_context += (
+            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
+        for ev in other_evals:
+            historical_context += (
+                f"  Evaluación - Severidad: {ev.severity}, Ocurrencia: {ev.occurrence}, "
+                f"Detección: {ev.detection}, Nivel: {ev.risk_level}\n"
+            )
+        for tr in other_treatments:
+            historical_context += f"  Tratamiento: {tr.treatment_action}\n"
+
+        for plan in other_plans:
+            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
+
+        for ree in other_reevs:
+            historical_context += (
+                f"  Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
+                f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+            )
+
+        historical_context += "\n"
+
+    if not historical_context:
+        historical_context = "No hay registros históricos disponibles para comparar."
+
+    # Valores actuales del usuario
     user_values = f"""
 Valores reevaluados ingresados:
 - Severidad: {severity}
@@ -857,12 +907,7 @@ Valores reevaluados ingresados:
 - Detección: {detection}
 """
 
-    controls_text = f"""
-Controles actuales:
-- Preventivos: {chr(10).join(preventive_controls)}
-- Detección: {chr(10).join(detection_controls)}
-"""
-
+    # Construcción del prompt para IA
     prompt = f"""
 Eres un analista experto en riesgos según la norma ISO 9001:2015.
 
@@ -880,12 +925,10 @@ Tratamientos aplicados:
 Acciones de contingencia:
 {contingency_info or "Sin acciones registradas"}
 
-Historial de reevaluaciones similares:
-{reevaluation_info or "Sin reevaluaciones históricas"}
+Contexto histórico de otros riesgos:
+{historical_context}
 
 {user_values}
-
-{controls_text}
 
 Responde en formato JSON como este:
 {{"risk_level": "🟥 Riesgo Alto"}}
@@ -911,4 +954,3 @@ Responde en formato JSON como este:
 
     except Exception as e:
         return {"error": str(e)}
-
