@@ -517,3 +517,149 @@ Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con 
     except Exception as e:
         print("Error al generar sugerencia IA:", str(e))
         return []
+
+
+def suggest_contingency_actions(risk_id, max_results=3):
+    """
+    Sugiere acciones de contingencia para un riesgo específico, basándose en:
+    - La identificación, evaluación y tratamiento del riesgo.
+    - Datos históricos de riesgos similares.
+    - Norma ISO 9001:2015 (Cláusulas 6.1 y 8.4).
+
+    Retorna una lista de diccionarios con la clave "contingency_action".
+    """
+    try:
+        risk = RiskIdentification.objects.get(id=risk_id)
+        evaluations = risk.evaluations.all()
+        treatments = risk.treatments.all()
+    except RiskIdentification.DoesNotExist:
+        return []
+
+    # Información actual del riesgo
+    risk_info = (
+        f"Riesgo identificado: {risk.identified_risk}\n"
+        f"Área: {risk.area.name}\n"
+        f"Actividad: {risk.activity_name}\n"
+        f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+    )
+
+    eval_info = ""
+    for i, ev in enumerate(evaluations, 1):
+        eval_info += (
+            f"Evaluación {i}:\n"
+            f"  Severidad: {ev.severity}\n"
+            f"  Ocurrencia: {ev.occurrence}\n"
+            f"  Detección: {ev.detection}\n"
+            f"  Nivel de riesgo: {ev.risk_level}\n"
+            f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
+            f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
+        ) or "No hay evaluaciones disponibles para este riesgo."
+
+    treatment_info = ""
+    for i, tr in enumerate(treatments, 1):
+        treatment_info += (
+            f"Tratamiento {i}:\n"
+            f"  Acción: {tr.treatment_action}\n"
+            f"  Fecha objetivo: {tr.target_date}\n"
+            f"  Fecha real: {tr.actual_date}\n"
+        )
+    if not treatment_info:
+        treatment_info = "No hay tratamientos registrados para este riesgo."
+
+    # Información histórica
+    historical_context = ""
+
+    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+        other_evals = other_risk.evaluations.all()
+        other_treatments = other_risk.treatments.all()
+        other_plans = ContingencyPlan.objects.filter(risk=other_risk)
+
+        historical_context += (
+            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
+        )
+
+        for ev in other_evals:
+            historical_context += (
+                f"  Evaluación - Severidad: {ev.severity}, Ocurrencia: {ev.occurrence}, "
+                f"Detección: {ev.detection}, Nivel: {ev.risk_level}\n"
+            )
+        for tr in other_treatments:
+            historical_context += f"  Tratamiento: {tr.treatment_action}\n"
+
+        for plan in other_plans:
+            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
+
+        historical_context += "\n"
+
+    if not historical_context:
+        historical_context = "No hay registros históricos disponibles para comparar."
+
+    # Prompt para la IA
+    prompt = f"""
+Eres un experto en gestión de riesgos conforme a la norma ISO 9001:2015, en particular las cláusulas 6.1 y 8.4.
+
+Con base en la siguiente información, recomienda {max_results} acciones de contingencia priorizadas, seleccionadas de la siguiente lista predefinida:
+
+- Establecer procedimientos alternativos
+- Identificar proveedores sustitutos
+- Asignar personal de respaldo
+- Mantener inventarios de emergencia
+- Implementar redundancias tecnológicas
+- Establecer protocolos de comunicación de crisis
+- Realizar simulacros y pruebas periódicas
+- Contratar seguros o coberturas específicas
+- Externalizar temporalmente operaciones críticas
+- Crear manuales de operación ante fallos
+
+Información del riesgo actual:
+{risk_info}
+
+Evaluaciones asociadas:
+{eval_info}
+
+Tratamientos aplicados:
+{treatment_info}
+
+Historial de riesgos similares:
+{historical_context}
+
+Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
+[
+  {{
+    "contingency_action": "Mantener inventarios de emergencia"
+  }},
+  {{
+    "contingency_action": "Asignar personal de respaldo"
+  }},
+  {{
+    "contingency_action": "Establecer protocolos de comunicación de crisis"
+  }}
+]
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.6,
+            max_tokens=400,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("Respuesta IA:", content)
+
+        suggestions = json.loads(content)
+
+        if isinstance(suggestions, list) and all("contingency_action" in item for item in suggestions):
+            return suggestions[:max_results]
+
+        return []
+
+    except json.JSONDecodeError as e:
+        print("Error al decodificar JSON:", e)
+        print("Contenido recibido:", repr(content))
+        return []
+    except Exception as e:
+        print("Error al generar sugerencia IA:", e)
+        return []
