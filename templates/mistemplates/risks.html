@@ -978,7 +978,6 @@ function attachTreatmentSuggestions() {
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
-        suggestionContainer.style.display = "block";
         suggestionList.innerHTML = ""; // Limpia sugerencias previas, sin mostrar aún el texto “Sugerencias de la IA:”
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
@@ -995,8 +994,11 @@ function attachTreatmentSuggestions() {
 
                 if (!Array.isArray(data) || data.length === 0) {
                     suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
+                    suggestionContainer.style.display = "block";
                     return;
                 }
+
+                suggestionContainer.style.display = "block";
 
                 data.forEach((item, index) => {
                     const action = item.treatment_action || "(sin acción sugerida)";
@@ -1024,6 +1026,7 @@ function attachTreatmentSuggestions() {
             .catch(error => {
                 console.error(error);
                 suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
+                suggestionContainer.style.display = "block";
             })
             .finally(() => {
                 btn.disabled = false;
@@ -1062,7 +1065,6 @@ function attachContingencySuggestions() {
         btn.textContent = "Obteniendo sugerencias...";
 
         // Muestra el contenedor y limpia el contenido anterior
-        suggestionContainer.style.display = "block";
         suggestionList.innerHTML = "";
 
         const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
@@ -1079,8 +1081,11 @@ function attachContingencySuggestions() {
 
                 if (!Array.isArray(data) || data.length === 0) {
                     suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
+                    suggestionContainer.style.display = "block";
                     return;
                 }
+
+                suggestionContainer.style.display = "block";
 
                 data.forEach((item, index) => {
                     const action = item.contingency_action || "(sin acción sugerida)";
@@ -1110,6 +1115,7 @@ function attachContingencySuggestions() {
             .catch(error => {
                 console.error(error);
                 suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
+                suggestionContainer.style.display = "block";
             })
             .finally(() => {
                 btn.disabled = false;
