@@ -2,7 +2,7 @@ from openai import OpenAI
 import openai
 import json
 import re
-from risks.models import RiskIdentification, RiskEvaluation
+from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
