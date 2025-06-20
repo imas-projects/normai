@@ -319,6 +319,7 @@ def add_reevaluation(request):
         }
     )
 
+@csrf_exempt
 def get_reevaluation_ranges_suggestions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Método no permitido'}, status=405)
