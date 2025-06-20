@@ -20,11 +20,12 @@
         <div class="mb-3">
             {{ form.contingency_actions.label_tag }}
             <select id="id_contingency_actions" name="{{ form.contingency_actions.name }}" multiple style="width: 100%; height: 150px; overflow-y: auto;">
-                {% for option in form.contingency_actions.field.queryset %}
-                    <option value="{{ option.pk }}"
-                        {% if option.pk in form.contingency_actions.value %}selected{% endif %}
-                    >{{ option }}</option>
+                {% for value, label in form.contingency_actions.field.choices %}
+                    <option value="{{ value }}"
+                        {% if value in form.contingency_actions.value %}selected{% endif %}
+                    >{{ label }}</option>
                 {% endfor %}
+
             </select>
         </div>
 
