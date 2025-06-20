@@ -645,6 +645,10 @@ function attachSuggestionHandler() {
             return;
         }
 
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
+
         const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
 
         fetch(url)
@@ -704,9 +708,14 @@ function attachSuggestionHandler() {
             .catch(error => {
                 alert("Error al obtener sugerencias.");
                 console.error(error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
     });
 }
+
 
 function attachEvaluationSuggestions() {
     const form = document.querySelector("#add-risk-evaluation-form");
