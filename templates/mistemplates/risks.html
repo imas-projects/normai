@@ -745,6 +745,10 @@ function attachEvaluationSuggestions() {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
 
+            const originalText = suggestControlsBtn.textContent;
+            suggestControlsBtn.disabled = true;
+            suggestControlsBtn.textContent = "Obteniendo sugerencias...";
+
             fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
                 .then(res => res.json())
                 .then(data => {
@@ -794,6 +798,10 @@ function attachEvaluationSuggestions() {
                 .catch(err => {
                     console.error("Error obteniendo controles:", err);
                     alert("Ocurrió un error al obtener controles sugeridos.");
+                })
+                .finally(() => {
+                    suggestControlsBtn.disabled = false;
+                    suggestControlsBtn.textContent = originalText;
                 });
         });
     }
@@ -803,6 +811,10 @@ function attachEvaluationSuggestions() {
         suggestRangesBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const originalText = suggestRangesBtn.textContent;
+            suggestRangesBtn.disabled = true;
+            suggestRangesBtn.textContent = "Obteniendo sugerencias...";
 
             fetch(suggestRangesBtn.dataset.url, {
                 method: "POST",
@@ -849,6 +861,10 @@ function attachEvaluationSuggestions() {
                 .catch(err => {
                     console.error("Error obteniendo rangos:", err);
                     alert("Ocurrió un error al obtener sugerencias de rangos.");
+                })
+                .finally(() => {
+                    suggestRangesBtn.disabled = false;
+                    suggestRangesBtn.textContent = originalText;
                 });
         });
     }
@@ -858,6 +874,10 @@ function attachEvaluationSuggestions() {
         suggestRiskLevelBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const originalText = suggestRiskLevelBtn.textContent;
+            suggestRiskLevelBtn.disabled = true;
+            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
 
             const params = new URLSearchParams({
                 risk_id: riskId,
@@ -871,15 +891,22 @@ function attachEvaluationSuggestions() {
             fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
-                    console.log("Respuesta nivel de riesgo:", data); // Opcional para depuración
                     if (data.error) return alert(data.error);
                     riskLevelField.value = data.risk_level;
                     riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
                 })
-                .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
+                .catch(err => {
+                    console.error("Error obteniendo nivel de riesgo:", err);
+                    alert("Ocurrió un error al obtener el nivel de riesgo.");
+                })
+                .finally(() => {
+                    suggestRiskLevelBtn.disabled = false;
+                    suggestRiskLevelBtn.textContent = originalText;
+                });
         });
     }
 }
+
 
 function attachTreatmentSuggestions() {
     const form = document.querySelector("#add-risk-treatment-form");
