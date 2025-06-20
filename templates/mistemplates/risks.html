@@ -576,6 +576,9 @@ function setupAddStepsModal() {
                     if (step.target === "contingencyPlanContent") {
                     attachContingencySuggestions();
                     }
+                    if (step.target === "reevaluationContent") {
+                    attachReevaluationSuggestions();
+                    }
                 })
                 .catch(err => {
                     console.error(`Error cargando ${step.url}:`, err);
@@ -1060,6 +1063,112 @@ function attachContingencySuggestions() {
     });
 }
 
+function attachReevaluationSuggestions() {
+    const form = document.querySelector("#add-reevaluation-form");
+    if (!form) return;
+
+    const riskSelect = form.querySelector("select[name='risk']");
+    const severityField = form.querySelector("select[name='severity']");
+    const occurrenceField = form.querySelector("select[name='occurrence']");
+    const detectionField = form.querySelector("select[name='detection']");
+    const riskLevelField = form.querySelector("select[name='risk_level']");
+    const riskLevelDisplay = document.getElementById("reevaluated-risk-level-suggestion");
+
+    const suggestRangesBtn = document.getElementById("suggest-reevaluation-ranges-btn");
+    if (suggestRangesBtn) {
+        suggestRangesBtn.addEventListener("click", () => {
+            const riskId = riskSelect ? riskSelect.value : null;
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+                return;
+            }
+
+            // Muestra estado de carga
+            suggestRangesBtn.disabled = true;
+            suggestRangesBtn.textContent = "Obteniendo sugerencias...";
+
+            fetch(suggestRangesBtn.dataset.url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ risk_id: riskId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    const extractMidValue = (rangeStr) => {
+                        const match = rangeStr.match(/(\d+)/g);
+                        if (match && match.length >= 2) {
+                            const min = parseInt(match[0]);
+                            const max = parseInt(match[1]);
+                            return Math.round((min + max) / 2);
+                        } else if (match && match.length === 1) {
+                            return parseInt(match[0]);
+                        }
+                        return null;
+                    };
+
+                    const sev = extractMidValue(data.severity_range);
+                    const occ = extractMidValue(data.occurrence_range);
+                    const det = extractMidValue(data.detection_range);
+
+                    if (sev !== null) severityField.value = sev;
+                    if (occ !== null) occurrenceField.value = occ;
+                    if (det !== null) detectionField.value = det;
+                })
+                .catch(err => {
+                    console.error("Error obteniendo rangos reevaluados:", err);
+                    alert("Ocurrió un error al obtener sugerencias de rangos.");
+                })
+                .finally(() => {
+                    suggestRangesBtn.disabled = false;
+                    suggestRangesBtn.textContent = "Sugerir rangos reevaluados";
+                });
+        });
+    }
+
+    const suggestRiskLevelBtn = document.getElementById("suggest-reevaluation-risk-level-btn");
+    if (suggestRiskLevelBtn) {
+        suggestRiskLevelBtn.addEventListener("click", () => {
+            const riskId = riskSelect ? riskSelect.value : null;
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+                return;
+            }
+
+            // Muestra estado de carga
+            suggestRiskLevelBtn.disabled = true;
+            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+            riskLevelDisplay.textContent = "";
+
+            const params = new URLSearchParams({
+                risk_id: riskId,
+                severity: severityField.value,
+                occurrence: occurrenceField.value,
+                detection: detectionField.value
+            });
+
+            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    riskLevelField.value = data.risk_level;
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
+                })
+                .catch(err => {
+                    console.error("Error obteniendo nivel de riesgo reevaluado:", err);
+                    alert("Ocurrió un error al obtener sugerencias del nivel de riesgo.");
+                })
+                .finally(() => {
+                    suggestRiskLevelBtn.disabled = false;
+                    suggestRiskLevelBtn.textContent = "Sugerir nivel de riesgo reevaluado";
+                });
+        });
+    }
+}
 
 
 
