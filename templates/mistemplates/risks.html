@@ -973,6 +973,11 @@ function attachTreatmentSuggestions() {
             return;
         }
 
+        // Muestra estado de carga
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
+
         suggestionContainer.style.display = "block";
         suggestionList.innerHTML = "Obteniendo sugerencias...";
 
@@ -1019,11 +1024,17 @@ function attachTreatmentSuggestions() {
             .catch(error => {
                 console.error(error);
                 suggestionList.innerHTML = "Error al obtener sugerencias.";
+            })
+            .finally(() => {
+                // Restaurar estado del botón
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
     });
 }
 
 document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
+
 
 
 function attachContingencySuggestions() {
@@ -1045,6 +1056,11 @@ function attachContingencySuggestions() {
             alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
             return;
         }
+
+        // Muestra estado de carga
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
 
         suggestionContainer.style.display = "block";
         suggestionList.innerHTML = "Obteniendo sugerencias...";
@@ -1095,9 +1111,14 @@ function attachContingencySuggestions() {
             .catch(error => {
                 console.error(error);
                 suggestionList.innerHTML = "Error al obtener sugerencias.";
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
     });
 }
+
 
 function attachReevaluationSuggestions() {
     const form = document.querySelector("#add-reevaluation-form");
