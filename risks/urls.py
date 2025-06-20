@@ -18,6 +18,7 @@ urlpatterns = [
   path('add-risk-treatment/', add_risk_treatment, name='add_risk_treatment'),
   path('get-treatment-suggestions/', get_treatment_suggestions, name='get_treatment_suggestions'),
   path('add-contingency-plan/', add_contingency_plan, name='add_contingency_plan'),
+  path('get-contingency-suggestions/', views.get_contingency_suggestions, name='get_contingency_suggestions'),
   path('add-reevaluation/', add_reevaluation, name='add_reevaluation'),
   path('edit-risk-identification/<int:risk_id>/', edit_risk_identification, name='edit-risk-identification'),
   path('edit-risk-evaluation/<int:risk_id>/', edit_risk_evaluation, name='edit-risk-evaluation'),
