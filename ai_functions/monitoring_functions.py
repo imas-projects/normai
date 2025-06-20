@@ -528,6 +528,14 @@ def suggest_contingency_actions(risk_id, max_results=3):
 
     Retorna una lista de diccionarios con la clave "contingency_action".
     """
+
+    def clean_json_markdown_block(text):
+        if text.startswith("```json"):
+            text = text[len("```json"):].strip()
+        if text.endswith("```"):
+            text = text[:-3].strip()
+        return text
+
     try:
         risk = RiskIdentification.objects.get(id=risk_id)
         evaluations = risk.evaluations.all()
@@ -649,6 +657,8 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta IA:", content)
 
+        content = clean_json_markdown_block(content)  # Limpieza del bloque Markdown
+
         suggestions = json.loads(content)
 
         if isinstance(suggestions, list) and all("contingency_action" in item for item in suggestions):
@@ -663,3 +673,4 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
     except Exception as e:
         print("Error al generar sugerencia IA:", e)
         return []
+
