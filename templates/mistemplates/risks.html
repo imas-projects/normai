@@ -973,10 +973,13 @@ function attachTreatmentSuggestions() {
             return;
         }
 
+        // Muestra estado de carga solo en el botón
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
+        suggestionContainer.style.display = "block";
+        suggestionList.innerHTML = ""; // Limpia pero no muestra texto
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -1034,6 +1037,7 @@ document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
 
 
 
+
 function attachContingencySuggestions() {
     const form = document.querySelector("#add-contingency-plan-form");
     if (!form) return;
@@ -1054,10 +1058,13 @@ function attachContingencySuggestions() {
             return;
         }
 
-        // Muestra estado de carga
+        // Muestra estado de carga solo en el botón
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
+
+        suggestionContainer.style.display = "block";
+        suggestionList.innerHTML = ""; // Elimina el texto de carga aquí
 
         const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -1107,6 +1114,7 @@ function attachContingencySuggestions() {
                 suggestionList.innerHTML = "Error al obtener sugerencias.";
             })
             .finally(() => {
+                // Restaurar estado del botón
                 btn.disabled = false;
                 btn.textContent = originalText;
             });
