@@ -2,26 +2,53 @@
 <div class="container">
     <form method="post" id="add-reevaluation-form" action="{% url 'risks:add_reevaluation' %}">
         {% csrf_token %}
+
         <div class="mb-3">
             {{ form.risk.label_tag }}
             {{ form.risk }}
         </div>
-        <div class="mb-3">
-            {{ form.severity.label_tag }}
-            {{ form.severity }}
-        </div>
-        <div class="mb-3">
-            {{ form.occurrence.label_tag }}
-            {{ form.occurrence }}
-        </div>
-        <div class="mb-3">
-            {{ form.detection.label_tag }}
-            {{ form.detection }}
-        </div>
-        <div class="mb-3">
-            {{ form.risk_level.label_tag }}
-            {{ form.risk_level }}
-        </div>
+
+        <fieldset class="mb-4">
+            <legend>Rangos reevaluados</legend>
+
+            <button type="button" id="suggest-reevaluation-ranges-btn" class="btn btn-info mb-3"
+                data-url="{% url 'risks:get_reevaluation_ranges_suggestions' %}">
+                Sugerir rangos reevaluados
+            </button>
+
+            <div class="mb-3">
+                {{ form.severity.label_tag }}
+                {{ form.severity }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.occurrence.label_tag }}
+                {{ form.occurrence }}
+            </div>
+
+            <div class="mb-3">
+                {{ form.detection.label_tag }}
+                {{ form.detection }}
+            </div>
+        </fieldset>
+
+        <fieldset class="mb-4">
+            <legend>Nivel de riesgo reevaluado</legend>
+
+            <button type="button" id="suggest-reevaluation-risk-level-btn" class="btn btn-info mb-3"
+                data-url="{% url 'risks:get_reevaluation_level_suggestions' %}">
+                Sugerir nivel de riesgo reevaluado
+            </button>
+
+            <div id="reevaluated-risk-level-suggestion" style="font-weight: bold; font-size: 1.2em; margin-top: 0.5rem;"></div>
+            
+            <div class="mb-3">
+                {{ form.risk_level.label_tag }}
+                {{ form.risk_level }}
+            </div>
+
+        </fieldset>
+
         <button type="submit" class="btn btn-success">Save</button>
     </form>
 </div>
