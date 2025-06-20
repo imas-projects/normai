@@ -926,34 +926,34 @@ function attachTreatmentSuggestions() {
                     "X-Requested-With": "XMLHttpRequest"
                 }
             })
-            .then(async response => {
-                const contentType = response.headers.get("Content-Type") || "";
-                if (!response.ok) {
-                    if (contentType.includes("application/json")) {
-                        const errorData = await response.json();
-                        throw errorData;
-                    } else {
-                        throw new Error("Respuesta no válida del servidor.");
+                .then(async response => {
+                    const contentType = response.headers.get("Content-Type") || "";
+                    if (!response.ok) {
+                        if (contentType.includes("application/json")) {
+                            const errorData = await response.json();
+                            throw errorData;
+                        } else {
+                            throw new Error("Respuesta no válida del servidor.");
+                        }
                     }
-                }
-                if (contentType.includes("application/json")) {
-                    return response.json();
-                } else {
-                    throw new Error("Respuesta inesperada del servidor.");
-                }
-            })
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    form.reset();
-                } else {
-                    alert("Formulario enviado, pero sin mensaje de confirmación.");
-                }
-            })
-            .catch(err => {
-                console.error("Error al enviar el formulario:", err);
-                alert("Error al enviar el formulario.");
-            });
+                    if (contentType.includes("application/json")) {
+                        return response.json();
+                    } else {
+                        throw new Error("Respuesta inesperada del servidor.");
+                    }
+                })
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        form.reset();
+                    } else {
+                        alert("Formulario enviado, pero sin mensaje de confirmación.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error al enviar el formulario:", err);
+                    alert("Error al enviar el formulario.");
+                });
         });
     }
 
@@ -973,13 +973,13 @@ function attachTreatmentSuggestions() {
             return;
         }
 
-        // Muestra estado de carga solo en el botón
+        // Estado de carga en el botón
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
         suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = ""; // Limpia pero no muestra texto
+        suggestionList.innerHTML = ""; // Limpia sugerencias previas, sin mostrar aún el texto “Sugerencias de la IA:”
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -991,12 +991,17 @@ function attachTreatmentSuggestions() {
                 return response.json();
             })
             .then(data => {
-                suggestionList.innerHTML = "";
+                suggestionList.innerHTML = ""; // Asegura que esté limpio
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    suggestionList.innerHTML = "No se encontraron sugerencias.";
+                    suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
                     return;
                 }
+
+                // Solo ahora mostramos el título
+                const title = document.createElement("h5");
+                title.textContent = "Sugerencias de la IA:";
+                suggestionList.appendChild(title);
 
                 data.forEach((item, index) => {
                     const action = item.treatment_action || "(sin acción sugerida)";
@@ -1023,10 +1028,9 @@ function attachTreatmentSuggestions() {
             })
             .catch(error => {
                 console.error(error);
-                suggestionList.innerHTML = "Error al obtener sugerencias.";
+                suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
             })
             .finally(() => {
-                // Restaurar estado del botón
                 btn.disabled = false;
                 btn.textContent = originalText;
             });
@@ -1034,8 +1038,6 @@ function attachTreatmentSuggestions() {
 }
 
 document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
-
-
 
 
 function attachContingencySuggestions() {
@@ -1058,13 +1060,14 @@ function attachContingencySuggestions() {
             return;
         }
 
-        // Muestra estado de carga solo en el botón
+        // Estado de carga solo en el botón
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
+        // Muestra el contenedor y limpia el contenido anterior
         suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = ""; // Elimina el texto de carga aquí
+        suggestionList.innerHTML = "";
 
         const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -1079,9 +1082,14 @@ function attachContingencySuggestions() {
                 suggestionList.innerHTML = "";
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    suggestionList.innerHTML = "No se encontraron sugerencias.";
+                    suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
                     return;
                 }
+
+                // Solo mostramos el título si hay sugerencias
+                const title = document.createElement("h5");
+                title.textContent = "Sugerencias de la IA:";
+                suggestionList.appendChild(title);
 
                 data.forEach((item, index) => {
                     const action = item.contingency_action || "(sin acción sugerida)";
@@ -1097,7 +1105,6 @@ function attachContingencySuggestions() {
 
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
-                        // Selecciona la opción en el select múltiple
                         Array.from(contingencySelect.options).forEach(option => {
                             if (option.text.trim() === action.trim()) {
                                 option.selected = true;
@@ -1111,15 +1118,15 @@ function attachContingencySuggestions() {
             })
             .catch(error => {
                 console.error(error);
-                suggestionList.innerHTML = "Error al obtener sugerencias.";
+                suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
             })
             .finally(() => {
-                // Restaurar estado del botón
                 btn.disabled = false;
                 btn.textContent = originalText;
             });
     });
 }
+
 
 
 function attachReevaluationSuggestions() {
