@@ -573,6 +573,9 @@ function setupAddStepsModal() {
                     if (step.target === "riskTreatmentContent") {
                     attachTreatmentSuggestions();
                     }
+                    if (step.target === "contingencyPlanContent") {
+                    attachContingencySuggestions();
+                    }
                 })
                 .catch(err => {
                     console.error(`Error cargando ${step.url}:`, err);
@@ -607,8 +610,6 @@ function attachFormSubmit(selector) {
         .then(data => {
             if (data.success) {
                 alert("Formulario enviado correctamente.");
-                // Puedes cerrar el modal aquí si quieres:
-                // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
             } else {
                 alert("Error al enviar el formulario.");
                 console.error(data.errors || "Error desconocido");
