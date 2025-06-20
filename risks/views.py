@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 import json
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -260,6 +260,34 @@ def add_contingency_plan(request):
         form = ContingencyPlanForm()
 
     return render(request, 'mistemplates/add_contingency_plan.html', {'form': form})
+
+def get_contingency_suggestions(request):
+    """
+    Endpoint que devuelve sugerencias de acciones de contingencia para un riesgo específico.
+    Parámetros esperados (GET):
+    - risk_id (obligatorio)
+    - max_results (opcional, por defecto 3)
+    """
+    risk_id = request.GET.get('risk_id')
+    max_results = request.GET.get('max_results', 3)
+
+    if not risk_id:
+        return JsonResponse({'error': 'Parámetro "risk_id" es requerido.'}, status=400)
+
+    try:
+        max_results = int(max_results)
+        if max_results < 1:
+            max_results = 3
+    except ValueError:
+        max_results = 3
+
+    suggestions = suggest_contingency_actions(risk_id=risk_id, max_results=max_results)
+
+    if not suggestions:
+        return JsonResponse({'error': 'No se pudieron generar sugerencias.'}, status=404)
+
+    return JsonResponse(suggestions, safe=False)
+
 
 def add_reevaluation(request):
     if request.method == 'POST':
