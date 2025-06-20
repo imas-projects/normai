@@ -954,8 +954,7 @@ function attachTreatmentSuggestions() {
                     console.error("Error al enviar el formulario:", err);
                     alert("Error al enviar el formulario.");
                 });
-        });
-    }
+    });
 
     const btn = form.querySelector("#getTreatmentSuggestionBtn");
     if (!btn) return;
@@ -973,13 +972,13 @@ function attachTreatmentSuggestions() {
             return;
         }
 
-        // Estado de carga en el botón
+        // Estado de carga solo en el botón
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
         suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = ""; // Limpia sugerencias previas, sin mostrar aún el texto “Sugerencias de la IA:”
+        suggestionList.innerHTML = ""; // No mostramos nada aún
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -991,14 +990,14 @@ function attachTreatmentSuggestions() {
                 return response.json();
             })
             .then(data => {
-                suggestionList.innerHTML = ""; // Asegura que esté limpio
+                suggestionList.innerHTML = ""; // Limpia de nuevo para asegurar
 
                 if (!Array.isArray(data) || data.length === 0) {
                     suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
                     return;
                 }
 
-                // Solo ahora mostramos el título
+                // Aquí ponemos el texto “Sugerencias de la IA:” solo UNA vez, justo cuando aparecen las sugerencias
                 const title = document.createElement("h5");
                 title.textContent = "Sugerencias de la IA:";
                 suggestionList.appendChild(title);
@@ -1065,9 +1064,9 @@ function attachContingencySuggestions() {
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
-        // Muestra el contenedor y limpia el contenido anterior
+        // Mostrar contenedor y limpiar contenido anterior
         suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = "";
+        suggestionList.innerHTML = ""; // ¡NO ponemos texto aquí!
 
         const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -1086,7 +1085,7 @@ function attachContingencySuggestions() {
                     return;
                 }
 
-                // Solo mostramos el título si hay sugerencias
+                // Solo aquí ponemos el título UNA vez, cuando ya hay sugerencias
                 const title = document.createElement("h5");
                 title.textContent = "Sugerencias de la IA:";
                 suggestionList.appendChild(title);
