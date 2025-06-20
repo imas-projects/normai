@@ -998,11 +998,6 @@ function attachTreatmentSuggestions() {
                     return;
                 }
 
-                // Solo ahora mostramos el título
-                const title = document.createElement("h5");
-                title.textContent = "Sugerencias de la IA:";
-                suggestionList.appendChild(title);
-
                 data.forEach((item, index) => {
                     const action = item.treatment_action || "(sin acción sugerida)";
                     const card = document.createElement("div");
@@ -1086,11 +1081,6 @@ function attachContingencySuggestions() {
                     suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
                     return;
                 }
-
-                // Solo mostramos el título si hay sugerencias
-                const title = document.createElement("h5");
-                title.textContent = "Sugerencias de la IA:";
-                suggestionList.appendChild(title);
 
                 data.forEach((item, index) => {
                     const action = item.contingency_action || "(sin acción sugerida)";
