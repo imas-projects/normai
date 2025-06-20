@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import create_risk, edit_risk_identification, edit_risk_evaluation, edit_risk_treatment, edit_contingency_plan, edit_reevaluation
-from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluation, add_risk_treatment, add_contingency_plan, add_reevaluation, get_controls_suggestions, get_ranges_suggestions, get_level_suggestions, get_treatment_suggestions
+from .views import generate_risks_pdf, add_risk_identification, add_risk_evaluation, add_risk_treatment, add_contingency_plan, add_reevaluation, get_controls_suggestions, get_ranges_suggestions, get_level_suggestions, get_treatment_suggestions, get_contingency_suggestions
 from . import views
 
 
@@ -18,7 +18,7 @@ urlpatterns = [
   path('add-risk-treatment/', add_risk_treatment, name='add_risk_treatment'),
   path('get-treatment-suggestions/', get_treatment_suggestions, name='get_treatment_suggestions'),
   path('add-contingency-plan/', add_contingency_plan, name='add_contingency_plan'),
-  path('get-contingency-suggestions/', views.get_contingency_suggestions, name='get_contingency_suggestions'),
+  path('get-contingency-suggestions/', get_contingency_suggestions, name='get_contingency_suggestions'),
   path('add-reevaluation/', add_reevaluation, name='add_reevaluation'),
   path('edit-risk-identification/<int:risk_id>/', edit_risk_identification, name='edit-risk-identification'),
   path('edit-risk-evaluation/<int:risk_id>/', edit_risk_evaluation, name='edit-risk-evaluation'),
