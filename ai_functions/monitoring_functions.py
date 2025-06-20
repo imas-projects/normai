@@ -674,3 +674,241 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         print("Error al generar sugerencia IA:", e)
         return []
 
+
+def suggest_reevaluation_rating_ranges(risk_id, preventive_controls, detection_controls):
+    try:
+        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+    except RiskIdentification.DoesNotExist:
+        return {"error": "No se encontró el riesgo especificado."}
+
+    # Información base del riesgo
+    risk_info = (
+        f"Riesgo identificado: {risk.identified_risk}\n"
+        f"Área: {risk.area.name}\n"
+        f"Actividad: {risk.activity_name}\n"
+        f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+    )
+
+    # Evaluaciones iniciales
+    evaluations = risk.evaluations.all()
+    eval_info = ""
+    for i, ev in enumerate(evaluations, 1):
+        eval_info += (
+            f"Evaluación {i}:\n"
+            f"  Severidad: {ev.severity}\n"
+            f"  Ocurrencia: {ev.occurrence}\n"
+            f"  Detección: {ev.detection}\n"
+            f"  Nivel de riesgo: {ev.risk_level}\n"
+            f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
+            f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
+        )
+
+    # Tratamientos
+    treatments = risk.treatments.all()
+    treatment_info = ""
+    for i, tr in enumerate(treatments, 1):
+        treatment_info += (
+            f"Tratamiento {i}:\n"
+            f"  Acción: {tr.treatment_action}\n"
+            f"  Fecha objetivo: {tr.target_date}\n"
+            f"  Fecha real: {tr.actual_date}\n"
+        )
+    if not treatment_info:
+        treatment_info = "No hay tratamientos registrados para este riesgo."
+
+    # Acciones de contingencia
+    contingency_plans = ContingencyPlan.objects.filter(risk=risk)
+    contingency_info = ""
+    for plan in contingency_plans:
+        actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
+        contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
+    if not contingency_info:
+        contingency_info = "No hay acciones de contingencia registradas."
+
+    # Recolección de reevaluaciones históricas
+    historical_reevaluations = Reevaluation.objects.exclude(risk=risk)
+    reevaluation_info = ""
+    for ree in historical_reevaluations[:10]:
+        reevaluation_info += (
+            f"Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
+            f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+        )
+
+    # Construcción del prompt para IA
+    controls_text = f"""
+Controles actuales provistos por el usuario:
+- Preventivos: {chr(10).join(preventive_controls)}
+- Detección: {chr(10).join(detection_controls)}
+"""
+
+    prompt = f"""
+Eres un experto en gestión de riesgos conforme a la norma ISO 9001:2015.
+
+Basándote en la siguiente información, sugiere rangos recomendados para:
+- Severidad
+- Ocurrencia
+- Detección
+
+Información del riesgo:
+{risk_info}
+
+Evaluaciones iniciales:
+{eval_info or "No hay evaluaciones disponibles"}
+
+Tratamientos aplicados:
+{treatment_info}
+
+Planes de contingencia:
+{contingency_info}
+
+Reevaluaciones históricas similares:
+{reevaluation_info or "No hay reevaluaciones históricas"}
+
+{controls_text}
+
+Responde únicamente en el siguiente formato JSON:
+{{
+  "severity_range": "entre 2 y 5",
+  "occurrence_range": "entre 3 y 6",
+  "detection_range": "entre 4 y 8"
+}}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=500,
+        )
+
+        raw_content = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", raw_content)
+
+        match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+        if not match:
+            return {"error": "No se encontró un JSON válido en la respuesta."}
+
+        data = json.loads(match.group(0))
+        return {
+            "severity_range": data.get("severity_range", ""),
+            "occurrence_range": data.get("occurrence_range", ""),
+            "detection_range": data.get("detection_range", "")
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+def suggest_reevaluation_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
+    try:
+        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+    except RiskIdentification.DoesNotExist:
+        return {"error": "No se encontró el riesgo especificado."}
+
+    # Reutilizamos el mismo contexto que antes
+    risk_info = (
+        f"Riesgo identificado: {risk.identified_risk}\n"
+        f"Área: {risk.area.name}\n"
+        f"Actividad: {risk.activity_name}\n"
+        f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+    )
+
+    evaluations = risk.evaluations.all()
+    eval_info = ""
+    for i, ev in enumerate(evaluations, 1):
+        eval_info += (
+            f"Evaluación {i}:\n"
+            f"  Severidad: {ev.severity}\n"
+            f"  Ocurrencia: {ev.occurrence}\n"
+            f"  Detección: {ev.detection}\n"
+            f"  Nivel de riesgo: {ev.risk_level}\n"
+            f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
+            f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
+        )
+
+    treatments = risk.treatments.all()
+    treatment_info = ""
+    for i, tr in enumerate(treatments, 1):
+        treatment_info += (
+            f"Tratamiento {i}:\n"
+            f"  Acción: {tr.treatment_action}\n"
+            f"  Fecha objetivo: {tr.target_date}\n"
+            f"  Fecha real: {tr.actual_date}\n"
+        )
+
+    contingency_plans = ContingencyPlan.objects.filter(risk=risk)
+    contingency_info = ""
+    for plan in contingency_plans:
+        actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
+        contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
+
+    reevaluation_info = ""
+    historical_reevaluations = Reevaluation.objects.exclude(risk=risk)
+    for ree in historical_reevaluations[:10]:
+        reevaluation_info += (
+            f"Reevaluación - Severidad: {ree.severity}, Ocurrencia: {ree.occurrence}, "
+            f"Detección: {ree.detection}, Nivel: {ree.risk_level}\n"
+        )
+
+    user_values = f"""
+Valores reevaluados ingresados:
+- Severidad: {severity}
+- Ocurrencia: {occurrence}
+- Detección: {detection}
+"""
+
+    controls_text = f"""
+Controles actuales:
+- Preventivos: {chr(10).join(preventive_controls)}
+- Detección: {chr(10).join(detection_controls)}
+"""
+
+    prompt = f"""
+Eres un analista experto en riesgos según la norma ISO 9001:2015.
+
+Utiliza toda la siguiente información para **estimar el nivel de riesgo (🟥, 🟨, 🟩)** más adecuado tras una reevaluación.
+
+Información del riesgo:
+{risk_info}
+
+Evaluaciones previas:
+{eval_info or "Sin evaluaciones"}
+
+Tratamientos aplicados:
+{treatment_info or "Sin tratamientos"}
+
+Acciones de contingencia:
+{contingency_info or "Sin acciones registradas"}
+
+Historial de reevaluaciones similares:
+{reevaluation_info or "Sin reevaluaciones históricas"}
+
+{user_values}
+
+{controls_text}
+
+Responde en formato JSON como este:
+{{"risk_level": "🟥 Riesgo Alto"}}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=300,
+        )
+
+        raw_content = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", raw_content)
+
+        match = re.search(r'\{.*\}', raw_content, re.DOTALL)
+        if not match:
+            return {"error": "No se encontró JSON válido."}
+
+        data = json.loads(match.group(0))
+        return {"risk_level": data.get("risk_level", "")}
+
+    except Exception as e:
+        return {"error": str(e)}
+
