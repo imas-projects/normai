@@ -42,9 +42,10 @@ class Process(models.Model):
     objective = models.TextField()
     creation_date = models.DateField()
     process_code = models.TextField()
-    responsible = models.ForeignKey(User, on_delete=models.PROTECT, related_name="process")
+    responsible = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="process")
     review = models.TextField(blank=True, null=True)
     review_date = models.DateField(blank=True, null=True)
+    summary = models.CharField(max_length=1000, verbose_name="Resumen", blank=True, null=True)
 
     staff_roles = models.TextField(blank=True, null=True)
     workspaces = models.TextField(blank=True, null=True)

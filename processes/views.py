@@ -31,7 +31,7 @@ def create_process(request):
 
 
 def load_form_options():
-    responsible_options = list(User.objects.all().values('id', 'first_name', 'last_name'))
+    responsible_options = list(Position.objects.all().values('id', 'name'))
     internal_suppliers_options = list(Area.objects.all().values('id', 'name'))
     external_suppliers_options = list(ExternalSupplier.objects.all().values('id', 'name'))
     internal_clients_options = list(Area.objects.all().values('id', 'name'))
@@ -136,7 +136,7 @@ def update_process(request):
                 updated_process.name = process_name
                 updated_process.objective = process_objective
                 updated_process.review_date = process_review_date
-                updated_process.responsible = User.objects.get(id=process_responsible) 
+                updated_process.responsible = Position.objects.get(id=process_responsible) 
 
                 updated_process.inputs.set(selected_inputs)
                 updated_process.outputs.set(selected_outputs)
@@ -193,6 +193,23 @@ def add_risk_processes(request):
             new_risk_process.save
 
     return render(request, 'mistemplates/processes.html', {'processes': processes})
+
+
+def save_process_summarize_ia(request):
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "save_process_summarize_form" :
+            process_id = request.POST.get("process_id")
+            new_summary = request.POST.get("summary")
+
+            updated_process = Process.objects.get(id=process_id)
+            updated_process.summary=new_summary[:1000]
+            updated_process.save() 
+
+
+    return redirect('processes:list_processes')
 
 
 ############## Views con IA
@@ -406,7 +423,7 @@ def process_iso_compliance_ia(request):
 def process_summarize_ia(request):
     assistant_answer = None
     open_details_modal_id = None
-    max_tokens= 250
+    max_tokens= 50
 
     processes = Process.objects.all()
 
@@ -445,7 +462,7 @@ def process_summarize_ia(request):
                 Indicadores de desempeño: {", ".join([i.name for i in process.performance_indicators.all()]) or "Ninguno"}
                 """
             
-            user_input = "Summarize this process of a manufacturing company. Your response must reflect the actual content of the process data. Avoid generic or fabricated insights."
+            user_input = "Summarize this process of a manufacturing company in less than 1000 characters. Your response must reflect the actual content of the process data. Avoid generic or fabricated insights."
 
             assistant_answer = ai.ai_text_function(process_data,user_input,max_tokens)
 

@@ -44,9 +44,9 @@
                             <div class="hstack gap-1">
                                 <h4 class="card-title bg-dark text-light p-1 px-1 rounded-top"> Código Tabla: {{ table.code }}</h4>
                             </div>
-                            <div class="hstack gap-1">
+                            <!--<div class="hstack gap-1">
                                 <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Área: {{ table.area.name }}</h4>
-                            </div>
+                            </div>-->
                             <div class="hstack gap-1">
                                 <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Estado: {{ table.get_status_display }}</h4>
                             </div>
@@ -58,16 +58,16 @@
                         </div>
                         <div class="hstack gap-4 w-auto">
                             <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Creada Por: {{ table.created_by.first_name }} {{ table.created_by.last_name}}</h4>
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Creada Por: {{ table.created_by.name }}</h4>
                             </div>
                             <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Emisor: {{ table.emiter.first_name }} {{ table.emiter.last_name}}</h4>
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Emisor: {{ table.emiter.name }}</h4>
                             </div>
                             <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.first_name}} {{ table.reviewed_by.last_name}}</h4>
+                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.name}}</h4>
                             </div>
                             <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.first_name }} {{ table.approved_by.last_name }}</h4>
+                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.name }}</h4>
                             </div>
                             </div>
                             
@@ -101,8 +101,6 @@
                                                     class="ri-add-line"></i>
                                                 Nuevo Mensaje
                                             </button>
-                                            {% else %}
-                                            
                                             {% endif %}
                                         </div>
                                     </tr>
@@ -120,12 +118,18 @@
                                     <tr>
                                         <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
                                         <td>{{ msg.message.name }}</td>
-                                        <td>{{ msg.receiver.first_name }} {{ msg.receiver.last_name }}</td>
-                                        <td>{{ msg.message.message_channels.first.channel}}</td>
+                                        <td>{{ msg.receiver.name}}</td>
+                                        <td>{% for mc in msg.message.message_channels.all %}
+                                                {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                Sin canal
+                                            {% endfor %}
+                                        </td>
 
                                         <td>{{ msg.periodicity.name }}</td>
                                         <td>
-                                            {% if user == table.emiter and table.status == 'open' %}
+
+                                            {% if user.user_position.first.position.name|stringformat:"s" == table.emiter|stringformat:"s" %}
                                             <button class="btn edit-btn btn-ghost-info" data-id="{{ msg.id }}"
                                                 data-bs-toggle="modal" data-bs-target="#editModal">
                                                 <i class="ri-edit-2-line" style="font-size: 18px;"></i>
@@ -345,7 +349,15 @@
                             <div class="mb-3">
                                 <label for="new-table-creator" class="form-label">Creada por:</label>
                                 <select class="form-select" id="new-table-creator" value="{{ user.id }}" name="new-table-creator" disabled>
-                                    <option value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}</option>
+                                    <option value="{{ user.id }}" selected> 
+                                        {% with user.user_position.first as user_pos %}
+                                            {% if user_pos %}
+                                                {{ user_pos.position.name }}
+                                            {% else %}
+                                                Sin posición
+                                            {% endif %}
+                                        {% endwith %}
+                                    </option>
                                 </select> 
                             </div> 
                             <div class="mb-3">
@@ -353,11 +365,11 @@
                                 <select id="new-table-emiter" name="new-table-emiter" class="form-control" required>
                                 </select>
                             </div>       
-                            <div class="mb-3">
+                            <!--<div class="mb-3">
                                 <label for="new-table-area" class="form-label">Area</label>
                                 <select class="form-select" id="new-table-area" name="new-table-area" required>
                                 </select>
-                            </div>           
+                            </div>   -->        
                         </div>
                         <div class="modal-footer">
                             <button type="submit" id="savetableBtn" class="btn btn-primary bg-success">Guardar
@@ -480,7 +492,7 @@
                             data.departments_options.forEach(opt => {
                                 const option = document.createElement('option');
                                 option.value = opt.id;
-                                option.textContent = `${opt.first_name} ${opt.last_name}`;
+                                option.textContent = `${opt.name}`;
                                 receiverSelect.appendChild(option);
                             });
                             if (receiverChoicesInstance) receiverChoicesInstance.destroy();
@@ -685,7 +697,7 @@
                                 data.departments_options.forEach(receiverOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = receiverOption.id;
-                                    optionElement.textContent = receiverOption.first_name + receiverOption.last_name;
+                                    optionElement.textContent = receiverOption.name;
                                     receiversSelect.appendChild(optionElement);
                                 });
 
@@ -770,7 +782,7 @@
                         table_code: document.getElementById("new-table-code").value,
                         table_emiter: document.getElementById("new-table-emiter").value,
                         table_creator: document.getElementById("new-table-creator").value,
-                        table_area: document.getElementById("new-table-area").value,
+                        //table_area: document.getElementById("new-table-area").value,
                     };
 
                     // Cargar opciones formulario
@@ -781,24 +793,24 @@
                             if (data.success) {
                                 //// Opciones selecionables en el formulario         
                                 
-                                const areaSelect = document.getElementById('new-table-area');
-                                areaSelect.innerHTML = ''; // Clear existing options
-                                data.areas_options.forEach(areaOption => {
-                                    const optionElement = document.createElement('option');
-                                    optionElement.value = areaOption.id;
-                                    optionElement.textContent = areaOption.name;
-                                    if (areaOption.id === data.area) {
-                                        optionElement.selected = true; 
-                                    }
-                                    areaSelect.appendChild(optionElement);
-                                }); 
+                                //const areaSelect = document.getElementById('new-table-area');
+                                //areaSelect.innerHTML = ''; // Clear existing options
+                                //data.areas_options.forEach(areaOption => {
+                                //    const optionElement = document.createElement('option');
+                                //   optionElement.value = areaOption.id;
+                                //    optionElement.textContent = areaOption.name;
+                                //    if (areaOption.id === data.area) {
+                                //        optionElement.selected = true; 
+                                //    }
+                                //    areaSelect.appendChild(optionElement);
+                                //}); 
                                 
                                 const emiterSelect = document.getElementById('new-table-emiter');
                                 emiterSelect.innerHTML = ''; // Clear existing options
                                 data.emiter_options.forEach(emiterOption => {
                                     const optionElement = document.createElement('option');
                                     optionElement.value = emiterOption.id;
-                                    optionElement.textContent = emiterOption.first_name + ' ' + emiterOption.last_name;
+                                    optionElement.textContent = emiterOption.name;
                                     if (emiterOption.id === data.emiter) {
                                         optionElement.selected = true; 
                                     }
@@ -822,7 +834,7 @@
                     table_code: document.getElementById('new-table-code').value,
                     table_emiter: document.getElementById('new-table-emiter').value,
                     table_creator: document.getElementById('new-table-creator').value,
-                    table_area: document.getElementById('new-table-area').value,
+                    //table_area: document.getElementById('new-table-area').value,
                 };
 
                 console.log(data)

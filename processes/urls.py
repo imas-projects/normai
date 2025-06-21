@@ -15,5 +15,9 @@ urlpatterns = [
     path('process-iso-compliance-ia/', views.process_iso_compliance_ia, name='process_iso_compliance_ia'),
     path('process-summarize-ia/', views.process_summarize_ia, name='process_summarize_ia'),
     path('add-risk-processes/', views.add_risk_processes, name='add_risk_processes'),
+
+    path('save-summary-processes/', views.save_process_summarize_ia, name='save_process_summarize_ia'),
 ]
+
+
 

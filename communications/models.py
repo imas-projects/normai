@@ -93,8 +93,8 @@ class CommunicationTable(models.Model):
     created_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="created_by", blank=False) # Elaborado por
     reviewed_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="reviewed_by", blank=True, null=True) # Revisado por
     approved_by = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="approved_by", blank=True, null=True) # Aprobado por
-    emiter = models.ForeignKey(User, on_delete=models.PROTECT, related_name="emiter", blank=True, null=True)
-    area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="area", blank=True, null=True) 
+    emiter = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="emiter", blank=True, null=True)
+    #area = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="area", blank=True, null=True) 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', null=True)   
     summary = models.CharField(max_length=1000, verbose_name="Resumen", blank=True, null=True)
 
@@ -127,7 +127,7 @@ class CommunicationTable(models.Model):
 
 class MessageChanel(models.Model):
     message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Message", null=False)
-    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="channel", verbose_name="Channel", null=False)
+    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Channel", null=False)
 
     class Meta:
         db_table = 'tb_communication_channels'  # Nombre de la tabla
@@ -138,7 +138,7 @@ class CommunicationMessage(models.Model):
     type = models.ForeignKey(CommunicationType, on_delete=models.PROTECT, related_name="communication_type", verbose_name="Communication Type", null=False)
     message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="communication_message", verbose_name="Message", null=False)
     table = models.ForeignKey(CommunicationTable, on_delete=models.PROTECT, related_name="message", verbose_name="Table", null=False)
-    receiver = models.ForeignKey(User, on_delete=models.PROTECT, related_name="communication_receivers", verbose_name="Receptor")
+    receiver = models.ForeignKey(Position, on_delete=models.PROTECT, related_name="communication_receivers", verbose_name="Receptor")
     periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, related_name="communication_periodicity", verbose_name="Periodicity of Communication", null=False)
     
     

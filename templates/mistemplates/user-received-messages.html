@@ -75,8 +75,13 @@
                                     <tr>
                                         <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
                                         <td>{{ msg.message.name }}</td>
-                                        <td>{{ msg.table.emiter.first_name }} {{ msg.table.emiter.last_name }}</td>  
-                                        <td>{{ msg.message.message_channels.first.channel}}</td>
+                                        <td>{{ msg.table.emiter.name }}</td>  
+                                        <td>{% for mc in msg.message.message_channels.all %}
+                                                {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                Sin canal
+                                            {% endfor %}
+                                        </td>
                                         <td>{{ msg.periodicity.name }}</td>                  
                                     </tr>
                                     
@@ -121,7 +126,7 @@
                                 <label for="message-transmitter" class="form-label">Emisor</label>
                                 {% if user.is_authenticated %}
                                 <select class="form-select" id="message-transmitter" name="transmitter" disabled>
-                                <selected value="{{ user.id }}" selected>{{ user.first_name }} {{ user.last_name }}></selected>
+                                <selected value="{{ user.id }}" selected>{{ user.name }} {{ user.name }}></selected>
                                 </select>
                                 {% else %}  
                                 <select class="form-select" id="message-transmitter" name="transmitter">   

@@ -10,4 +10,5 @@ admin.site.register(models.Rol)
 admin.site.register(models.ExternalClient)
 admin.site.register(models.ExternalSupplier)
 admin.site.register(models.Documentation)
+admin.site.register(models.UserPosition)
 

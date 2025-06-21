@@ -57,8 +57,13 @@
                                     <tr>
                                         <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
                                         <td>{{ msg.message.name }}</td>
-                                        <td>{{ msg.receiver.first_name }} {{ msg.receiver.last_name }}</td> 
-                                        <td>{{ msg.message.message_channels.first.channel}}</td>
+                                        <td>{{ msg.receiver.name }}</td> 
+                                        <td>{% for mc in msg.message.message_channels.all %}
+                                                {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                Sin canal
+                                            {% endfor %}
+                                        </td>
                                         <td>{{ msg.periodicity.name }}</td>                  
                                     </tr>
                                     

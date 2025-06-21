@@ -95,4 +95,13 @@ class Position(models.Model):
 
     def __str__(self):
         return self.name
-    
+
+class UserPosition(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE, related_name="user_position")
+    position=models.ForeignKey(Position, on_delete=models.CASCADE, related_name="user_position")
+
+    class Meta:
+        db_table = 'tb_company_position_users'
+
+    def __str__(self):
+       return f"{self.user}{self.position}"

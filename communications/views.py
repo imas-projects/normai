@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import CommunicationTable, CommunicationType, Message, Channel, Periodicity, CommunicationMessage, MessageChanel
-from company.models import Area
+from company.models import Area, Position, UserPosition
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 import json
@@ -36,6 +36,7 @@ def all_messages(request):
     'message__type',
     'message__receiver',
     'message__periodicity',
+    'message__message__message_channels__channel'
     )
 
     context = {
@@ -54,7 +55,7 @@ def all_messages(request):
 def load_form_options():
     all_periodicities = list(Periodicity.objects.all().values('id', 'name')) 
     all_communicationtypes = list(CommunicationType.objects.all().values('id', 'scope', 'direction')) 
-    all_departments = list(User.objects.all().values('id', 'first_name','last_name','groups'))
+    all_departments = list(Position.objects.all().values('id', 'name'))
     all_channels = list(Channel.objects.all().values('id','name'))
 
     return {
@@ -106,7 +107,7 @@ def update_message(request):
             receiver_id = data.get('message_receiver')
 
             # Obtener el CommunicationMessage y su Message relacionado
-            com_message = CommunicationMessage.objects.get(id=com_message)
+            com_message = CommunicationMessage.objects.get(id=com_message_id)
             message = com_message.message
 
             # Actualizar campos
@@ -129,6 +130,8 @@ def update_message(request):
         except Message.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Row not found.'})
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
@@ -162,7 +165,7 @@ def load_messageform_options_asJson(request):
 
 @login_required
 def load_addtableform_options_asJson(request):
-    all_emiter= list(User.objects.all().values('id', 'first_name','last_name'))
+    all_emiter= list(Position.objects.all().values('id', 'name'))
     all_areas = list(Area.objects.all().values('id','name'))
     # print(all_areas)
     #'departments_options' : all_departments,
@@ -233,23 +236,29 @@ def create_table(request):
             data = json.loads(request.body) 
             table_code = data.get('table_code')  # Simple text field
             table_emiter = data.get('table_emiter')  # Foreign key
-            table_area = data.get('table_area')
+            #table_area = data.get('table_area')
             table_creator = data.get('table_creator')
+
+           # table_emiter_position = UserPosition.objects.get(user_id=table_emiter)
+
+            table_creator_position = UserPosition.objects.get(user_id=table_creator)
             
             # Crear tabla
             new_table = CommunicationTable(
                 code=table_code,
-                emiter=User.objects.get(id=table_emiter),
+                emiter=Position.objects.get(id=table_emiter),
                 review_date=datetime.date.today(),
                 review_number=0,
-                area=Area.objects.get(id=table_area),
-                created_by=User.objects.get(id=table_creator)
+                #area=Area.objects.get(id=table_area),
+                created_by=Position.objects.get(id=table_creator_position.position_id)
                 )
             # Guardar tabla
             new_table.save()  
 
             return JsonResponse({'success': True})
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method.'})
 
@@ -258,8 +267,9 @@ def create_table(request):
 #@user_passes_test(communication_check)
 def user_received_messages(request):
     user = request.user
-   
-    received_messages = CommunicationMessage.objects.filter(receiver=user).distinct()
+    user_position = UserPosition.objects.get(user_id=user)
+
+    received_messages = CommunicationMessage.objects.filter(receiver=user_position.position).distinct()
     received_messages = [message for message in received_messages]
   
 
@@ -275,8 +285,9 @@ def user_received_messages(request):
 #@user_passes_test(communication_check)
 def user_sent_messages(request):
     user = request.user
+    user_position = UserPosition.objects.get(user_id=user)
 
-    sent_messages_table = CommunicationTable.objects.filter(emiter=user)
+    sent_messages_table = CommunicationTable.objects.filter(emiter=user_position.position)
     sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_table)
     # Contexto para la plantilla
     context = {
@@ -337,11 +348,11 @@ def save_table_summarize_ia(request):
         if form_name == "save_table_summarize_form" :
             table_id = request.POST.get("table_id")
             new_summary = request.POST.get("summary")
-            print('oki1')
+
             updated_table = CommunicationTable.objects.get(id=table_id)
             updated_table.summary=new_summary[:1000]
             updated_table.save() 
-            print('oki2', updated_table.summary)
+
 
     return redirect('communications:communication_tables')
 
