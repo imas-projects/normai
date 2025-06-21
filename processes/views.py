@@ -211,9 +211,134 @@ def save_process_summarize_ia(request):
 
     return redirect('processes:list_processes')
 
+def kpis_processes(request):
+    processes = Process.objects.all()
+
+    return render(request, 'mistemplates/kpis-processes.html', {'processes': processes})
+
+
+def save_kpi_processes(request):
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "save_kpi_processes_form" :
+            process_id = request.POST.get("process_id")
+            new_kpi = request.POST.get("kpi_name")
+            new_kpi_is_effective = request.POST.get("kpi_is_effective")
+            new_kpi_is_efficient = request.POST.get("kpi_is_efficient")
+
+            kpi = PerformanceIndicator.objects.create(
+                name = new_kpi,
+                effective = new_kpi_is_effective,
+                efficient = new_kpi_is_efficient
+            )
+
+            updated_process = Process.objects.get(id=process_id)
+            updated_process.performance_indicators.add(kpi)
+
+
+    return redirect('processes:kpis_processes')
 
 ############## Views con IA
+
 from ai_functions import implementation_functions as ai
+
+
+def kpis_detector_ia(request):
+    processes = Process.objects.all()
+    assistant_answer = None
+
+    json_function_name = "kpis_detector_function"
+    json_function_description = "This function should identify 1 or more KPI in a process" \
+                                "of a manufacturing plant according to ISO 9001:2015 norm and the given data."
+    json_schema_input = {
+    "type": "object",
+    "properties": {
+        "detected_kpi": {
+            "type": "array",
+            "description": "A list of identified KPIs with descriptions and if it could be efficient or effective.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Indicates a possible identified KPI."
+                    },
+                    "efficient": {
+                        "type": "boolean",
+                        "description": "True if the KPI could be efficient"
+                    },
+                    "effective": {
+                        "type": "boolean",
+                        "description": "True if the KPI could be effective"
+                    }
+                },
+                "required": [
+                    "name",
+                    "effective",
+                    "efficient",
+                ],
+                "additionalProperties": False
+            },
+        }
+    },
+    "required": ["detected_kpi"],
+    "additionalProperties": False,
+    "strict": False,
+    "stream":True,
+    }
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "kpis-detector_form" :
+            process_id = int(request.POST.get("process_id"))
+
+            process= Process.objects.get(id=process_id)
+            activities = process.processactivity_set.all().order_by("order")
+            activity_list = "\n".join([f"{a.order}. {a.activity}" for a in activities])
+
+            process_data = f"""
+                Estos son los datos del proceso:
+                Nombre: {process.name}
+                Objetivo: {process.objective}
+                Pasos del proceso: {activity_list or "No especificados"}
+
+                Espacios de trabajo: {process.workspaces or "No especificados"}
+                Instalaciones: {process.facilities or "No especificadas"}
+                Equipamiento: {process.equipment or "No especificado"}
+                Materiales: {process.materials or "No especificados"}
+                Recursos de transporte: {process.transport_resources or "No especificados"}
+                Tecnologías de comunicación: {process.communication_technologies or "No especificadas"}
+                Entorno operativo: {process.operational_environment or "No especificado"}
+
+                Proveedores internos: {", ".join([a.name for a in process.internal_suppliers.all()]) or "Ninguno"}
+                Proveedores externos: {", ".join([e.name for e in process.external_suppliers.all()]) or "Ninguno"}
+                Clientes internos: {", ".join([a.name for a in process.internal_clients.all()]) or "Ninguno"}
+                Clientes externos: {", ".join([e.name for e in process.external_clients.all()]) or "Ninguno"}
+
+                Entradas del proceso: {", ".join([i.name for i in process.inputs.all()]) or "Ninguna"}
+                Salidas del proceso: {", ".join([o.name for o in process.outputs.all()]) or "Ninguna"}
+                Documentación: {", ".join([d.document_description for d in process.documents.all()]) or "Ninguna"}
+                KPIs actuales: {", ".join([i.name for i in process.performance_indicators.all()]) or "Ninguno"}
+                """
+            
+            user_input = "Identify at least 1 specific and meaningful KPI, different from the ones that the procees already has, focusing mainly on the provided process data. Use the ISO 9001:2015 standard only as a supporting framework to validate or guide your reasoning."\
+                        "Your response must reflect the unique characteristics of the process and not rely on generic assumptions. Structure the result as a list of KPIs."
+
+            assistant_answer = ai.ai_json_function(process_data,user_input,json_schema_input,json_function_name,json_function_description)
+            print(assistant_answer)
+
+
+    context = {
+        'processes': processes,
+        'kpi_answer': assistant_answer,
+        "selected_process_id": process_id
+        }
+
+    return render(request, 'mistemplates/kpis-processes.html', context)
+
+
 
 def process_risk_detector_ia(request):
     assistant_answer = None
@@ -477,3 +602,8 @@ def process_summarize_ia(request):
         }
     
     return render(request, 'mistemplates/processes.html',context)
+
+
+def checklist_detector_ia(request):
+
+    return render(request, 'mistemplates/processes.html')

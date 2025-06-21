@@ -15,7 +15,7 @@
                                 aria-expanded="false" aria-controls="sidebarDashboards">
                                 <i class="bx bxs-message"></i> <span data-key="t-dashboards">Comunicaciones</span>
                             </a>
-                            -<div class="collapse menu-dropdown" id="sidebarDashboards">
+                            <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <a href="{% url 'communications:communication_tables' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
@@ -26,9 +26,9 @@
                                     <li class="nav-item">
                                         <a href="{% url 'communications:sent_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes enviados </a>
                                     </li>
-                                    <li class="nav-item">
+                                    <!--<li class="nav-item">
                                         <a href="{% url 'communications:communication_table_review' %}" class="nav-link" data-key="t-analytics"> Revisiones </a>
-                                    </li>                                    
+                                    </li>  -->                                  
                                 </ul>
                             </div>
                         </li>
@@ -74,14 +74,17 @@
                         <!-- Fin Menu Auditorias --> 
                         <!--Menu Procesos-->
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse"
-                                role="button" aria-expanded="false" aria-controls="sidebarApps">
-                                <i class="bx bx-layer"></i> <span data-key="t-apps">Procesos</span>
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
+                                aria-expanded="false" aria-controls="sidebarDashboards">
+                                <i class="bx bx-selection"></i> <span data-key="t-dashboards">Procesos</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarApps">
+                            <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <a href="{% url 'processes:list_processes' %}" class="nav-link" data-key="t-analytics"> Ver Procesos </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'processes:kpis_processes' %}" class="nav-link" data-key="t-analytics"> KPIs </a>
                                     </li>
                                 </ul>
                             </div>    
@@ -92,19 +95,19 @@
                                 <i class="bx bx-border-all"></i> <span data-key="t-dashboards">Area</span>
                             </a>
                         </li> 
-                        <li class="menu-title"><span data-key="t-menu">Menu</span></li>
+
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="{% url 'pages:wellcome_view' %}" role="button">
                                 <i class="bx bx-user"></i> <span data-key="t-dashboards">Inicio</span>
                             </a>
                         </li>
                         <!-- Menu Autenticacion--> 
-                        <li class="nav-item">
+                        <!--<li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
-                                aria-expanded="false" aria-controls="sidebarAuth">
-                                <i class="bx bx-user-circle"></i> <span data-key="t-authentication">Autenticación</span>
+                                aria-expanded="false" aria-controls="sidebarDashboards">
+                                <i class="bx bx-user-circle"></i> <span data-key="t-dashboards">Autenticación</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarAuth">
+                            <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
                                         <li class="nav-item">
@@ -115,7 +118,7 @@
                                         </li>
                                 </ul>
                             </div>
-                        </li>
+                        </li>-->
                         <!-- Fin Menu Autenticacion --> 
                     </ul>
                 </div>

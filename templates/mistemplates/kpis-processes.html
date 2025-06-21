@@ -1,0 +1,486 @@
+{% extends "mistemplates/mi_base.html" %}
+{% load static %}
+{% block title %}Procesos{% endblock title %}
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            {% block pagetitle %}
+            {% include "partials/page-title.html" with pagetitle="Procesos" title="Procesos" %}
+            {% endblock pagetitle %}
+
+
+    <div class="card border card-border-dark">
+        <div class="card-body">
+           <div class="dropdown">
+                <button class="btn btn-dark dropdown-toggle w-auto" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    Seleccionar Proceso
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    {% for process in processes %}
+                    <!--<li><a class="dropdown-item" href="#" id="openProcessKPImodal">{{ process.name }}</a></li>-->
+                    <a class="dropdown-item" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">{{ process.name }}</a>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% for process in processes %}
+    <div class="row">
+        {% if selected_process_id and process.id == selected_process_id %}
+            <div class="collapse multi-collapse show" id="multiCollapseExample{{process.id}}">
+                <div class="card border card-border-dark">
+                    <div class="card-body">
+                        <div class="card-title bg-dark text-light p-2">
+                            KPIs para el proceso: {{process.name}}
+                        </div>
+                        
+                            {% for indicator in process.performance_indicators.all %}
+                            <div>{{ indicator.name }}</div>
+                            <div>
+                                {% if indicator.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                {% if indicator.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No indicators available</p>
+                            {% endfor %}
+                            
+                            {% if kpi_answer %}
+                                <div class="alert alert-info p-2" id="kpi-box-{{ process.id }}">
+                                <label class="form-label"><strong>Riesgos detectados</strong></label>
+                                    {% for kpi in kpi_answer.detected_kpi%}
+                                    <div>
+                                        <div>{{ kpi.name }}</div>
+                                        <div>
+                                            {% if kpi.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                            {% if kpi.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                                        </div>
+                                        <div class="p-2">
+                                            <form method="post" action="{% url 'processes:save_kpi_processes' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="form_name" value="save_kpi_processes_form">
+                                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                                            <input type="hidden" name="kpi_name" value="{{ kpi.name }}">
+                                            <input type="hidden" name="kpi_is_effective" value="{{ kpi.effective }}">
+                                            <input type="hidden" name="kpi_is_efficient" value="{{ kpi.efficient }}">
+                                            <button type="submit" class="btn btn-primary btn-sm">Guardar KPI</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                    </div>
+                    <div class="hstack gap-2 p-3">
+                        <form method="post" action="{% url 'processes:kpis_detector_ia' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_name" value="kpis-detector_form">
+                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                            <button class="btn btn-secondary rounded-top">
+                                        Identificar nuevo KPI con IA
+                            </button>
+                        </form>
+
+                        <!--<form method="post" action="{% url 'processes:checklist_detector_ia' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_name" value="process-checklist_form">
+                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                            <button class="btn btn-secondary rounded-top" data-bs-toggle="modal" data-bs-target="#ChecklistModal{{ process.id }}">
+                                        Sugerir Controles de Calidad
+                            </button>
+                        </form>-->
+                       
+                        <a class="btn btn-danger rounded-top" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">Cerrar</a>
+
+                    </div>
+                </div>
+            </div>
+        {% else %}
+                    <div class="collapse multi-collapse" id="multiCollapseExample{{process.id}}">
+                <div class="card border card-border-dark">
+                    <div class="card-body">
+                        <div class="card-title bg-dark text-light p-2">
+                            KPIs para el proceso: {{process.name}}
+                        </div>
+                        
+                            {% for indicator in process.performance_indicators.all %}
+                            <div>{{ indicator.name }}</div>
+                            <div>
+                                {% if indicator.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                {% if indicator.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No indicators available</p>
+                            {% endfor %}
+                            
+                            {% if kpi_answer and process.id == selected_process_id %}
+                                <div class="alert alert-info" id="kpi-box-{{ process.id }}">
+                                <label class="form-label"><strong>Riesgos detectados</strong></label>
+                                    {% for kpi in kpi_answer.detected_kpi%}
+                                    <div>
+                                        <div>{{ kpi.name }}</div>
+                                         <div>
+                                            {% if kpi.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                            {% if kpi.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                    </div>
+                    <div class="hstack gap-2 p-3">
+                        <form method="post" action="{% url 'processes:kpis_detector_ia' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_name" value="kpis-detector_form">
+                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                            <button class="btn btn-secondary rounded-top">
+                                        Identificar nuevos KPIs con IA
+                            </button>
+                        </form>
+
+                        <form method="post" action="{% url 'processes:checklist_detector_ia' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_name" value="process-checklist_form">
+                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                            <button class="btn btn-secondary rounded-top" data-bs-toggle="modal" data-bs-target="#ChecklistModal{{ process.id }}">
+                                        Sugerir Checklist Auditoría
+                            </button>
+                        </form>
+                       
+                        <a class="btn btn-danger rounded-top" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">Cerrar</a>
+
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+
+    <!--Modal KIPs-->    
+    <div class="modal fade" id="KPIModal{{ process.id }}" tabindex="-1" aria-labelledby="KPIModalLabel{{ process.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-white text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title" id="KPIModalLabel{{ process.id }}">Riesgos detectados - {{ process.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            {% if risk_answer %}
+            <div class="mt-4">
+                <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                    <label class="form-label"><strong>Riesgos detectados</strong></label>
+                    {% for risk in risk_answer.risks%}
+                    <div class="border p-3 mb-3 bg-white text-dark rounded">
+                        <p><strong>Posible Riesgo Detectado:</strong> {{ risk.risk }}</p>
+                        <p><strong>Descripción del Riesgo:</strong> {{ risk.risk_description }}</p>
+                        <p><strong>Posible Consecuencia:</strong> {{ risk.consequence }}</p>
+                        <p><strong>Descripción de la Consecuencia:</strong> {{ risk.consequence_description }}</p>
+                        <form method="post" action="{% url 'processes:add_risk_processes' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_name" value="add_risk_processes_form">
+                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                        <input type="hidden" name="process_name" value="{{ process.name }}">
+                        <input type="hidden" name="process_risk" value="{{ risk.risk }}">
+                        <input type="hidden" name="process_consequence" value="{{ risk.consequence }}">
+                        <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <p><strong>Aún no se ha realizado el análisis de riesgos</strong> {{ risk.risk }}</p>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <form method="post" action="{% url 'processes:process_risk_detector_ia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_name" value="process_risk_detector_form">
+            <input type="hidden" name="process_id" value="{{ process.id }}">
+            <button type="submit" class="btn btn-primary">
+                {% if risk_answer %}
+                    Volver a analizar riesgos con IA
+                {% else %}
+                    Analizar riesgos con IA
+                {% endif %}
+                </button>
+            </form>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+        </div>
+    </div>
+    </div>
+{% endfor %}
+
+</div>
+
+    
+{% endblock content %}
+
+{% block extra_js %}
+
+<!--JS Modal Edición-->
+<script>
+    let choicesInstances = {
+        responsible: null,
+        internalSuppliers: null,
+        externalSuppliers: null,
+        inputs: null,
+        outputs: null,
+        internalClients: null,
+        externalClients: null,
+        documents: null,
+        measurements: null,
+        indicators: null
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.openEditProcessModal').forEach(button => {
+            button.addEventListener('click', function () {
+                const id = button.getAttribute('data-process-id');
+                const responsibleSelect = document.getElementById('process-responsible');
+                const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
+                const externalsuppliersSelect = document.getElementById('process-external-suppliers');
+                const inputsSelect = document.getElementById('process-inputs');
+                const outputsSelect = document.getElementById('process-outputs');
+                const internalclientsSelect = document.getElementById('process-internal-clients');
+                const externalclientsSelect = document.getElementById('process-external-clients');
+                const documentsSelect = document.getElementById('process-documents');
+                const measurementsSelect = document.getElementById('process-measurements');
+                const indicatorsSelect = document.getElementById('process-indicators');
+
+                const selects = [
+                    { el: responsibleSelect, key: 'responsible' },
+                    { el: internalsuppliersSelect, key: 'internalSuppliers' },
+                    { el: externalsuppliersSelect, key: 'externalSuppliers' },
+                    { el: inputsSelect, key: 'inputs' },
+                    { el: outputsSelect, key: 'outputs' },
+                    { el: internalclientsSelect, key: 'internalClients' },
+                    { el: externalclientsSelect, key: 'externalClients' },
+                    { el: documentsSelect, key: 'documents' },
+                    { el: measurementsSelect, key: 'measurements' },
+                    { el: indicatorsSelect, key: 'indicators' }
+                ];
+
+                selects.forEach(({ el, key }) => {
+                    if (choicesInstances[key]) {
+                        choicesInstances[key].destroy();
+                        choicesInstances[key] = null;
+                    }
+                    el.innerHTML = '';
+                });
+
+                fetch(`/processes/get-process/${id}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('process-id').value = data.id;
+                            document.getElementById('process-name').value = data.name;
+                            document.getElementById('process-objective').value = data.objective;
+
+                            // Responsable
+                            data.responsible_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (option.id === data.responsible) el.selected = true;
+                                responsibleSelect.appendChild(el);
+                            });
+                            choicesInstances.responsible = new Choices(responsibleSelect);
+
+                            // Internal Suppliers
+                            data.internal_suppliers_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.internal_suppliers.some(sel => sel.id === option.id)) el.selected = true;
+                                internalsuppliersSelect.appendChild(el);
+                            });
+                            choicesInstances.internalSuppliers = new Choices(internalsuppliersSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // External Suppliers
+                            data.external_suppliers_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.external_suppliers.some(sel => sel.id === option.id)) el.selected = true;
+                                externalsuppliersSelect.appendChild(el);
+                            });
+                            choicesInstances.externalSuppliers = new Choices(externalsuppliersSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Internal Clients
+                            data.internal_clients_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.internal_clients.some(sel => sel.id === option.id)) el.selected = true;
+                                internalclientsSelect.appendChild(el);
+                            });
+                            choicesInstances.internalClients = new Choices(internalclientsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // External Clients
+                            data.external_clients_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.external_clients.some(sel => sel.id === option.id)) el.selected = true;
+                                externalclientsSelect.appendChild(el);
+                            });
+                            choicesInstances.externalClients = new Choices(externalclientsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Inputs
+                            data.inputs_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.inputs.some(sel => sel.id === option.id)) el.selected = true;
+                                inputsSelect.appendChild(el);
+                            });
+                            choicesInstances.inputs = new Choices(inputsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Outputs
+                            data.outputs_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.outputs.some(sel => sel.id === option.id)) el.selected = true;
+                                outputsSelect.appendChild(el);
+                            });
+                            choicesInstances.outputs = new Choices(outputsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Documents
+                            data.documents.forEach(doc => {
+                                const el = document.createElement('option');
+                                el.value = doc.id;
+                                el.textContent = `${doc.document_description} | ${doc.document_code}`;
+                                el.selected = true;
+                                documentsSelect.appendChild(el);
+                            });
+                            choicesInstances.documents = new Choices(documentsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Measurements
+                            data.measurements_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.measurement_process_parameter;
+                                if (data.measurements.some(sel => sel.id === option.id)) el.selected = true;
+                                measurementsSelect.appendChild(el);
+                            });
+                            choicesInstances.measurements = new Choices(measurementsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            // Indicators
+                            data.indicators_options.forEach(option => {
+                                const el = document.createElement('option');
+                                el.value = option.id;
+                                el.textContent = option.name;
+                                if (data.indicators.some(sel => sel.id === option.id)) el.selected = true;
+                                indicatorsSelect.appendChild(el);
+                            });
+                            choicesInstances.indicators = new Choices(indicatorsSelect, {
+                                removeItemButton: true, closeDropdownOnSelect: true
+                            });
+
+                            new bootstrap.Modal(document.getElementById('editProcessModal')).show();
+                        }
+                    });
+            });
+        });
+    });
+
+    
+        // Click en el botón de guardar cambios dentro del modal de edición.
+    document.getElementById('editProcessForm').addEventListener('submit', function (event) {
+            //console.log('editform submitted!'); //debug
+            event.preventDefault();
+
+            const responsibleSelect = document.getElementById('process-responsible');
+            const internalsuppliersSelect = document.getElementById('process-internal-suppliers');
+            const externalsuppliersSelect = document.getElementById('process-external-suppliers');
+            const inputsSelect = document.getElementById('process-inputs');
+            const outputsSelect = document.getElementById('process-outputs');
+            const internalclientsSelect = document.getElementById('process-internal-clients');
+            const externalclientsSelect = document.getElementById('process-external-clients');
+            const documentsSelect = document.getElementById('process-documents');
+            const measurementsSelect = document.getElementById('process-measurements');
+            const indicatorsSelect = document.getElementById('process-indicators');
+
+            const data = {
+                id: document.getElementById('process-id').value,
+                process_name: document.getElementById('process-name').value,
+                process_objective: document.getElementById('process-objective').value,
+                process_responsible: document.getElementById('process-responsible').value,
+                process_internal_suppliers: Array.from(internalsuppliersSelect.selectedOptions).map(option => option.value),
+                process_external_suppliers: Array.from(externalsuppliersSelect.selectedOptions).map(option => option.value),
+                process_outputs: Array.from(outputsSelect.selectedOptions).map(option => option.value),
+                process_internal_clients: Array.from(internalclientsSelect.selectedOptions).map(option => option.value),
+                process_external_clients: Array.from(externalclientsSelect.selectedOptions).map(option => option.value),
+                process_documents: Array.from(documentsSelect.selectedOptions).map(option => option.value),
+                process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
+                process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
+            };
+
+            fetch('/processes/update-process/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(data),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Proceso editado con éxito');
+                        location.reload();
+                    } else {
+                        alert('Ha ocurrido un error.');
+                    }
+                });
+        });
+    
+
+    // Función para obtener el token CSRF si es necesario
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+{% if open_details_modal_id %}
+<script>
+    const modalToOpen = document.getElementById('{{ open_details_modal_id }}');
+    const bootstrapModal = new bootstrap.Modal(modalToOpen);
+    bootstrapModal.show();
+</script>
+{% endif %}
+
+
+{% endblock extra_js %}
+    
