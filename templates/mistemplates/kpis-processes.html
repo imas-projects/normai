@@ -142,14 +142,14 @@
                             </button>
                         </form>
 
-                        <form method="post" action="{% url 'processes:checklist_detector_ia' %}">
+                        <!--<form method="post" action="{% url 'processes:checklist_detector_ia' %}">
                             {% csrf_token %}
                             <input type="hidden" name="form_name" value="process-checklist_form">
                             <input type="hidden" name="process_id" value="{{ process.id }}">
                             <button class="btn btn-secondary rounded-top" data-bs-toggle="modal" data-bs-target="#ChecklistModal{{ process.id }}">
                                         Sugerir Checklist Auditoría
                             </button>
-                        </form>
+                        </form>-->
                        
                         <a class="btn btn-danger rounded-top" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">Cerrar</a>
 
