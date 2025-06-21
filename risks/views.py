@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 import json
 
-from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action
+from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions, suggest_reevaluation_rating_ranges, suggest_reevaluation_risk_level
 
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area').all() 
@@ -201,12 +201,21 @@ def get_level_suggestions(request):
 def add_risk_treatment(request):
     if request.method == 'POST':
         form = RiskTreatmentForm(request.POST)
+
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+            else:
+                return redirect('risks:add_risk_treatment') 
+
         else:
-            print("ERRORES DEL FORMULARIO:", form.errors)  
-            return JsonResponse({'error': form.errors}, status=400)
+            print("ERRORES DEL FORMULARIO:", form.errors)
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'error': form.errors}, status=400)
+            else:
+                return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
+
     else:
         form = RiskTreatmentForm()
 
@@ -252,16 +261,121 @@ def add_contingency_plan(request):
 
     return render(request, 'mistemplates/add_contingency_plan.html', {'form': form})
 
+def get_contingency_suggestions(request):
+    """
+    Endpoint que devuelve sugerencias de acciones de contingencia para un riesgo específico.
+    Parámetros esperados (GET):
+    - risk_id (obligatorio)
+    - max_results (opcional, por defecto 3)
+    """
+    risk_id = request.GET.get('risk_id')
+    max_results = request.GET.get('max_results', 3)
+
+    if not risk_id:
+        return JsonResponse({'error': 'Parámetro "risk_id" es requerido.'}, status=400)
+
+    try:
+        max_results = int(max_results)
+        if max_results < 1:
+            max_results = 3
+    except ValueError:
+        max_results = 3
+
+    suggestions = suggest_contingency_actions(risk_id=risk_id, max_results=max_results)
+
+    if not suggestions:
+        return JsonResponse({'error': 'No se pudieron generar sugerencias.'}, status=404)
+
+    return JsonResponse(suggestions, safe=False)
+
+
 def add_reevaluation(request):
+    suggestion_data = None
+    risk_id = request.GET.get("risk_id")
+
     if request.method == 'POST':
         form = ReevaluationForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('risks:risks')
+            return JsonResponse({'success': True, 'message': 'Reevaluación guardada correctamente'}, status=200)
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+
     else:
         form = ReevaluationForm()
+        if risk_id:
+            try:
+                suggestion_data = suggest_reevaluation_rating_ranges(risk_id=int(risk_id))
+            except Exception as e:
+                suggestion_data = {"error": f"Error al generar sugerencias: {str(e)}"}
 
-    return render(request, 'mistemplates/add_reevaluation.html', {'form': form})
+    return render(
+        request,
+        'mistemplates/add_reevaluation.html',
+        {
+            'form': form,
+            'suggestion_data': suggestion_data,
+            'risk_id': risk_id 
+        }
+    )
+
+@csrf_exempt
+def get_reevaluation_ranges_suggestions(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    risk_id = data.get('risk_id')
+
+    if not risk_id:
+        return JsonResponse({'error': 'Falta el parámetro risk_id'}, status=400)
+
+    try:
+        suggestions = suggest_reevaluation_rating_ranges(int(risk_id))
+
+        if "error" in suggestions:
+            return JsonResponse({'error': suggestions["error"]}, status=400)
+
+        return JsonResponse(suggestions)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error al generar sugerencias de rangos: {str(e)}'}, status=500)
+        
+
+def get_reevaluation_level_suggestions(request):
+    risk_id = request.GET.get('risk_id')
+
+    if not risk_id:
+        return JsonResponse({'error': 'Falta el parámetro obligatorio risk_id'}, status=400)
+
+    severity = request.GET.get("severity")
+    occurrence = request.GET.get("occurrence")
+    detection_score = request.GET.get("detection")
+
+    if not all([severity, occurrence, detection_score]):
+        return JsonResponse({'error': 'Faltan datos para calcular el nivel de riesgo'}, status=400)
+
+    try:
+        suggestions = suggest_reevaluation_risk_level(
+            int(risk_id),
+            int(severity),
+            int(occurrence),
+            int(detection_score)
+        )
+
+        if "error" in suggestions:
+            return JsonResponse({'error': suggestions["error"]}, status=400)
+
+        return JsonResponse(suggestions)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error al generar sugerencias de nivel de riesgo: {str(e)}'}, status=500)
+
+
 
 def edit_risk_identification(request, risk_id):
     risk = get_object_or_404(RiskIdentification, id=risk_id)

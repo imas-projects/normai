@@ -573,6 +573,12 @@ function setupAddStepsModal() {
                     if (step.target === "riskTreatmentContent") {
                     attachTreatmentSuggestions();
                     }
+                    if (step.target === "contingencyPlanContent") {
+                    attachContingencySuggestions();
+                    }
+                    if (step.target === "reevaluationContent") {
+                    attachReevaluationSuggestions();
+                    }
                 })
                 .catch(err => {
                     console.error(`Error cargando ${step.url}:`, err);
@@ -607,8 +613,6 @@ function attachFormSubmit(selector) {
         .then(data => {
             if (data.success) {
                 alert("Formulario enviado correctamente.");
-                // Puedes cerrar el modal aquí si quieres:
-                // bootstrap.Modal.getInstance(form.closest(".modal")).hide();
             } else {
                 alert("Error al enviar el formulario.");
                 console.error(data.errors || "Error desconocido");
@@ -640,6 +644,10 @@ function attachSuggestionHandler() {
             alert("Por favor, completa el área y la actividad.");
             return;
         }
+
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
 
         const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
 
@@ -700,9 +708,14 @@ function attachSuggestionHandler() {
             .catch(error => {
                 alert("Error al obtener sugerencias.");
                 console.error(error);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
     });
 }
+
 
 function attachEvaluationSuggestions() {
     const form = document.querySelector("#add-risk-evaluation-form");
@@ -731,6 +744,10 @@ function attachEvaluationSuggestions() {
         suggestControlsBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const originalText = suggestControlsBtn.textContent;
+            suggestControlsBtn.disabled = true;
+            suggestControlsBtn.textContent = "Obteniendo sugerencias...";
 
             fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
                 .then(res => res.json())
@@ -781,6 +798,10 @@ function attachEvaluationSuggestions() {
                 .catch(err => {
                     console.error("Error obteniendo controles:", err);
                     alert("Ocurrió un error al obtener controles sugeridos.");
+                })
+                .finally(() => {
+                    suggestControlsBtn.disabled = false;
+                    suggestControlsBtn.textContent = originalText;
                 });
         });
     }
@@ -790,6 +811,10 @@ function attachEvaluationSuggestions() {
         suggestRangesBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const originalText = suggestRangesBtn.textContent;
+            suggestRangesBtn.disabled = true;
+            suggestRangesBtn.textContent = "Obteniendo sugerencias...";
 
             fetch(suggestRangesBtn.dataset.url, {
                 method: "POST",
@@ -836,6 +861,10 @@ function attachEvaluationSuggestions() {
                 .catch(err => {
                     console.error("Error obteniendo rangos:", err);
                     alert("Ocurrió un error al obtener sugerencias de rangos.");
+                })
+                .finally(() => {
+                    suggestRangesBtn.disabled = false;
+                    suggestRangesBtn.textContent = originalText;
                 });
         });
     }
@@ -845,6 +874,10 @@ function attachEvaluationSuggestions() {
         suggestRiskLevelBtn.addEventListener("click", () => {
             const riskId = riskSelect.value;
             if (!riskId) return alert("Selecciona un riesgo primero.");
+
+            const originalText = suggestRiskLevelBtn.textContent;
+            suggestRiskLevelBtn.disabled = true;
+            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
 
             const params = new URLSearchParams({
                 risk_id: riskId,
@@ -858,54 +891,71 @@ function attachEvaluationSuggestions() {
             fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
-                    console.log("Respuesta nivel de riesgo:", data); // Opcional para depuración
                     if (data.error) return alert(data.error);
                     riskLevelField.value = data.risk_level;
                     riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
                 })
-                .catch(err => console.error("Error obteniendo nivel de riesgo:", err));
+                .catch(err => {
+                    console.error("Error obteniendo nivel de riesgo:", err);
+                    alert("Ocurrió un error al obtener el nivel de riesgo.");
+                })
+                .finally(() => {
+                    suggestRiskLevelBtn.disabled = false;
+                    suggestRiskLevelBtn.textContent = originalText;
+                });
         });
     }
 }
+
 
 function attachTreatmentSuggestions() {
     const form = document.querySelector("#add-risk-treatment-form");
     if (!form) return;
 
-    // ✅ Añadimos manejador de submit si no lo tienes
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();
+    const submitBtn = document.querySelector("#submitTreatmentForm");
+    if (submitBtn) {
+        submitBtn.addEventListener("click", function (e) {
+            e.preventDefault();
 
-        const formData = new FormData(form);
+            const formData = new FormData(form);
 
-        fetch(form.action, {
-            method: "POST",
-            body: formData,
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw err;
+            fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+                .then(async response => {
+                    const contentType = response.headers.get("Content-Type") || "";
+                    if (!response.ok) {
+                        if (contentType.includes("application/json")) {
+                            const errorData = await response.json();
+                            throw errorData;
+                        } else {
+                            throw new Error("Respuesta no válida del servidor.");
+                        }
+                    }
+                    if (contentType.includes("application/json")) {
+                        return response.json();
+                    } else {
+                        throw new Error("Respuesta inesperada del servidor.");
+                    }
+                })
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        form.reset();
+                    } else {
+                        alert("Formulario enviado, pero sin mensaje de confirmación.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error al enviar el formulario:", err);
+                    alert("Error al enviar el formulario.");
                 });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.message) {
-                alert(data.message);
-                form.reset();  // Opcional: limpia el formulario
-            } else {
-                alert("Formulario enviado, pero sin mensaje de confirmación.");
-            }
-        })
-        .catch(err => {
-            console.error("Error al enviar el formulario:", err);
-            alert("Error al enviar el formulario.");
         });
-    });
+    }
 
     const btn = form.querySelector("#getTreatmentSuggestionBtn");
     if (!btn) return;
@@ -923,9 +973,12 @@ function attachTreatmentSuggestions() {
             return;
         }
 
-        // Mostrar el contenedor y cargar texto provisional
-        suggestionContainer.style.display = "block";
-        suggestionList.innerHTML = "Obteniendo sugerencias...";
+        // Estado de carga en el botón
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
+
+        suggestionList.innerHTML = ""; // Limpia sugerencias previas, sin mostrar aún el texto “Sugerencias de la IA:”
 
         const url = `/risks/get-treatment-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
 
@@ -937,12 +990,15 @@ function attachTreatmentSuggestions() {
                 return response.json();
             })
             .then(data => {
-                suggestionList.innerHTML = "";
+                suggestionList.innerHTML = ""; // Asegura que esté limpio
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    suggestionList.innerHTML = "No se encontraron sugerencias.";
+                    suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
+                    suggestionContainer.style.display = "block";
                     return;
                 }
+
+                suggestionContainer.style.display = "block";
 
                 data.forEach((item, index) => {
                     const action = item.treatment_action || "(sin acción sugerida)";
@@ -955,11 +1011,6 @@ function attachTreatmentSuggestions() {
                             <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
                         </div>
                     `;
-
-                    // ✅ Auto-asignar la primera sugerencia al textarea
-                    if (index === 0 && treatmentActionInput) {
-                        treatmentActionInput.value = action;
-                    }
 
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
@@ -974,7 +1025,12 @@ function attachTreatmentSuggestions() {
             })
             .catch(error => {
                 console.error(error);
-                suggestionList.innerHTML = "Error al obtener sugerencias.";
+                suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
+                suggestionContainer.style.display = "block";
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
             });
     });
 }
@@ -982,6 +1038,270 @@ function attachTreatmentSuggestions() {
 document.addEventListener("DOMContentLoaded", attachTreatmentSuggestions);
 
 
+
+function attachContingencySuggestions() {
+    const form = document.querySelector("#add-contingency-plan-form");
+    if (!form) return;
+
+    const btn = form.querySelector("#getContingencySuggestionBtn");
+    const riskSelect = form.querySelector("select[name='risk']");
+    const contingencySelect = form.querySelector("select[name='contingency_actions']");
+    const suggestionContainer = form.querySelector("#contingencySuggestionContainer");
+    const suggestionList = form.querySelector("#contingencySuggestionList");
+
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+        const riskId = riskSelect ? riskSelect.value : null;
+
+        if (!riskId) {
+            alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+            return;
+        }
+
+        // Estado de carga solo en el botón
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Obteniendo sugerencias...";
+
+        // Muestra el contenedor y limpia el contenido anterior
+        suggestionList.innerHTML = "";
+
+        const url = `/risks/get-contingency-suggestions/?risk_id=${encodeURIComponent(riskId)}&max_results=3`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error al obtener sugerencias de IA.");
+                }
+                return response.json();
+            })
+            .then(data => {
+                suggestionList.innerHTML = "";
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    suggestionList.innerHTML = "<p>No se encontraron sugerencias.</p>";
+                    suggestionContainer.style.display = "block";
+                    return;
+                }
+
+                suggestionContainer.style.display = "block";
+
+                data.forEach((item, index) => {
+                    const action = item.contingency_action || "(sin acción sugerida)";
+                    const card = document.createElement("div");
+                    card.className = "card mb-2";
+
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <strong>Acción sugerida ${index + 1}:</strong> ${action}<br>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
+                        </div>
+                    `;
+
+                    const useBtn = card.querySelector("button");
+                    useBtn.addEventListener("click", function () {
+                        Array.from(contingencySelect.options).forEach(option => {
+                            if (option.text.trim() === action.trim()) {
+                                option.selected = true;
+                            }
+                        });
+                        suggestionContainer.style.display = "none";
+                    });
+
+                    suggestionList.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error(error);
+                suggestionList.innerHTML = "<p>Error al obtener sugerencias.</p>";
+                suggestionContainer.style.display = "block";
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
+    });
+}
+
+
+
+
+function attachReevaluationSuggestions() {
+    const form = document.querySelector("#add-reevaluation-form");
+    if (!form) return;
+
+    const riskSelect = form.querySelector("select[name='risk']");
+    const severityField = form.querySelector("select[name='severity']");
+    const occurrenceField = form.querySelector("select[name='occurrence']");
+    const detectionField = form.querySelector("select[name='detection']");
+    const riskLevelField = form.querySelector("select[name='risk_level']");
+    const riskLevelDisplay = document.getElementById("reevaluated-risk-level-suggestion");
+
+    const suggestRangesBtn = document.getElementById("suggest-reevaluation-ranges-btn");
+    if (suggestRangesBtn) {
+        suggestRangesBtn.addEventListener("click", () => {
+            const riskId = riskSelect ? riskSelect.value : null;
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+                return;
+            }
+
+            // Muestra estado de carga
+            suggestRangesBtn.disabled = true;
+            suggestRangesBtn.textContent = "Obteniendo sugerencias...";
+
+            fetch(suggestRangesBtn.dataset.url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ risk_id: riskId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    const extractMidValue = (rangeStr) => {
+                        const match = rangeStr.match(/(\d+)/g);
+                        if (match && match.length >= 2) {
+                            const min = parseInt(match[0]);
+                            const max = parseInt(match[1]);
+                            return Math.round((min + max) / 2);
+                        } else if (match && match.length === 1) {
+                            return parseInt(match[0]);
+                        }
+                        return null;
+                    };
+
+                    const sev = extractMidValue(data.severity_range);
+                    const occ = extractMidValue(data.occurrence_range);
+                    const det = extractMidValue(data.detection_range);
+
+                    if (sev !== null) severityField.value = sev;
+                    if (occ !== null) occurrenceField.value = occ;
+                    if (det !== null) detectionField.value = det;
+                })
+                .catch(err => {
+                    console.error("Error obteniendo rangos reevaluados:", err);
+                    alert("Ocurrió un error al obtener sugerencias de rangos.");
+                })
+                .finally(() => {
+                    suggestRangesBtn.disabled = false;
+                    suggestRangesBtn.textContent = "Sugerir rangos reevaluados";
+                });
+        });
+    }
+
+    const suggestRiskLevelBtn = document.getElementById("suggest-reevaluation-risk-level-btn");
+    if (suggestRiskLevelBtn) {
+        suggestRiskLevelBtn.addEventListener("click", () => {
+            const riskId = riskSelect ? riskSelect.value : null;
+            if (!riskId) {
+                alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+                return;
+            }
+
+            // Muestra estado de carga
+            suggestRiskLevelBtn.disabled = true;
+            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+            riskLevelDisplay.textContent = "";
+
+            const params = new URLSearchParams({
+                risk_id: riskId,
+                severity: severityField.value,
+                occurrence: occurrenceField.value,
+                detection: detectionField.value
+            });
+
+            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) return alert(data.error);
+
+                    riskLevelField.value = data.risk_level;
+                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
+                })
+                .catch(err => {
+                    console.error("Error obteniendo nivel de riesgo reevaluado:", err);
+                    alert("Ocurrió un error al obtener sugerencias del nivel de riesgo.");
+                })
+                .finally(() => {
+                    suggestRiskLevelBtn.disabled = false;
+                    suggestRiskLevelBtn.textContent = "Sugerir nivel de riesgo reevaluado";
+                });
+        });
+    }
+}
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Cargar el formulario de edición de Risk Identification
+    document.querySelectorAll(".openEditRiskIdentificationModal").forEach(button => {
+        button.addEventListener("click", function () {
+            let riskId = this.getAttribute("data-risk-id");
+            fetch(`/risks/edit-risk-identification/${riskId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(`editRiskIdentificationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskIdentificationModal${riskId}`)).show();
+                });
+        });
+    });
+
+    // Risk Evaluation
+    document.querySelectorAll(".openEditRiskEvaluationModal").forEach(button => {
+        button.addEventListener("click", function () {
+            let riskId = this.getAttribute("data-risk-id");
+            fetch(`/risks/edit-risk-evaluation/${riskId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(`editRiskEvaluationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskEvaluationModal${riskId}`)).show();
+                });
+        });
+    });
+
+    // Risk Treatment
+    document.querySelectorAll(".openEditRiskTreatmentModal").forEach(button => {
+        button.addEventListener("click", function () {
+            let riskId = this.getAttribute("data-risk-id");
+            fetch(`/risks/edit-risk-treatment/${riskId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(`editRiskTreatmentContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editRiskTreatmentModal${riskId}`)).show();
+                });
+        });
+    });
+
+    // Contingency Plan
+    document.querySelectorAll(".openEditContingencyPlanModal").forEach(button => {
+        button.addEventListener("click", function () {
+            let riskId = this.getAttribute("data-risk-id");
+            fetch(`/risks/edit-contingency-plan/${riskId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(`editContingencyPlanContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editContingencyPlanModal${riskId}`)).show();
+                });
+        });
+    });
+
+    // Reevaluation
+    document.querySelectorAll(".openEditReevaluationModal").forEach(button => {
+        button.addEventListener("click", function () {
+            let riskId = this.getAttribute("data-risk-id");
+            fetch(`/risks/edit-reevaluation/${riskId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById(`editReevaluationContent${riskId}`).innerHTML = html;
+                    new bootstrap.Modal(document.getElementById(`editReevaluationModal${riskId}`)).show();
+                });
+        });
+    });
+});
 
 
 

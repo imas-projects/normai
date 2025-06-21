@@ -2,22 +2,55 @@
 <div class="container">
     <form method="post" id="add-contingency-plan-form" action="{% url 'risks:add_contingency_plan' %}">
         {% csrf_token %}
+
         <div class="mb-3">
             {{ form.risk.label_tag }}
             {{ form.risk }}
         </div>
+
+        <div class="mb-3">
+            <button type="button" id="getContingencySuggestionBtn" class="btn btn-info">Obtener sugerencias IA</button>
+        </div>
+
+        <div id="contingencySuggestionContainer" class="mt-4" style="display:none;">
+            <strong>Sugerencias de la IA:</strong>
+            <div id="contingencySuggestionList" class="mt-2"></div>
+        </div>
+
         <div class="mb-3">
             {{ form.contingency_actions.label_tag }}
-            {{ form.contingency_actions }}
+            <select id="id_contingency_actions" name="{{ form.contingency_actions.name }}" multiple style="width: 100%; height: 150px; overflow-y: auto;">
+                {% for value, label in form.contingency_actions.field.choices %}
+                    <option value="{{ value }}"
+                        {% if value in form.contingency_actions.value %}selected{% endif %}
+                    >{{ label }}</option>
+                {% endfor %}
+
+            </select>
         </div>
+
         <div class="mb-3">
             {{ form.responsible.label_tag }}
-            {{ form.responsible }}
+            <select id="id_responsible" name="{{ form.responsible.name }}" multiple style="width: 100%; height: 150px; overflow-y: auto;">
+                {% for option in form.responsible.field.queryset %}
+                    <option value="{{ option.pk }}"
+                        {% if option.pk in form.responsible.value %}selected{% endif %}
+                    >{{ option }}</option>
+                {% endfor %}
+            </select>
         </div>
+
         <div class="mb-3">
             {{ form.communicate_to.label_tag }}
-            {{ form.communicate_to }}
+            <select id="id_communicate_to" name="{{ form.communicate_to.name }}" multiple style="width: 100%; height: 150px; overflow-y: auto;">
+                {% for option in form.communicate_to.field.queryset %}
+                    <option value="{{ option.pk }}"
+                        {% if option.pk in form.communicate_to.value %}selected{% endif %}
+                    >{{ option }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+
+        <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
