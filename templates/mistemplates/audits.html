@@ -345,7 +345,6 @@ document.getElementById("openAddProcessRequirementModal").addEventListener("clic
         });
 });
 
-<script>
 document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_audit_program_header' %}")
     .then(response => response.text())
@@ -428,8 +427,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
         }, 300);
     });
 });
-</script>
-
 
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program' %}")
