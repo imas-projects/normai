@@ -454,9 +454,53 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     .then(response => response.text())
     .then(html => {
         document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+        const modalEl = document.getElementById("addAnnualProgramModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Esperamos que el DOM del form se cargue para añadir listener al botón IA
+        const btnSuggestIA = document.getElementById("btnSuggestIA");
+        if (btnSuggestIA) {
+            btnSuggestIA.addEventListener("click", function() {
+                const programHeaderSelect = document.querySelector("#id_program_header");
+                if (!programHeaderSelect || !programHeaderSelect.value) {
+                    alert("Por favor seleccione un Program Header primero.");
+                    return;
+                }
+
+                const suggestionsDiv = document.getElementById("iaSuggestions");
+                suggestionsDiv.innerHTML = "Cargando sugerencias...";
+
+                fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                        return;
+                    }
+                    if (!data.suggestions || data.suggestions.length === 0) {
+                        suggestionsDiv.innerHTML = "<div class='text-warning'>No se encontraron sugerencias.</div>";
+                        return;
+                    }
+
+                    let html = "<h5>Sugerencias IA (3 prioridades):</h5><ul class='list-group'>";
+                    data.suggestions.forEach((s, idx) => {
+                        html += `<li class="list-group-item">
+                            <strong>#${idx + 1}</strong> Proceso: <em>${s.process_name}</em> (Código: ${s.process_code})<br>
+                            Mes sugerido: <strong>${s.month}</strong>
+                        </li>`;
+                    });
+                    html += "</ul>";
+                    suggestionsDiv.innerHTML = html;
+                })
+                .catch(err => {
+                    suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+                });
+            });
+        }
     });
 });
+
 
 document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program_user' %}")
