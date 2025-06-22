@@ -193,7 +193,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
       const container = document.getElementById("auditProgramHeaderModalFormContent");
       container.innerHTML = html;
 
-      // Cambio clave: usar setTimeout para esperar a que el DOM se actualice bien
       setTimeout(() => {
         const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
 
@@ -202,7 +201,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
           return;
         }
 
-        // Asegurarse que NO es un botón de tipo submit
         suggestBtn.setAttribute("type", "button");
 
         const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
@@ -220,7 +218,7 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
           const originalText = suggestBtn.textContent;
           suggestBtn.disabled = true;
           suggestBtn.textContent = "Obteniendo sugerencias...";
-          suggestionsDiv.innerHTML = ""; // Limpiar
+          suggestionsDiv.innerHTML = "";
           suggestionsDiv.style.display = "block";
 
           fetch(`/audits/suggest_audit_program_fields/?year=${yearInput.value}`)
@@ -240,7 +238,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                 return;
               }
 
-              // Añadir título y sugerencias
               suggestionsDiv.innerHTML = `
                 <strong>Sugerencias de la IA:</strong>
                 <div id="suggestionList" class="mt-2">
@@ -259,18 +256,26 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                 </div>
               `;
 
-              // Aplicar sugerencia a los campos del formulario
               document.querySelectorAll(".applySuggestionBtn").forEach(applyBtn => {
                 applyBtn.addEventListener("click", function () {
                   const idx = parseInt(this.dataset.idx);
                   const s = suggestions[idx];
                   if (!s) return;
 
+                  // Aplicar valores en los campos
                   document.querySelector("textarea[name='objective']").value = s.objective;
                   document.querySelector("textarea[name='scope']").value = s.scope;
                   document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
                   document.querySelector("textarea[name='security_standards']").value = s.security_standards;
 
+                  // Aquí hacemos que desaparezca el div de sugerencias
+                  suggestionsDiv.style.display = "none";
+                  suggestionsDiv.innerHTML = "";
+
+                  // Opcional: hacer foco en el primer campo, por ejemplo objective
+                  document.querySelector("textarea[name='objective']").focus();
+
+                  alert("Sugerencia aplicada al formulario. Recuerda guardar los cambios.");
                 });
               });
             })
@@ -281,11 +286,11 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
             });
         });
 
-        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
-      }, 100); // 100ms de espera para asegurar que el contenido está en el DOM
+      }, 100);
     });
 });
+
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
