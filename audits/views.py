@@ -26,7 +26,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai
 
 # === BASIC VIEWS ===
 
@@ -251,6 +251,25 @@ def suggest_annual_program_processes_view(request):
         return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"suggestions": suggestions})
+
+def suggest_audit_users_view(request):
+    program_header_id = request.GET.get("program_header_id")
+    process_id = request.GET.get("process_id")
+
+    if not program_header_id or not process_id:
+        return HttpResponseBadRequest("Faltan parámetros 'program_header_id' o 'process_id'")
+
+    try:
+        suggestions = suggest_audit_users_ai(
+            program_header_id=int(program_header_id),
+            process_id=int(process_id),
+            max_results=5  
+        )
+    except Exception as e:
+        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
+
+    return JsonResponse({"suggestions": suggestions})
+
 
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
