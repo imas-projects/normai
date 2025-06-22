@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Usuario a Programa Anual</h2>
-  <form method="post" action="{% url 'audits:add_annual_program_user' %}">
+  <form method="post" action="{% url 'audits:add_annual_program_user' %}" id="addProgramUserForm">
     {% csrf_token %}
 
     <div class="mb-3">
@@ -11,6 +11,14 @@
         <div class="text-danger small">{{ form.annual_program.errors }}</div>
       {% endif %}
     </div>
+
+    <!-- Botón de sugerencias IA -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestUsersIA" class="btn btn-info">Sugerir usuarios IA</button>
+    </div>
+
+    <!-- Contenedor para mostrar sugerencias IA -->
+    <div id="userSuggestionsIA" class="mt-4"></div>
 
     <div class="mb-3">
       {{ form.user.label_tag }}
@@ -23,4 +31,3 @@
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
-
