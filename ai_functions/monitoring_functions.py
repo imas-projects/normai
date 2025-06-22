@@ -8,9 +8,13 @@ from collections import defaultdict
 from django.db.models import Count
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
 from communications.models import CommunicationTable, CommunicationMessage
-from processes.models import Process 
-from audits.models import AnnualProgram, Findings, AuditReport, AuditProgramHeader
-from audits.models import AuditProgramHeader, AnnualProgramUser, AnnualProgram
+from processes.models import Process
+from audits.models import (
+    AnnualProgram, AnnualProgramUser, AuditProgramHeader,
+    AnnualPlanAuditor, AnnualPlanAudited, AnnualPlan,
+    User, Findings, ProcessRequirement, Checklist, AuditorEvaluation
+)
+from django.contrib.auth.models import User  
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
