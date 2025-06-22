@@ -186,15 +186,106 @@
 
 {% block extra_js %}
 <script>
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_program_header' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditProgramHeaderModalFormContent");
+      container.innerHTML = html;
+
+      // Cambio clave: usar setTimeout para esperar a que el DOM se actualice bien
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias");
+          return;
+        }
+
+        // Asegurarse que NO es un botón de tipo submit
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
+        suggestionsDiv.style.display = "none"; // Ocultar inicialmente
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Botón de sugerencia pulsado");
+
+          const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
+          if (!yearInput || !yearInput.value) {
+            alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
+            return;
+          }
+
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = ""; // Limpiar
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_program_fields/?year=${yearInput.value}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+              // Añadir título y sugerencias
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Objetivo:</strong> ${s.objective}</p>
+                        <p><strong>Alcance:</strong> ${s.scope}</p>
+                        <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
+                        <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              // Aplicar sugerencia a los campos del formulario
+              document.querySelectorAll(".applySuggestionBtn").forEach(applyBtn => {
+                applyBtn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  document.querySelector("textarea[name='objective']").value = s.objective;
+                  document.querySelector("textarea[name='scope']").value = s.scope;
+                  document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
+                  document.querySelector("textarea[name='security_standards']").value = s.security_standards;
+
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
+        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+      }, 100); // 100ms de espera para asegurar que el contenido está en el DOM
     });
 });
-
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
