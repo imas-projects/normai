@@ -352,7 +352,8 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
       const container = document.getElementById("auditProgramHeaderModalFormContent");
       container.innerHTML = html;
 
-      requestAnimationFrame(() => {
+      // Cambio clave: usar setTimeout para esperar a que el DOM se actualice bien
+      setTimeout(() => {
         const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
 
         if (!suggestBtn) {
@@ -440,8 +441,9 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
             });
         });
 
+        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
-      });
+      }, 100); // 100ms de espera para asegurar que el contenido está en el DOM
     });
 });
 
