@@ -4,6 +4,7 @@ import json
 import re
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
 from communications.models import CommunicationTable, CommunicationMessage
+from audits.models import AuditProgramHeader
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
@@ -1073,3 +1074,114 @@ Ejemplo de respuesta JSON:
                 "recommendations": [f"Error inesperado: {str(e)}"]
             }
         }
+
+
+def suggest_audit_fields(year: int, max_results=3):
+    """
+    Sugiere automáticamente hasta 3 combinaciones de objetivo, alcance, criterios y estándares,
+    basándose en:
+    - Registros históricos del modelo AuditProgramHeader
+    - Reglas y buenas prácticas de la norma ISO 9001:2015
+
+    Retorna una lista de diccionarios:
+    [
+        {
+            "objective": "...",
+            "scope": "...",
+            "audit_criteria": "...",
+            "security_standards": "..."
+        },
+        ...
+    ]
+    """
+
+    historical_headers = AuditProgramHeader.objects.exclude(year=year).order_by('-year')[:10]
+
+    if not historical_headers.exists():
+        prompt = f"""
+Eres un experto en auditorías internas de calidad bajo la norma ISO 9001:2015.
+
+Basándote en buenas prácticas y la norma ISO 9001:2015, sugiéreme TRES propuestas completas (objetivo, alcance, criterios de auditoría y estándares de seguridad)
+para un programa de auditoría anual del año {year}.
+
+Responde únicamente en formato JSON, como una lista de 3 objetos con las claves:
+- "objective"
+- "scope"
+- "audit_criteria"
+- "security_standards"
+
+Ejemplo:
+[
+  {{
+    "objective": "Asegurar la conformidad del sistema de gestión con la norma ISO 9001:2015",
+    "scope": "Todas las áreas del sistema de gestión de calidad",
+    "audit_criteria": "ISO 9001:2015 cláusulas 4 a 10",
+    "security_standards": "Controles de seguridad según política interna y requisitos legales aplicables"
+  }},
+  ...
+]
+"""
+    else:
+        examples = []
+        for h in historical_headers:
+            examples.append(
+                f"Año: {h.year} | "
+                f"Objetivo: {h.objective.strip()} | "
+                f"Alcance: {h.scope.strip()} | "
+                f"Criterios: {h.audit_criteria.strip()} | "
+                f"Estándares: {h.security_standards.strip()}"
+            )
+
+        prompt = f"""
+Eres un auditor líder experto en ISO 9001:2015.
+
+Usando el siguiente historial de programas de auditoría anteriores, genera TRES propuestas de objetivo, alcance, criterios de auditoría y estándares de seguridad
+para el año {year}. Sigue el formato anterior, en orden de prioridad (más completo o relevante primero).
+
+Historial:
+{chr(10).join(examples)}
+
+Por favor responde en JSON como una lista de objetos con las claves:
+- "objective"
+- "scope"
+- "audit_criteria"
+- "security_standards"
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=800,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("Respuesta IA (cruda):", repr(content))
+
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
+            return [
+                {
+                    "objective": item.get("objective", "").strip(),
+                    "scope": item.get("scope", "").strip(),
+                    "audit_criteria": item.get("audit_criteria", "").strip(),
+                    "security_standards": item.get("security_standards", "").strip()
+                }
+                for item in suggestions[:max_results]
+            ]
+
+        print("Formato inesperado:", type(suggestions))
+        return []
+
+    except json.JSONDecodeError as jde:
+        print("Error JSON:", str(jde))
+        print("Contenido no parseable:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general IA:", str(e))
+        return []
+
+
