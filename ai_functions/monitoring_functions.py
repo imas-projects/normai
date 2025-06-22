@@ -3,6 +3,7 @@ import openai
 import json
 import re
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
+from communications.models import CommunicationTable, CommunicationMessage
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
@@ -954,3 +955,79 @@ Responde en formato JSON como este:
 
     except Exception as e:
         return {"error": str(e)}
+
+
+
+def generate_communication_flow_map(table_id):
+    """
+    Genera un grafo de flujo de comunicación a partir de una tabla específica.
+    Incluye nodos, conexiones y una inferencia IA para identificar problemas o patrones,
+    según cláusulas de la norma ISO 9001:2015.
+    """
+    try:
+        table = CommunicationTable.objects.select_related('emiter').get(id=table_id)
+        messages = CommunicationMessage.objects.select_related('receiver', 'message', 'periodicity').filter(table=table)
+
+        if not messages.exists():
+            return {"nodes": [], "edges": [], "ia_insights": "No se encontraron mensajes en esta tabla."}
+
+        edges = []
+        nodes = set()
+        ia_examples = []
+
+        for msg in messages:
+            emiter = table.emiter
+            receiver = msg.receiver
+            msg_name = msg.message.name
+            freq = msg.periodicity.name
+
+            if emiter and receiver:
+                edges.append({
+                    "from": f"{emiter.name} ({emiter.area.name})",
+                    "to": f"{receiver.name} ({receiver.area.name})",
+                    "label": msg_name,
+                    "frequency": freq
+                })
+
+                nodes.add(f"{emiter.name} ({emiter.area.name})")
+                nodes.add(f"{receiver.name} ({receiver.area.name})")
+
+                ia_examples.append(f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}")
+
+        # Prompt de IA para análisis
+        prompt = f"""
+Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1 y 5.3).
+A continuación se muestra un resumen del flujo de comunicaciones internas entre procesos y puestos en una organización industrial:
+
+{chr(10).join(ia_examples)}
+
+Tu tarea:
+1. Detecta patrones (flujo excesivo o escaso entre ciertas áreas).
+2. Sugiere posibles debilidades o barreras de comunicación.
+3. Da una recomendación de mejora concreta según la norma ISO.
+
+Responde en texto plano, breve y claro, como si fueras un asesor para una auditoría interna.
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=600,
+        )
+
+        insights = response.choices[0].message.content.strip()
+
+        return {
+            "nodes": list(nodes),
+            "edges": edges,
+            "ia_insights": insights
+        }
+
+    except CommunicationTable.DoesNotExist:
+        return {"nodes": [], "edges": [], "ia_insights": "Tabla no encontrada."}
+    except Exception as e:
+        print("Error general en la generación del mapa:", str(e))
+        return {"nodes": [], "edges": [], "ia_insights": f"Error inesperado: {str(e)}"}
+
+
