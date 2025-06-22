@@ -402,20 +402,28 @@ def table_flow_map_ia(request):
     ia_flow_data = None
     table_id = None
 
-    all_communicationtables = CommunicationTable.objects.prefetch_related(
-        'message__type',
-        'message__receiver',
-        'message__periodicity',
-    )
+    all_communicationtables = CommunicationTable.objects.all()
 
     if request.method == "POST":
         table_id = request.POST.get("table_id")
-        print("Generando mapa para tabla ID:", table_id)
-
-        # Llamamos directamente a la función importada
-        ia_flow_data = generate_communication_flow_map(table_id)
-
-        print("Resultado IA:", ia_flow_data)
+        if table_id:
+            print("Generando mapa para tabla ID:", table_id)
+            try:
+                ia_flow_data = generate_communication_flow_map(table_id)
+                print("Resultado IA:", ia_flow_data)
+            except Exception as e:
+                print(f"Error al generar mapa IA: {e}")
+                ia_flow_data = {
+                    "nodes": [],
+                    "edges": [],
+                    "ia_insights": {
+                        "patterns": [],
+                        "weaknesses": [],
+                        "recommendations": [f"Error interno: {str(e)}"]
+                    }
+                }
+        else:
+            print("No se recibió table_id válido en POST")
 
     context = {
         "flow_nodes": ia_flow_data["nodes"] if ia_flow_data else [],
@@ -427,4 +435,3 @@ def table_flow_map_ia(request):
     }
 
     return render(request, "mistemplates/communication-tables.html", context)
-
