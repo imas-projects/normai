@@ -969,7 +969,7 @@ def generate_communication_flow_map(table_id):
         messages = CommunicationMessage.objects.select_related('receiver', 'message', 'periodicity').filter(table=table)
 
         if not messages.exists():
-            return {"nodes": [], "edges": [], "ia_insights": "No se encontraron mensajes en esta tabla."}
+            return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": ["No se encontraron mensajes en esta tabla."]}}
 
         edges = []
         nodes = set()
@@ -994,7 +994,7 @@ def generate_communication_flow_map(table_id):
 
                 ia_examples.append(f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}")
 
-        # Prompt de IA para análisis
+        # Prompt de IA para análisis en formato JSON
         prompt = f"""
 Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1 y 5.3).
 A continuación se muestra un resumen del flujo de comunicaciones internas entre procesos y puestos en una organización industrial:
@@ -1006,8 +1006,16 @@ Tu tarea:
 2. Sugiere posibles debilidades o barreras de comunicación.
 3. Da una recomendación de mejora concreta según la norma ISO.
 
-Responde en texto plano, breve y claro, como si fueras un asesor para una auditoría interna.
-        """
+Por favor, responde exclusivamente con un JSON que contenga las claves: "patterns", "weaknesses" y "recommendations". Cada una debe ser una lista de strings.
+
+Ejemplo de respuesta JSON:
+
+{{
+  "patterns": ["Patrón 1", "Patrón 2"],
+  "weaknesses": ["Debilidad 1", "Debilidad 2"],
+  "recommendations": ["Recomendación 1", "Recomendación 2"]
+}}
+"""
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -1016,18 +1024,25 @@ Responde en texto plano, breve y claro, como si fueras un asesor para una audito
             max_tokens=600,
         )
 
-        insights = response.choices[0].message.content.strip()
+        insights_raw = response.choices[0].message.content.strip()
+
+        try:
+            insights_json = json.loads(insights_raw)
+        except json.JSONDecodeError:
+            insights_json = {
+                "patterns": [],
+                "weaknesses": [],
+                "recommendations": [insights_raw]
+            }
 
         return {
             "nodes": list(nodes),
             "edges": edges,
-            "ia_insights": insights
+            "ia_insights": insights_json
         }
 
     except CommunicationTable.DoesNotExist:
-        return {"nodes": [], "edges": [], "ia_insights": "Tabla no encontrada."}
+        return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": ["Tabla no encontrada."]}}
     except Exception as e:
         print("Error general en la generación del mapa:", str(e))
-        return {"nodes": [], "edges": [], "ia_insights": f"Error inesperado: {str(e)}"}
-
-
+        return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": [f"Error inesperado: {str(e)}"]}}
