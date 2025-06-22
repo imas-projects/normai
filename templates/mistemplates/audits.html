@@ -447,6 +447,7 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
 
 
 
+
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
