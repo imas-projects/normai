@@ -241,7 +241,7 @@
             </div>
 
             <div class="modal-footer">
-                <form method="post" action="{% url 'table_flow_map_ia' %}">
+                <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
                     {% csrf_token %}
                     <input type="hidden" name="table_id" value="{{ table.id }}">
                     <button type="submit" class="btn btn-info">Generar Mapa IA</button>
