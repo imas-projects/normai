@@ -352,7 +352,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
       const container = document.getElementById("auditProgramHeaderModalFormContent");
       container.innerHTML = html;
 
-      // Esperar a que el contenido dinámico esté disponible
       requestAnimationFrame(() => {
         const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
 
@@ -361,12 +360,13 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
           return;
         }
 
+        const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
+        suggestionsDiv.style.display = "none"; // Ocultar inicialmente
+
         suggestBtn.addEventListener("click", function () {
           console.log("Botón de sugerencia pulsado");
 
           const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
-          const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
-
           if (!yearInput || !yearInput.value) {
             alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
             return;
@@ -375,7 +375,8 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
           const originalText = suggestBtn.textContent;
           suggestBtn.disabled = true;
           suggestBtn.textContent = "Obteniendo sugerencias...";
-          suggestionsDiv.innerHTML = '<div class="text-muted">Consultando IA...</div>';
+          suggestionsDiv.innerHTML = ""; // Limpiar
+          suggestionsDiv.style.display = "block";
 
           fetch(`/audits/suggest_audit_program_fields/?year=${yearInput.value}`)
             .then(res => res.json())
@@ -394,20 +395,26 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                 return;
               }
 
-              suggestionsDiv.innerHTML = suggestions.map((s, i) => `
-                <div class="card mt-2 shadow-sm">
-                  <div class="card-body">
-                    <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                    <p><strong>Objetivo:</strong> ${s.objective}</p>
-                    <p><strong>Alcance:</strong> ${s.scope}</p>
-                    <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
-                    <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
-                    <button class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
-                  </div>
+              // Añadir título y sugerencias
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Objetivo:</strong> ${s.objective}</p>
+                        <p><strong>Alcance:</strong> ${s.scope}</p>
+                        <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
+                        <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
+                        <button class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
                 </div>
-              `).join("");
+              `;
 
-              // Enganchar eventos a botones "Usar esta sugerencia"
+              // Aplicar sugerencia a los campos del formulario
               document.querySelectorAll(".applySuggestionBtn").forEach(applyBtn => {
                 applyBtn.addEventListener("click", function () {
                   const idx = parseInt(this.dataset.idx);
@@ -419,7 +426,7 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                   document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
                   document.querySelector("textarea[name='security_standards']").value = s.security_standards;
 
-                  alert("Sugerencia aplicada.");
+                  alert("Sugerencia aplicada al formulario. Recuerda guardar los cambios.");
                 });
               });
             })
@@ -430,7 +437,6 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
             });
         });
 
-        // Mostrar modal una vez que el evento está conectado
         new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
       });
     });
