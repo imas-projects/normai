@@ -272,6 +272,8 @@ def suggest_audit_users_view(request):
             max_results=5
         )
     except Exception as e:
+        print("Error en suggest_audit_users_view:", e)
+        traceback.print_exc()  
         return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
 
     return JsonResponse({"suggestions": suggestions})
