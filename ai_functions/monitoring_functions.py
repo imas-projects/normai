@@ -1475,7 +1475,7 @@ Ordena por score y limita a {max_results} resultados.
 """
 
     try:
-        completion = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Eres un asistente experto en auditorías ISO."},
@@ -1483,7 +1483,7 @@ Ordena por score y limita a {max_results} resultados.
             ],
             temperature=0.5,
         )
-        gpt_response = completion.choices[0].message.content
+        gpt_response = response.choices[0].message.content
 
         # Intentar parsear JSON
         return json.loads(gpt_response)
