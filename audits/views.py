@@ -256,17 +256,20 @@ def add_annual_program_user(request):
     return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program_user.html')
 
 def suggest_audit_users_view(request):
-    program_header_id = request.GET.get("program_header_id")
-    process_id = request.GET.get("process_id")
+    annual_program_id = request.GET.get("annual_program_id")
 
-    if not program_header_id or not process_id:
-        return HttpResponseBadRequest("Faltan parámetros 'program_header_id' o 'process_id'")
+    if not annual_program_id:
+        return HttpResponseBadRequest("Falta el parámetro 'annual_program_id'")
 
     try:
+        annual_program = get_object_or_404(AnnualProgram, pk=annual_program_id)
+        program_header_id = annual_program.program_header_id
+        process_id = annual_program.process_id
+
         suggestions = suggest_audit_users_ai(
             program_header_id=int(program_header_id),
             process_id=int(process_id),
-            max_results=5  
+            max_results=5
         )
     except Exception as e:
         return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
