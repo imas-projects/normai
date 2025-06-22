@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Encabezado del Programa de Auditoría</h2>
-  <form method="post" action="{% url 'audits:add_audit_program_header' %}">
+  <form method="post" action="{% url 'audits:add_audit_program_header' %}" id="add-audit-program-header-form">
     {% csrf_token %}
 
     <div class="mb-3">
@@ -10,6 +10,14 @@
       {% if form.year.errors %}
         <div class="text-danger small">{{ form.year.errors }}</div>
       {% endif %}
+
+      <!-- Botón de sugerencias -->
+      <button type="button" id="suggestAuditFieldsBtn" class="btn btn-outline-primary btn-sm mt-2">
+        Obtener sugerencias de IA
+      </button>
+
+      <!-- Contenedor para mostrar sugerencias -->
+      <div id="auditSuggestionsContainer" class="mt-3"></div>
     </div>
 
     <div class="mb-3">
@@ -47,4 +55,3 @@
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
-
