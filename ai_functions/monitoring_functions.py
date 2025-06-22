@@ -1320,12 +1320,18 @@ Responde en JSON como lista de objetos con esas claves.
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
         data = json.loads(clean_content)
 
+        MONTHS_MAP = {
+            "January": 1, "February": 2, "March": 3, "April": 4,
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        }
+
         if isinstance(data, list) and all(isinstance(item, dict) for item in data):
             return [
                 {
                     "process_name": item.get("process_name", "").strip(),
                     "process_code": item.get("process_code", "").strip(),
-                    "suggested_month": int(item.get("suggested_month", 1)),
+                    "suggested_month": MONTHS_MAP.get(item.get("suggested_month", "January"), 1),
                     "justification": item.get("justification", "").strip()
                 }
                 for item in data[:max_results]
@@ -1341,3 +1347,4 @@ Responde en JSON como lista de objetos con esas claves.
     except Exception as e:
         print("Error general IA:", str(e))
         return []
+
