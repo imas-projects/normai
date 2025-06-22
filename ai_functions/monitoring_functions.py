@@ -2,8 +2,13 @@ from openai import OpenAI
 import openai
 import json
 import re
+from datetime import date
+from collections import defaultdict
+from django.db.models import Count
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
 from communications.models import CommunicationTable, CommunicationMessage
+from processes.models import Process 
+from audits.models import AnnualProgram, Findings, AuditReport, AuditProgramHeader
 from audits.models import AuditProgramHeader
 from django.conf import settings
 from collections import Counter
@@ -1185,3 +1190,154 @@ Por favor responde en JSON como una lista de objetos con las claves:
         return []
 
 
+def suggest_annual_processes_ai(program_header_id: int, max_results=3):
+    """
+    Sugiere automáticamente hasta 3 procesos y meses para auditar en un AuditProgramHeader dado,
+    basándose en:
+    - Historial de AnnualProgram
+    - Indicadores de criticidad del modelo Process
+    - Clasificaciones de hallazgos (NC mayor, menor)
+    - Buenas prácticas ISO 9001:2015
+    """
+    try:
+        header = AuditProgramHeader.objects.get(id=program_header_id)
+    except AuditProgramHeader.DoesNotExist:
+        return []
+
+    year = header.year
+    all_processes = Process.objects.all()
+    if not all_processes.exists():
+        return []
+
+    today = date.today()
+    past_programs = AnnualProgram.objects.exclude(program_header__year=year).select_related('process', 'program_header')
+    past_findings = Findings.objects.select_related('report__audit__annual_program__process')
+
+    # --- Preparar historial si lo hay ---
+    if past_programs.exists():
+        audit_history = defaultdict(list)
+        for entry in past_programs:
+            audit_history[entry.process.id].append(entry.month)
+
+        findings_by_process = defaultdict(lambda: {"NC_MAYOR": 0, "NC_MENOR": 0})
+        for f in past_findings:
+            try:
+                process_id = f.report.audit.annual_program.process.id
+                findings_by_process[process_id][f.classification] += 1
+            except:
+                continue
+
+        process_data_examples = []
+        for process in all_processes:
+            entry = {
+                "process_name": process.name,
+                "process_code": process.process_code,
+                "months_audited": audit_history.get(process.id, []),
+                "review_date": str(process.review_date) if process.review_date else "None",
+                "creation_date": str(process.creation_date),
+                "staff_roles": bool(process.staff_roles),
+                "equipment": bool(process.equipment),
+                "materials": bool(process.materials),
+                "transport_resources": bool(process.transport_resources),
+                "nc_mayor": findings_by_process[process.id]["NC_MAYOR"],
+                "nc_menor": findings_by_process[process.id]["NC_MENOR"]
+            }
+            process_data_examples.append(entry)
+
+        prompt = f"""
+Eres un auditor líder experto en ISO 9001:2015.
+
+Con base en el siguiente historial de auditorías y características de los procesos, sugiere TRES combinaciones de proceso y mes para auditar en el año {year}.
+Prioriza:
+- Procesos con más no conformidades (NC_MAYOR > NC_MENOR)
+- Procesos con alta complejidad (campos poblados)
+- Procesos no auditados recientemente o nuevos
+- Procesos sin revisión reciente
+- Distribución de auditorías a lo largo del año (meses menos usados)
+
+Cada sugerencia debe incluir:
+- process_name
+- process_code
+- suggested_month
+- justification (una frase clara con el razonamiento)
+
+Datos:
+{json.dumps(process_data_examples[:15], indent=2)}
+
+Responde en formato JSON como una lista de objetos con las claves:
+- "process_name"
+- "process_code"
+- "suggested_month"
+- "justification"
+"""
+    else:
+        # --- Sin historial, guiarse solo por ISO 9001:2015 ---
+        fallback_processes = all_processes[:10]
+        process_data = [
+            {
+                "process_name": p.name,
+                "process_code": p.process_code,
+                "creation_date": str(p.creation_date),
+                "review_date": str(p.review_date) if p.review_date else "None",
+                "staff_roles": bool(p.staff_roles),
+                "equipment": bool(p.equipment),
+                "materials": bool(p.materials),
+                "transport_resources": bool(p.transport_resources),
+            }
+            for p in fallback_processes
+        ]
+
+        prompt = f"""
+No hay historial de auditorías disponibles.
+
+Eres un experto en auditoría ISO 9001:2015 y tienes la siguiente lista de procesos activos. 
+Basándote en su criticidad, fecha de creación, complejidad (campos poblados), y la norma ISO 9001:2015, 
+sugiere TRES procesos con el mes ideal para auditarlos este año ({year}).
+
+Cada sugerencia debe contener:
+- process_name
+- process_code
+- suggested_month
+- justification (basada en los datos disponibles)
+
+Datos:
+{json.dumps(process_data, indent=2)}
+
+Responde en JSON como lista de objetos con esas claves.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=1000,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("IA Response:", repr(content))
+
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        data = json.loads(clean_content)
+
+        if isinstance(data, list) and all(isinstance(item, dict) for item in data):
+            return [
+                {
+                    "process_name": item.get("process_name", "").strip(),
+                    "process_code": item.get("process_code", "").strip(),
+                    "suggested_month": int(item.get("suggested_month", 1)),
+                    "justification": item.get("justification", "").strip()
+                }
+                for item in data[:max_results]
+            ]
+
+        print("Formato inesperado:", type(data))
+        return []
+
+    except json.JSONDecodeError as e:
+        print("Error JSON:", str(e))
+        print("Contenido recibido:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general IA:", str(e))
+        return []
