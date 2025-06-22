@@ -295,9 +295,116 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     .then(response => response.text())
     .then(html => {
         document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+        const modalEl = document.getElementById("addAnnualProgramModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Esperamos que el DOM del form se cargue para añadir listener al botón IA
+        const btnSuggestIA = document.getElementById("btnSuggestIA");
+        const suggestionsDiv = document.getElementById("iaSuggestions");
+
+        if (btnSuggestIA) {
+            btnSuggestIA.setAttribute("type", "button");
+
+            btnSuggestIA.addEventListener("click", function() {
+                const programHeaderSelect = document.querySelector("#id_program_header");
+                if (!programHeaderSelect || !programHeaderSelect.value) {
+                    alert("Por favor seleccione un Program Header primero.");
+                    return;
+                }
+
+                const originalText = btnSuggestIA.textContent;
+                btnSuggestIA.disabled = true;
+                btnSuggestIA.textContent = "Obteniendo sugerencias...";
+                suggestionsDiv.innerHTML = "";
+                suggestionsDiv.style.display = "block";
+
+                fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    btnSuggestIA.disabled = false;
+                    btnSuggestIA.textContent = originalText;
+
+                    if (data.error) {
+                        suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                        return;
+                    }
+
+                    if (!data.suggestions || data.suggestions.length === 0) {
+                        suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                        return;
+                    }
+
+                    // Construir tarjetas de sugerencias
+                    suggestionsDiv.innerHTML = `
+                      <strong>Sugerencias de la IA:</strong>
+                      <div id="suggestionList" class="mt-2">
+                        ${data.suggestions.map((s, i) => `
+                          <div class="card mt-2 shadow-sm">
+                            <div class="card-body">
+                              <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                              <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                              <p><strong>Mes sugerido:</strong> <em>${s.month !== undefined && s.month !== null ? s.month : "No especificado"}</em></p>
+                              <p><strong>Justificación:</strong> ${s.justification}</p>
+                              <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                            </div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    `;
+
+                    document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
+                        btn.addEventListener("click", function() {
+                            const idx = parseInt(this.dataset.idx);
+                            const s = data.suggestions[idx];
+                            if (!s) return;
+
+                            // Aplicar valores en los campos
+                            const processSelect = document.querySelector("#id_process");
+                            const monthSelect = document.querySelector("#id_month");
+
+                            if (processSelect) {
+                                // Selecciona el proceso por el código o nombre si tienes value
+                                // Asumiendo que el select tiene los IDs de proceso en value
+                                // Buscamos la opción que coincida con el nombre o código:
+                                let optionToSelect = Array.from(processSelect.options).find(opt =>
+                                  opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                                );
+                                if (optionToSelect) {
+                                  processSelect.value = optionToSelect.value;
+                                } else {
+                                  // Si no existe, dejar sin cambios o mostrar aviso
+                                  console.warn("Proceso sugerido no encontrado en el select");
+                                }
+                            }
+
+                            if (monthSelect) {
+                                if (s.month !== undefined && s.month !== null) {
+                                  monthSelect.value = s.month;
+                                } else {
+                                  monthSelect.value = ""; // Limpia o pone default
+                                }
+                            }
+
+                            // Opcional: hacer foco en el select proceso
+                            if (processSelect) processSelect.focus();
+
+                            // Limpia sugerencias y opcionalmente oculta el div
+                            suggestionsDiv.innerHTML = "";
+                            // suggestionsDiv.style.display = "none";
+                        });
+                    });
+                })
+                .catch(err => {
+                    btnSuggestIA.disabled = false;
+                    btnSuggestIA.textContent = originalText;
+                    suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+                });
+            });
+        }
     });
 });
+
 
 document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_program_user' %}")
