@@ -1469,7 +1469,7 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
 
     # 7. Hallazgos relevantes
     findings = Findings.objects.filter(
-        report__audit__annual_program__process=process
+        report__audit__annual_program__process_id=process.id
     ).select_related('report')
 
     for f in findings:
