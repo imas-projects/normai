@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict, OrderedDict
@@ -26,7 +26,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai
 
 # === BASIC VIEWS ===
 
@@ -239,6 +239,18 @@ def suggest_audit_program_fields(request):
 
 def add_annual_program(request):
     return _add_form_view(request, AnnualProgramForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program.html')
+
+def suggest_annual_program_processes_view(request):
+    program_header_id = request.GET.get('program_header_id')
+    if not program_header_id:
+        return HttpResponseBadRequest("Falta el parámetro 'program_header_id'")
+
+    try:
+        suggestions = suggest_annual_processes_ai(int(program_header_id))
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"suggestions": suggestions})
 
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
