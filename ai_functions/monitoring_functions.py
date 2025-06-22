@@ -1478,6 +1478,8 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
 
     scored_users.sort(key=lambda x: x["score"], reverse=True)
     top_candidates = scored_users[:max_results]
+    print("Top candidates para GPT:", top_candidates)
+
 
     prompt = f"""
 Eres un auditor experto y asistente IA. Tienes esta lista de candidatos con puntajes y razones técnicas:
