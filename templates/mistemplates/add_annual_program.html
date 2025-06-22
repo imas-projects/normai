@@ -12,13 +12,10 @@
       {% endif %}
     </div>
 
-    <!-- Botón de sugerencias -->
+    <!-- Botón de sugerencias IA con clase y estilo más parecido -->
     <div class="mb-3">
-      <button type="button" id="suggestAuditFieldsBtn" class="btn btn-info">Sugerir procesos IA</button>
+      <button type="button" id="btnSuggestIA" class="btn btn-info">Sugerir procesos IA</button>
     </div>
-
-    <!-- Contenedor para mostrar sugerencias IA -->
-    <div id="auditSuggestionsContainer" class="mt-4" style="display:none;"></div>
 
     <div class="mb-3">
       {{ form.process.label_tag }}
@@ -41,5 +38,6 @@
     
   </form>
 
-
+  <!-- Contenedor de sugerencias, oculto por defecto -->
+  <div id="iaSuggestions" class="mt-4" style="display:none;"></div>
 </div>
