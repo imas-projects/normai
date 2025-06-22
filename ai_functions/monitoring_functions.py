@@ -969,7 +969,15 @@ def generate_communication_flow_map(table_id):
         messages = CommunicationMessage.objects.select_related('receiver', 'message', 'periodicity').filter(table=table)
 
         if not messages.exists():
-            return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": ["No se encontraron mensajes en esta tabla."]}}
+            return {
+                "nodes": [],
+                "edges": [],
+                "ia_insights": {
+                    "patterns": [],
+                    "weaknesses": [],
+                    "recommendations": ["No se encontraron mensajes en esta tabla."]
+                }
+            }
 
         edges = []
         nodes = set()
@@ -994,7 +1002,6 @@ def generate_communication_flow_map(table_id):
 
                 ia_examples.append(f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}")
 
-        # Prompt de IA para análisis en formato JSON
         prompt = f"""
 Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1 y 5.3).
 A continuación se muestra un resumen del flujo de comunicaciones internas entre procesos y puestos en una organización industrial:
@@ -1026,9 +1033,13 @@ Ejemplo de respuesta JSON:
 
         insights_raw = response.choices[0].message.content.strip()
 
+        # Limpieza para eliminar backticks y etiquetas JSON del string
+        insights_clean = re.sub(r"```json|```", "", insights_raw).strip()
+
         try:
-            insights_json = json.loads(insights_raw)
+            insights_json = json.loads(insights_clean)
         except json.JSONDecodeError:
+            # En caso de fallo, retornamos el texto completo como recomendación para que no se pierda info
             insights_json = {
                 "patterns": [],
                 "weaknesses": [],
@@ -1042,7 +1053,23 @@ Ejemplo de respuesta JSON:
         }
 
     except CommunicationTable.DoesNotExist:
-        return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": ["Tabla no encontrada."]}}
+        return {
+            "nodes": [],
+            "edges": [],
+            "ia_insights": {
+                "patterns": [],
+                "weaknesses": [],
+                "recommendations": ["Tabla no encontrada."]
+            }
+        }
     except Exception as e:
         print("Error general en la generación del mapa:", str(e))
-        return {"nodes": [], "edges": [], "ia_insights": {"patterns": [], "weaknesses": [], "recommendations": [f"Error inesperado: {str(e)}"]}}
+        return {
+            "nodes": [],
+            "edges": [],
+            "ia_insights": {
+                "patterns": [],
+                "weaknesses": [],
+                "recommendations": [f"Error inesperado: {str(e)}"]
+            }
+        }
