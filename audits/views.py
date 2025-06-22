@@ -252,6 +252,9 @@ def suggest_annual_program_processes_view(request):
 
     return JsonResponse({"suggestions": suggestions})
 
+def add_annual_program_user(request):
+    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program_user.html')
+
 def suggest_audit_users_view(request):
     program_header_id = request.GET.get("program_header_id")
     process_id = request.GET.get("process_id")
@@ -270,13 +273,9 @@ def suggest_audit_users_view(request):
 
     return JsonResponse({"suggestions": suggestions})
 
-
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
-
-def add_annual_program_user(request):
-    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program_user.html')
-
+    
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
 
