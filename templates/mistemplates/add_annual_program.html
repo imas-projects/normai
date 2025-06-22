@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Programa Anual</h2>
-  <form method="post" action="{% url 'audits:add_annual_program' %}">
+  <form method="post" action="{% url 'audits:add_annual_program' %}" id="annualProgramForm">
     {% csrf_token %}
     
     <div class="mb-3">
@@ -11,6 +11,8 @@
         <div class="text-danger small">{{ form.program_header.errors }}</div>
       {% endif %}
     </div>
+
+    <button type="button" class="btn btn-primary ms-2" id="btnSuggestIA">Sugerir procesos IA</button>
     
     <div class="mb-3">
       {{ form.process.label_tag }}
@@ -30,6 +32,8 @@
     </div>
     
     <button type="submit" class="btn btn-success">Guardar</button>
+    
   </form>
-</div>
 
+  <div id="iaSuggestions" class="mt-4"></div>
+</div>
