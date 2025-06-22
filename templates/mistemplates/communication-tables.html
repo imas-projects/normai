@@ -76,6 +76,13 @@
                                     data-bs-target="#summarizeModal{{ table.id }}">
                                 <i class="ri-add-line"></i> Resumir tabla
                             </button>
+                        
+                            <button type="button" class="btn btn-outline-info ms-2" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#flowMapModal{{ table.id }}">
+                                <i class="ri-map-pin-line"></i> Mapa IA
+                            </button>
+
 
                            <!--<form method="post" id="summarize_form" action="{% url 'communications:table-summarize-ia' %}">
                                 {% csrf_token %}
@@ -196,6 +203,55 @@
                         </div>
                     </div>
                 </div>
+
+<!-- Modal Mapa de Comunicación IA -->
+<div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-white text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="flowMapModalLabel{{ table.id }}">Mapa IA de Comunicación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                    <div class="alert alert-info">
+                        <strong>Hallazgos IA:</strong>
+                        <p>{{ flow_ia_insights }}</p>
+                    </div>
+
+                    <div id="graph-container-{{ table.id }}">
+                        <!-- Aquí podrías insertar un gráfico dinámico con JS, o representar nodos/edges como lista -->
+                        <h6>Nodos:</h6>
+                        <ul>
+                            {% for node in flow_nodes %}
+                                <li><strong>{{ node.label }}</strong> (ID: {{ node.id }})</li>
+                            {% endfor %}
+                        </ul>
+                        <h6>Relaciones:</h6>
+                        <ul>
+                            {% for edge in flow_edges %}
+                                <li>De <strong>{{ edge.from }}</strong> a <strong>{{ edge.to }}</strong></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Haz clic en el botón para generar el mapa IA.</p>
+                {% endif %}
+            </div>
+
+            <div class="modal-footer">
+                <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="table_id" value="{{ table.id }}">
+                    <button type="submit" class="btn btn-info">Generar Mapa IA</button>
+                </form>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 
@@ -872,6 +928,17 @@
             }
             return cookieValue;
         }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const flowModal = document.getElementById('flowMapModal{{ table_id }}');
+        {% if open_flow_modal %}
+            if (flowModal) {
+                const modalInstance = new bootstrap.Modal(flowModal);
+                modalInstance.show();
+            }
+        {% endif %}
+    });
+
     </script>
 
     
