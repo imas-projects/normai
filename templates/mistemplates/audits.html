@@ -360,6 +360,9 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
           return;
         }
 
+        // Asegurarse que NO es un botón de tipo submit
+        suggestBtn.setAttribute("type", "button");
+
         const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
         suggestionsDiv.style.display = "none"; // Ocultar inicialmente
 
@@ -407,7 +410,7 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                         <p><strong>Alcance:</strong> ${s.scope}</p>
                         <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
                         <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
-                        <button class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
                       </div>
                     </div>
                   `).join("")}
@@ -441,6 +444,7 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
       });
     });
 });
+
 
 
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
