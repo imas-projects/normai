@@ -4,22 +4,24 @@
   <form method="post" action="{% url 'audits:add_audit_program_header' %}" id="add-audit-program-header-form">
     {% csrf_token %}
 
+    <!-- Campo de año -->
     <div class="mb-3">
       {{ form.year.label_tag }}
       {{ form.year }}
       {% if form.year.errors %}
         <div class="text-danger small">{{ form.year.errors }}</div>
       {% endif %}
-
-      <!-- Botón de sugerencias -->
-      <div class="mb-3">
-        <button type="button" id="suggestAuditFieldsBtn" class="btn btn-info">Obtener sugerencias IA</button>
-      </div>
-
-      <!-- Contenedor para mostrar sugerencias -->
-      <div id="auditSuggestionsContainer" class="mt-4" style="display:none;"></div>
     </div>
 
+    <!-- Botón de sugerencias -->
+    <div class="mb-3">
+      <button type="button" id="suggestAuditFieldsBtn" class="btn btn-info">Obtener sugerencias IA</button>
+    </div>
+
+    <!-- Contenedor para mostrar sugerencias -->
+    <div id="auditSuggestionsContainer" class="mt-4" style="display:none;"></div>
+
+    <!-- Campo objetivo -->
     <div class="mb-3">
       {{ form.objective.label_tag }}
       {{ form.objective }}
@@ -28,6 +30,7 @@
       {% endif %}
     </div>
 
+    <!-- Campo alcance -->
     <div class="mb-3">
       {{ form.scope.label_tag }}
       {{ form.scope }}
@@ -36,6 +39,7 @@
       {% endif %}
     </div>
 
+    <!-- Campo criterios -->
     <div class="mb-3">
       {{ form.audit_criteria.label_tag }}
       {{ form.audit_criteria }}
@@ -44,6 +48,7 @@
       {% endif %}
     </div>
 
+    <!-- Campo normas de seguridad -->
     <div class="mb-3">
       {{ form.security_standards.label_tag }}
       {{ form.security_standards }}
@@ -52,6 +57,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón de guardar -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
