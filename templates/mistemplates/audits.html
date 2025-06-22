@@ -345,86 +345,83 @@ document.getElementById("openAddProcessRequirementModal").addEventListener("clic
         });
 });
 
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_program_header' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+      document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+      new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
 
-        // Esperar a que el DOM esté listo
-        setTimeout(() => {
-            const btn = document.getElementById("suggestAuditFieldsBtn");
-            if (!btn) return;
+      // Esperar a que el nuevo contenido esté en el DOM
+      setTimeout(() => {
+        const btn = document.getElementById("getSuggestionBtn");
+        if (!btn) return;
 
-            btn.addEventListener("click", function () {
-                const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
-                const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
+        btn.addEventListener("click", function () {
+          const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
+          const container = document.getElementById("suggestionContainer");
+          const list = document.getElementById("suggestionList");
 
-                if (!yearInput || !yearInput.value) {
-                    alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
-                    return;
-                }
+          if (!yearInput || !yearInput.value) {
+            alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
+            return;
+          }
 
-                const originalText = btn.textContent;
-                btn.disabled = true;
-                btn.textContent = "Obteniendo sugerencias...";
+          const originalText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = "Obteniendo sugerencias...";
 
-                suggestionsDiv.innerHTML = '<div class="text-muted">Consultando IA...</div>';
+          fetch(`/audits/suggest_audit_program_fields/?year=${encodeURIComponent(yearInput.value)}`)
+            .then(response => {
+              if (!response.ok) throw new Error(`Error ${response.status}`);
+              return response.json();
+            })
+            .then(data => {
+              if (data.error || !Array.isArray(data.suggestions)) {
+                alert("No se encontraron sugerencias.");
+                return;
+              }
 
-                fetch(/audits/suggest_audit_program_fields/?year=${yearInput.value})
-                    .then(res => res.json())
-                    .then(data => {
-                        btn.disabled = false;
-                        btn.textContent = originalText;
+              list.innerHTML = "";
+              data.suggestions.forEach((s, idx) => {
+                const div = document.createElement("div");
+                div.className = "alert alert-secondary";
 
-                        if (data.error) {
-                            suggestionsDiv.innerHTML = <div class="text-danger">${data.error}</div>;
-                            return;
-                        }
+                div.innerHTML = `
+                  <strong>Sugerencia ${idx + 1}</strong><br>
+                  <strong>Objetivo:</strong> ${s.objective}<br>
+                  <strong>Alcance:</strong> ${s.scope}<br>
+                  <strong>Criterios de Auditoría:</strong> ${s.audit_criteria}<br>
+                  <strong>Normas de Seguridad:</strong> ${s.security_standards}<br>
+                  <button type="button" class="btn btn-sm btn-primary mt-2 select-suggestion-btn">Usar esta sugerencia</button>
+                `;
 
-                        const suggestions = data.suggestions || [];
-                        if (suggestions.length === 0) {
-                            suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
-                            return;
-                        }
+                list.appendChild(div);
 
-                        suggestionsDiv.innerHTML = suggestions.map((s, i) => 
-                            <div class="card mt-2 shadow-sm">
-                                <div class="card-body">
-                                    <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                                    <p><strong>Objetivo:</strong> ${s.objective}</p>
-                                    <p><strong>Alcance:</strong> ${s.scope}</p>
-                                    <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
-                                    <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
-                                    <button class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
-                                </div>
-                            </div>
-                        ).join("");
+                const selectBtn = div.querySelector(".select-suggestion-btn");
+                selectBtn.addEventListener("click", () => {
+                  const form = document.getElementById("add-audit-program-header-form");
+                  form.querySelector("textarea[name='objective']").value = s.objective;
+                  form.querySelector("textarea[name='scope']").value = s.scope;
+                  form.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
+                  form.querySelector("textarea[name='security_standards']").value = s.security_standards;
 
-                        // Asignar eventos a botones "Usar esta sugerencia"
-                        document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
-                            btn.addEventListener("click", function () {
-                                const idx = parseInt(this.dataset.idx);
-                                const s = suggestions[idx];
-                                if (!s) return;
+                  container.style.display = "none";
+                });
+              });
 
-                                document.querySelector("textarea[name='objective']").value = s.objective;
-                                document.querySelector("textarea[name='scope']").value = s.scope;
-                                document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
-                                document.querySelector("textarea[name='security_standards']").value = s.security_standards;
-
-                                alert("Sugerencia aplicada.");
-                            });
-                        });
-                    })
-                    .catch(err => {
-                        btn.disabled = false;
-                        btn.textContent = originalText;
-                        suggestionsDiv.innerHTML = <div class="text-danger">Error al obtener sugerencias: ${err}</div>;
-                    });
+              container.style.display = "block";
+            })
+            .catch(error => {
+              alert("Error al obtener sugerencias.");
+              console.error(error);
+            })
+            .finally(() => {
+              btn.disabled = false;
+              btn.textContent = originalText;
             });
-        }, 300);
+        });
+      }, 300);
     });
 });
 
