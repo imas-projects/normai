@@ -564,16 +564,106 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     });
 });
 
+document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_program_user' %}")
+    .then((response) => response.text())
+    .then((html) => {
+      document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
 
+      const modalEl = document.getElementById("addAnnualProgramUserModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
 
-document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program_user' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
+      const btnSuggestIA = document.getElementById("btnSuggestUsersIA");
+      const suggestionsDiv = document.getElementById("iaUserSuggestions");
+
+      if (btnSuggestIA) {
+        btnSuggestIA.setAttribute("type", "button");
+
+        btnSuggestIA.addEventListener("click", function () {
+          const annualProgramSelect = document.querySelector("#id_annual_program");
+
+          if (!annualProgramSelect || !annualProgramSelect.value) {
+            alert("Por favor seleccione un Annual Program primero.");
+            return;
+          }
+
+          const originalText = btnSuggestIA.textContent;
+          btnSuggestIA.disabled = true;
+          btnSuggestIA.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest-audit-users/?annual_program_id=${annualProgramSelect.value}`)
+            .then((response) => response.json())
+            .then((data) => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                return;
+              }
+
+              if (!data.suggestions || data.suggestions.length === 0) {
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestedUsersList" class="mt-2">
+                  ${data.suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
+                        <p><strong>Rol sugerido:</strong> ${s.suggested_role || "N/A"}</p>
+                        <p><strong>Justificación:</strong> ${s.justification}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applyUserSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              document.querySelectorAll(".applyUserSuggestionBtn").forEach((btn) => {
+                btn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = data.suggestions[idx];
+                  if (!s) return;
+
+                  const userSelect = document.querySelector("#id_user");
+
+                  if (userSelect) {
+                    let optionToSelect = Array.from(userSelect.options).find(
+                      (opt) =>
+                        opt.text.includes(s.full_name) || opt.text.includes(s.username)
+                    );
+
+                    if (optionToSelect) {
+                      userSelect.value = optionToSelect.value;
+                    } else {
+                      console.warn("Usuario sugerido no encontrado en el select.");
+                    }
+
+                    userSelect.focus();
+                  }
+
+                  suggestionsDiv.innerHTML = "";
+                });
+              });
+            })
+            .catch((err) => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+      }
     });
 });
+
 
 document.getElementById("openAddAnnualPlanModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_annual_plan' %}")
