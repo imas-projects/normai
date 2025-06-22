@@ -1462,7 +1462,23 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
     scored_users.sort(key=lambda x: x["score"], reverse=True)
     top_candidates = scored_users[:max_results]
 
-    # Preparar prompt para GPT
+    # Preparar lista para GPT
+    scored_users = []
+    for uid, info in users_scores.items():
+        try:
+            user = User.objects.get(id=uid)
+            scored_users.append({
+                "user_id": uid,
+                "username": user.username,
+                "score": info["score"],
+                "justification": "; ".join(info["reasons"])[:200]
+            })
+        except User.DoesNotExist:
+            continue
+
+    scored_users.sort(key=lambda x: x["score"], reverse=True)
+    top_candidates = scored_users[:max_results]
+
     prompt = f"""
 Eres un auditor experto y asistente IA. Tienes esta lista de candidatos con puntajes y razones técnicas:
 
@@ -1484,9 +1500,17 @@ Ordena por score y limita a {max_results} resultados.
             temperature=0.5,
         )
         gpt_response = response.choices[0].message.content
+        print("Respuesta cruda de GPT:", repr(gpt_response))
 
-        # Intentar parsear JSON
-        return json.loads(gpt_response)
+        # Limpiar posible formato Markdown JSON
+        clean_response = re.sub(r'^```json\s*|\s*```$', '', gpt_response).strip()
+        print("Respuesta limpia de GPT:", repr(clean_response))
+
+        return json.loads(clean_response)
+    except json.JSONDecodeError as jde:
+        print(f"Error al decodificar JSON: {jde}")
+        print("Contenido recibido:", repr(clean_response))
+        return top_candidates
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
