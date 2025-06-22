@@ -9,6 +9,7 @@ from company.models import Area, Position, UserPosition
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 import json
+from ai_functions.monitoring_functions import generate_communication_flow_map
 
 
 # Create your views here.
@@ -394,3 +395,36 @@ def table_summarize_ia(request):
         }
 
     return render(request, "mistemplates/communication-tables.html", context)
+
+
+
+def table_flow_map_ia(request):
+    ia_flow_data = None
+    table_id = None
+
+    all_communicationtables = CommunicationTable.objects.prefetch_related(
+        'message__type',
+        'message__receiver',
+        'message__periodicity',
+    )
+
+    if request.method == "POST":
+        table_id = request.POST.get("table_id")
+        print("Generando mapa para tabla ID:", table_id)
+
+        # Llamamos directamente a la función importada
+        ia_flow_data = generate_communication_flow_map(table_id)
+
+        print("Resultado IA:", ia_flow_data)
+
+    context = {
+        "flow_nodes": ia_flow_data["nodes"] if ia_flow_data else [],
+        "flow_edges": ia_flow_data["edges"] if ia_flow_data else [],
+        "flow_ia_insights": ia_flow_data["ia_insights"] if ia_flow_data else None,
+        'all_communicationtables': all_communicationtables,
+        "table_id": table_id,
+        "open_flow_modal": True,
+    }
+
+    return render(request, "mistemplates/communication-tables.html", context)
+
