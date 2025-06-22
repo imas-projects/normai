@@ -217,21 +217,25 @@
                 {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
                     <div class="alert alert-info">
                         <strong>Hallazgos IA:</strong>
-                        <p>{{ flow_ia_insights }}</p>
+                        <pre style="white-space: pre-wrap;">{{ flow_ia_insights }}</pre>
                     </div>
 
                     <div id="graph-container-{{ table.id }}">
-                        <!-- Aquí podrías insertar un gráfico dinámico con JS, o representar nodos/edges como lista -->
                         <h6>Nodos:</h6>
                         <ul>
                             {% for node in flow_nodes %}
-                                <li><strong>{{ node.label }}</strong> (ID: {{ node.id }})</li>
+                                <li>{{ node }}</li>
                             {% endfor %}
                         </ul>
+
                         <h6>Relaciones:</h6>
                         <ul>
                             {% for edge in flow_edges %}
-                                <li>De <strong>{{ edge.from }}</strong> a <strong>{{ edge.to }}</strong></li>
+                                <li>
+                                    De <strong>{{ edge.from }}</strong> a <strong>{{ edge.to }}</strong><br>
+                                    Mensaje: <em>{{ edge.label }}</em><br>
+                                    Frecuencia: <em>{{ edge.frequency }}</em>
+                                </li>
                             {% endfor %}
                         </ul>
                     </div>
