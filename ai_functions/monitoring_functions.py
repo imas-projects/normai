@@ -3,6 +3,7 @@ import openai
 import json
 import re
 from django.utils.timezone import now
+from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 from collections import defaultdict
 from django.db.models import Count
@@ -1379,13 +1380,12 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
         uid = ua.user.id
         users_scores[uid]["score"] += 3
         users_scores[uid]["reasons"].append(f"Asignado antes en programa con proceso {process.name}")
-
         if ua.annual_program and hasattr(ua.annual_program, 'program_header'):
             if ua.annual_program.program_header.year == header.year:
                 users_scores[uid]["score"] -= 1
-                users_scores[uid]["reasons"].append(f"Asignación reciente en el mismo año")
+                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
 
-    # 2. Usuarios que fueron auditores en planes de este proceso
+    # 2. Auditores previos
     auditors = AnnualPlanAuditor.objects.filter(
         annual_plan__annual_program__process=process
     ).select_related('user', 'annual_plan')
@@ -1393,9 +1393,9 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
     for auditor in auditors:
         uid = auditor.user.id
         users_scores[uid]["score"] += 2
-        users_scores[uid]["reasons"].append(f"Fue auditor en plan del proceso {process.name}")
+        users_scores[uid]["reasons"].append("Fue auditor en plan del proceso")
 
-    # 3. Usuarios que fueron auditados en planes del proceso
+    # 3. Auditados previos
     audited_users = AnnualPlanAudited.objects.filter(
         annual_plan__annual_program__process=process
     ).select_related('user', 'annual_plan')
@@ -1403,9 +1403,9 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
     for audited in audited_users:
         uid = audited.user.id
         users_scores[uid]["score"] += 1
-        users_scores[uid]["reasons"].append(f"Fue auditado en plan del proceso {process.name}")
+        users_scores[uid]["reasons"].append("Fue auditado en plan del proceso")
 
-    # 4. Usuarios líderes de auditoría en planes del proceso
+    # 4. Líderes de auditoría previos
     leaders = AnnualPlan.objects.filter(
         annual_program__process=process
     ).select_related('lider')
@@ -1414,12 +1414,10 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
         if leader_plan.lider:
             uid = leader_plan.lider.id
             users_scores[uid]["score"] += 2
-            users_scores[uid]["reasons"].append(f"Fue líder de auditoría en proceso {process.name}")
+            users_scores[uid]["reasons"].append("Fue líder de auditoría en este proceso")
 
-    # 5. Usuarios que auditaron requisitos similares
-
+    # 5. Requisitos similares
     reqs_ids = ProcessRequirement.objects.filter(process=process).values_list('requirement_id', flat=True)
-
     checklist_audits = Checklist.objects.filter(
         audit_plan__annual_program__process=process,
         question__requirement_id__in=reqs_ids
@@ -1432,7 +1430,6 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
         ).select_related('audit')
 
         for ev in evals:
-            # Validar que ev.audit y relaciones existan y sean correctas
             audit = getattr(ev, 'audit', None)
             if not audit:
                 continue
@@ -1441,15 +1438,14 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
             lider = getattr(audit, 'lider', None)
 
             if annual_program and lider:
-                # Buscar user_id del lider dentro de annual_program_users
                 user_qs = getattr(annual_program, 'annual_program_users', None)
                 if user_qs:
                     uid = user_qs.filter(user=lider).values_list('user_id', flat=True).first()
                     if uid:
                         users_scores[uid]["score"] += 1
-                        users_scores[uid]["reasons"].append(f"Auditó requisitos similares en proceso {process.name}")
+                        users_scores[uid]["reasons"].append("Auditó requisitos similares")
 
-    # 6. Rendimiento (evaluaciones con rate >= 7)
+    # 6. Buen rendimiento
     good_evals = AuditorEvaluation.objects.filter(
         audit__annual_program__process=process,
         rate__gte=7
@@ -1469,9 +1465,9 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
                 uid = user_qs.filter(user=lider).values_list('user_id', flat=True).first()
                 if uid:
                     users_scores[uid]["score"] += 1
-                    users_scores[uid]["reasons"].append(f"Obtuvo buena calificación en evaluaciones anteriores")
+                    users_scores[uid]["reasons"].append("Obtuvo buena calificación en evaluaciones anteriores")
 
-    # Hallazgos encontrados
+    # 7. Hallazgos relevantes
     findings = Findings.objects.filter(
         report__audit__annual_program__process=process
     ).select_related('report')
@@ -1484,11 +1480,11 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
                 if first_plan and first_plan.lider:
                     leader_id = first_plan.lider.id
                     users_scores[leader_id]["score"] += 1
-                    users_scores[leader_id]["reasons"].append(f"Encontró hallazgos en auditorías previas")
+                    users_scores[leader_id]["reasons"].append("Encontró hallazgos en auditorías previas")
         except Exception:
             continue
 
-    # Penalización por saturación
+    # 8. Penalización por saturación
     for uid in list(users_scores.keys()):
         last_assignment_dates = []
 
@@ -1510,7 +1506,7 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
                 users_scores[uid]["score"] -= 2
                 users_scores[uid]["reasons"].append("Actividad reciente, penalización para evitar saturación")
 
-    # Preparar lista ordenada
+    # Preparar lista
     scored_users = []
     for uid, info in users_scores.items():
         try:
@@ -1527,7 +1523,7 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
     scored_users.sort(key=lambda x: x["score"], reverse=True)
     top_candidates = scored_users[:max_results]
 
-    # Prompt GPT (dejamos igual)
+    # Prompt GPT
     prompt = f"""
 Eres un auditor experto y un asistente de IA que ayuda a seleccionar candidatos para auditorías.
 
@@ -1541,11 +1537,23 @@ Devuelve la respuesta en JSON con las claves:
 - user_id
 - username
 - score
-- justification (justificación clara, breve y en lenguaje natural)
+- justification
 
 Ordena la lista por score de mayor a menor y limita a {max_results} resultados.
 """
 
-    # Código para llamada GPT comentado igual que antes
-
-    return top_candidates
+    try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Eres un asistente experto en auditorías ISO."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+        )
+        gpt_response = completion.choices[0].message.content
+        return json.loads(gpt_response)
+    except Exception as e:
+        # Fallback en caso de error con la API
+        print(f"Error GPT: {e}")
+        return top_candidates
