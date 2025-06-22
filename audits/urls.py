@@ -11,6 +11,7 @@ urlpatterns = [
     path('add_audit_program_header/', views.add_audit_program_header, name='add_audit_program_header'),
     path('suggest_audit_program_fields/', views.suggest_audit_program_fields, name='suggest_audit_program_fields'),
     path('add_annual_program/', views.add_annual_program, name='add_annual_program'),
+    path('suggest-annual-program-processes/', views.suggest_annual_program_processes_view, name='suggest_annual_program_processes'),
     path('add_annual_plan/', views.add_annual_plan, name='add_annual_plan'),
     path('add_annual_program_user/', views.add_annual_program_user, name='add_annual_program_user'),
     path('add_annual_plan_auditor/', views.add_annual_plan_auditor, name='add_annual_plan_auditor'),
