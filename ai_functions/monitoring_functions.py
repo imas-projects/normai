@@ -2,7 +2,8 @@ from openai import OpenAI
 import openai
 import json
 import re
-from datetime import date
+from django.utils.timezone import now
+from datetime import date, timedelta
 from collections import defaultdict
 from django.db.models import Count
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
@@ -1348,3 +1349,206 @@ Responde en JSON como lista de objetos con esas claves.
         print("Error general IA:", str(e))
         return []
 
+def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=5):
+    """
+    Sugiere usuarios candidatos para un AnnualProgram (proceso) usando datos históricos y reglas ponderadas.
+    Retorna lista de dicts con 'user_id', 'username', 'score', 'justification'.
+    """
+
+    try:
+        header = AuditProgramHeader.objects.get(id=program_header_id)
+        process = Process.objects.get(id=process_id)
+    except (AuditProgramHeader.DoesNotExist, Process.DoesNotExist):
+        return []
+
+    today = date.today()
+    three_months_ago = today - timedelta(days=90)
+
+    # Cargar todos los usuarios que hayan tenido alguna relación con el proceso o requisitos relacionados
+    users_scores = defaultdict(lambda: {"score": 0, "reasons": []})
+
+    # 1. Usuarios asignados antes a AnnualProgram con este proceso
+    past_assignments = AnnualProgramUser.objects.filter(
+        annual_program__process=process
+    ).select_related('user', 'annual_program')
+
+    for ua in past_assignments:
+        uid = ua.user.id
+        users_scores[uid]["score"] += 3
+        users_scores[uid]["reasons"].append(f"Asignado antes en programa con proceso {process.name}")
+
+        # Penalizar si fue muy reciente para no saturar
+        if ua.annual_program.program_header.year == header.year:
+            # Suponiendo que programa anual se asigna en el año actual
+            users_scores[uid]["score"] -= 1
+            users_scores[uid]["reasons"].append(f"Asignación reciente en el mismo año")
+
+    # 2. Usuarios que fueron auditores en planes de este proceso
+    auditors = AnnualPlanAuditor.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user', 'annual_plan')
+
+    for auditor in auditors:
+        uid = auditor.user.id
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append(f"Fue auditor en plan del proceso {process.name}")
+
+    # 3. Usuarios que fueron auditados en planes del proceso
+    audited_users = AnnualPlanAudited.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user', 'annual_plan')
+
+    for audited in audited_users:
+        uid = audited.user.id
+        users_scores[uid]["score"] += 1
+        users_scores[uid]["reasons"].append(f"Fue auditado en plan del proceso {process.name}")
+
+    # 4. Usuarios líderes de auditoría en planes del proceso
+    leaders = AnnualPlan.objects.filter(
+        annual_program__process=process
+    ).select_related('lider')
+
+    for leader_plan in leaders:
+        uid = leader_plan.lider.id
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append(f"Fue líder de auditoría en proceso {process.name}")
+
+    # 5. Usuarios que auditaron requisitos similares (vía checklist en auditorías de planes con procesos relacionados)
+
+    # Obtener requisitos del proceso actual
+    reqs_ids = ProcessRequirement.objects.filter(process=process).values_list('requirement_id', flat=True)
+
+    # Usuarios que auditaron checklists con preguntas relacionadas a esos requisitos
+    checklist_audits = Checklist.objects.filter(
+        audit_plan__annual_program__process=process,
+        question__requirement_id__in=reqs_ids
+    ).select_related('audit_plan', 'question')
+
+    user_ids_from_checklist = set()
+
+    for checklist in checklist_audits:
+        # Buscar auditor que hizo evaluación para esa pregunta y plan
+        evals = AuditorEvaluation.objects.filter(
+            audit=checklist.audit_plan,
+            question=checklist.question
+        ).select_related('audit')
+
+        for ev in evals:
+            uid = ev.audit.annual_program.annual_program_users.filter(user=ev.audit.lider).values_list('user_id', flat=True).first()
+            if uid:
+                users_scores[uid]["score"] += 1
+                users_scores[uid]["reasons"].append(f"Auditó requisitos similares en proceso {process.name}")
+
+    # 6. Rendimiento: sumamos puntos si rate > 7 en evaluaciones pasadas y hallazgos detectados
+
+    good_evals = AuditorEvaluation.objects.filter(
+        audit__annual_program__process=process,
+        rate__gte=7
+    ).select_related('audit', 'question')
+
+    for ge in good_evals:
+        # Usamos auditor líder del plan (o buscar usuario asignado a ese audit)
+        uid = ge.audit.annual_program.annual_program_users.filter(user=ge.audit.lider).values_list('user_id', flat=True).first()
+        if uid:
+            users_scores[uid]["score"] += 1
+            users_scores[uid]["reasons"].append(f"Obtuvo buena calificación en evaluaciones anteriores")
+
+    # Hallazgos encontrados (consideramos rigor)
+    findings = Findings.objects.filter(
+        report__audit__annual_program__process=process
+    ).select_related('report')
+
+    # Contamos hallazgos por usuario (de los que participaron en esos planes)
+    # Esta parte puede ser compleja, simplificamos:
+    # Suponemos que líder que generó informe es quien encontró hallazgo
+
+    for f in findings:
+        try:
+            audit_plan = f.report.audit
+            leader_id = audit_plan.annual_plans.first().lider.id
+            users_scores[leader_id]["score"] += 1
+            users_scores[leader_id]["reasons"].append(f"Encontró hallazgos en auditorías previas")
+        except Exception:
+            continue
+
+    # Penalización por saturación (si la última asignación fue hace menos de 3 meses restamos puntos)
+    for uid in list(users_scores.keys()):
+        # Buscar última asignación anual o plan auditor/auditado
+        last_assignment_dates = []
+
+        last_apu = AnnualProgramUser.objects.filter(user_id=uid).order_by('-annual_program__program_header__year').first()
+        if last_apu:
+            last_assignment_dates.append(date(last_apu.annual_program.program_header.year, 12, 31))  # Simplificado al año
+
+        last_ap = AnnualPlanAuditor.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_ap:
+            last_assignment_dates.append(last_ap.annual_plan.audit_opening_date)
+
+        last_apa = AnnualPlanAudited.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_apa:
+            last_assignment_dates.append(last_apa.annual_plan.audit_opening_date)
+
+        if last_assignment_dates:
+            last_date = max(last_assignment_dates)
+            if last_date > three_months_ago:
+                users_scores[uid]["score"] -= 2
+                users_scores[uid]["reasons"].append("Actividad reciente, penalización para evitar saturación")
+
+    # Preparar lista ordenada de candidatos
+    scored_users = []
+    for uid, info in users_scores.items():
+        try:
+            user = User.objects.get(id=uid)
+            scored_users.append({
+                "user_id": uid,
+                "username": user.username,
+                "score": info["score"],
+                "justification": "; ".join(info["reasons"])
+            })
+        except User.DoesNotExist:
+            continue
+
+    scored_users.sort(key=lambda x: x["score"], reverse=True)
+    top_candidates = scored_users[:max_results]
+
+    # Construir prompt para GPT
+    prompt = f"""
+Eres un auditor experto y un asistente de IA que ayuda a seleccionar candidatos para auditorías.
+
+Tienes esta lista de candidatos con sus puntajes y razones técnicas por las que podrían ser seleccionados:
+
+{json.dumps(top_candidates, indent=2)}
+
+Por favor, revisa esta lista y responde con una lista ordenada de los mejores candidatos, explicando en lenguaje natural claro y resumido por qué cada uno es una buena opción para auditar este proceso.
+
+Devuelve la respuesta en JSON con las claves:
+- user_id
+- username
+- score
+- justification (justificación clara, breve y en lenguaje natural)
+
+Ordena la lista por score de mayor a menor y limita a {max_results} resultados.
+"""
+
+    # Aquí puedes hacer la llamada al cliente GPT con ese prompt, por ejemplo:
+    """
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.4,
+        max_tokens=800,
+    )
+    content = response.choices[0].message.content.strip()
+
+    # Limpiar y parsear JSON recibido (similar a la función que ya tienes)
+    clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+    try:
+        data = json.loads(clean_content)
+        return data[:max_results]
+    except Exception:
+        # Si falla el parseo, retornamos la lista original
+        return top_candidates
+    """
+
+    # Por simplicidad aquí retornamos la lista original:
+    return top_candidates
