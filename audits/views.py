@@ -6,6 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 from itertools import zip_longest
+from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt
 
 from .forms import (
     AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm, AnnualProgramUserForm,
@@ -23,6 +25,8 @@ from .models import (
     AuditedEvaluationQuestion,
     LeadAuditorEvaluationQuestion
 )
+
+from ai_functions.monitoring_functions import suggest_audit_fields
 
 # === BASIC VIEWS ===
 
@@ -217,6 +221,21 @@ def _add_form_view(request, form_class, redirect_url, template_name, use_cleaned
 
 def add_audit_program_header(request):
     return _add_form_view(request, AuditProgramHeaderForm, 'audits:annual_audit_program', 'mistemplates/add_audit_program_header.html')
+
+@require_GET
+@csrf_exempt 
+def suggest_audit_program_fields(request):
+    try:
+        year = int(request.GET.get("year", 0))
+        if year <= 0:
+            return JsonResponse({"error": "Año inválido."}, status=400)
+
+        suggestions = suggest_audit_fields(year)
+        return JsonResponse({"suggestions": suggestions})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def add_annual_program(request):
     return _add_form_view(request, AnnualProgramForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program.html')
