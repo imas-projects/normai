@@ -244,7 +244,7 @@
                 <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
                     {% csrf_token %}
                     <input type="hidden" name="table_id" value="{{ table.id }}">
-                    <button type="submit" class="btn btn-info">Generar Mapa IA</button>
+                    <button type="submit" class="btn btn-info" id="generateFlowMapBtn">Generar Mapa IA</button>
                 </form>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
@@ -929,15 +929,29 @@
             return cookieValue;
         }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const flowModal = document.getElementById('flowMapModal{{ table_id }}');
-        {% if open_flow_modal %}
-            if (flowModal) {
-                const modalInstance = new bootstrap.Modal(flowModal);
-                modalInstance.show();
-            }
-        {% endif %}
-    });
+document.addEventListener('DOMContentLoaded', function () {
+    // Mostrar modal si corresponde
+    const flowModal = document.getElementById('flowMapModal{{ table_id }}');
+    {% if open_flow_modal %}
+        if (flowModal) {
+            const modalInstance = new bootstrap.Modal(flowModal);
+            modalInstance.show();
+        }
+    {% endif %}
+
+    // Capturar el botón y el formulario
+    const generateBtn = document.getElementById('generateFlowMapBtn');
+    const form = generateBtn ? generateBtn.closest('form') : null;
+
+    if (form && generateBtn) {
+        form.addEventListener('submit', function () {
+            // Deshabilitar botón y cambiar texto para mostrar carga
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Obteniendo sugerencias...';
+        });
+    }
+});
+
 
     </script>
 
