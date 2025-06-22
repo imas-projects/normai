@@ -1462,29 +1462,23 @@ def suggest_audit_users_ai(program_header_id: int, process_id: int, max_results=
     scored_users.sort(key=lambda x: x["score"], reverse=True)
     top_candidates = scored_users[:max_results]
 
-    # Preparar lista para GPT
-    scored_users = []
-    for uid, info in users_scores.items():
-        try:
-            user = User.objects.get(id=uid)
-            scored_users.append({
-                "user_id": uid,
-                "username": user.username,
-                "score": info["score"],
-                "justification": "; ".join(info["reasons"])[:200]
-            })
-        except User.DoesNotExist:
-            continue
+    # Si no hay candidatos suficientes, crear un candidato genérico para que GPT no se quede sin info
+    if len(top_candidates) == 0:
+        top_candidates = [{
+            "user_id": 0,
+            "username": "N/A",
+            "score": 0,
+            "justification": "No hay datos históricos suficientes para sugerir candidatos. Selección basada en criterios ISO 9001:2015."
+        }]
 
-    scored_users.sort(key=lambda x: x["score"], reverse=True)
-    top_candidates = scored_users[:max_results]
     print("Top candidates para GPT:", top_candidates)
-
 
     prompt = f"""
 Eres un auditor experto y asistente IA. Tienes esta lista de candidatos con puntajes y razones técnicas:
 
 {json.dumps(top_candidates, indent=2)}
+
+Si la lista está vacía o solo contiene un candidato genérico, indica que no hay datos históricos suficientes para sugerir auditores específicos y que la selección debe basarse en la norma ISO 9001:2015.
 
 Responde con una lista ordenada de los mejores candidatos, explicando en lenguaje claro y resumido por qué son buenos para auditar este proceso.
 
@@ -1516,3 +1510,4 @@ Ordena por score y limita a {max_results} resultados.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
+
