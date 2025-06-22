@@ -17,6 +17,9 @@
       <button type="button" id="btnSuggestIA" class="btn btn-info">Sugerir procesos IA</button>
     </div>
 
+    <!-- Contenedor de sugerencias, oculto por defecto -->
+    <div id="iaSuggestions" class="mt-4" style="display:none;"></div>
+
     <div class="mb-3">
       {{ form.process.label_tag }}
       {{ form.process }}
@@ -37,7 +40,4 @@
     <button type="submit" class="btn btn-success">Guardar</button>
     
   </form>
-
-  <!-- Contenedor de sugerencias, oculto por defecto -->
-  <div id="iaSuggestions" class="mt-4" style="display:none;"></div>
 </div>
