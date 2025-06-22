@@ -216,9 +216,36 @@
             <div class="modal-body">
                 {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
                     <div class="alert alert-info">
-                        <strong>Hallazgos IA:</strong>
-                        <pre style="white-space: pre-wrap;">{{ flow_ia_insights }}</pre>
-                    </div>
+    <strong>Hallazgos IA:</strong>
+
+    {% if flow_ia_insights.patterns %}
+        <h6>Patrones detectados:</h6>
+        <ul>
+            {% for p in flow_ia_insights.patterns %}
+                <li>{{ p }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if flow_ia_insights.weaknesses %}
+        <h6>Debilidades o barreras de comunicación:</h6>
+        <ul>
+            {% for w in flow_ia_insights.weaknesses %}
+                <li>{{ w }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if flow_ia_insights.recommendations %}
+        <h6>Recomendaciones:</h6>
+        <ul>
+            {% for r in flow_ia_insights.recommendations %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+
 
                     <div id="graph-container-{{ table.id }}">
                         <h6>Nodos:</h6>
