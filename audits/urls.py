@@ -9,6 +9,7 @@ urlpatterns = [
     path('annual-audit-plan/', views.annual_audit_plan, name='annual_audit_plan'),  
     path('conduct-internal-audits/', views.conduct_internal_audits, name='conduct_internal_audits'),  
     path('add_audit_program_header/', views.add_audit_program_header, name='add_audit_program_header'),
+    path('suggest_audit_program_fields/', views.suggest_audit_program_fields, name='suggest_audit_program_fields'),
     path('add_annual_program/', views.add_annual_program, name='add_annual_program'),
     path('add_annual_plan/', views.add_annual_plan, name='add_annual_plan'),
     path('add_annual_program_user/', views.add_annual_program_user, name='add_annual_program_user'),
