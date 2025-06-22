@@ -10,7 +10,7 @@ from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
 from communications.models import CommunicationTable, CommunicationMessage
 from processes.models import Process 
 from audits.models import AnnualProgram, Findings, AuditReport, AuditProgramHeader
-from audits.models import AuditProgramHeader
+from audits.models import AuditProgramHeader, AnnualProgramUser, AnnualProgram
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
