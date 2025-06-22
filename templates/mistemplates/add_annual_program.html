@@ -12,8 +12,14 @@
       {% endif %}
     </div>
 
-    <button type="button" class="btn btn-primary ms-2" id="btnSuggestIA">Sugerir procesos IA</button>
-    
+    <!-- Botón de sugerencias -->
+    <div class="mb-3">
+      <button type="button" id="suggestAuditFieldsBtn" class="btn btn-info">Sugerir procesos IA</button>
+    </div>
+
+    <!-- Contenedor para mostrar sugerencias IA -->
+    <div id="auditSuggestionsContainer" class="mt-4" style="display:none;"></div>
+
     <div class="mb-3">
       {{ form.process.label_tag }}
       {{ form.process }}
@@ -35,5 +41,5 @@
     
   </form>
 
-  <div id="iaSuggestions" class="mt-4"></div>
+
 </div>
