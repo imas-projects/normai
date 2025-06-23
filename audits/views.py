@@ -340,7 +340,7 @@ def suggest_audited_view(request):
         annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
 
         suggestions = suggest_audited_ai(
-            program_id=annual_plan.annual_program.id,
+            plan_id=annual_plan.id,  
             max_results=5
         )
     except Exception as e:
