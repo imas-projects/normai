@@ -28,5 +28,6 @@ urlpatterns = [
     path('suggest-audit-questions/', views.suggest_audit_questions_view, name='suggest_audit_questions'),
     path("save-audit-question/", views.save_selected_audit_question, name="save_audit_question"),
     path('add_auditor_evaluation/', views.add_auditor_evaluation, name='add_auditor_evaluation'),
+    path("suggest-compliance-rate/", views.suggest_compliance_rate_view, name="suggest_compliance_rate"),
     path('add_lead_auditor_evaluation_question/', views.add_lead_auditor_evaluation_question, name='add_lead_auditor_evaluation_question'),
 ]
