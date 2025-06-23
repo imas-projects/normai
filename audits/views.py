@@ -375,15 +375,23 @@ def add_audited_evaluation_question(request):
 
 def suggest_audit_questions_view(request):
     requirement_id = request.GET.get('requirement_id')
-    process_name = request.GET.get('process_name')
 
-    if not requirement_id or not process_name:
-        return HttpResponseBadRequest("Faltan los parámetros 'requirement_id' o 'process_name'.")
+    if not requirement_id:
+        return HttpResponseBadRequest("Falta el parámetro 'requirement_id'.")
 
     try:
         requirement = Requirement.objects.get(pk=requirement_id)
     except Requirement.DoesNotExist:
         return HttpResponseBadRequest("El requisito especificado no existe.")
+
+    # Buscar proceso asociado en ProcessRequirement
+    # Si hay más de uno, puedes elegir el primero o devolver error o manejar lista
+    process_requirement = ProcessRequirement.objects.filter(requirement=requirement).first()
+
+    if not process_requirement:
+        return HttpResponseBadRequest("No se encontró proceso asociado al requisito.")
+
+    process_name = process_requirement.process.name
 
     try:
         questions = suggest_audit_questions(requirement, process_name)
