@@ -968,12 +968,38 @@ document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click
 });
 
 
-document.getElementById("openAddFindingsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_findings' %}")
+document.getElementById("openAddFindingsModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_findings' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("findingsModalFormContent").innerHTML = html;
+      const container = document.getElementById("findingsModalFormContent");
+      container.innerHTML = html;
+
+      // Esperar un poco para asegurar que el DOM del modal ya esté listo
+      setTimeout(() => {
+        const form = container.querySelector("form");
+
+        if (form) {
+          // Manejamos el submit de clasificar con IA o guardar desde el backend
+          form.addEventListener("submit", function (e) {
+            const clickedButton = form.querySelector("button[type=submit][clicked=true]");
+            if (clickedButton) {
+              clickedButton.removeAttribute("clicked");
+            }
+          });
+
+          // Detectar qué botón se pulsó (clasificar o guardar)
+          const buttons = form.querySelectorAll("button[type=submit]");
+          buttons.forEach(btn => {
+            btn.addEventListener("click", function () {
+              btn.setAttribute("clicked", true);
+            });
+          });
+        }
+
+        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
+      }, 100);
     });
 });
 
