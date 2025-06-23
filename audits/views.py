@@ -316,7 +316,7 @@ def suggest_auditor_view(request):
         annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
 
         suggestions = suggest_auditor_ai(
-            annual_plan_id=annual_plan.id,
+            program_id=annual_plan.annual_program.id, 
             max_results=5
         )
     except Exception as e:
@@ -325,7 +325,7 @@ def suggest_auditor_view(request):
         return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
 
     return JsonResponse({"suggestions": suggestions})
-    
+
 
 def add_annual_plan_audited(request):
     return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
