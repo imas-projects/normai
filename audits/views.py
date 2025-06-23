@@ -15,7 +15,7 @@ from .forms import (
     AnnualPlanAuditorForm, AnnualPlanAuditedForm, ChecklistForm, FindingsForm, AuditReportForm,
     ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm
 )
-
+from company.models import Requirement
 
 from .models import (
     AuditProgramHeader,ProcessRequirement, AnnualProgram, AnnualProgramUser, 
@@ -27,7 +27,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions
 
 # === BASIC VIEWS ===
 
@@ -372,6 +372,26 @@ def add_process_requirement(request):
 
 def add_audited_evaluation_question(request):
     return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_audited_evaluation_question.html')
+
+def suggest_audit_questions_view(request):
+    requirement_id = request.GET.get('requirement_id')
+    process_name = request.GET.get('process_name')
+
+    if not requirement_id or not process_name:
+        return HttpResponseBadRequest("Faltan los parámetros 'requirement_id' o 'process_name'.")
+
+    try:
+        requirement = Requirement.objects.get(pk=requirement_id)
+    except Requirement.DoesNotExist:
+        return HttpResponseBadRequest("El requisito especificado no existe.")
+
+    try:
+        questions = suggest_audit_questions(requirement, process_name)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"questions": questions})
+
 
 def add_auditor_evaluation(request):
     return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_internal_audits', 'mistemplates/add_auditor_evaluation.html')
