@@ -28,6 +28,14 @@
       {% endif %}
     </div>
 
+    <!-- Botón para Clasificar con IA antes del campo Clasificación -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestFindingClassification" class="btn btn-info">Clasificar con IA</button>
+    </div>
+
+    <!-- Mensaje IA -->
+    <div id="iaFindingClassificationFeedback" class="alert alert-info" style="display: none;"></div>
+    
     <div class="mb-3">
       {{ form.classification.label_tag }}
       {{ form.classification }}
@@ -36,13 +44,8 @@
       {% endif %}
     </div>
 
-    <!-- Mensaje IA -->
-    <div id="iaFindingClassificationFeedback" class="alert alert-info" style="display: none;"></div>
 
-    <div class="mt-4 d-flex gap-3">
-      <button type="submit" name="save" class="btn btn-success">Guardar</button>
-      <button type="button" id="btnSuggestFindingClassification" class="btn btn-outline-primary">Clasificar con IA</button>
-    </div>
+    <button type="submit" name="save" class="btn btn-success mt-3">Guardar</button>
 
     {% if ia_error %}
       <div class="alert alert-danger mt-3">{{ ia_error }}</div>
