@@ -439,7 +439,11 @@ def suggest_compliance_rate_view(request):
             question__id=question_id
         )
     except Checklist.DoesNotExist:
-        return HttpResponseBadRequest("No se encontró un Checklist con ese audit_id y question_id.")
+        tb = traceback.format_exc()
+        return JsonResponse({"error": "No se encontró un Checklist con ese audit_id y question_id.", "traceback": tb}, status=400)
+    except Exception:
+        tb = traceback.format_exc()
+        return JsonResponse({"error": "Error inesperado al buscar el Checklist.", "traceback": tb}, status=500)
 
     try:
         suggested_rate = suggest_compliance_rating(checklist)
@@ -451,6 +455,7 @@ def suggest_compliance_rate_view(request):
         return JsonResponse({"error": "La IA no pudo determinar un rate válido."}, status=422)
 
     return JsonResponse({"rate": suggested_rate})
+
 
 
 
