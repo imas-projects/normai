@@ -36,6 +36,13 @@
       {% endif %}
     </div>
 
-    <button type="submit" class="btn btn-success">Guardar</button>
+    <div class="mt-4 d-flex gap-3">
+      <button type="submit" name="save" class="btn btn-success">Guardar</button>
+      <button type="submit" name="classify_ia" class="btn btn-outline-primary">Clasificar con IA</button>
+    </div>
+
+    {% if ia_error %}
+      <div class="alert alert-danger mt-3">{{ ia_error }}</div>
+    {% endif %}
   </form>
 </div>
