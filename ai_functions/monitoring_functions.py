@@ -1835,3 +1835,170 @@ Devuelve JSON con: user_id, username, score, justification.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
+
+
+def suggest_audited_ai(plan_id: int, max_results=5):
+    try:
+        plan = AnnualPlan.objects.select_related('annual_program__program_header', 'annual_program__process').get(id=plan_id)
+        annual_program = plan.annual_program
+        header = annual_program.program_header
+        process = annual_program.process
+    except AnnualPlan.DoesNotExist:
+        return []
+
+    today = date.today()
+    three_months_ago = today - timedelta(days=90)
+
+    users_scores = defaultdict(lambda: {"score": 0, "reasons": []})
+
+    # 1. Ha sido auditado en este proceso
+    previously_audited = AnnualPlanAudited.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user')
+
+    for audited in previously_audited:
+        uid = audited.user.id
+        users_scores[uid]["score"] += 3
+        users_scores[uid]["reasons"].append("Experiencia previa siendo auditado en este proceso")
+
+    # 2. Ha sido auditor en este proceso (visión inversa útil)
+    past_auditors = AnnualPlanAuditor.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user')
+
+    for auditor in past_auditors:
+        uid = auditor.user.id
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append("Experiencia como auditor en este proceso, puede aportar visión crítica")
+
+    # 3. Ha sido asignado a un AnnualProgram del proceso
+    prev_programs = AnnualProgramUser.objects.filter(
+        annual_program__process=process
+    ).select_related('user', 'annual_program__program_header')
+
+    for apu in prev_programs:
+        uid = apu.user.id
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append("Participación en programas del proceso")
+
+        if apu.annual_program.program_header.year == header.year:
+            users_scores[uid]["score"] -= 1
+            users_scores[uid]["reasons"].append("Ya participó este año, se prioriza rotación")
+
+    # 4. Ha sido líder en auditorías del proceso
+    leaders = AnnualPlan.objects.filter(
+        annual_program__process=process
+    ).select_related('lider')
+
+    for leader in leaders:
+        if leader.lider:
+            uid = leader.lider.id
+            users_scores[uid]["score"] += 1
+            users_scores[uid]["reasons"].append("Ha liderado auditorías de este proceso")
+
+    # 5. Ha auditado requisitos técnicos similares
+    process_reqs = ProcessRequirement.objects.filter(
+        process=process
+    ).values_list('requirement_id', flat=True)
+
+    similar_checklists = Checklist.objects.filter(
+        question__requirement_id__in=process_reqs
+    ).select_related('audit_plan__lider')
+
+    for checklist in similar_checklists:
+        if checklist.audit_plan and checklist.audit_plan.lider:
+            uid = checklist.audit_plan.lider.id
+            users_scores[uid]["score"] += 1
+            users_scores[uid]["reasons"].append("Experiencia con requisitos técnicos similares")
+
+    # 6. Evaluaciones positivas en auditorías
+    good_eval = AuditorEvaluation.objects.filter(
+        audit__annual_program__process=process,
+        rate__gte=7
+    ).select_related('audit__lider')
+
+    for eval in good_eval:
+        if eval.audit and eval.audit.lider:
+            uid = eval.audit.lider.id
+            users_scores[uid]["score"] += 1
+            users_scores[uid]["reasons"].append("Obtuvo buenas evaluaciones como auditor")
+
+    # 7. Penalización por saturación reciente
+    for uid in list(users_scores.keys()):
+        last_dates = []
+
+        last_apu = AnnualProgramUser.objects.filter(user_id=uid).order_by('-annual_program__program_header__year').first()
+        if last_apu:
+            year = last_apu.annual_program.program_header.year
+            last_dates.append(date(year, 12, 31))
+
+        last_ap = AnnualPlanAuditor.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_ap and last_ap.annual_plan.audit_opening_date:
+            last_dates.append(last_ap.annual_plan.audit_opening_date)
+
+        last_apa = AnnualPlanAudited.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_apa and last_apa.annual_plan.audit_opening_date:
+            last_dates.append(last_apa.annual_plan.audit_opening_date)
+
+        last_leader = AnnualPlan.objects.filter(lider_id=uid).order_by('-audit_opening_date').first()
+        if last_leader and last_leader.audit_opening_date:
+            last_dates.append(last_leader.audit_opening_date)
+
+        if last_dates and max(last_dates) > three_months_ago:
+            users_scores[uid]["score"] -= 2
+            users_scores[uid]["reasons"].append("Actividad reciente, penalización por evitar sobrecarga")
+
+    # Preparar para IA
+    scored_users = []
+    for uid, info in users_scores.items():
+        try:
+            user = User.objects.get(id=uid)
+            scored_users.append({
+                "user_id": uid,
+                "username": user.username,
+                "score": info["score"],
+                "justification": "; ".join(info["reasons"])[:200]
+            })
+        except User.DoesNotExist:
+            continue
+
+    scored_users.sort(key=lambda x: x["score"], reverse=True)
+    top_candidates = scored_users[:max_results]
+
+    if not top_candidates:
+        top_candidates = [{
+            "user_id": 0,
+            "username": "N/A",
+            "score": 0,
+            "justification": "No hay historial suficiente para sugerir candidatos. Se recomienda seleccionar según criterios de la ISO 9001:2015."
+        }]
+
+    prompt = f"""
+Eres un asistente experto en auditorías ISO. A continuación tienes una lista de posibles candidatos para ser auditados en un plan anual. Cada uno tiene un puntaje y una justificación técnica:
+
+{json.dumps(top_candidates, indent=2)}
+
+Si no hay candidatos válidos, indica que debe seleccionarse según criterio profesional y normas ISO.
+
+Devuelve JSON con: user_id, username, score, justification.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Eres un asistente experto en auditorías ISO."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+        )
+        gpt_response = response.choices[0].message.content
+        clean_response = re.sub(r'^```json|```$', '', gpt_response).strip()
+        return json.loads(clean_response)
+    except json.JSONDecodeError as jde:
+        print(f"Error al decodificar JSON: {jde}")
+        print("Contenido recibido:", repr(clean_response))
+        return top_candidates
+    except Exception as e:
+        print(f"Error GPT: {e}")
+        return top_candidates
