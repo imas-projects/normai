@@ -1,9 +1,10 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Evaluación del Auditor</h2>
-  <form method="post" action="{% url 'audits:add_auditor_evaluation' %}">
+  <form method="post" action="{% url 'audits:add_auditor_evaluation' %}" id="auditorEvaluationForm">
     {% csrf_token %}
 
+    <!-- AUDIT -->
     <div class="mb-3">
       {{ form.audit.label_tag }}
       {{ form.audit }}
@@ -12,6 +13,7 @@
       {% endif %}
     </div>
 
+    <!-- QUESTION -->
     <div class="mb-3">
       {{ form.question.label_tag }}
       {{ form.question }}
@@ -20,6 +22,7 @@
       {% endif %}
     </div>
 
+    <!-- ORDEN -->
     <div class="mb-3">
       {{ form.orden.label_tag }}
       {{ form.orden }}
@@ -28,14 +31,23 @@
       {% endif %}
     </div>
 
+    <!-- RATE -->
     <div class="mb-3">
       {{ form.rate.label_tag }}
-      {{ form.rate }}
+      <div class="input-group">
+        {{ form.rate }}
+        <button type="button" id="btnSuggestRateIA" class="btn btn-outline-info ms-2">Sugerir con IA</button>
+      </div>
       {% if form.rate.errors %}
         <div class="text-danger small">{{ form.rate.errors }}</div>
       {% endif %}
     </div>
 
-    <button type="submit" class="btn btn-success">Guardar</button>
+    <!-- Feedback de IA -->
+    <div id="iaSuggestionFeedback" class="mt-2 text-muted small" style="display: none;">
+      Sugerencia generada por IA.
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Guardar</button>
   </form>
 </div>
