@@ -443,13 +443,15 @@ def suggest_compliance_rate_view(request):
 
     try:
         suggested_rate = suggest_compliance_rating(checklist)
-    except Exception as e:
-        return JsonResponse({"error": f"Error al obtener sugerencia de IA: {str(e)}"}, status=500)
+    except Exception:
+        tb = traceback.format_exc()
+        return JsonResponse({"error": "Error al obtener sugerencia de IA.", "traceback": tb}, status=500)
 
     if suggested_rate is None:
         return JsonResponse({"error": "La IA no pudo determinar un rate válido."}, status=422)
 
-    return JsonResponse({"suggested_rate": suggested_rate})
+    return JsonResponse({"rate": suggested_rate})
+
 
 
 def add_lead_auditor_evaluation_question(request):
