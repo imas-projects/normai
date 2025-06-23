@@ -28,7 +28,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
 
 # === BASIC VIEWS ===
 
@@ -364,6 +364,42 @@ def add_checklist(request):
 
 def add_findings(request):
     return _add_form_view(request, FindingsForm, 'audits:conduct_internal_audits', 'mistemplates/add_findings.html')
+
+def classify_finding_view(request):
+    finding_text = request.GET.get("finding_text")
+    requirement_id = request.GET.get("requirement_id")
+
+    if not finding_text:
+        return HttpResponseBadRequest("El texto del hallazgo (finding_text) es obligatorio.")
+
+    requirement = None
+    if requirement_id:
+        try:
+            requirement = Requirement.objects.get(id=requirement_id)
+        except Requirement.DoesNotExist:
+            tb = traceback.format_exc()
+            return JsonResponse({
+                "error": f"Requisito con ID {requirement_id} no encontrado.",
+                "traceback": tb
+            }, status=400)
+        except Exception:
+            tb = traceback.format_exc()
+            return JsonResponse({
+                "error": "Error inesperado al obtener el requisito.",
+                "traceback": tb
+            }, status=500)
+
+    try:
+        classification = classify_finding_ia(finding_text, requirement)
+    except Exception:
+        tb = traceback.format_exc()
+        return JsonResponse({"error": "Error al clasificar con IA.", "traceback": tb}, status=500)
+
+    if classification is None:
+        return JsonResponse({"error": "La IA no pudo determinar una clasificación válida."}, status=422)
+
+    return JsonResponse({"classification": classification})
+
 
 def add_audit_report(request):
     return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
