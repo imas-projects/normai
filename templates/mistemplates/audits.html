@@ -1007,7 +1007,6 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
 
         suggestBtn.addEventListener("click", function () {
           const requirementSelect = form.querySelector("select[name='requirement']");
-
           const requirementId = requirementSelect?.value;
 
           if (!requirementId) {
@@ -1056,16 +1055,37 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
               document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
                 button.addEventListener("click", function () {
                   const question = decodeURIComponent(this.dataset.question);
+                  const btn = this;
+                  btn.disabled = true;
+                  btn.textContent = "Guardando...";
 
-                  // Crear un campo oculto para que se envíe al guardar
-                  const input = document.createElement("input");
-                  input.type = "hidden";
-                  input.name = "selected_questions";
-                  input.value = question;
-                  form.appendChild(input);
-
-                  // Visualmente ocultar la tarjeta
-                  this.closest(".card").remove();
+                  fetch("{% url 'audits:save_audit_question' %}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/x-www-form-urlencoded",
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: new URLSearchParams({
+                      question_text: question,
+                      requirement_id: requirementSelect.value
+                    })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert("Pregunta guardada correctamente.");
+                      btn.closest(".card").remove();
+                    } else {
+                      alert("Error al guardar: " + (data.error || "desconocido"));
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                    }
+                  })
+                  .catch(err => {
+                    alert("Error inesperado: " + err);
+                    btn.disabled = false;
+                    btn.textContent = "Seleccionar";
+                  });
                 });
               });
 
