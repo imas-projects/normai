@@ -1,9 +1,10 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Plan Anual de Auditoría</h2>
-  <form method="post" action="{% url 'audits:add_annual_plan' %}">
+  <form method="post" action="{% url 'audits:add_annual_plan' %}" id="addAnnualPlanForm">
     {% csrf_token %}
 
+    <!-- Programa Anual -->
     <div class="mb-3">
       {{ form.annual_program.label_tag }}
       {{ form.annual_program }}
@@ -12,6 +13,17 @@
       {% endif %}
     </div>
 
+    <!-- Botón de sugerencias IA para líder -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestLeaderIA" class="btn btn-info">
+        Sugerir líder IA
+      </button>
+    </div>
+
+    <!-- Contenedor para mostrar sugerencias IA de líder -->
+    <div id="leaderSuggestionsIA" class="mt-4"></div>
+
+    <!-- Selector de líder -->
     <div class="mb-3">
       {{ form.lider.label_tag }}
       {{ form.lider }}
@@ -20,6 +32,7 @@
       {% endif %}
     </div>
 
+    <!-- Apertura -->
     <div class="mb-3">
       {{ form.audit_opening_date.label_tag }}
       {{ form.audit_opening_date }}
@@ -44,6 +57,7 @@
       {% endif %}
     </div>
 
+    <!-- Cierre -->
     <div class="mb-3">
       {{ form.audit_closing_date.label_tag }}
       {{ form.audit_closing_date }}
@@ -68,7 +82,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón final -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
-
