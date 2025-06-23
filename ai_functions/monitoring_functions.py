@@ -2075,4 +2075,73 @@ Por favor responde únicamente con una lista JSON de strings. Ejemplo:
         print("Error general al generar preguntas de auditoría:", str(e))
         return []
 
+def suggest_compliance_rating(checklist_obj):
+    """
+    Usa IA para sugerir un rating (0-10) de cumplimiento basado en:
+    - La pregunta de auditoría
+    - La evidencia ingresada
+    - El requisito asociado
+    - Criterios de la norma ISO 9001:2015
 
+    checklist_obj: instancia de Checklist con campos 'evidence', 'question', 'orden', etc.
+
+    Retorna un entero entre 0 y 10, o None si no se puede obtener.
+    """
+
+    question_text = checklist_obj.question.question_text
+    requirement_name = checklist_obj.question.requirement.name if checklist_obj.question.requirement else "N/A"
+    evidence = checklist_obj.evidence or ""
+    process_name = checklist_obj.audit_plan.annual_program.process.name
+    clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
+
+    # Prompt para IA
+    prompt = f"""
+Eres un auditor experto en calidad bajo la norma ISO 9001:2015, especialmente en el sector industrial.
+
+Te presento una **pregunta de auditoría**, una **evidencia objetiva** recabada durante la auditoría, y el requisito de la norma que aplica.
+
+Debes analizar y proponer un grado de cumplimiento del 0 al 10, donde:
+- 0 significa "incumplimiento total"
+- 10 significa "cumplimiento total"
+- Los valores intermedios reflejan distintos niveles de cumplimiento parcial.
+
+Tu evaluación debe seguir los criterios de ISO 9001:2015.
+
+---
+
+**Requisito/cláusula ISO:** {requirement_name}
+{f'Descripción del requisito: {clause_description}' if clause_description else ''}
+
+**Proceso auditado:** {process_name}
+
+**Pregunta de auditoría:** {question_text}
+
+**Evidencia obtenida:** {evidence}
+
+---
+
+Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # o el que uses
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=10,
+        )
+
+        result = response.choices[0].message.content.strip()
+
+        # Extraer el número sugerido
+        match = re.search(r"\b([0-9]|10)\b", result)
+        if match:
+            rating = int(match.group(1))
+            return rating if 0 <= rating <= 10 else None
+        else:
+            print("Respuesta IA inesperada:", result)
+            return None
+
+    except Exception as e:
+        print("Error al obtener sugerencia de rating:", str(e))
+        return None
