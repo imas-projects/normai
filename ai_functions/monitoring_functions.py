@@ -2002,3 +2002,77 @@ Devuelve JSON con: user_id, username, score, justification.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
+
+
+def suggest_audit_questions(requirement_obj, process_name, max_results=5):
+    """
+    Genera dinámicamente preguntas de auditoría para un objeto Requirement,
+    aplicadas a un proceso específico.
+
+    - requirement_obj: instancia del modelo Requirement
+    - process_name: string, ej. "Producción aeroespacial"
+    - max_results: número de preguntas a sugerir (máx. 5 por defecto)
+
+    Retorna una lista de strings con preguntas sugeridas por IA.
+    """
+
+    # Usamos el nombre como identificador del requisito (ej. "8.5.1")
+    clause_identifier = requirement_obj.name
+
+    # Texto más descriptivo para enriquecer el prompt (si decides añadirlo en el modelo más adelante)
+    clause_description = getattr(requirement_obj, "description", "")  # si decides agregarlo
+
+    # Prompt enriquecido
+    prompt = f"""
+Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015, con experiencia específica en la industria aeroespacial.
+
+Quiero que generes {max_results} preguntas de auditoría bien formuladas, prácticas y alineadas con el requisito/cláusula "{clause_identifier}" de la norma ISO 9001:2015.
+
+{f'Descripción del requisito: {clause_description}' if clause_description else ''}
+
+Estas preguntas deben estar orientadas a auditar el proceso de: "{process_name}".
+
+Cada pregunta debe:
+- Estar en español
+- Ser clara, directa, y enfocada en verificar el cumplimiento del requisito
+- Ser útil para identificar conformidades o no conformidades en una auditoría real
+
+Por favor responde únicamente con una lista JSON de strings. Ejemplo:
+
+[
+  "¿Pregunta 1...?",
+  "¿Pregunta 2...?",
+  ...
+]
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=700,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("Respuesta cruda de IA:", repr(content))
+
+        # Limpiar posibles delimitadores de markdown
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        questions = json.loads(clean_content)
+
+        if isinstance(questions, list) and all(isinstance(q, str) for q in questions):
+            return [q.strip() for q in questions[:max_results]]
+
+        print("Formato inesperado de respuesta IA:", type(questions))
+        return []
+
+    except json.JSONDecodeError as jde:
+        print("Error al parsear JSON:", str(jde))
+        print("Contenido recibido:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general al generar preguntas de auditoría:", str(e))
+        return []
+
+
