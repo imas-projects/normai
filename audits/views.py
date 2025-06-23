@@ -281,6 +281,27 @@ def suggest_audit_users_view(request):
 
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
+
+def suggest_leader_view(request):
+    annual_program_id = request.GET.get("annual_program_id")
+
+    if not annual_program_id:
+        return HttpResponseBadRequest("Falta el parámetro 'annual_program_id'")
+
+    try:
+        annual_program = get_object_or_404(AnnualProgram, pk=annual_program_id)
+        
+        suggestions = suggest_leader_ai(
+            program_id=annual_program.id,
+            max_results=5
+        )
+    except Exception as e:
+        print("Error en suggest_leader_view:", e)
+        traceback.print_exc()
+        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
+
+    return JsonResponse({"suggestions": suggestions})
+
     
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
