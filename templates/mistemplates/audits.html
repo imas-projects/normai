@@ -1123,14 +1123,71 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_auditor_evaluation' %}")
+document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_auditor_evaluation' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditorEvaluationModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditorEvaluationModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("btnSuggestRateIA");
+        const feedback = document.getElementById("iaSuggestionFeedback");
+        const form = document.getElementById("auditorEvaluationForm");
+
+        if (!suggestBtn || !form) return;
+
+        suggestBtn.addEventListener("click", function () {
+          const auditSelect = form.querySelector("select[name='audit']");
+          const questionSelect = form.querySelector("select[name='question']");
+          const rateInput = form.querySelector("input[name='rate']");
+
+          const auditId = auditSelect?.value;
+          const questionId = questionSelect?.value;
+
+          if (!auditId || !questionId) {
+            alert("Selecciona una auditoría y una pregunta antes de sugerir un valor.");
+            return;
+          }
+
+          // UI feedback
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo...";
+
+          fetch(`/audits/suggest-compliance-rate/?audit_id=${auditId}&question_id=${questionId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                alert("Error IA: " + data.error);
+                return;
+              }
+
+              // Rellenar el campo rate
+              const suggestedRate = parseFloat(data.rate);
+              if (!isNaN(suggestedRate)) {
+                rateInput.value = suggestedRate;
+                feedback.style.display = "block";
+              } else {
+                alert("La IA no devolvió un valor numérico válido.");
+              }
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              alert("Error al obtener sugerencia IA: " + err);
+            });
+        });
+
+        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+      }, 100);
     });
 });
+
 
 </script>
 
