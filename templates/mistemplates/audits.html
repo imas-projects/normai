@@ -1007,13 +1007,11 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
 
         suggestBtn.addEventListener("click", function () {
           const requirementSelect = form.querySelector("select[name='requirement']");
-          const processInput = form.querySelector("input[name='process_name']");
 
           const requirementId = requirementSelect?.value;
-          const processName = processInput?.value?.trim();
 
-          if (!requirementId || !processName) {
-            alert("Por favor, selecciona un requisito y escribe el nombre del proceso antes de solicitar sugerencias.");
+          if (!requirementId) {
+            alert("Por favor, selecciona un requisito antes de solicitar sugerencias.");
             return;
           }
 
@@ -1023,7 +1021,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
           suggestionsDiv.style.display = "block";
           suggestionsDiv.innerHTML = "";
 
-          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}&process_name=${encodeURIComponent(processName)}`)
+          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}`)
             .then(res => res.json())
             .then(data => {
               suggestBtn.disabled = false;
@@ -1034,7 +1032,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                 return;
               }
 
-              const questions = data.suggestions || [];
+              const questions = data.questions || [];
               if (questions.length === 0) {
                 suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
                 return;
@@ -1083,6 +1081,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
       }, 100);
     });
 });
+
 
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
