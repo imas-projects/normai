@@ -19,6 +19,7 @@ urlpatterns = [
     path('add_annual_plan_auditor/', views.add_annual_plan_auditor, name='add_annual_plan_auditor'),
     path('suggest-auditor/', views.suggest_auditor_view, name='suggest_auditor'),
     path('add_annual_plan_audited/', views.add_annual_plan_audited, name='add_annual_plan_audited'),
+    path('suggest-audited/', views.suggest_audited_view, name='suggest_audited'),
     path('add_checklist/', views.add_checklist, name='add_checklist'),
     path('add_findings/', views.add_findings, name='add_findings'),
     path('add_audit_report/', views.add_audit_report, name='add_audit_report'),
