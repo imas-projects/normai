@@ -400,6 +400,27 @@ def suggest_audit_questions_view(request):
 
     return JsonResponse({"questions": questions})
 
+@require_POST
+@csrf_exempt  
+def save_selected_audit_question(request):
+    try:
+        requirement_id = request.POST.get("requirement_id")
+        question_text = request.POST.get("question_text")
+
+        if not requirement_id or not question_text:
+            return JsonResponse({"error": "Faltan datos"}, status=400)
+
+        requirement = Requirement.objects.get(pk=requirement_id)
+
+        question = AuditedEvaluationQuestion.objects.create(
+            requirement=requirement,
+            question_text=question_text,
+        )
+
+        return JsonResponse({"success": True, "id": question.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def add_auditor_evaluation(request):
     return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_internal_audits', 'mistemplates/add_auditor_evaluation.html')
