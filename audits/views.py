@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
@@ -362,8 +363,47 @@ def add_checklist(request):
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
     return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
 
+
 def add_findings(request):
-    return _add_form_view(request, FindingsForm, 'audits:conduct_internal_audits', 'mistemplates/add_findings.html')
+    ia_error = None
+
+    if request.method == "POST":
+        form = FindingsForm(request.POST)
+
+        if "classify_ia" in request.POST:
+            if form.is_valid():
+                finding_text = form.cleaned_data["finding_text"]
+                requirement = form.cleaned_data.get("requirement")
+
+                try:
+                    classification = classify_finding_ia(finding_text, requirement)
+                    if classification:
+                        form.cleaned_data["classification"] = classification
+                        form.fields["classification"].initial = classification
+                        form.data = form.data.copy()
+                        form.data["classification"] = classification
+                        messages.success(request, f"Clasificación sugerida: {classification}")
+                    else:
+                        ia_error = "La IA no pudo determinar una clasificación."
+                except Exception as e:
+                    ia_error = f"Error al clasificar con IA: {str(e)}"
+
+            # Mostrar el formulario con el campo classification autoseleccionado
+            return render(request, "mistemplates/add_findings.html", {
+                "form": form,
+                "ia_error": ia_error
+            })
+
+        elif "save" in request.POST:
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Hallazgo guardado correctamente.")
+                return redirect("audits:conduct_internal_audits")
+
+    else:
+        form = FindingsForm()
+
+    return render(request, "mistemplates/add_findings.html", {"form": form})
 
 def classify_finding_view(request):
     finding_text = request.GET.get("finding_text")
