@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Hallazgo</h2>
-  <form method="post" action="{% url 'audits:add_findings' %}">
+  <form method="post" action="{% url 'audits:add_findings' %}" id="findingsForm">
     {% csrf_token %}
 
     <div class="mb-3">
@@ -36,9 +36,12 @@
       {% endif %}
     </div>
 
+    <!-- Mensaje IA -->
+    <div id="iaFindingClassificationFeedback" class="alert alert-info" style="display: none;"></div>
+
     <div class="mt-4 d-flex gap-3">
       <button type="submit" name="save" class="btn btn-success">Guardar</button>
-      <button type="submit" name="classify_ia" class="btn btn-outline-primary">Clasificar con IA</button>
+      <button type="button" id="btnSuggestFindingClassification" class="btn btn-outline-primary">Clasificar con IA</button>
     </div>
 
     {% if ia_error %}
