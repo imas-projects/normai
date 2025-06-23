@@ -22,6 +22,7 @@ urlpatterns = [
     path('suggest-audited/', views.suggest_audited_view, name='suggest_audited'),
     path('add_checklist/', views.add_checklist, name='add_checklist'),
     path('add_findings/', views.add_findings, name='add_findings'),
+    path('classify-finding/', views.classify_finding_view, name='classify_finding'),
     path('add_audit_report/', views.add_audit_report, name='add_audit_report'),
     path('add_process_requirement/', views.add_process_requirement, name='add_process_requirement'),
     path('add_audited_evaluation_question/', views.add_audited_evaluation_question, name='add_audited_evaluation_question'),
