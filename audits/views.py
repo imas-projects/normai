@@ -27,7 +27,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai
 
 # === BASIC VIEWS ===
 
