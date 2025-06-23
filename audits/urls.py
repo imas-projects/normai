@@ -25,7 +25,7 @@ urlpatterns = [
     path('add_audit_report/', views.add_audit_report, name='add_audit_report'),
     path('add_process_requirement/', views.add_process_requirement, name='add_process_requirement'),
     path('add_audited_evaluation_question/', views.add_audited_evaluation_question, name='add_audited_evaluation_question'),
+    path('suggest-audit-questions/', views.suggest_audit_questions_view, name='suggest_audit_questions'),
     path('add_auditor_evaluation/', views.add_auditor_evaluation, name='add_auditor_evaluation'),
     path('add_lead_auditor_evaluation_question/', views.add_lead_auditor_evaluation_question, name='add_lead_auditor_evaluation_question'),
-
 ]
