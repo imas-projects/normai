@@ -968,40 +968,84 @@ document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click
 });
 
 
-document.getElementById("openAddFindingsModal").addEventListener("click", function () {
+document.getElementById("openAddFindingsModal").addEventListener("click", function (e) {
+  e.preventDefault();  // evitar navegación
+
   fetch("{% url 'audits:add_findings' %}")
     .then(response => response.text())
     .then(html => {
       const container = document.getElementById("findingsModalFormContent");
       container.innerHTML = html;
 
-      // Esperar un poco para asegurar que el DOM del modal ya esté listo
-      setTimeout(() => {
-        const form = container.querySelector("form");
+      // Mostrar modal
+      const modal = new bootstrap.Modal(document.getElementById("addFindingsModal"));
+      modal.show();
 
-        if (form) {
-          // Manejamos el submit de clasificar con IA o guardar desde el backend
-          form.addEventListener("submit", function (e) {
-            const clickedButton = form.querySelector("button[type=submit][clicked=true]");
-            if (clickedButton) {
-              clickedButton.removeAttribute("clicked");
-            }
-          });
-
-          // Detectar qué botón se pulsó (clasificar o guardar)
-          const buttons = form.querySelectorAll("button[type=submit]");
-          buttons.forEach(btn => {
-            btn.addEventListener("click", function () {
-              btn.setAttribute("clicked", true);
-            });
-          });
-        }
-
-        // Mostrar el modal
-        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
-      }, 100);
+      // Ahora configurar el botón Clasificar con IA dentro del modal
+      setupIaClassification();
     });
 });
+
+function setupIaClassification() {
+  const form = document.getElementById("findingsForm");
+  if (!form) return;
+
+  const suggestBtn = document.getElementById("btnSuggestFindingClassification");
+  const requirementSelect = form.querySelector("select[name='requirement']");
+  const findingInput = form.querySelector("textarea[name='finding_text']");
+  const classificationSelect = form.querySelector("select[name='classification']");
+  const feedback = document.getElementById("iaFindingClassificationFeedback");
+
+  // Ocultar feedback inicialmente
+  if (feedback) feedback.style.display = "none";
+
+  if (!suggestBtn) return;
+
+  suggestBtn.addEventListener("click", () => {
+    const requirementId = requirementSelect.value;
+    const findingText = findingInput.value;
+
+    if (!requirementId || !findingText.trim()) {
+      alert("Por favor, selecciona un requisito y escribe el texto del hallazgo.");
+      return;
+    }
+
+    const originalText = suggestBtn.textContent;
+    suggestBtn.disabled = true;
+    suggestBtn.textContent = "Obteniendo...";
+
+    fetch(`/audits/classify-finding/?requirement_id=${requirementId}&finding_text=${encodeURIComponent(findingText)}`)
+      .then(res => res.json())
+      .then(data => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+
+        if (data.error) {
+          alert("Error IA: " + data.error);
+          return;
+        }
+
+        const suggested = data.classification;
+        const option = Array.from(classificationSelect.options).find(opt => opt.value === suggested);
+
+        if (option) {
+          classificationSelect.value = suggested;
+          if (feedback) {
+            feedback.textContent = `Clasificación sugerida por IA: ${option.text}`;
+            feedback.style.display = "block";
+          }
+        } else {
+          alert("Clasificación sugerida no válida.");
+        }
+      })
+      .catch(err => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+        alert("Error inesperado: " + err);
+      });
+  });
+}
+
 
 document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_audit_report' %}")
