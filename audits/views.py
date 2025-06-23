@@ -27,7 +27,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai
 
 # === BASIC VIEWS ===
 
@@ -305,6 +305,27 @@ def suggest_leader_view(request):
     
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
+
+def suggest_auditor_view(request):
+    annual_plan_id = request.GET.get("annual_plan_id")
+
+    if not annual_plan_id:
+        return HttpResponseBadRequest("Falta el parámetro 'annual_plan_id'")
+
+    try:
+        annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
+
+        suggestions = suggest_auditor_ai(
+            annual_plan_id=annual_plan.id,
+            max_results=5
+        )
+    except Exception as e:
+        print("Error en suggest_auditor_view:", e)
+        traceback.print_exc()
+        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
+
+    return JsonResponse({"suggestions": suggestions})
+    
 
 def add_annual_plan_audited(request):
     return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
