@@ -28,7 +28,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating
 
 # === BASIC VIEWS ===
 
@@ -425,6 +425,32 @@ def save_selected_audit_question(request):
 
 def add_auditor_evaluation(request):
     return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_internal_audits', 'mistemplates/add_auditor_evaluation.html')
+
+def suggest_compliance_rate_view(request):
+    audit_id = request.GET.get("audit_id")
+    question_id = request.GET.get("question_id")
+
+    if not audit_id or not question_id:
+        return HttpResponseBadRequest("Faltan parámetros: audit_id y question_id son obligatorios.")
+
+    try:
+        checklist = Checklist.objects.get(
+            audit_plan__id=audit_id,
+            question__id=question_id
+        )
+    except Checklist.DoesNotExist:
+        return HttpResponseBadRequest("No se encontró un Checklist con ese audit_id y question_id.")
+
+    try:
+        suggested_rate = suggest_compliance_rating(checklist)
+    except Exception as e:
+        return JsonResponse({"error": f"Error al obtener sugerencia de IA: {str(e)}"}, status=500)
+
+    if suggested_rate is None:
+        return JsonResponse({"error": "La IA no pudo determinar un rate válido."}, status=422)
+
+    return JsonResponse({"suggested_rate": suggested_rate})
+
 
 def add_lead_auditor_evaluation_question(request):
     return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_lead_auditor_evaluation_question.html')
