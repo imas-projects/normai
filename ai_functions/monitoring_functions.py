@@ -2145,3 +2145,61 @@ Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
     except Exception as e:
         print("Error al obtener sugerencia de rating:", str(e))
         return None
+
+
+def classify_finding_ia(finding_text, requirement_obj=None):
+    """
+    Clasifica automáticamente un hallazgo según la norma ISO 9001:2015 usando IA.
+
+    Parámetros:
+    - finding_text: Texto del hallazgo ingresado por el auditor.
+    - requirement_obj: (opcional) Instancia del modelo Requirement asociada al hallazgo.
+
+    Retorna una string: 'NC_MAYOR', 'NC_MENOR' u 'OPORTUNIDAD_MEJORA'
+    """
+
+    # Identificador de cláusula
+    clause_identifier = requirement_obj.name if requirement_obj else ""
+    clause_description = getattr(requirement_obj, "description", "") if requirement_obj else ""
+
+    prompt = f"""
+Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015.
+
+Quiero que clasifiques el siguiente hallazgo en una de las siguientes categorías:
+- NC_MAYOR: No conformidad mayor
+- NC_MENOR: No conformidad menor
+- OPORTUNIDAD_MEJORA: Oportunidad de mejora
+
+Tu clasificación debe basarse en los criterios de la norma ISO 9001:2015.
+
+{f'Este hallazgo está relacionado con la cláusula "{clause_identifier}".' if clause_identifier else ''}
+{f'Descripción de la cláusula: {clause_description}' if clause_description else ''}
+
+Texto del hallazgo:
+\"\"\"{finding_text}\"\"\"
+
+Responde únicamente con uno de estos tres valores exactos (sin comillas ni explicación):
+NC_MAYOR
+NC_MENOR
+OPORTUNIDAD_MEJORA
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=10,
+        )
+
+        result = response.choices[0].message.content.strip().upper()
+
+        if result in ["NC_MAYOR", "NC_MENOR", "OPORTUNIDAD_MEJORA"]:
+            return result
+
+        print("Respuesta IA no válida:", repr(result))
+        return None
+
+    except Exception as e:
+        print("Error en clasificación IA:", str(e))
+        return None
