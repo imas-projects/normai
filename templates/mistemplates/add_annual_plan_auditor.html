@@ -13,6 +13,16 @@
       {% endif %}
     </div>
 
+    <!-- Botón de sugerencias IA para auditor -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestAuditorIA" class="btn btn-info">
+        Sugerir auditor IA
+      </button>
+    </div>
+
+    <!-- Contenedor para mostrar sugerencias IA de auditor -->
+    <div id="auditorSuggestionsIA" class="mt-4"></div>
+
     <!-- Selector de usuario (auditor) -->
     <div class="mb-3">
       {{ form.user.label_tag }}
