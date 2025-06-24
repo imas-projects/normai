@@ -29,7 +29,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields
 
 # === BASIC VIEWS ===
 
@@ -256,10 +256,7 @@ def add_annual_plan(request):
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
 
-def add_annual_plan_audited(request):
-    return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
-
-def suggest_audited_view(request):
+def suggest_auditor_view(request):
     annual_plan_id = request.GET.get("annual_plan_id")
 
     if not annual_plan_id:
@@ -268,17 +265,21 @@ def suggest_audited_view(request):
     try:
         annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
 
-        suggestions = suggest_audited_ai(
-            plan_id=annual_plan.id,  
+        suggestions = suggest_auditor_ai(
+            annual_plan_id=annual_plan.id,
             max_results=5
         )
     except Exception as e:
-        print("Error en suggest_audited_view:", e)
+        print("Error en suggest_auditor_view:", e)
         traceback.print_exc()
         return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
 
     return JsonResponse({"suggestions": suggestions})
 
+
+def add_annual_plan_audited(request):
+    return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
+    
 
 def add_checklist(request):
     if request.method == "POST":
