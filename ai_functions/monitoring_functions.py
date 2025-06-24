@@ -1428,12 +1428,12 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     process_reqs = ProcessRequirement.objects.filter(process=process).values_list('requirement_id', flat=True)
 
     similar_checklists = Checklist.objects.filter(
-        requirement_id__in=process_reqs
-    ).select_related('audit__lider')
+        question__requirement_id__in=process_reqs
+    ).select_related('audit_plan__lider')
 
     for checklist in similar_checklists:
-        if checklist.audit and checklist.audit.lider:
-            uid = checklist.audit.lider.id
+        if checklist.audit_plan and checklist.audit_plan.lider:
+            uid = checklist.audit_plan.lider.id
             users_scores[uid]["score"] += 1
             users_scores[uid]["reasons"].append("Experiencia auditando requisitos normativos similares")
 
