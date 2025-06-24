@@ -795,7 +795,7 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
           suggestionsDiv.innerHTML = "";
           suggestionsDiv.style.display = "block";
 
-          fetch(`/audits/suggest_audit_report/?audit_id=${auditId}`)
+          fetch(`/audits/suggest_audit_report/?audit_plan_id=${auditId}`)
             .then(res => res.json())
             .then(data => {
               suggestBtn.disabled = false;
