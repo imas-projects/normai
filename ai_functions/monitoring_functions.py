@@ -1363,6 +1363,10 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     except AnnualProgram.DoesNotExist:
         return []
 
+    # Obtener líder actual para excluirlo
+    current_leader_id = AnnualPlan.objects.filter(annual_program=annual_program).values_list('lider_id', flat=True).first()
+    excluded_user_ids = {current_leader_id} if current_leader_id else set()
+
     today = date.today()
     three_months_ago = today - timedelta(days=90)
     users_scores = defaultdict(lambda: {"score": 0, "reasons": []})
@@ -1374,6 +1378,8 @@ def suggest_auditor_ai(program_id: int, max_results=5):
 
     for auditor in past_auditors:
         uid = auditor.user.id
+        if uid in excluded_user_ids:
+            continue
         users_scores[uid]["score"] += 3
         users_scores[uid]["reasons"].append("Experiencia previa como auditor en este proceso")
 
@@ -1385,6 +1391,8 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     for plan in past_leaders:
         if plan.lider:
             uid = plan.lider.id
+            if uid in excluded_user_ids:
+                continue
             users_scores[uid]["score"] += 2
             users_scores[uid]["reasons"].append("Fue líder en auditoría de este proceso")
 
@@ -1395,45 +1403,12 @@ def suggest_auditor_ai(program_id: int, max_results=5):
 
     for audited in audited_users:
         uid = audited.user.id
+        if uid in excluded_user_ids:
+            continue
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-    # 4. Participación en programas del proceso (sustituye AnnualProgramUser)
-    related_plans = AnnualPlan.objects.filter(
-        annual_program__process=process
-    ).select_related('annual_program__program_header', 'lider')
-
-    for plan in related_plans:
-        year = plan.annual_program.program_header.year
-
-        # Lider
-        if plan.lider:
-            uid = plan.lider.id
-            users_scores[uid]["score"] += 2
-            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
-            if year == header.year:
-                users_scores[uid]["score"] -= 1
-                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
-
-        # Auditores
-        for auditor in plan.annualplanauditor_set.all():
-            uid = auditor.user.id
-            users_scores[uid]["score"] += 2
-            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
-            if year == header.year:
-                users_scores[uid]["score"] -= 1
-                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
-
-        # Auditados
-        for audited in plan.annualplanaudited_set.all():
-            uid = audited.user.id
-            users_scores[uid]["score"] += 2
-            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
-            if year == header.year:
-                users_scores[uid]["score"] -= 1
-                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
-
-    # 5. Evaluaciones positivas como auditor
+    # 4. Evaluaciones positivas como auditor
     good_evals = AuditorEvaluation.objects.filter(
         audit__annual_program__process=process,
         rate__gte=7
@@ -1442,10 +1417,12 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     for eval in good_evals:
         if eval.audit and eval.audit.lider:
             uid = eval.audit.lider.id
+            if uid in excluded_user_ids:
+                continue
             users_scores[uid]["score"] += 1
             users_scores[uid]["reasons"].append("Evaluado con buen desempeño en auditorías")
 
-    # 6. Requisitos técnicos similares
+    # 5. Requisitos técnicos similares
     process_reqs = ProcessRequirement.objects.filter(process=process).values_list('requirement_id', flat=True)
 
     similar_checklists = Checklist.objects.filter(
@@ -1455,11 +1432,16 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     for checklist in similar_checklists:
         if checklist.audit_plan and checklist.audit_plan.lider:
             uid = checklist.audit_plan.lider.id
+            if uid in excluded_user_ids:
+                continue
             users_scores[uid]["score"] += 1
             users_scores[uid]["reasons"].append("Experiencia auditando requisitos normativos similares")
 
-    # 7. Penalización por saturación reciente (últimos 3 meses)
+    # 6. Penalización por saturación reciente
     for uid in list(users_scores.keys()):
+        if uid in excluded_user_ids:
+            continue
+
         last_dates = []
 
         last_ap = AnnualPlanAuditor.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
@@ -1481,6 +1463,8 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     # Preparar lista para GPT
     scored_users = []
     for uid, info in users_scores.items():
+        if uid in excluded_user_ids:
+            continue
         try:
             user = User.objects.get(id=uid)
             scored_users.append({
