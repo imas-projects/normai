@@ -29,7 +29,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
 
 # === BASIC VIEWS ===
 
@@ -257,51 +257,9 @@ def suggest_annual_program_processes_view(request):
 
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
-
-def suggest_leader_view(request):
-    annual_program_id = request.GET.get("annual_program_id")
-
-    if not annual_program_id:
-        return HttpResponseBadRequest("Falta el parámetro 'annual_program_id'")
-
-    try:
-        annual_program = get_object_or_404(AnnualProgram, pk=annual_program_id)
-        
-        suggestions = suggest_leader_ai(
-            program_id=annual_program.id,
-            max_results=5
-        )
-    except Exception as e:
-        print("Error en suggest_leader_view:", e)
-        traceback.print_exc()
-        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
-
-    return JsonResponse({"suggestions": suggestions})
-
     
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
-
-def suggest_auditor_view(request):
-    annual_plan_id = request.GET.get("annual_plan_id")
-
-    if not annual_plan_id:
-        return HttpResponseBadRequest("Falta el parámetro 'annual_plan_id'")
-
-    try:
-        annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
-
-        suggestions = suggest_auditor_ai(
-            program_id=annual_plan.annual_program.id, 
-            max_results=5
-        )
-    except Exception as e:
-        print("Error en suggest_auditor_view:", e)
-        traceback.print_exc()
-        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
-
-    return JsonResponse({"suggestions": suggestions})
-
 
 def add_annual_plan_audited(request):
     return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
