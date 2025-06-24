@@ -1733,6 +1733,16 @@ def suggest_audit_report_fields(audit_plan_id: int):
         "strengths": "..."
     }
     """
+    def safe_str(value):
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, dict) or isinstance(value, list):
+            return json.dumps(value, ensure_ascii=False).strip()
+        elif value is None:
+            return ""
+        else:
+            return str(value).strip()
+
     try:
         audit_plan = AnnualPlan.objects.select_related(
             'annual_program__program_header',
@@ -1742,11 +1752,9 @@ def suggest_audit_report_fields(audit_plan_id: int):
             'checklists__question',
         ).get(id=audit_plan_id)
 
-        # Encabezado
         header = audit_plan.annual_program.program_header
         process = audit_plan.annual_program.process
 
-        # Recolección de datos
         findings = audit_plan.findings.all()
         checklist = audit_plan.checklists.all()
 
@@ -1761,7 +1769,6 @@ def suggest_audit_report_fields(audit_plan_id: int):
             f.question.question_text for f in checklist.filter(compliance=True)[:5]
         ]
 
-        # Construcción del prompt
         prompt = f"""
 Eres un auditor experto en la norma ISO 9001:2015, especialmente en la cláusula 9.1.2 (seguimiento, medición, análisis y evaluación).
 
@@ -1798,8 +1805,8 @@ La redacción debe ser profesional, precisa y orientada a las recomendaciones de
         suggestions = json.loads(clean_content)
 
         return {
-            "summary": suggestions.get("summary", "").strip(),
-            "strengths": suggestions.get("strengths", "").strip()
+            "summary": safe_str(suggestions.get("summary", "")),
+            "strengths": safe_str(suggestions.get("strengths", ""))
         }
 
     except Exception as e:
@@ -1808,3 +1815,4 @@ La redacción debe ser profesional, precisa y orientada a las recomendaciones de
             "summary": "",
             "strengths": ""
         }
+
