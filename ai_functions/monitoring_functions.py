@@ -13,7 +13,7 @@ from processes.models import Process
 from audits.models import (
     AnnualProgram, AuditProgramHeader,
     AnnualPlanAuditor, AnnualPlanAudited, AnnualPlan,
-    User, Findings, ProcessRequirement, Checklist, AuditorEvaluation
+    User, Findings, ProcessRequirement, Checklist, AuditorEvaluation, AuditReport
 )
 from django.contrib.auth.models import User  
 from django.conf import settings
@@ -1721,3 +1721,93 @@ OPORTUNIDAD_MEJORA
     except Exception as e:
         print("Error en clasificación IA:", str(e))
         return None
+
+def suggest_audit_report_fields(audit_plan_id: int):
+    """
+    Genera automáticamente un resumen (summary) y fortalezas (strengths) para un AuditReport
+    basado en hallazgos, cumplimiento, criterios y contexto ISO 9001:2015.
+
+    Requiere:
+    - audit_plan_id: ID del AnnualPlan.
+
+    Devuelve:
+    {
+        "summary": "...",
+        "strengths": "..."
+    }
+    """
+    try:
+        audit_plan = AnnualPlan.objects.select_related(
+            'annual_program__program_header',
+            'annual_program__process'
+        ).prefetch_related(
+            'findings',
+            'checklists__question',
+        ).get(id=audit_plan_id)
+
+        # Encabezado
+        header = audit_plan.annual_program.program_header
+        process = audit_plan.annual_program.process
+
+        # Recolección de datos
+        findings = audit_plan.findings.all()
+        checklist = audit_plan.checklists.all()
+
+        compliance_summary = {
+            "total": checklist.count(),
+            "compliant": checklist.filter(compliance=True).count(),
+            "non_compliant": checklist.filter(compliance=False).count()
+        }
+
+        finding_texts = [f"- {f.finding_text} ({f.classification})" for f in findings]
+        strengths_list = [
+            f.question.question_text for f in checklist.filter(compliance=True)[:5]
+        ]
+
+        # Construcción del prompt
+        prompt = f"""
+Eres un auditor experto en la norma ISO 9001:2015, especialmente en la cláusula 9.1.2 (seguimiento, medición, análisis y evaluación).
+
+Debes redactar un **informe de auditoría** con dos secciones:
+- summary: resumen estructurado y claro del desarrollo de la auditoría
+- strengths: fortalezas detectadas en el proceso auditado
+
+Toma en cuenta:
+- **Objetivo:** {header.objective}
+- **Alcance:** {header.scope}
+- **Criterios de auditoría:** {header.audit_criteria}
+- **Estándares de seguridad:** {header.security_standards}
+- **Proceso auditado:** {process.name} ({process.process_code})
+- **Hallazgos encontrados:** {chr(10).join(finding_texts) or 'Ninguno'}
+- **Cumplimiento general:** {compliance_summary['compliant']}/{compliance_summary['total']} ítems cumplidos
+- **Fortalezas (resumidas de la checklist):** {chr(10).join(strengths_list) or 'Ninguna observada'}
+
+Por favor, responde en JSON con las claves:
+- "summary"
+- "strengths"
+
+La redacción debe ser profesional, precisa y orientada a las recomendaciones de auditoría interna bajo ISO 9001:2015.
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=800,
+        )
+
+        content = response.choices[0].message.content.strip()
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        return {
+            "summary": suggestions.get("summary", "").strip(),
+            "strengths": suggestions.get("strengths", "").strip()
+        }
+
+    except Exception as e:
+        print(f"Error al generar informe IA: {str(e)}")
+        return {
+            "summary": "",
+            "strengths": ""
+        }
