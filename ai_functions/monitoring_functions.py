@@ -1736,7 +1736,7 @@ def suggest_audit_report_fields(audit_plan_id: int):
     def safe_str(value):
         if isinstance(value, str):
             return value.strip()
-        elif isinstance(value, dict) or isinstance(value, list):
+        elif isinstance(value, (dict, list)):
             return json.dumps(value, ensure_ascii=False).strip()
         elif value is None:
             return ""
@@ -1815,4 +1815,5 @@ La redacción debe ser profesional, precisa y orientada a las recomendaciones de
             "summary": "",
             "strengths": ""
         }
+
 
