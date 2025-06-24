@@ -1,9 +1,12 @@
 {% load static %}
+
 <div class="container mt-4">
   <h2>Agregar Informe de Auditoría</h2>
-  <form method="post" action="{% url 'audits:add_audit_report' %}">
+
+  <form method="post" action="{% url 'audits:add_audit_report' %}" id="add-audit-report-form">
     {% csrf_token %}
 
+    <!-- Selección del Plan de Auditoría -->
     <div class="mb-3">
       {{ form.audit.label_tag }}
       {{ form.audit }}
@@ -12,6 +15,17 @@
       {% endif %}
     </div>
 
+    <!-- Botón para sugerencias IA -->
+    <div class="mb-3">
+      <button type="button" id="suggestAuditReportBtn" class="btn btn-info">
+        Obtener sugerencias IA
+      </button>
+    </div>
+
+    <!-- Contenedor para sugerencias generadas por IA -->
+    <div id="auditReportSuggestionsContainer" class="mt-4" style="display: none;"></div>
+
+    <!-- Campo de resumen -->
     <div class="mb-3">
       {{ form.summary.label_tag }}
       {{ form.summary }}
@@ -20,6 +34,7 @@
       {% endif %}
     </div>
 
+    <!-- Campo de fortalezas -->
     <div class="mb-3">
       {{ form.strengths.label_tag }}
       {{ form.strengths }}
@@ -28,6 +43,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón de envío -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
