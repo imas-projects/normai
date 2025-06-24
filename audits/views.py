@@ -159,7 +159,7 @@ def conduct_internal_audits(request):
             "rate": eval.rate
         } for eval in auditor_evals]
 
-        report = AuditReport.objects.filter(audit=plan.annual_program).first()
+        report = AuditReport.objects.filter(audit=plan).first()
         report_data = None
         findings_data = []
 
