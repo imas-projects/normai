@@ -381,7 +381,7 @@ def suggest_audit_report_view(request):
     try:
         audit_plan = AnnualPlan.objects.get(pk=audit_plan_id)
         suggestion = suggest_audit_report_fields(audit_plan.id)
-        return JsonResponse({"summary": suggestion["summary"], "strengths": suggestion["strengths"]})
+        return JsonResponse({"suggestions": [suggestion]})
 
     except AnnualPlan.DoesNotExist:
         print(f"AuditPlan con id {audit_plan_id} no existe.")
