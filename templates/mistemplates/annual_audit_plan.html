@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
       fetch("{% url 'audits:add_annual_plan_audited' %}")
         .then(response => response.text())
         .then(html => {
-          document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
+          document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
           new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
         });
     });
@@ -200,7 +200,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
   fetch("{% url 'audits:add_annual_plan_auditor' %}")
     .then((response) => response.text())
     .then((html) => {
-      document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
+      document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
 
       const modalEl = document.getElementById("addAnnualPlanAuditorModal");
       const modal = new bootstrap.Modal(modalEl);
