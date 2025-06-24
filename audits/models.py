@@ -247,7 +247,7 @@ class AuditorEvaluation(models.Model):
         'AnnualPlan',
         on_delete=models.PROTECT,
         related_name="auditor_evaluations",
-        verbose_name="Audit"
+        verbose_name="Audit Plan"
     )
     question = models.ForeignKey(
         'AuditedEvaluationQuestion',
@@ -297,7 +297,7 @@ class Findings(models.Model):
         'AnnualPlan',
         on_delete=models.PROTECT,
         related_name="findings",
-        verbose_name="Audit"
+        verbose_name="Audit Plan"
     )
     requirement = models.ForeignKey(
         'company.Requirement',
