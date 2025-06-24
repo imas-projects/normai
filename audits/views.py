@@ -58,10 +58,6 @@ def annual_audit_program(request):
 
     program_ids = annual_programs.values_list("id", flat=True)
 
-    users_by_program = defaultdict(list)
-    for apu in AnnualProgramUser.objects.filter(annual_program_id__in=program_ids).select_related("user"):
-        users_by_program[apu.annual_program_id].append(apu.user)
-
     requirements_by_process = defaultdict(list)
     for pr in ProcessRequirement.objects.select_related("process", "requirement"):
         requirements_by_process[pr.process_id].append(pr.requirement)
@@ -80,8 +76,7 @@ def annual_audit_program(request):
 
         for program in filtered:
             enriched_programs.append({
-                "program": program,
-                "users": users_by_program.get(program.id, []),
+                "program": program, 
                 "requirements": requirements_by_process.get(program.process_id, [])
             })
 
