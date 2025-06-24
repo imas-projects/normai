@@ -29,7 +29,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields
 
 # === BASIC VIEWS ===
 
@@ -376,6 +376,24 @@ def classify_finding_view(request):
 def add_audit_report(request):
     return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
 
+def suggest_audit_report_view(request):
+    audit_plan_id = request.GET.get("audit_plan_id")
+
+    if not audit_plan_id:
+        return HttpResponseBadRequest("Falta el parámetro 'audit_plan_id'")
+
+    try:
+        audit_plan = get_object_or_404(AnnualPlan, pk=audit_plan_id)
+
+        suggestion = suggest_audit_report_fields(audit_plan.id)
+        return JsonResponse({"summary": suggestion["summary"], "strengths": suggestion["strengths"]})
+
+    except Exception as e:
+        print("Error en suggest_audit_report_view:", e)
+        traceback.print_exc()
+        return JsonResponse({"error": f"Error al generar el informe: {str(e)}"}, status=500)
+
+
 def add_process_requirement(request):
     return _add_form_view(request, ProcessRequirementForm, 'audits:annual_audit_program', 'mistemplates/add_process_requirement.html')
 
@@ -463,8 +481,6 @@ def suggest_compliance_rate_view(request):
         return JsonResponse({"error": "La IA no pudo determinar un rate válido."}, status=422)
 
     return JsonResponse({"rate": suggested_rate})
-
-
 
 
 def add_lead_auditor_evaluation_question(request):
