@@ -379,12 +379,16 @@ def suggest_audit_report_view(request):
         return HttpResponseBadRequest("Falta el parámetro 'audit_plan_id'")
 
     try:
-        audit_plan = get_object_or_404(AnnualPlan, pk=audit_plan_id)
-
+        audit_plan = AnnualPlan.objects.get(pk=audit_plan_id)
         suggestion = suggest_audit_report_fields(audit_plan.id)
         return JsonResponse({"summary": suggestion["summary"], "strengths": suggestion["strengths"]})
 
+    except AnnualPlan.DoesNotExist:
+        print(f"AuditPlan con id {audit_plan_id} no existe.")
+        return HttpResponseBadRequest("El plan de auditoría no existe.")
+
     except Exception as e:
+        import traceback
         print("Error en suggest_audit_report_view:", e)
         traceback.print_exc()
         return JsonResponse({"error": f"Error al generar el informe: {str(e)}"}, status=500)
