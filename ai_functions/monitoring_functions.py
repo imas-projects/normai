@@ -1353,7 +1353,7 @@ Responde en JSON como lista de objetos con esas claves.
     except Exception as e:
         print("Error general IA:", str(e))
         return []
-        
+
 
 def suggest_auditor_ai(program_id: int, max_results=5):
     try:
@@ -1408,15 +1408,15 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-    # 4. Evaluaciones positivas como auditor
+   # 4. Evaluaciones positivas como auditor
     good_evals = AuditorEvaluation.objects.filter(
-        audit__annual_program__process=process,
+        audit_plan__annual_program__process=process,
         rate__gte=7
-    ).select_related('audit__lider')
+    ).select_related('audit_plan__lider')
 
     for eval in good_evals:
-        if eval.audit and eval.audit.lider:
-            uid = eval.audit.lider.id
+        if eval.audit_plan and eval.audit_plan.lider:
+            uid = eval.audit_plan.lider.id
             if uid in excluded_user_ids:
                 continue
             users_scores[uid]["score"] += 1
@@ -1517,8 +1517,6 @@ Devuelve JSON con: user_id, username, full_name, score, justification.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
-
-
 
 
 def suggest_audit_questions(requirement_obj, process_name, max_results=5):
