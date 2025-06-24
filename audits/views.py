@@ -13,14 +13,14 @@ from django.views.decorators.csrf import csrf_exempt
 import traceback
 
 from .forms import (
-    AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm, AnnualProgramUserForm,
+    AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm,
     AnnualPlanAuditorForm, AnnualPlanAuditedForm, ChecklistForm, FindingsForm, AuditReportForm,
     ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm
 )
 from company.models import Requirement
 
 from .models import (
-    AuditProgramHeader,ProcessRequirement, AnnualProgram, AnnualProgramUser, 
+    AuditProgramHeader,ProcessRequirement, AnnualProgram,
     AnnualPlan,
     Checklist,
     AuditReport,
@@ -29,7 +29,7 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_audit_users_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_leader_ai, suggest_auditor_ai, suggest_audited_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia
 
 # === BASIC VIEWS ===
 
@@ -252,32 +252,6 @@ def suggest_annual_program_processes_view(request):
         suggestions = suggest_annual_processes_ai(int(program_header_id))
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse({"suggestions": suggestions})
-
-def add_annual_program_user(request):
-    return _add_form_view(request, AnnualProgramUserForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program_user.html')
-
-def suggest_audit_users_view(request):
-    annual_program_id = request.GET.get("annual_program_id")
-
-    if not annual_program_id:
-        return HttpResponseBadRequest("Falta el parámetro 'annual_program_id'")
-
-    try:
-        annual_program = get_object_or_404(AnnualProgram, pk=annual_program_id)
-        program_header_id = annual_program.program_header_id
-        process_id = annual_program.process_id
-
-        suggestions = suggest_audit_users_ai(
-            program_header_id=int(program_header_id),
-            process_id=int(process_id),
-            max_results=5
-        )
-    except Exception as e:
-        print("Error en suggest_audit_users_view:", e)
-        traceback.print_exc()  
-        return JsonResponse({"error": f"Error al generar sugerencias: {str(e)}"}, status=500)
 
     return JsonResponse({"suggestions": suggestions})
 
