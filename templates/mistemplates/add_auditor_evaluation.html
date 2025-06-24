@@ -6,11 +6,12 @@
 
     <!-- AUDIT -->
     <div class="mb-3">
-      {{ form.audit.label_tag }}
-      {{ form.audit }}
-      {% if form.audit.errors %}
-        <div class="text-danger small">{{ form.audit.errors }}</div>
+      {{ form.audit_plan.label_tag }}
+      {{ form.audit_plan }}
+      {% if form.audit_plan.errors %}
+        <div class="text-danger small">{{ form.audit_plan.errors }}</div>
       {% endif %}
+
     </div>
 
     <!-- QUESTION -->
