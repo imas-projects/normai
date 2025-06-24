@@ -1398,19 +1398,40 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-    # 4. Ha sido asignado a AnnualProgram con este proceso
-    previous_assignments = AnnualProgramUser.objects.filter(
+    # 4. Participación en programas del proceso (sustituye AnnualProgramUser)
+    related_plans = AnnualPlan.objects.filter(
         annual_program__process=process
-    ).select_related('user')
+    ).select_related('annual_program__program_header', 'lider')
 
-    for apu in previous_assignments:
-        uid = apu.user.id
-        users_scores[uid]["score"] += 2
-        users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
+    for plan in related_plans:
+        year = plan.annual_program.program_header.year
 
-        if apu.annual_program.program_header.year == header.year:
-            users_scores[uid]["score"] -= 1
-            users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
+        # Lider
+        if plan.lider:
+            uid = plan.lider.id
+            users_scores[uid]["score"] += 2
+            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
+            if year == header.year:
+                users_scores[uid]["score"] -= 1
+                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
+
+        # Auditores
+        for auditor in plan.annualplanauditor_set.all():
+            uid = auditor.user.id
+            users_scores[uid]["score"] += 2
+            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
+            if year == header.year:
+                users_scores[uid]["score"] -= 1
+                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
+
+        # Auditados
+        for audited in plan.annualplanaudited_set.all():
+            uid = audited.user.id
+            users_scores[uid]["score"] += 2
+            users_scores[uid]["reasons"].append("Participación anterior en programas del proceso")
+            if year == header.year:
+                users_scores[uid]["score"] -= 1
+                users_scores[uid]["reasons"].append("Asignación reciente en el mismo año")
 
     # 5. Evaluaciones positivas como auditor
     good_evals = AuditorEvaluation.objects.filter(
@@ -1441,11 +1462,6 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     for uid in list(users_scores.keys()):
         last_dates = []
 
-        last_apu = AnnualProgramUser.objects.filter(user_id=uid).order_by('-annual_program__program_header__year').first()
-        if last_apu:
-            year = last_apu.annual_program.program_header.year
-            last_dates.append(date(year, 12, 31))
-
         last_ap = AnnualPlanAuditor.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
         if last_ap and last_ap.annual_plan.audit_opening_date:
             last_dates.append(last_ap.annual_plan.audit_opening_date)
@@ -1470,6 +1486,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
             scored_users.append({
                 "user_id": uid,
                 "username": user.username,
+                "full_name": f"{user.first_name} {user.last_name}",
                 "score": info["score"],
                 "justification": "; ".join(info["reasons"])[:200]
             })
@@ -1494,7 +1511,7 @@ Eres un asistente experto en auditorías ISO. A continuación tienes una lista d
 
 Si no hay candidatos válidos, indica que debe seleccionarse según criterio profesional y normas ISO.
 
-Devuelve JSON con: user_id, username, score, justification.
+Devuelve JSON con: user_id, username, full_name, score, justification.
 """
 
     try:
@@ -1516,6 +1533,7 @@ Devuelve JSON con: user_id, username, score, justification.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
+
 
 
 
