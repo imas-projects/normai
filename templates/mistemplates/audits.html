@@ -558,14 +558,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  const openAuditorBtn = document.getElementById("openAddAnnualPlanAuditorModal");
+  const openAuditorBtn = document.getElementById("openAddAnnualPlanAuditedModal");
   if (openAuditorBtn) {
     openAuditorBtn.addEventListener("click", function () {
-      fetch("{% url 'audits:add_annual_plan_auditor' %}")
+      fetch("{% url 'audits:add_annual_plan_audited' %}")
         .then(response => response.text())
         .then(html => {
           document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
-          new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
+          new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
         });
     });
   }
@@ -573,105 +573,111 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-
-document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click", function() {
-  fetch("{% url 'audits:add_annual_plan_audited' %}")
-    .then(response => response.text())
-    .then(html => {
+document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_plan_auditor' %}")
+    .then((response) => response.text())
+    .then((html) => {
       document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
 
-      const modalEl = document.getElementById("addAnnualPlanAuditedModal");
+      const modalEl = document.getElementById("addAnnualPlanAuditorModal");
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
-      const btnSuggestIA = document.getElementById("btnSuggestAuditedIA");
-      const suggestionsDiv = document.getElementById("auditedSuggestionsIA");
+      // Esperar a que el DOM esté listo
+      requestAnimationFrame(() => {
+        const btnSuggestIA = document.getElementById("btnSuggestAuditorIA");
+        const suggestionsDiv = document.getElementById("auditorSuggestionsIA");
 
-      if (btnSuggestIA) {
-        btnSuggestIA.setAttribute("type", "button");
+        if (btnSuggestIA) {
+          btnSuggestIA.setAttribute("type", "button");
 
-        btnSuggestIA.addEventListener("click", function() {
-          const annualPlanSelect = document.querySelector("#id_annual_plan");
+          btnSuggestIA.addEventListener("click", function () {
+            const annualPlanSelect = document.querySelector("#id_annual_plan");
 
-          if (!annualPlanSelect || !annualPlanSelect.value) {
-            alert("Por favor seleccione un Plan Anual primero.");
-            return;
-          }
+            if (!annualPlanSelect || !annualPlanSelect.value) {
+              alert("Por favor seleccione un Plan Anual primero.");
+              return;
+            }
 
-          const originalText = btnSuggestIA.textContent;
-          btnSuggestIA.disabled = true;
-          btnSuggestIA.textContent = "Obteniendo sugerencias...";
-          suggestionsDiv.innerHTML = "";
-          suggestionsDiv.style.display = "block";
+            const originalText = btnSuggestIA.textContent;
+            btnSuggestIA.disabled = true;
+            btnSuggestIA.textContent = "Obteniendo sugerencias...";
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "block";
 
-          fetch(`/audits/suggest-audited/?annual_plan_id=${annualPlanSelect.value}`)
-            .then(response => response.json())
-            .then(data => {
-              btnSuggestIA.disabled = false;
-              btnSuggestIA.textContent = originalText;
+            fetch(`/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value}`)
+              .then((response) => response.json())
+              .then((data) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
 
-              if (data.error) {
-                suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
-                return;
-              }
+                if (data.error) {
+                  suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                  return;
+                }
 
-              if (!data.suggestions || data.suggestions.length === 0) {
-                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
-                return;
-              }
+                if (!data.suggestions || data.suggestions.length === 0) {
+                  suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                  return;
+                }
 
-              suggestionsDiv.innerHTML = `
-                <strong>Sugerencias de la IA:</strong>
-                <div id="suggestedAuditadosList" class="mt-2">
-                  ${data.suggestions.map((s, i) => `
-                    <div class="card mt-2 shadow-sm">
-                      <div class="card-body">
-                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                        <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
-                        <p><strong>Rol sugerido:</strong> ${s.suggested_role || "N/A"}</p>
-                        <p><strong>Justificación:</strong> ${s.justification}</p>
-                        <button type="button" class="btn btn-sm btn-outline-success applyAuditedSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                suggestionsDiv.innerHTML = `
+                  <strong>Sugerencias de la IA:</strong>
+                  <div id="suggestedAuditorsList" class="mt-2">
+                    ${data.suggestions.map((s, i) => `
+                      <div class="card mt-2 shadow-sm">
+                        <div class="card-body">
+                          <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                          <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
+                          <p><strong>Rol sugerido:</strong> ${s.suggested_role || "N/A"}</p>
+                          <p><strong>Justificación:</strong> ${s.justification}</p>
+                          <button type="button" class="btn btn-sm btn-outline-success applyAuditorSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                        </div>
                       </div>
-                    </div>
-                  `).join("")}
-                </div>
-              `;
+                    `).join("")}
+                  </div>
+                `;
 
-              document.querySelectorAll(".applyAuditedSuggestionBtn").forEach(btn => {
-                btn.addEventListener("click", function() {
-                  const idx = parseInt(this.dataset.idx);
-                  const s = data.suggestions[idx];
-                  if (!s) return;
+                document.querySelectorAll(".applyAuditorSuggestionBtn").forEach((btn) => {
+                  btn.addEventListener("click", function () {
+                    const idx = parseInt(this.dataset.idx);
+                    const s = data.suggestions[idx];
+                    if (!s) return;
 
-                  const auditedSelect = document.querySelector("#id_user");
+                    const auditorSelect = document.querySelector("#id_user");
 
-                  if (auditedSelect) {
-                    let optionToSelect = Array.from(auditedSelect.options).find(
-                      opt => opt.text.includes(s.full_name) || opt.text.includes(s.username)
-                    );
+                    if (auditorSelect) {
+                      let optionToSelect = Array.from(auditorSelect.options).find(
+                        (opt) =>
+                          opt.text.includes(s.full_name) || opt.text.includes(s.username)
+                      );
 
-                    if (optionToSelect) {
-                      auditedSelect.value = optionToSelect.value;
-                    } else {
-                      console.warn("Usuario sugerido no encontrado en el select de auditado.");
+                      if (optionToSelect) {
+                        auditorSelect.value = optionToSelect.value;
+                      } else {
+                        console.warn("Usuario sugerido no encontrado en el select de auditor.");
+                      }
+
+                      auditorSelect.focus();
                     }
 
-                    auditedSelect.focus();
-                  }
-
-                  suggestionsDiv.innerHTML = "";
+                    suggestionsDiv.innerHTML = "";
+                  });
                 });
+              })
+              .catch((err) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
               });
-            })
-            .catch(err => {
-              btnSuggestIA.disabled = false;
-              btnSuggestIA.textContent = originalText;
-              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
-            });
-        });
-      }
+          });
+        } else {
+          console.warn("btnSuggestAuditorIA no encontrado");
+        }
+      });
     });
 });
+
 
 
 document.getElementById("openAddFindingsModal").addEventListener("click", function (e) {
