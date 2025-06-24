@@ -338,7 +338,7 @@ class Findings(models.Model):
 
 class AuditReport(models.Model):
     audit = models.ForeignKey(
-        'AnnualProgram', 
+        'AnnualPlan', 
         on_delete=models.PROTECT,
         verbose_name="Audit Plan"
     )
