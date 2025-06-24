@@ -344,7 +344,7 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                             <div class="card-body">
                               <h6 class="card-title">Sugerencia ${i + 1}</h6>
                               <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
-                              <p><strong>Mes sugerido:</strong> <em>${s.suggested_month !== undefined && s.suggested_month !== null ? s.suggested_month : "No especificado"}</em></p>
+                              <p><strong>Mes sugerido:</strong> <em>${s.month !== undefined && s.month !== null ? s.month : "No especificado"}</em></p>
                               <p><strong>Justificación:</strong> ${s.justification}</p>
                               <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
                             </div>
@@ -364,26 +364,34 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                             const monthSelect = document.querySelector("#id_month");
 
                             if (processSelect) {
+                                // Selecciona el proceso por el código o nombre si tienes value
+                                // Asumiendo que el select tiene los IDs de proceso en value
+                                // Buscamos la opción que coincida con el nombre o código:
                                 let optionToSelect = Array.from(processSelect.options).find(opt =>
                                   opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
                                 );
                                 if (optionToSelect) {
                                   processSelect.value = optionToSelect.value;
                                 } else {
+                                  // Si no existe, dejar sin cambios o mostrar aviso
                                   console.warn("Proceso sugerido no encontrado en el select");
                                 }
                             }
 
                             if (monthSelect) {
-                                if (s.suggested_month !== undefined && s.suggested_month !== null) {
-                                  monthSelect.value = s.suggested_month;
+                                if (s.month !== undefined && s.month !== null) {
+                                  monthSelect.value = s.month;
                                 } else {
-                                  monthSelect.value = "";
+                                  monthSelect.value = ""; // Limpia o pone default
                                 }
                             }
 
+                            // Opcional: hacer foco en el select proceso
                             if (processSelect) processSelect.focus();
+
+                            // Limpia sugerencias y opcionalmente oculta el div
                             suggestionsDiv.innerHTML = "";
+                            // suggestionsDiv.style.display = "none";
                         });
                     });
                 })
@@ -397,14 +405,5 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     });
 });
 
-
-document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program_user' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
-    });
-});
 </script>
 {% endblock extra_js %}
