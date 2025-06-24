@@ -753,14 +753,102 @@ function setupIaClassification() {
 }
 
 
-document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_report' %}")
+document.getElementById("openAddAuditReportModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_report' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditReportModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditReportModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditReportBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Audit Report");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditReportSuggestionsContainer");
+        suggestionsDiv.style.display = "none";
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Solicitando sugerencias de IA para el informe de auditoría...");
+
+          const auditSelect = document.querySelector("#add-audit-report-form select[name='audit']");
+          if (!auditSelect || !auditSelect.value) {
+            alert("Por favor, selecciona una auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditId = auditSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_report/?audit_id=${auditId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias generadas por IA:</strong>
+                <div id="suggestionListReport" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Resumen:</strong> ${s.summary}</p>
+                        <p><strong>Fortalezas:</strong> ${s.strengths}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applyAuditReportSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              document.querySelectorAll(".applyAuditReportSuggestionBtn").forEach(applyBtn => {
+                applyBtn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  document.querySelector("textarea[name='summary']").value = s.summary;
+                  document.querySelector("textarea[name='strengths']").value = s.strengths;
+
+                  suggestionsDiv.style.display = "none";
+                  suggestionsDiv.innerHTML = "";
+                  document.querySelector("textarea[name='summary']").focus();
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
         new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
+      }, 100);
     });
 });
+
 
 document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_audited_evaluation_question' %}")
