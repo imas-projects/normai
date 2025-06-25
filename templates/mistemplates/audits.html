@@ -430,109 +430,134 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
     });
 });
 
-document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program' %}")
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        const modalEl = document.getElementById("addAnnualProgramModal");
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+      document.getElementById("annualProgramModalFormContent").innerHTML = html;
+      const modal = new bootstrap.Modal(document.getElementById("addAnnualProgramModal"));
+      modal.show();
 
-        const btnSuggestIA = document.getElementById("btnSuggestIA");
-        const suggestionsDiv = document.getElementById("iaSuggestions");
+      const btnSuggestIA = document.getElementById("btnSuggestIA");
+      const suggestionsDiv = document.getElementById("iaSuggestions");
 
-        if (btnSuggestIA) {
-            btnSuggestIA.setAttribute("type", "button");
+      if (!btnSuggestIA) return;
 
-            btnSuggestIA.addEventListener("click", function() {
-                const programHeaderSelect = document.querySelector("#id_program_header");
-                if (!programHeaderSelect || !programHeaderSelect.value) {
-                    alert("Por favor seleccione un Program Header primero.");
-                    return;
+      btnSuggestIA.setAttribute("type", "button");
+
+      btnSuggestIA.addEventListener("click", function () {
+        const programHeaderSelect = document.querySelector("#id_program_header");
+        if (!programHeaderSelect || !programHeaderSelect.value) {
+          alert("Por favor seleccione un Program Header primero.");
+          return;
+        }
+
+        const originalText = btnSuggestIA.textContent;
+        btnSuggestIA.disabled = true;
+        btnSuggestIA.textContent = "Obteniendo sugerencias...";
+        suggestionsDiv.innerHTML = "";
+        suggestionsDiv.style.display = "block";
+
+        fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+          .then(res => res.json())
+          .then(data => {
+            btnSuggestIA.disabled = false;
+            btnSuggestIA.textContent = originalText;
+
+            if (data.error) {
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+              return;
+            }
+
+            const suggestions = data.suggestions || [];
+            if (suggestions.length === 0) {
+              suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+              return;
+            }
+
+            suggestionsDiv.innerHTML = `
+              <strong>Sugerencias de la IA:</strong>
+              <div id="suggestionList" class="mt-2">
+                ${suggestions.map((s, i) => `
+                  <div class="card mt-2 shadow-sm">
+                    <div class="card-body">
+                      <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                      <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                      <p><strong>Mes sugerido:</strong> <em>${s.month ? s.month : "Sin mes asignado"}</em></p>
+                      <p><strong>Justificación:</strong> ${s.justification}</p>
+                      <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
+                        data-idx="${i}">Seleccionar</button>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `;
+
+            document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
+              btn.addEventListener("click", function () {
+                const idx = parseInt(this.dataset.idx);
+                const s = suggestions[idx];
+                if (!s) return;
+
+                const processSelect = document.querySelector("#id_process");
+
+                let matchingOption = Array.from(processSelect.options).find(opt =>
+                  opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                );
+
+                if (!matchingOption) {
+                  alert("No se encontró el proceso en la lista del formulario.");
+                  return;
                 }
 
-                const originalText = btnSuggestIA.textContent;
-                btnSuggestIA.disabled = true;
-                btnSuggestIA.textContent = "Obteniendo sugerencias...";
-                suggestionsDiv.innerHTML = "";
-                suggestionsDiv.style.display = "block";
+                const process_id = matchingOption.value;
+                const program_header_id = programHeaderSelect.value;
+                const month = s.month || "";
 
-                fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
-                .then(response => response.json())
-                .then(data => {
-                    btnSuggestIA.disabled = false;
-                    btnSuggestIA.textContent = originalText;
+                const thisBtn = this;
+                thisBtn.disabled = true;
+                thisBtn.textContent = "Guardando...";
 
-                    if (data.error) {
-                        suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
-                        return;
-                    }
-
-                    if (!data.suggestions || data.suggestions.length === 0) {
-                        suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
-                        return;
-                    }
-
-                    suggestionsDiv.innerHTML = `
-                      <strong>Sugerencias de la IA:</strong>
-                      <div id="suggestionList" class="mt-2">
-                        ${data.suggestions.map((s, i) => `
-                          <div class="card mt-2 shadow-sm">
-                            <div class="card-body">
-                              <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                              <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
-                              <p><strong>Mes sugerido:</strong> <em>${s.month !== undefined && s.month !== null ? s.month : "No especificado"}</em></p>
-                              <p><strong>Justificación:</strong> ${s.justification}</p>
-                              <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Seleccionar</button>
-                            </div>
-                          </div>
-                        `).join('')}
-                      </div>
-                    `;
-
-                    document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
-                        btn.addEventListener("click", function() {
-                            const idx = parseInt(this.dataset.idx);
-                            const s = data.suggestions[idx];
-                            if (!s) return;
-
-                            const processSelect = document.querySelector("#id_process");
-                            const monthSelect = document.querySelector("#id_month");
-
-                            if (processSelect) {
-                                let optionToSelect = Array.from(processSelect.options).find(opt =>
-                                    opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
-                                );
-                                if (optionToSelect) {
-                                    processSelect.value = optionToSelect.value;
-                                } else {
-                                    console.warn("Proceso sugerido no encontrado en el select");
-                                }
-                            }
-
-                            if (monthSelect) {
-                                if (s.month !== undefined && s.month !== null) {
-                                    monthSelect.value = s.month;
-                                } else {
-                                    monthSelect.value = "";
-                                }
-                            }
-
-                            if (processSelect) processSelect.focus();
-                            suggestionsDiv.innerHTML = "";
-                        });
-                    });
+                fetch("{% url 'audits:save_selected_annual_program_process' %}", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                  },
+                  body: new URLSearchParams({
+                    program_header_id,
+                    process_id,
+                    month
+                  })
                 })
-                .catch(err => {
-                    btnSuggestIA.disabled = false;
-                    btnSuggestIA.textContent = originalText;
-                    suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
-                });
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert("Sugerencia guardada correctamente.");
+                      thisBtn.closest(".card").remove();
+                    } else {
+                      alert("Error al guardar: " + (data.error || "desconocido"));
+                      thisBtn.disabled = false;
+                      thisBtn.textContent = "Seleccionar";
+                    }
+                  })
+                  .catch(err => {
+                    alert("Error inesperado: " + err);
+                    thisBtn.disabled = false;
+                    thisBtn.textContent = "Seleccionar";
+                  });
+              });
             });
-        }
+          })
+          .catch(err => {
+            btnSuggestIA.disabled = false;
+            btnSuggestIA.textContent = originalText;
+            suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+          });
+      });
     });
 });
+
 
 document.addEventListener("DOMContentLoaded", function () {
   const openAnnualPlanBtn = document.getElementById("openAddAnnualPlanModal");
