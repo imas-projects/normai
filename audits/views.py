@@ -311,6 +311,33 @@ def suggest_auditor_view(request):
 
     return JsonResponse({"suggestions": suggestions})
 
+@require_POST
+@csrf_exempt 
+def save_selected_auditor(request):
+    try:
+        annual_plan_id = request.POST.get("annual_plan_id")
+        user_id = request.POST.get("user_id")
+
+        if not annual_plan_id or not user_id:
+            return JsonResponse({"error": "Faltan datos"}, status=400)
+
+        annual_plan = get_object_or_404(AnnualPlan, pk=annual_plan_id)
+        user = get_object_or_404(User, pk=user_id)
+
+        obj, created = AnnualPlanAuditor.objects.get_or_create(
+            annual_plan=annual_plan,
+            user=user,
+            defaults={"role": "auditor"}  
+        )
+        if not created:
+            return JsonResponse({"error": "Este auditor ya está asignado al plan."}, status=400)
+
+        return JsonResponse({"success": True, "message": "Auditor guardado correctamente."})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 
 def add_annual_plan_audited(request):
     return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
