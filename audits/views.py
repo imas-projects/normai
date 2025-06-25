@@ -22,7 +22,7 @@ from company.models import Requirement
 
 from .models import (
     AuditProgramHeader,ProcessRequirement, AnnualProgram,
-    AnnualPlan,
+    AnnualPlan,AnnualPlanAuditor,
     Checklist,
     AuditReport,
     Findings,
