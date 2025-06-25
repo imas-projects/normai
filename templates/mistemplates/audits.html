@@ -475,6 +475,12 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
               return;
             }
 
+            const MONTH_NAMES = {
+              1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+              5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+              9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+            };
+
             suggestionsDiv.innerHTML = `
               <strong>Sugerencias de la IA:</strong>
               <div id="suggestionList" class="mt-2">
@@ -483,7 +489,7 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                     <div class="card-body">
                       <h6 class="card-title">Sugerencia ${i + 1}</h6>
                       <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
-                      <p><strong>Mes sugerido:</strong> <em>${s.month ? s.month : "Sin mes asignado"}</em></p>
+                      <p><strong>Mes sugerido:</strong> <em>${MONTH_NAMES[s.month] || "Sin mes asignado"}</em></p>
                       <p><strong>Justificación:</strong> ${s.justification}</p>
                       <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
                         data-idx="${i}">Seleccionar</button>
