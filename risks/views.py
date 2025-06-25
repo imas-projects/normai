@@ -4,6 +4,7 @@ from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm
 from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from collections import defaultdict
 from django.http import FileResponse
 from reportlab.lib.pagesizes import letter
@@ -56,6 +57,34 @@ def add_risk_identification(request):
     return render(request, 'mistemplates/add_risk_identification.html', {
         'form': form
     })
+
+@require_POST
+@csrf_exempt  
+def save_selected_risk_identification(request):
+    try:
+        area_id = request.POST.get("area_id")
+        activity_name = request.POST.get("activity_name")
+        identified_risk = request.POST.get("identified_risk")
+        consequences = request.POST.get("consequences")
+
+        if not all([area_id, activity_name, identified_risk, consequences]):
+            return JsonResponse({"error": "Faltan datos"}, status=400)
+
+        from yourapp.models import Area, RiskIdentification
+
+        area = Area.objects.get(pk=area_id)
+
+        risk = RiskIdentification.objects.create(
+            area=area,
+            activity_name=activity_name,
+            identified_risk=identified_risk,
+            consequences=consequences
+        )
+
+        return JsonResponse({"success": True, "id": risk.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def get_suggestions(request):
     area_id = request.GET.get('area')
