@@ -328,7 +328,6 @@ document.getElementById("openAddProcessRequirementModal").addEventListener("clic
             const modalInstance = new bootstrap.Modal(modalEl);
             modalInstance.show();
 
-            // Detectamos si el formulario dentro del modal fue enviado correctamente
             const form = modalEl.querySelector("form");
             if (form) {
                 form.addEventListener("submit", function (e) {
@@ -343,22 +342,17 @@ document.getElementById("openAddProcessRequirementModal").addEventListener("clic
                         body: formData,
                         headers: {
                             "X-Requested-With": "XMLHttpRequest"
-                        }
+                        },
+                        redirect: "follow"
                     })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Cerrar el modal
-                                modalInstance.hide();
-
-                                // Esperar a que el modal se cierre completamente
-                                modalEl.addEventListener('hidden.bs.modal', function () {
-                                    // Refrescar la página audits.html
-                                    window.location.href = "/audits/audits/";
-                                }, { once: true });
+                        .then(res => {
+                            // ✅ Como se guarda correctamente, redirigimos manualmente
+                            if (res.redirected) {
+                                window.location.href = "/audits/audits/";
                             } else {
-                                // Mostrar errores si los hay
-                                modalContainer.innerHTML = data.html || "<div class='text-danger'>Error al guardar</div>";
+                                return res.text().then(html => {
+                                    modalContainer.innerHTML = html;
+                                });
                             }
                         })
                         .catch(error => {
