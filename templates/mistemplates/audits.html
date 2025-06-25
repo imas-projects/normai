@@ -507,149 +507,178 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     .then(response => response.text())
     .then(html => {
       document.getElementById("annualProgramModalFormContent").innerHTML = html;
-      const modal = new bootstrap.Modal(document.getElementById("addAnnualProgramModal"));
+      const modalEl = document.getElementById("addAnnualProgramModal");
+      const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
       const btnSuggestIA = document.getElementById("btnSuggestIA");
       const suggestionsDiv = document.getElementById("iaSuggestions");
 
-      if (!btnSuggestIA) return;
+      if (btnSuggestIA) {
+        btnSuggestIA.setAttribute("type", "button");
 
-      btnSuggestIA.setAttribute("type", "button");
+        btnSuggestIA.addEventListener("click", function () {
+          const programHeaderSelect = document.querySelector("#id_program_header");
+          if (!programHeaderSelect || !programHeaderSelect.value) {
+            alert("Por favor seleccione un Program Header primero.");
+            return;
+          }
 
-      btnSuggestIA.addEventListener("click", function () {
-        const programHeaderSelect = document.querySelector("#id_program_header");
-        if (!programHeaderSelect || !programHeaderSelect.value) {
-          alert("Por favor seleccione un Program Header primero.");
-          return;
-        }
+          const originalText = btnSuggestIA.textContent;
+          btnSuggestIA.disabled = true;
+          btnSuggestIA.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
 
-        const originalText = btnSuggestIA.textContent;
-        btnSuggestIA.disabled = true;
-        btnSuggestIA.textContent = "Obteniendo sugerencias...";
-        suggestionsDiv.innerHTML = "";
-        suggestionsDiv.style.display = "block";
+          fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+            .then(res => res.json())
+            .then(data => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
 
-        fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
-          .then(res => res.json())
-          .then(data => {
-            btnSuggestIA.disabled = false;
-            btnSuggestIA.textContent = originalText;
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                return;
+              }
 
-            if (data.error) {
-              suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
-              return;
-            }
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                return;
+              }
 
-            const suggestions = data.suggestions || [];
-            if (suggestions.length === 0) {
-              suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
-              return;
-            }
+              const MONTH_NAME_TO_NUM = {
+                january: 1, february: 2, march: 3, april: 4,
+                may: 5, june: 6, july: 7, august: 8,
+                september: 9, october: 10, november: 11, december: 12
+              };
 
-            // Mapas con keys en minúsculas para evitar problemas con mayúsculas/minúsculas
-            const MONTH_NAME_TO_NUM = {
-              january: 1, february: 2, march: 3, april: 4,
-              may: 5, june: 6, july: 7, august: 8,
-              september: 9, october: 10, november: 11, december: 12
-            };
+              const MONTH_NAME_TO_ES = {
+                january: "Enero", february: "Febrero", march: "Marzo", april: "Abril",
+                may: "Mayo", june: "Junio", july: "Julio", august: "Agosto",
+                september: "Septiembre", october: "Octubre", november: "Noviembre", december: "Diciembre"
+              };
 
-            const MONTH_NAME_TO_ES = {
-              january: "Enero", february: "Febrero", march: "Marzo", april: "Abril",
-              may: "Mayo", june: "Junio", july: "Julio", august: "Agosto",
-              september: "Septiembre", october: "Octubre", november: "Noviembre", december: "Diciembre"
-            };
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => {
+                    const rawMonth = s.suggested_month || "";
+                    const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
+                    const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
+                    return `
+                      <div class="card mt-2 shadow-sm">
+                        <div class="card-body">
+                          <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                          <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                          <p><strong>Mes sugerido:</strong> <em>${monthEs}</em></p>
+                          <p><strong>Justificación:</strong> ${s.justification}</p>
+                          <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
+                            data-idx="${i}">Seleccionar</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              `;
 
-            suggestionsDiv.innerHTML = `
-              <strong>Sugerencias de la IA:</strong>
-              <div id="suggestionList" class="mt-2">
-                ${suggestions.map((s, i) => {
-                  // Validar que sea string y no null/undefined
+              document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
+                btn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  const processSelect = document.querySelector("#id_process");
+
+                  let matchingOption = Array.from(processSelect.options).find(opt =>
+                    opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                  );
+
+                  if (!matchingOption) {
+                    alert("No se encontró el proceso en la lista del formulario.");
+                    return;
+                  }
+
+                  const process_id = matchingOption.value;
+                  const program_header_id = programHeaderSelect.value;
+
                   const rawMonth = s.suggested_month || "";
                   const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
-                  const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
-                  return `
-                    <div class="card mt-2 shadow-sm">
-                      <div class="card-body">
-                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                        <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
-                        <p><strong>Mes sugerido:</strong> <em>${monthEs}</em></p>
-                        <p><strong>Justificación:</strong> ${s.justification}</p>
-                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
-                          data-idx="${i}">Seleccionar</button>
-                      </div>
-                    </div>
-                  `;
-                }).join("")}
-              </div>
-            `;
+                  const month = MONTH_NAME_TO_NUM[monthKey] || "";
 
-            document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
-              btn.addEventListener("click", function () {
-                const idx = parseInt(this.dataset.idx);
-                const s = suggestions[idx];
-                if (!s) return;
+                  const thisBtn = this;
+                  thisBtn.disabled = true;
+                  thisBtn.textContent = "Guardando...";
 
-                const processSelect = document.querySelector("#id_process");
-
-                let matchingOption = Array.from(processSelect.options).find(opt =>
-                  opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
-                );
-
-                if (!matchingOption) {
-                  alert("No se encontró el proceso en la lista del formulario.");
-                  return;
-                }
-
-                const process_id = matchingOption.value;
-                const program_header_id = programHeaderSelect.value;
-
-                // Convertir nombre del mes en número para el modelo
-                const rawMonth = s.suggested_month || "";
-                const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
-                const month = MONTH_NAME_TO_NUM[monthKey] || "";
-
-                const thisBtn = this;
-                thisBtn.disabled = true;
-                thisBtn.textContent = "Guardando...";
-
-                fetch("{% url 'audits:save_annual_program_suggestion' %}", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                  },
-                  body: new URLSearchParams({
-                    program_header_id,
-                    process_id,
-                    month
+                  fetch("{% url 'audits:save_annual_program_suggestion' %}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/x-www-form-urlencoded",
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: new URLSearchParams({
+                      program_header_id,
+                      process_id,
+                      month
+                    })
                   })
-                })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (data.success) {
-                      alert("Sugerencia guardada correctamente.");
-                      thisBtn.closest(".card").remove();
-                    } else {
-                      alert("Error al guardar: " + (data.error || "desconocido"));
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.success) {
+                        alert("Sugerencia guardada correctamente.");
+                        thisBtn.closest(".card").remove();
+                      } else {
+                        alert("Error al guardar: " + (data.error || "desconocido"));
+                        thisBtn.disabled = false;
+                        thisBtn.textContent = "Seleccionar";
+                      }
+                    })
+                    .catch(err => {
+                      alert("Error inesperado: " + err);
                       thisBtn.disabled = false;
                       thisBtn.textContent = "Seleccionar";
-                    }
-                  })
-                  .catch(err => {
-                    alert("Error inesperado: " + err);
-                    thisBtn.disabled = false;
-                    thisBtn.textContent = "Seleccionar";
-                  });
+                    });
+                });
               });
+            })
+            .catch(err => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
             });
+        });
+      }
+
+      // Interceptar envío del formulario del modal y redirigir al guardar
+      const form = modalEl.querySelector("form");
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const action = form.getAttribute("action");
+          const method = form.getAttribute("method") || "POST";
+
+          fetch(action, {
+            method: method,
+            body: formData,
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
           })
-          .catch(err => {
-            btnSuggestIA.disabled = false;
-            btnSuggestIA.textContent = originalText;
-            suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
-          });
-      });
+            .then(response => {
+              if (response.redirected) {
+                window.location.href = "http://34.254.185.243:8000/audits/audits/";
+              } else {
+                return response.text().then(html => {
+                  document.getElementById("annualProgramModalFormContent").innerHTML = html;
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error al enviar el formulario:", error);
+            });
+        });
+      }
     });
 });
 
@@ -661,8 +690,41 @@ document.addEventListener("DOMContentLoaded", function () {
       fetch("{% url 'audits:add_annual_plan' %}")
         .then(response => response.text())
         .then(html => {
-          document.getElementById("annualPlanModalFormContent").innerHTML = html;
-          new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+          const container = document.getElementById("annualPlanModalFormContent");
+          container.innerHTML = html;
+
+          const modalEl = document.getElementById("addAnnualPlanModal");
+          new bootstrap.Modal(modalEl).show();
+
+          const form = modalEl.querySelector("form");
+          if (form) {
+            form.addEventListener("submit", function (e) {
+              e.preventDefault();
+              const formData = new FormData(form);
+              const action = form.getAttribute("action");
+              const method = form.getAttribute("method") || "POST";
+
+              fetch(action, {
+                method: method,
+                body: formData,
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest"
+                }
+              })
+                .then(response => {
+                  if (response.redirected) {
+                    window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                  } else {
+                    return response.text().then(html => {
+                      container.innerHTML = html;
+                    });
+                  }
+                })
+                .catch(error => {
+                  console.error("Error al enviar el formulario:", error);
+                });
+            });
+          }
         });
     });
   }
@@ -673,8 +735,41 @@ document.addEventListener("DOMContentLoaded", function () {
       fetch("{% url 'audits:add_annual_plan_audited' %}")
         .then(response => response.text())
         .then(html => {
-          document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
-          new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+          const container = document.getElementById("annualPlanAuditedModalFormContent");
+          container.innerHTML = html;
+
+          const modalEl = document.getElementById("addAnnualPlanAuditedModal");
+          new bootstrap.Modal(modalEl).show();
+
+          const form = modalEl.querySelector("form");
+          if (form) {
+            form.addEventListener("submit", function (e) {
+              e.preventDefault();
+              const formData = new FormData(form);
+              const action = form.getAttribute("action");
+              const method = form.getAttribute("method") || "POST";
+
+              fetch(action, {
+                method: method,
+                body: formData,
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest"
+                }
+              })
+                .then(response => {
+                  if (response.redirected) {
+                    window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                  } else {
+                    return response.text().then(html => {
+                      container.innerHTML = html;
+                    });
+                  }
+                })
+                .catch(error => {
+                  console.error("Error al enviar el formulario:", error);
+                });
+            });
+          }
         });
     });
   }
@@ -778,31 +873,8 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                       .then((data) => {
                         if (data.success) {
                           alert(data.message || "Auditor guardado correctamente.");
-
-                          // Seleccionar auditor en el select si existe
-                          const auditorSelect = document.querySelector("#id_user");
-                          if (auditorSelect) {
-                            let optionToSelect = Array.from(auditorSelect.options).find(
-                              (opt) =>
-                                opt.text.includes(s.full_name) || opt.text.includes(s.username)
-                            );
-
-                            if (optionToSelect) {
-                              auditorSelect.value = optionToSelect.value;
-                              auditorSelect.focus();
-                            } else {
-                              console.warn("Usuario sugerido no encontrado en el select de auditor.");
-                            }
-                          }
-
-                          btn.closest(".card").remove();
-                          suggestionsDiv.innerHTML = "";
-
-                          // Cerrar modal
-                          const modalEl = document.getElementById("addAnnualPlanAuditorModal");
-                          const modal = bootstrap.Modal.getInstance(modalEl);
-                          if (modal) modal.hide();
-
+                          // Redirección a audits
+                          window.location.href = "http://34.254.185.243:8000/audits/audits/";
                         } else {
                           alert("Error al guardar: " + (data.error || "desconocido"));
                           btn.disabled = false;
@@ -833,6 +905,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
 
 
 
+
 document.getElementById("openAddFindingsModal").addEventListener("click", function (e) {
   e.preventDefault();  // evitar navegación
 
@@ -843,11 +916,46 @@ document.getElementById("openAddFindingsModal").addEventListener("click", functi
       container.innerHTML = html;
 
       // Mostrar modal
-      const modal = new bootstrap.Modal(document.getElementById("addFindingsModal"));
+      const modalEl = document.getElementById("addFindingsModal");
+      const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
-      // Ahora configurar el botón Clasificar con IA dentro del modal
+      // Configurar botón IA
       setupIaClassification();
+
+      // Detectar el submit del formulario para hacer el fetch POST y controlar refresco y cierre modal
+      const form = document.getElementById("findingsForm");
+      if (!form) return;
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        fetch(form.action, {
+          method: form.method,
+          body: formData,
+          headers: {
+            "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+          }
+        })
+          .then(res => {
+            // Aceptamos que la respuesta puede ser redirección (302)
+            // La idea es que la respuesta es correcta y guardó
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+
+            return res.text(); // o json si devuelves json
+          })
+          .then(data => {
+            // Cerrar modal
+            modal.hide();
+
+            // Refrescar la página deseada
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
+      });
     });
 });
 
@@ -861,7 +969,6 @@ function setupIaClassification() {
   const classificationSelect = form.querySelector("select[name='classification']");
   const feedback = document.getElementById("iaFindingClassificationFeedback");
 
-  // Ocultar feedback inicialmente
   if (feedback) feedback.style.display = "none";
 
   if (!suggestBtn) return;
@@ -1031,7 +1138,39 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
             });
         });
 
-        new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
+        // Mostrar modal
+        const modalEl = document.getElementById("addAuditReportModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Capturamos submit para manejar el guardado y refresco de la página
+        const form = document.getElementById("add-audit-report-form");
+        if (!form) return;
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+            .then(res => {
+              if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+              return res.text();
+            })
+            .then(data => {
+              modal.hide();
+              window.location.href = "http://34.254.185.243:8000/audits/audits/";
+            })
+            .catch(err => {
+              alert("Error al guardar: " + err);
+            });
+        });
+
       }, 100);
     });
 });
@@ -1055,7 +1194,9 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
         suggestionsDiv.innerHTML = "";
 
         const form = document.getElementById("auditedEvaluationForm");
+        if (!form) return;
 
+        // Botón de sugerencias IA
         suggestBtn.addEventListener("click", function () {
           const requirementSelect = form.querySelector("select[name='requirement']");
           const requirementId = requirementSelect?.value;
@@ -1102,7 +1243,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                 </div>
               `;
 
-              // Agregar funcionalidad a botones de seleccionar
+              // Funcionalidad botones seleccionar
               document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
                 button.addEventListener("click", function () {
                   const question = decodeURIComponent(this.dataset.question);
@@ -1118,7 +1259,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                     },
                     body: new URLSearchParams({
                       question_text: question,
-                      requirement_id: requirementSelect.value
+                      requirement_id: form.querySelector("select[name='requirement']").value
                     })
                   })
                   .then(res => res.json())
@@ -1148,31 +1289,126 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
             });
         });
 
-        new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
+        // Mostrar modal
+        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Capturar submit del formulario para guardar y refrescar
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => {
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.text();
+          })
+          .then(() => {
+            modal.hide();
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
+        });
+
       }, 100);
     });
 });
 
 
+
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
+  fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addLeadAuditorEvaluationQuestionModal")).show();
+      const container = document.getElementById("leadAuditorEvaluationQuestionModalFormContent");
+      container.innerHTML = html;
+
+      const modalEl = document.getElementById("addLeadAuditorEvaluationQuestionModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      const form = container.querySelector("form");
+      if (!form) return;
+
+      form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+          method: form.method,
+          body: formData,
+          headers: {
+            "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+          }
+        })
+        .then(res => {
+          if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.text();
+        })
+        .then(() => {
+          modal.hide();
+          window.location.href = "http://34.254.185.243:8000/audits/audits/";
+        })
+        .catch(err => {
+          alert("Error al guardar: " + err);
+        });
+      });
     });
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
-        fetch("{% url 'audits:add_checklist' %}")  
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addChecklistQuestionModal")).show();
+  document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_checklist' %}")
+      .then(response => response.text())
+      .then(html => {
+        const container = document.getElementById("checklistQuestionModalFormContent");
+        container.innerHTML = html;
+
+        const modalEl = document.getElementById("addChecklistQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        const form = container.querySelector("form");
+        if (!form) return;
+
+        form.addEventListener("submit", function(event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => {
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.text();
+          })
+          .then(() => {
+            modal.hide();
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
         });
-    });
+      });
+  });
 });
+
 
 document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_auditor_evaluation' %}")
@@ -1183,57 +1419,82 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
 
       setTimeout(() => {
         const suggestBtn = document.getElementById("btnSuggestRateIA");
-        const feedback = document.getElementById("iaSuggestionFeedback");
         const form = document.getElementById("auditorEvaluationForm");
 
-        if (!suggestBtn || !form) return;
+        if (!form) return;
 
-        suggestBtn.addEventListener("click", function () {
-          const auditSelect = form.querySelector("select[name='audit_plan']");
-          const questionSelect = form.querySelector("select[name='question']");
-          const rateInput = form.querySelector("input[name='rate']");
+        // Configurar botón de sugerencia IA
+        if (suggestBtn) {
+          suggestBtn.addEventListener("click", function () {
+            const auditSelect = form.querySelector("select[name='audit_plan']");
+            const questionSelect = form.querySelector("select[name='question']");
+            const rateInput = form.querySelector("input[name='rate']");
 
-          const auditId = auditSelect?.value;
-          const questionId = questionSelect?.value;
+            const auditId = auditSelect?.value;
+            const questionId = questionSelect?.value;
 
-          if (!auditId || !questionId) {
-            alert("Selecciona una auditoría y una pregunta antes de sugerir un valor.");
-            return;
-          }
+            if (!auditId || !questionId) {
+              alert("Selecciona una auditoría y una pregunta antes de sugerir un valor.");
+              return;
+            }
 
-          // UI feedback
-          const originalText = suggestBtn.textContent;
-          suggestBtn.disabled = true;
-          suggestBtn.textContent = "Obteniendo...";
+            const originalText = suggestBtn.textContent;
+            suggestBtn.disabled = true;
+            suggestBtn.textContent = "Obteniendo...";
 
-          fetch(`/audits/suggest-compliance-rate/?audit_id=${auditId}&question_id=${questionId}`)
-            .then(res => res.json())
-            .then(data => {
-              suggestBtn.disabled = false;
-              suggestBtn.textContent = originalText;
+            fetch(`/audits/suggest-compliance-rate/?audit_id=${auditId}&question_id=${questionId}`)
+              .then(res => res.json())
+              .then(data => {
+                suggestBtn.disabled = false;
+                suggestBtn.textContent = originalText;
 
-              if (data.error) {
-                alert("Error IA: " + data.error);
-                return;
-              }
+                if (data.error) {
+                  alert("Error IA: " + data.error);
+                  return;
+                }
 
-              // Rellenar el campo rate
-              const suggestedRate = parseFloat(data.rate);
-              if (!isNaN(suggestedRate)) {
-                rateInput.value = suggestedRate;
-                alert("Sugerencia IA aplicada correctamente.");
-              } else {
-                alert("La IA no devolvió un valor numérico válido.");
-              }
+                const suggestedRate = parseFloat(data.rate);
+                if (!isNaN(suggestedRate)) {
+                  rateInput.value = suggestedRate;
+                  alert("Sugerencia IA aplicada correctamente.");
+                } else {
+                  alert("La IA no devolvió un valor numérico válido.");
+                }
+              })
+              .catch(err => {
+                suggestBtn.disabled = false;
+                suggestBtn.textContent = originalText;
+                alert("Error al obtener sugerencia IA: " + err);
+              });
+          });
+        }
+
+        // Capturar submit para enviar con fetch y refrescar página al guardar
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(form);
+
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+            .then(res => {
+              if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+              return res.text();
+            })
+            .then(() => {
+              bootstrap.Modal.getInstance(document.getElementById("addAuditorEvaluationModal")).hide();
+              window.location.href = "http://34.254.185.243:8000/audits/audits/";
             })
             .catch(err => {
-              suggestBtn.disabled = false;
-              suggestBtn.textContent = originalText;
-              alert("Error al obtener sugerencia IA: " + err);
+              alert("Error al guardar: " + err);
             });
         });
 
-        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
       }, 100);
     });
