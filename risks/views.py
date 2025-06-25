@@ -70,8 +70,6 @@ def save_selected_risk_identification(request):
         if not all([area_id, activity_name, identified_risk, consequences]):
             return JsonResponse({"error": "Faltan datos"}, status=400)
 
-        from yourapp.models import Area, RiskIdentification
-
         area = Area.objects.get(pk=area_id)
 
         risk = RiskIdentification.objects.create(
