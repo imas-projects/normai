@@ -856,7 +856,6 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
           return;
         }
 
-        // ✅ Función para formatear la salida JSON de forma legible
         function formatSuggestionField(content) {
           try {
             const parsed = JSON.parse(content);
@@ -927,7 +926,6 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
                   ${suggestions.map((s, i) => `
                     <div class="card mt-2 shadow-sm">
                       <div class="card-body">
-                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
                         <p><strong>Resumen:</strong></p>
                         <div>${formatSuggestionField(s.summary)}</div>
                         <p class="mt-2"><strong>Fortalezas:</strong></p>
