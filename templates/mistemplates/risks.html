@@ -1176,15 +1176,21 @@ function attachContingencySuggestions() {
 
     const useBtn = card.querySelector("button");
     useBtn.addEventListener("click", function () {
-        // Añadimos esta acción al select múltiple, sin borrar las anteriores
-        Array.from(contingencySelect.options).forEach(option => {
-            if (option.text.trim() === action.trim()) {
-                option.selected = true;
-            }
-        });
-        // Ocultamos el contenedor de sugerencias para que "desaparezca"
-        suggestionContainer.style.display = "none";
+    // Añadimos esta acción al select múltiple, sin borrar las anteriores
+    Array.from(contingencySelect.options).forEach(option => {
+        if (option.text.trim() === action.trim()) {
+            option.selected = true;
+        }
     });
+
+    // Eliminamos la tarjeta específica que se seleccionó
+    card.remove();
+
+    // Si ya no quedan tarjetas dentro de suggestionList, ocultamos el contenedor completo
+    if (suggestionList.children.length === 0) {
+        suggestionContainer.style.display = "none";
+    }
+});
 
     suggestionList.appendChild(card);
 });
