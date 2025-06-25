@@ -518,7 +518,7 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                 thisBtn.disabled = true;
                 thisBtn.textContent = "Guardando...";
 
-                fetch("{% url 'audits:save_selected_annual_program_process' %}", {
+                fetch("{% url 'audits:save_annual_program_suggestion' %}", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
