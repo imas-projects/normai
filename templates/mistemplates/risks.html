@@ -649,9 +649,13 @@ function attachSuggestionHandler() {
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
-        const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
+        const suggestionContainer = document.getElementById("suggestionContainer");
+        const suggestionList = document.getElementById("suggestionList");
 
-        fetch(url)
+        suggestionContainer.style.display = "block";
+        suggestionList.innerHTML = "";
+
+        fetch(`/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
@@ -671,39 +675,69 @@ function attachSuggestionHandler() {
                     return;
                 }
 
-                const container = document.getElementById("suggestionContainer");
-                const list = document.getElementById("suggestionList");
-
-                if (!Array.isArray(data)) {
-                    alert("No se encontraron sugerencias válidas.");
+                if (!Array.isArray(data) || data.length === 0) {
+                    suggestionList.innerHTML = `<div class="text-warning">No se encontraron sugerencias válidas.</div>`;
                     return;
                 }
 
-                list.innerHTML = "";
-
                 data.forEach(item => {
-                    const div = document.createElement("div");
-                    div.className = "alert alert-secondary";
+                    const card = document.createElement("div");
+                    card.className = "card mt-2 shadow-sm";
 
-                    div.innerHTML = `
-                        <strong>Riesgo:</strong> ${item.identified_risk}<br>
-                        <strong>Consecuencia:</strong> ${item.consequences}<br>
-                        <button type="button" class="btn btn-sm btn-primary mt-2 select-suggestion-btn">Usar esta sugerencia</button>
+                    card.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>Riesgo:</strong> ${item.identified_risk}<br>
+                          <strong>Consecuencia:</strong> ${item.consequences}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success selectSuggestionBtn">Seleccionar</button>
+                      </div>
                     `;
 
-                    list.appendChild(div);
+                    suggestionList.appendChild(card);
 
-                    const selectBtn = div.querySelector(".select-suggestion-btn");
+                    const selectBtn = card.querySelector(".selectSuggestionBtn");
+
                     selectBtn.addEventListener("click", () => {
-                        const form = document.getElementById("add-risk-identification-form");
-                        form.querySelector("input[name='identified_risk']").value = item.identified_risk;
-                        form.querySelector("textarea[name='consequences']").value = item.consequences;
+                        selectBtn.disabled = true;
+                        selectBtn.textContent = "Guardando...";
 
-                        container.style.display = "none";
+                        // Prepara datos para guardar
+                        const form = document.getElementById("add-risk-identification-form");
+                        const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+
+                        fetch("/risks/save-selected-risk/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                                "X-CSRFToken": csrfToken,
+                                "X-Requested-With": "XMLHttpRequest"
+                            },
+                            body: new URLSearchParams({
+                                area_id: areaValue,
+                                activity_name: activityValue,
+                                identified_risk: item.identified_risk,
+                                consequences: item.consequences
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert("Sugerencia guardada correctamente.");
+                                card.remove();  // Remueve esta sugerencia de la lista
+                            } else {
+                                alert("Error al guardar: " + (data.error || "desconocido"));
+                                selectBtn.disabled = false;
+                                selectBtn.textContent = "Seleccionar";
+                            }
+                        })
+                        .catch(err => {
+                            alert("Error inesperado: " + err);
+                            selectBtn.disabled = false;
+                            selectBtn.textContent = "Seleccionar";
+                        });
                     });
                 });
-
-                container.style.display = "block";
             })
             .catch(error => {
                 alert("Error al obtener sugerencias.");
@@ -715,6 +749,7 @@ function attachSuggestionHandler() {
             });
     });
 }
+
 
 
 function attachEvaluationSuggestions() {
