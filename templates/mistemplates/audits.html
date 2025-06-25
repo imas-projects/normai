@@ -440,19 +440,15 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
                   const s = suggestions[idx];
                   if (!s) return;
 
-                  // Aplicar valores en los campos
                   document.querySelector("textarea[name='objective']").value = s.objective;
                   document.querySelector("textarea[name='scope']").value = s.scope;
                   document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
                   document.querySelector("textarea[name='security_standards']").value = s.security_standards;
 
-                  // Aquí hacemos que desaparezca el div de sugerencias
                   suggestionsDiv.style.display = "none";
                   suggestionsDiv.innerHTML = "";
 
-                  // Opcional: hacer foco en el primer campo, por ejemplo objective
                   document.querySelector("textarea[name='objective']").focus();
-
                 });
               });
             })
@@ -463,10 +459,48 @@ document.getElementById("openAddAuditProgramHeaderModal").addEventListener("clic
             });
         });
 
-        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal"));
+        modal.show();
+
+        // Interceptar el envío del formulario para forzar el reload
+        const modalElement = document.getElementById("addAuditProgramHeaderModal");
+        const form = modalElement.querySelector("form");
+
+        if (form) {
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const action = form.getAttribute("action");
+            const method = form.getAttribute("method") || "POST";
+
+            fetch(action, {
+              method: method,
+              body: formData,
+              headers: {
+                "X-Requested-With": "XMLHttpRequest"
+              },
+            })
+              .then(response => {
+                if (response.redirected) {
+                  window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                } else {
+                  return response.text().then(html => {
+                    container.innerHTML = html;
+                  });
+                }
+              })
+              .catch(error => {
+                console.error("Error al enviar el formulario:", error);
+              });
+          });
+        }
+
       }, 100);
     });
 });
+
 
 document.getElementById("openAddAnnualProgramModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_annual_program' %}")
