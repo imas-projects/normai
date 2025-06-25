@@ -1317,10 +1317,9 @@ if (suggestRiskLevelBtn) {
                     alert(`Nivel de riesgo sugerido recibido, pero no reconocido: ${data.risk_level}`);
                 } else {
                     riskLevelField.value = riskLevelValue;
-                    alert(`Nivel de riesgo sugerido seleccionado: ${riskLevelValue}`);
+                    alert(`Nivel de riesgo sugerido seleccionado`);
                 }
 
-                riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
             })
             .catch(err => {
                 console.error("Error obteniendo nivel de riesgo reevaluado:", err);
