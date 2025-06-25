@@ -914,41 +914,68 @@ if (suggestControlsBtn) {
     }
 
     const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+if (suggestRiskLevelBtn) {
+    suggestRiskLevelBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestRiskLevelBtn.textContent;
-            suggestRiskLevelBtn.disabled = true;
-            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestRiskLevelBtn.textContent;
+        suggestRiskLevelBtn.disabled = true;
+        suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
 
-            const params = new URLSearchParams({
-                risk_id: riskId,
-                preventive_controls: preventiveControlsField.value,
-                detection_controls: detectionControlsField.value,
-                severity: severityField.value,
-                occurrence: occurrenceField.value,
-                detection: detectionField.value
-            });
-
-            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
-                    riskLevelField.value = data.risk_level;
-                    alert(`Nivel de riesgo sugerido seleccionado: ${data.risk_level}`);
-                })
-                .catch(err => {
-                    console.error("Error obteniendo nivel de riesgo:", err);
-                    alert("Ocurrió un error al obtener el nivel de riesgo.");
-                })
-                .finally(() => {
-                    suggestRiskLevelBtn.disabled = false;
-                    suggestRiskLevelBtn.textContent = originalText;
-                });
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            preventive_controls: preventiveControlsField.value,
+            detection_controls: detectionControlsField.value,
+            severity: severityField.value,
+            occurrence: occurrenceField.value,
+            detection: detectionField.value
         });
-    }
+
+        fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
+
+                // Mapeo de la respuesta con emojis/textos a los valores que espera el select
+                const mapping = {
+                    "🟥 Riesgo Alto": "High",
+                    "🟨 Riesgo Moderado": "Moderate",
+                    "🟩 Riesgo Bajo": "Low",
+                    // Por si hay alguna variación en español
+                    "🟥 Risk High": "High",
+                    "🟨 Risk Moderate": "Moderate",
+                    "🟩 Risk Low": "Low",
+                };
+
+                // Extraemos solo el valor, sin emoji ni texto extra
+                let riskLevelValue = null;
+                for (const key in mapping) {
+                    if (data.risk_level.includes(key)) {
+                        riskLevelValue = mapping[key];
+                        break;
+                    }
+                }
+
+                if (!riskLevelValue) {
+                    // Si no coincide con nada, intentar asignar el string tal cual o alertar
+                    riskLevelValue = data.risk_level; // fallback
+                    alert(`Nivel de riesgo sugerido recibido, pero no reconocido: ${data.risk_level}`);
+                } else {
+                    // Seteamos el select por valor
+                    riskLevelField.value = riskLevelValue;
+                    alert(`Nivel de riesgo sugerido seleccionado: ${riskLevelValue}`);
+                }
+            })
+            .catch(err => {
+                console.error("Error obteniendo nivel de riesgo:", err);
+                alert("Ocurrió un error al obtener el nivel de riesgo.");
+            })
+            .finally(() => {
+                suggestRiskLevelBtn.disabled = false;
+                suggestRiskLevelBtn.textContent = originalText;
+            });
+    });
 }
 
 
