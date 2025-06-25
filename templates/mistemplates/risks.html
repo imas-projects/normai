@@ -774,89 +774,81 @@ function attachEvaluationSuggestions() {
     const preventiveList = document.getElementById("preventiveSuggestionsList");
     const detectionList = document.getElementById("detectionSuggestionsList");
 
-    const suggestControlsBtn = document.getElementById("suggest-controls-btn");
-    if (suggestControlsBtn) {
-        suggestControlsBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+const suggestControlsBtn = document.getElementById("suggest-controls-btn");
+if (suggestControlsBtn) {
+    suggestControlsBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestControlsBtn.textContent;
-            suggestControlsBtn.disabled = true;
-            suggestControlsBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestControlsBtn.textContent;
+        suggestControlsBtn.disabled = true;
+        suggestControlsBtn.textContent = "Obteniendo sugerencias...";
 
-            fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
+        fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
 
-                    preventiveList.innerHTML = "";
-                    detectionList.innerHTML = "";
+                preventiveList.innerHTML = "";
+                detectionList.innerHTML = "";
 
-                    data.preventive_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "card mt-2 shadow-sm";
+                data.preventive_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
 
-                        div.innerHTML = `
-                          <div class="card-body d-flex justify-content-between align-items-center">
-                            <p class="mb-0 text-success"><strong>Preventivo:</strong> ${control}</p>
-                            <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Usar</button>
-                          </div>
-                        `;
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Preventivo:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
 
-                        div.querySelector("button").addEventListener("click", () => {
-                            if (preventiveControlsField.value) {
-                                preventiveControlsField.value += `\n${control}`;
-                            } else {
-                                preventiveControlsField.value = control;
-                            }
-                            div.remove();
-                        });
-                        preventiveList.appendChild(div);
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (preventiveControlsField.value) {
+                            preventiveControlsField.value += `\n${control}`;
+                        } else {
+                            preventiveControlsField.value = control;
+                        }
+                        div.remove();
                     });
-
-                    data.detection_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "card mt-2 shadow-sm";
-
-                        div.innerHTML = `
-                          <div class="card-body d-flex justify-content-between align-items-center">
-                            <p class="mb-0 text-danger"><strong>Detección:</strong> ${control}</p>
-                            <button type="button" class="btn btn-sm btn-outline-danger selectControlBtn">Usar</button>
-                          </div>
-                        `;
-
-                        div.querySelector("button").addEventListener("click", () => {
-                          if (isPreventive) {
-                            if (preventiveControlsField.value) {
-                              preventiveControlsField.value += `\n${control}`;
-                            } else {
-                              preventiveControlsField.value = control;
-                            }
-                          } else {
-                            if (detectionControlsField.value) {
-                              detectionControlsField.value += `\n${control}`;
-                            } else {
-                              detectionControlsField.value = control;
-                            }
-                          }
-                          div.remove();
-                        });
-
-                        detectionList.appendChild(div);
-                    });
-
-                    suggestionsContainer.style.display = "block";
-                })
-                .catch(err => {
-                    console.error("Error obteniendo controles:", err);
-                    alert("Ocurrió un error al obtener controles sugeridos.");
-                })
-                .finally(() => {
-                    suggestControlsBtn.disabled = false;
-                    suggestControlsBtn.textContent = originalText;
+                    preventiveList.appendChild(div);
                 });
-        });
-    }
+
+                data.detection_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
+
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Detección:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
+
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (detectionControlsField.value) {
+                            detectionControlsField.value += `\n${control}`;
+                        } else {
+                            detectionControlsField.value = control;
+                        }
+                        div.remove();
+                    });
+
+                    detectionList.appendChild(div);
+                });
+
+                suggestionsContainer.style.display = "block";
+            })
+            .catch(err => {
+                console.error("Error obteniendo controles:", err);
+                alert("Ocurrió un error al obtener controles sugeridos.");
+            })
+            .finally(() => {
+                suggestControlsBtn.disabled = false;
+                suggestControlsBtn.textContent = originalText;
+            });
+    });
+}
 
     const suggestRangesBtn = document.getElementById("suggest-ranges-btn");
     if (suggestRangesBtn) {
