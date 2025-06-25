@@ -823,10 +823,10 @@ function setupIaClassification() {
 
         if (option) {
           classificationSelect.value = suggested;
+          alert("Clasificación sugerida.");
           if (feedback) {
             feedback.textContent = `Clasificación sugerida por IA: ${option.text}`;
             feedback.style.display = "block";
-            alert("Clasificación sugerida.");
           }
         } else {
           alert("Clasificación sugerida no válida.");
