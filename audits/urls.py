@@ -12,6 +12,7 @@ urlpatterns = [
     path('suggest_audit_program_fields/', views.suggest_audit_program_fields, name='suggest_audit_program_fields'),
     path('add_annual_program/', views.add_annual_program, name='add_annual_program'),
     path('suggest-annual-program-processes/', views.suggest_annual_program_processes_view, name='suggest_annual_program_processes'),
+    path('save-annual-program-suggestion/', views.save_selected_annual_program_process, name='save_annual_program_suggestion'),
     path('add_annual_plan/', views.add_annual_plan, name='add_annual_plan'),
     path('add_annual_plan_auditor/', views.add_annual_plan_auditor, name='add_annual_plan_auditor'),
     path('suggest-auditor/', views.suggest_auditor_view, name='suggest_auditor'),
