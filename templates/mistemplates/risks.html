@@ -964,7 +964,7 @@ if (suggestRiskLevelBtn) {
                 } else {
                     // Seteamos el select por valor
                     riskLevelField.value = riskLevelValue;
-                    alert(`Nivel de riesgo sugerido seleccionado: ${riskLevelValue}`);
+                    alert(`Nivel de riesgo sugerido seleccionado);
                 }
             })
             .catch(err => {
@@ -1082,7 +1082,7 @@ function attachTreatmentSuggestions() {
                     card.innerHTML = `
                         <div class="card-body">
                             <strong>Acción sugerida ${index + 1}:</strong> ${action}<br>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
+                            <button type="button" class="btn btn-outline-success btn-sm">Seleccionar</button>
                         </div>
                     `;
 
