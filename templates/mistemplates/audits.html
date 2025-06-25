@@ -1120,7 +1120,6 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
               const suggestedRate = parseFloat(data.rate);
               if (!isNaN(suggestedRate)) {
                 rateInput.value = suggestedRate;
-                feedback.style.display = "block";
               } else {
                 alert("La IA no devolvió un valor numérico válido.");
               }
