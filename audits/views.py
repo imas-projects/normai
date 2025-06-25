@@ -30,6 +30,8 @@ from .models import (
     LeadAuditorEvaluationQuestion
 )
 
+from processes.models import Process
+
 from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields
 
 # === BASIC VIEWS ===
