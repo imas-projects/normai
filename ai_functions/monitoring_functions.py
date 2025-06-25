@@ -1337,7 +1337,7 @@ Responde en JSON como lista de objetos con esas claves.
                 {
                     "process_name": item.get("process_name", "").strip(),
                     "process_code": item.get("process_code", "").strip(),
-                    "suggested_month": MONTHS_MAP.get(item.get("suggested_month", "January"), 1),
+                    "suggested_month": item.get("suggested_month", "January"),
                     "justification": item.get("justification", "").strip()
                 }
                 for item in data[:max_results]
