@@ -439,7 +439,6 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
 
-        // Esperamos que el DOM del form se cargue para añadir listener al botón IA
         const btnSuggestIA = document.getElementById("btnSuggestIA");
         const suggestionsDiv = document.getElementById("iaSuggestions");
 
@@ -475,7 +474,6 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                         return;
                     }
 
-                    // Construir tarjetas de sugerencias
                     suggestionsDiv.innerHTML = `
                       <strong>Sugerencias de la IA:</strong>
                       <div id="suggestionList" class="mt-2">
@@ -486,7 +484,7 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                               <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
                               <p><strong>Mes sugerido:</strong> <em>${s.month !== undefined && s.month !== null ? s.month : "No especificado"}</em></p>
                               <p><strong>Justificación:</strong> ${s.justification}</p>
-                              <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                              <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Seleccionar</button>
                             </div>
                           </div>
                         `).join('')}
@@ -499,39 +497,30 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                             const s = data.suggestions[idx];
                             if (!s) return;
 
-                            // Aplicar valores en los campos
                             const processSelect = document.querySelector("#id_process");
                             const monthSelect = document.querySelector("#id_month");
 
                             if (processSelect) {
-                                // Selecciona el proceso por el código o nombre si tienes value
-                                // Asumiendo que el select tiene los IDs de proceso en value
-                                // Buscamos la opción que coincida con el nombre o código:
                                 let optionToSelect = Array.from(processSelect.options).find(opt =>
-                                  opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                                    opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
                                 );
                                 if (optionToSelect) {
-                                  processSelect.value = optionToSelect.value;
+                                    processSelect.value = optionToSelect.value;
                                 } else {
-                                  // Si no existe, dejar sin cambios o mostrar aviso
-                                  console.warn("Proceso sugerido no encontrado en el select");
+                                    console.warn("Proceso sugerido no encontrado en el select");
                                 }
                             }
 
                             if (monthSelect) {
                                 if (s.month !== undefined && s.month !== null) {
-                                  monthSelect.value = s.month;
+                                    monthSelect.value = s.month;
                                 } else {
-                                  monthSelect.value = ""; // Limpia o pone default
+                                    monthSelect.value = "";
                                 }
                             }
 
-                            // Opcional: hacer foco en el select proceso
                             if (processSelect) processSelect.focus();
-
-                            // Limpia sugerencias y opcionalmente oculta el div
                             suggestionsDiv.innerHTML = "";
-                            // suggestionsDiv.style.display = "none";
                         });
                     });
                 })
