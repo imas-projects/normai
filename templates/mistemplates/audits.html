@@ -492,8 +492,9 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
               <strong>Sugerencias de la IA:</strong>
               <div id="suggestionList" class="mt-2">
                 ${suggestions.map((s, i) => {
+                  // Validar que sea string y no null/undefined
                   const rawMonth = s.suggested_month || "";
-                  const monthKey = rawMonth.trim().toLowerCase();
+                  const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
                   const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
                   return `
                     <div class="card mt-2 shadow-sm">
@@ -531,15 +532,10 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                 const process_id = matchingOption.value;
                 const program_header_id = programHeaderSelect.value;
 
-                // Convertir suggested_month a número
+                // Convertir nombre del mes en número para el modelo
                 const rawMonth = s.suggested_month || "";
-                const monthKey = rawMonth.trim().toLowerCase();
+                const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
                 const month = MONTH_NAME_TO_NUM[monthKey] || "";
-
-                if (!month) {
-                  alert("El mes sugerido no es válido.");
-                  return;
-                }
 
                 const thisBtn = this;
                 thisBtn.disabled = true;
