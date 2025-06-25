@@ -321,10 +321,54 @@ document.getElementById("openAddProcessRequirementModal").addEventListener("clic
     fetch("{% url 'audits:add_process_requirement' %}")
         .then(response => response.text())
         .then(html => {
-            document.getElementById("processRequirementModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addProcessRequirementModal")).show();
+            const modalContainer = document.getElementById("processRequirementModalFormContent");
+            modalContainer.innerHTML = html;
+
+            const modalEl = document.getElementById("addProcessRequirementModal");
+            const modalInstance = new bootstrap.Modal(modalEl);
+            modalInstance.show();
+
+            // Detectamos si el formulario dentro del modal fue enviado correctamente
+            const form = modalEl.querySelector("form");
+            if (form) {
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+                    const action = form.getAttribute("action");
+                    const method = form.getAttribute("method") || "POST";
+
+                    fetch(action, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Cerrar el modal
+                                modalInstance.hide();
+
+                                // Esperar a que el modal se cierre completamente
+                                modalEl.addEventListener('hidden.bs.modal', function () {
+                                    // Refrescar la página audits.html
+                                    window.location.href = "/audits/audits/";
+                                }, { once: true });
+                            } else {
+                                // Mostrar errores si los hay
+                                modalContainer.innerHTML = data.html || "<div class='text-danger'>Error al guardar</div>";
+                            }
+                        })
+                        .catch(error => {
+                            modalContainer.innerHTML = `<div class='text-danger'>Error de red: ${error}</div>`;
+                        });
+                });
+            }
         });
 });
+
 
 document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_audit_program_header' %}")
