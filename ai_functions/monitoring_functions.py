@@ -1363,12 +1363,18 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     except AnnualProgram.DoesNotExist:
         return []
 
-    # Obtener líder actual para excluirlo
+    # Obtener líderes y auditados actuales para excluirlos
     current_leader_id = AnnualPlan.objects.filter(annual_program=annual_program).values_list('lider_id', flat=True).first()
+    current_audited_ids = set(AnnualPlanAudited.objects.filter(
+        annual_plan__annual_program=annual_program
+    ).values_list('user_id', flat=True))
+
     excluded_user_ids = {current_leader_id} if current_leader_id else set()
+    excluded_user_ids.update(current_audited_ids)
 
     today = date.today()
     three_months_ago = today - timedelta(days=90)
+    start_year = date(today.year, 1, 1)
     users_scores = defaultdict(lambda: {"score": 0, "reasons": []})
 
     # 1. Ha sido auditor en planes con este proceso
@@ -1408,7 +1414,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-   # 4. Evaluaciones positivas como auditor
+    # 4. Evaluaciones positivas como auditor
     good_evals = AuditorEvaluation.objects.filter(
         audit_plan__annual_program__process=process,
         rate__gte=7
@@ -1437,7 +1443,31 @@ def suggest_auditor_ai(program_id: int, max_results=5):
             users_scores[uid]["score"] += 1
             users_scores[uid]["reasons"].append("Experiencia auditando requisitos normativos similares")
 
-    # 6. Penalización por saturación reciente
+    # BONUS: Sumar puntos a usuarios que NO han hecho auditorías este año (incentivar nuevos)
+    # Buscamos usuarios que no están en los registros de auditorías o liderazgos en el año actual
+    all_users_ids = set(User.objects.values_list('id', flat=True))
+    users_with_audit_this_year = set(
+        AnnualPlanAuditor.objects.filter(
+            annual_plan__audit_opening_date__gte=start_year
+        ).values_list('user_id', flat=True)
+    ) | set(
+        AnnualPlan.objects.filter(
+            audit_opening_date__gte=start_year
+        ).values_list('lider_id', flat=True)
+    ) | set(
+        AnnualPlanAudited.objects.filter(
+            annual_plan__audit_opening_date__gte=start_year
+        ).values_list('user_id', flat=True)
+    )
+
+    users_without_audit_this_year = all_users_ids - users_with_audit_this_year - excluded_user_ids
+
+    for uid in users_without_audit_this_year:
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append("No ha trabajado en auditorías este año, potencial nuevo recurso")
+
+    # 6. Penalización máxima por saturación reciente (últimos 3 meses)
+    # Si tiene alguna auditoría como líder, auditor o auditado en últimos 3 meses, se excluye
     for uid in list(users_scores.keys()):
         if uid in excluded_user_ids:
             continue
@@ -1457,8 +1487,9 @@ def suggest_auditor_ai(program_id: int, max_results=5):
             last_dates.append(last_leader.audit_opening_date)
 
         if last_dates and max(last_dates) > three_months_ago:
-            users_scores[uid]["score"] -= 2
-            users_scores[uid]["reasons"].append("Actividad reciente, penalización por evitar sobrecarga")
+            # Eliminamos al usuario para que no esté en el top, penalización máxima:
+            users_scores.pop(uid)
+            continue
 
     # Preparar lista para GPT
     scored_users = []
@@ -1484,6 +1515,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         top_candidates = [{
             "user_id": 0,
             "username": "N/A",
+            "full_name": "N/A",
             "score": 0,
             "justification": "No hay datos suficientes para sugerir auditores. Se recomienda seleccionar según la norma ISO 9001:2015."
         }]
