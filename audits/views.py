@@ -312,7 +312,7 @@ def suggest_auditor_view(request):
     return JsonResponse({"suggestions": suggestions})
 
 @require_POST
-@csrf_exempt 
+@csrf_exempt
 def save_selected_auditor(request):
     try:
         annual_plan_id = request.POST.get("annual_plan_id")
@@ -326,8 +326,7 @@ def save_selected_auditor(request):
 
         obj, created = AnnualPlanAuditor.objects.get_or_create(
             annual_plan=annual_plan,
-            user=user,
-            defaults={"role": "auditor"}  
+            user=user
         )
         if not created:
             return JsonResponse({"error": "Este auditor ya está asignado al plan."}, status=400)
