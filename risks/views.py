@@ -232,7 +232,7 @@ def add_risk_treatment(request):
         if form.is_valid():
             form.save()
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+                return JsonResponse({'success': True, 'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
             else:
                 return redirect('risks:add_risk_treatment') 
 
@@ -280,7 +280,7 @@ def add_contingency_plan(request):
         form = ContingencyPlanForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Contingency plan saved successfully'}, status=200)  
+            return JsonResponse({'success': True, 'message': 'Contingency plan saved successfully'}, status=200)  
         else:
             return JsonResponse({'error': form.errors}, status=400)
     else:
