@@ -620,7 +620,6 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
       const modal = new bootstrap.Modal(modalEl);
       modal.show();
 
-      // Esperar a que el DOM esté listo
       requestAnimationFrame(() => {
         const btnSuggestIA = document.getElementById("btnSuggestAuditorIA");
         const suggestionsDiv = document.getElementById("auditorSuggestionsIA");
@@ -666,39 +665,77 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                         <div class="card-body">
                           <h6 class="card-title">Sugerencia ${i + 1}</h6>
                           <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
-                          <p><strong>Rol sugerido:</strong> ${s.suggested_role || "N/A"}</p>
                           <p><strong>Justificación:</strong> ${s.justification}</p>
-                          <button type="button" class="btn btn-sm btn-outline-success applyAuditorSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                          <button type="button" class="btn btn-sm btn-outline-success selectAuditorBtn" data-idx="${i}">Seleccionar</button>
                         </div>
                       </div>
                     `).join("")}
                   </div>
                 `;
 
-                document.querySelectorAll(".applyAuditorSuggestionBtn").forEach((btn) => {
+                document.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
                   btn.addEventListener("click", function () {
                     const idx = parseInt(this.dataset.idx);
                     const s = data.suggestions[idx];
                     if (!s) return;
 
-                    const auditorSelect = document.querySelector("#id_user");
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = "Guardando...";
 
-                    if (auditorSelect) {
-                      let optionToSelect = Array.from(auditorSelect.options).find(
-                        (opt) =>
-                          opt.text.includes(s.full_name) || opt.text.includes(s.username)
-                      );
-
-                      if (optionToSelect) {
-                        auditorSelect.value = optionToSelect.value;
-                      } else {
-                        console.warn("Usuario sugerido no encontrado en el select de auditor.");
-                      }
-
-                      auditorSelect.focus();
+                    const annualPlanSelect = document.querySelector("#id_annual_plan");
+                    if (!annualPlanSelect || !annualPlanSelect.value) {
+                      alert("Falta seleccionar Plan Anual.");
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                      return;
                     }
 
-                    suggestionsDiv.innerHTML = "";
+                    fetch("{% url 'audits:save_selected_auditor' %}", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                      },
+                      body: new URLSearchParams({
+                        user_id: s.user_id,
+                        annual_plan_id: annualPlanSelect.value,
+                      }),
+                    })
+                      .then((res) => res.json())
+                      .then((data) => {
+                        if (data.success) {
+                          alert(data.message || "Auditor guardado correctamente.");
+
+                          // Seleccionar auditor en el select si existe
+                          const auditorSelect = document.querySelector("#id_user");
+                          if (auditorSelect) {
+                            let optionToSelect = Array.from(auditorSelect.options).find(
+                              (opt) =>
+                                opt.text.includes(s.full_name) || opt.text.includes(s.username)
+                            );
+
+                            if (optionToSelect) {
+                              auditorSelect.value = optionToSelect.value;
+                              auditorSelect.focus();
+                            } else {
+                              console.warn("Usuario sugerido no encontrado en el select de auditor.");
+                            }
+                          }
+
+                          btn.closest(".card").remove();
+                          suggestionsDiv.innerHTML = "";
+                        } else {
+                          alert("Error al guardar: " + (data.error || "desconocido"));
+                          btn.disabled = false;
+                          btn.textContent = "Seleccionar";
+                        }
+                      })
+                      .catch((err) => {
+                        alert("Error inesperado: " + err);
+                        btn.disabled = false;
+                        btn.textContent = "Seleccionar";
+                      });
                   });
                 });
               })
