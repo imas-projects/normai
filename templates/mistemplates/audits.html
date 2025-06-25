@@ -475,25 +475,26 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
               return;
             }
 
-            // 🔁 Mapeo de nombre del mes en inglés → número y español
+            // Mapas con keys en minúsculas para evitar problemas con mayúsculas/minúsculas
             const MONTH_NAME_TO_NUM = {
-              January: 1, February: 2, March: 3, April: 4,
-              May: 5, June: 6, July: 7, August: 8,
-              September: 9, October: 10, November: 11, December: 12
+              january: 1, february: 2, march: 3, april: 4,
+              may: 5, june: 6, july: 7, august: 8,
+              september: 9, october: 10, november: 11, december: 12
             };
 
             const MONTH_NAME_TO_ES = {
-              January: "Enero", February: "Febrero", March: "Marzo", April: "Abril",
-              May: "Mayo", June: "Junio", July: "Julio", August: "Agosto",
-              September: "Septiembre", October: "Octubre", November: "Noviembre", December: "Diciembre"
+              january: "Enero", february: "Febrero", march: "Marzo", april: "Abril",
+              may: "Mayo", june: "Junio", july: "Julio", august: "Agosto",
+              september: "Septiembre", october: "Octubre", november: "Noviembre", december: "Diciembre"
             };
 
             suggestionsDiv.innerHTML = `
               <strong>Sugerencias de la IA:</strong>
               <div id="suggestionList" class="mt-2">
                 ${suggestions.map((s, i) => {
-                  const monthName = s.suggested_month;
-                  const monthEs = MONTH_NAME_TO_ES[monthName] || "Sin mes asignado";
+                  const rawMonth = s.suggested_month || "";
+                  const monthKey = rawMonth.trim().toLowerCase();
+                  const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
                   return `
                     <div class="card mt-2 shadow-sm">
                       <div class="card-body">
@@ -530,8 +531,15 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
                 const process_id = matchingOption.value;
                 const program_header_id = programHeaderSelect.value;
 
-                // ✅ Convertir nombre del mes en número para el modelo
-                const month = MONTH_NAME_TO_NUM[s.suggested_month] || "";
+                // Convertir suggested_month a número
+                const rawMonth = s.suggested_month || "";
+                const monthKey = rawMonth.trim().toLowerCase();
+                const month = MONTH_NAME_TO_NUM[monthKey] || "";
+
+                if (!month) {
+                  alert("El mes sugerido no es válido.");
+                  return;
+                }
 
                 const thisBtn = this;
                 thisBtn.disabled = true;
