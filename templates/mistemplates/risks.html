@@ -774,90 +774,81 @@ function attachEvaluationSuggestions() {
     const preventiveList = document.getElementById("preventiveSuggestionsList");
     const detectionList = document.getElementById("detectionSuggestionsList");
 
-    const suggestControlsBtn = document.getElementById("suggest-controls-btn");
-    if (suggestControlsBtn) {
-        suggestControlsBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+const suggestControlsBtn = document.getElementById("suggest-controls-btn");
+if (suggestControlsBtn) {
+    suggestControlsBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestControlsBtn.textContent;
-            suggestControlsBtn.disabled = true;
-            suggestControlsBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestControlsBtn.textContent;
+        suggestControlsBtn.disabled = true;
+        suggestControlsBtn.textContent = "Obteniendo sugerencias...";
 
-            fetch(${suggestControlsBtn.dataset.url}?risk_id=${riskId})
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
+        fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
 
-                    preventiveList.innerHTML = "";
-                    detectionList.innerHTML = "";
+                preventiveList.innerHTML = "";
+                detectionList.innerHTML = "";
 
-                    data.preventive_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "card mt-2 shadow-sm";
+                data.preventive_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
 
-                        div.innerHTML = 
-                          <div class="card-body d-flex justify-content-between align-items-center">
-                            <p class="mb-0"><strong>Preventivo:</strong> ${control}</p>
-                            <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
-                          </div>
-                        ;
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Preventivo:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
 
-                        div.querySelector("button").addEventListener("click", () => {
-                            if (preventiveControlsField.value) {
-                                preventiveControlsField.value += \n${control};
-                            } else {
-                                preventiveControlsField.value = control;
-                            }
-                            div.remove();
-                        });
-                        preventiveList.appendChild(div);
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (preventiveControlsField.value) {
+                            preventiveControlsField.value += `\n${control}`;
+                        } else {
+                            preventiveControlsField.value = control;
+                        }
+                        div.remove();
                     });
-
-                    data.detection_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "card mt-2 shadow-sm";
-
-                        div.innerHTML = 
-                          <div class="card-body d-flex justify-content-between align-items-center">
-                            <p class="mb-0"><strong>Detección:</strong> ${control}</p>
-                            <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
-                          </div>
-                        ;
-
-                        div.querySelector("button").addEventListener("click", () => {
-                            if (preventiveControlsField.value) {
-                              preventiveControlsField.value += \n${control};
-                            } else {
-                              preventiveControlsField.value = control;
-                            }
-                            div.remove();
-                         });   
-                         div.querySelector("button").addEventListener("click", () => {
-                            if (detectionControlsField.value) {
-                              detectionControlsField.value += \n${control};
-                            } else {
-                              detectionControlsField.value = control;
-                            }
-                          }
-                          div.remove();
-                        });
-
-                        detectionList.appendChild(div);
-                    });
-
-                    suggestionsContainer.style.display = "block";
-                })
-                .catch(err => {
-                    console.error("Error obteniendo controles:", err);
-                    alert("Ocurrió un error al obtener controles sugeridos.");
-                })
-                .finally(() => {
-                    suggestControlsBtn.disabled = false;
-                    suggestControlsBtn.textContent = originalText;
+                    preventiveList.appendChild(div);
                 });
-        });
-    }
+
+                data.detection_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
+
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Detección:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
+
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (detectionControlsField.value) {
+                            detectionControlsField.value += `\n${control}`;
+                        } else {
+                            detectionControlsField.value = control;
+                        }
+                        div.remove();
+                    });
+
+                    detectionList.appendChild(div);
+                });
+
+                suggestionsContainer.style.display = "block";
+            })
+            .catch(err => {
+                console.error("Error obteniendo controles:", err);
+                alert("Ocurrió un error al obtener controles sugeridos.");
+            })
+            .finally(() => {
+                suggestControlsBtn.disabled = false;
+                suggestControlsBtn.textContent = originalText;
+            });
+    });
+}
 
     const suggestRangesBtn = document.getElementById("suggest-ranges-btn");
     if (suggestRangesBtn) {
@@ -922,42 +913,71 @@ function attachEvaluationSuggestions() {
         });
     }
 
-    const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
+if (suggestRiskLevelBtn) {
+    suggestRiskLevelBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestRiskLevelBtn.textContent;
-            suggestRiskLevelBtn.disabled = true;
-            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestRiskLevelBtn.textContent;
+        suggestRiskLevelBtn.disabled = true;
+        suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
 
-            const params = new URLSearchParams({
-                risk_id: riskId,
-                preventive_controls: preventiveControlsField.value,
-                detection_controls: detectionControlsField.value,
-                severity: severityField.value,
-                occurrence: occurrenceField.value,
-                detection: detectionField.value
-            });
-
-            fetch(${suggestRiskLevelBtn.dataset.url}?${params.toString()})
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
-                    riskLevelField.value = data.risk_level;
-                    alert(Nivel de riesgo sugerido seleccionado: ${data.risk_level});
-                })
-                .catch(err => {
-                    console.error("Error obteniendo nivel de riesgo:", err);
-                    alert("Ocurrió un error al obtener el nivel de riesgo.");
-                })
-                .finally(() => {
-                    suggestRiskLevelBtn.disabled = false;
-                    suggestRiskLevelBtn.textContent = originalText;
-                });
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            preventive_controls: preventiveControlsField.value,
+            detection_controls: detectionControlsField.value,
+            severity: severityField.value,
+            occurrence: occurrenceField.value,
+            detection: detectionField.value
         });
-    }
+
+        fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
+
+                // Mapeo de la respuesta con emojis/textos a los valores que espera el select
+                const mapping = {
+                    "🟥 Riesgo Alto": "High",
+                    "🟨 Riesgo Moderado": "Moderate",
+                    "🟩 Riesgo Bajo": "Low",
+                    // Por si hay alguna variación en español
+                    "🟥 Risk High": "High",
+                    "🟨 Risk Moderate": "Moderate",
+                    "🟩 Risk Low": "Low",
+                };
+
+                // Extraemos solo el valor, sin emoji ni texto extra
+                let riskLevelValue = null;
+                for (const key in mapping) {
+                    if (data.risk_level.includes(key)) {
+                        riskLevelValue = mapping[key];
+                        break;
+                    }
+                }
+
+                if (!riskLevelValue) {
+                    // Si no coincide con nada, intentar asignar el string tal cual o alertar
+                    riskLevelValue = data.risk_level; // fallback
+                    alert(`Nivel de riesgo sugerido recibido, pero no reconocido: ${data.risk_level}`);
+                } else {
+                    // Seteamos el select por valor
+                    riskLevelField.value = riskLevelValue;
+                    alert(`Nivel de riesgo sugerido seleccionado: ${riskLevelValue}`);
+                }
+            })
+            .catch(err => {
+                console.error("Error obteniendo nivel de riesgo:", err);
+                alert("Ocurrió un error al obtener el nivel de riesgo.");
+            })
+            .finally(() => {
+                suggestRiskLevelBtn.disabled = false;
+                suggestRiskLevelBtn.textContent = originalText;
+            });
+    });
+}
+
 }
 
 
