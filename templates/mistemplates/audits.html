@@ -475,27 +475,38 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
               return;
             }
 
-            const MONTH_NAMES = {
-              1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
-              5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
-              9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+            // 🔁 Mapeo de nombre del mes en inglés → número y español
+            const MONTH_NAME_TO_NUM = {
+              January: 1, February: 2, March: 3, April: 4,
+              May: 5, June: 6, July: 7, August: 8,
+              September: 9, October: 10, November: 11, December: 12
+            };
+
+            const MONTH_NAME_TO_ES = {
+              January: "Enero", February: "Febrero", March: "Marzo", April: "Abril",
+              May: "Mayo", June: "Junio", July: "Julio", August: "Agosto",
+              September: "Septiembre", October: "Octubre", November: "Noviembre", December: "Diciembre"
             };
 
             suggestionsDiv.innerHTML = `
               <strong>Sugerencias de la IA:</strong>
               <div id="suggestionList" class="mt-2">
-                ${suggestions.map((s, i) => `
-                  <div class="card mt-2 shadow-sm">
-                    <div class="card-body">
-                      <h6 class="card-title">Sugerencia ${i + 1}</h6>
-                      <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
-                      <p><strong>Mes sugerido:</strong> <em>${MONTH_NAMES[s.month] || "Sin mes asignado"}</em></p>
-                      <p><strong>Justificación:</strong> ${s.justification}</p>
-                      <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
-                        data-idx="${i}">Seleccionar</button>
+                ${suggestions.map((s, i) => {
+                  const monthName = s.suggested_month;
+                  const monthEs = MONTH_NAME_TO_ES[monthName] || "Sin mes asignado";
+                  return `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                        <p><strong>Mes sugerido:</strong> <em>${monthEs}</em></p>
+                        <p><strong>Justificación:</strong> ${s.justification}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
+                          data-idx="${i}">Seleccionar</button>
+                      </div>
                     </div>
-                  </div>
-                `).join("")}
+                  `;
+                }).join("")}
               </div>
             `;
 
@@ -518,7 +529,9 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
 
                 const process_id = matchingOption.value;
                 const program_header_id = programHeaderSelect.value;
-                const month = s.month || "";
+
+                // ✅ Convertir nombre del mes en número para el modelo
+                const month = MONTH_NAME_TO_NUM[s.suggested_month] || "";
 
                 const thisBtn = this;
                 thisBtn.disabled = true;
