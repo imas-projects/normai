@@ -166,19 +166,6 @@ def conduct_internal_audits(request):
         report_data = None
         findings_data = []
 
-        if report:
-            report_data = {
-                "summary": report.summary,
-                "strengths": report.strengths
-            }
-
-            findings = Findings.objects.filter(report=report).select_related("requirement")
-            findings_data = [{
-                "requirement": f.requirement.name if f.requirement else "N/A",
-                "text": f.finding_text,
-                "classification": f.classification,
-            } for f in findings]
-
         lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(type='AUDITOR_LIDER')
 
         lead_auditor_evaluation = [{
