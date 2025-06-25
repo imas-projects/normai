@@ -260,6 +260,12 @@ def save_selected_annual_program_process(request):
         program_header_id = request.POST.get("program_header_id")
         process_id = request.POST.get("process_id")
         month = request.POST.get("month")
+        try:
+            month = int(month)
+            if not (1 <= month <= 12):
+                return JsonResponse({"error": "Mes inválido"}, status=400)
+        except:
+            return JsonResponse({"error": "Mes inválido"}, status=400)
 
         if not program_header_id or not process_id:
             return JsonResponse({"error": "Faltan datos"}, status=400)
