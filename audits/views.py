@@ -250,6 +250,31 @@ def suggest_annual_program_processes_view(request):
 
     return JsonResponse({"suggestions": suggestions})
 
+@require_POST
+@csrf_exempt
+def save_selected_annual_program_process(request):
+    try:
+        program_header_id = request.POST.get("program_header_id")
+        process_id = request.POST.get("process_id")
+        month = request.POST.get("month")
+
+        if not program_header_id or not process_id or not month:
+            return JsonResponse({"error": "Faltan datos"}, status=400)
+
+        program_header = AuditProgramHeader.objects.get(pk=program_header_id)
+        process = Process.objects.get(pk=process_id)
+
+        annual_program = AnnualProgram.objects.create(
+            program_header=program_header,
+            process=process,
+            month=month
+        )
+
+        return JsonResponse({"success": True, "id": annual_program.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
     
