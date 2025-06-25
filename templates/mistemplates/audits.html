@@ -855,7 +855,6 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
     });
 });
 
-
 document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_audited_evaluation_question' %}")
     .then(response => response.text())
