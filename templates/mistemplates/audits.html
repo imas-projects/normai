@@ -725,6 +725,12 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
 
                           btn.closest(".card").remove();
                           suggestionsDiv.innerHTML = "";
+
+                          // Cerrar modal
+                          const modalEl = document.getElementById("addAnnualPlanAuditorModal");
+                          const modal = bootstrap.Modal.getInstance(modalEl);
+                          if (modal) modal.hide();
+
                         } else {
                           alert("Error al guardar: " + (data.error || "desconocido"));
                           btn.disabled = false;
@@ -751,6 +757,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
       });
     });
 });
+
 
 
 
