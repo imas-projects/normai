@@ -124,23 +124,23 @@
 
 
 <div class="mt-3">
-    {% for area, risks in grouped_risks.items %}
-    <div class="accordion" id="accordion{{ area|slugify }}">
+    {% for (area, process), risks in grouped_risks.items %}
+    <div class="accordion" id="accordion{{ area|slugify }}-{{ process|slugify }}">
         <div class="accordion-item">
-            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area|slugify }}">
+            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area|slugify }}-{{ process|slugify }}">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#collapse{{ area|slugify }}" 
+                    data-bs-target="#collapse{{ area|slugify }}-{{ process|slugify }}" 
                     aria-expanded="false" 
-                    aria-controls="collapse{{ area|slugify }}">
-                    {{ area.name }}  <!-- Asumiendo que 'area' tiene un atributo 'name' -->
+                    aria-controls="collapse{{ area|slugify }}-{{ process|slugify }}">
+                    {{ area.name }} - {{ process.name }}
                 </button>
                 <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
                     <i class="ri-file-download-line"></i> Download PDF
                 </a>
             </h2>
 
-            <div id="collapse{{ area|slugify }}" class="accordion-collapse collapse"
-                aria-labelledby="heading{{ area|slugify }}">
+            <div id="collapse{{ area|slugify }}-{{ process|slugify }}" class="accordion-collapse collapse"
+                aria-labelledby="heading{{ area|slugify }}-{{ process|slugify }}">
                 <div class="accordion-body">
                     {% for risk in risks %}
                     <div class="card mb-3" style="background-color: #e9ecef; color: black;">
@@ -154,8 +154,8 @@
                                                 <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
                                             </tr>
                                             <tr>
-                                                <th style="font-size: 18px;">Activity Name:</th>
-                                                <td style="font-size: 18px;">{{ risk.activity_name }}</td>
+                                                <th style="font-size: 18px;">Process:</th>
+                                                <td style="font-size: 18px;">{{ risk.process.name }}</td>
                                             </tr>
                                             <tr>
                                                 <th style="font-size: 18px;">Consequences:</th>
@@ -184,6 +184,7 @@
                                         </button>
                                     </div>
                                 </div>
+
 <!-- Botones de Edición y Eliminación -->
 <div class="col-md-2 d-flex flex-column align-items-end align-self-start">
     <div class="dropdown">
@@ -630,18 +631,18 @@ function attachSuggestionHandler() {
 
     btn.addEventListener("click", function () {
         const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
-        const activityInput = document.querySelector("#add-risk-identification-form input[name='activity_name']");
+        const processInput = document.querySelector("#add-risk-identification-form input[name='process']");
 
-        if (!areaSelect || !activityInput) {
+        if (!areaSelect || !processInput) {
             alert("No se encontraron los campos requeridos.");
             return;
         }
 
         const areaValue = areaSelect.value;
-        const activityValue = activityInput.value;
+        const processValue = processInput.value;
 
-        if (!areaValue || !activityValue) {
-            alert("Por favor, completa el área y la actividad.");
+        if (!areaValue || !processValue) {
+            alert("Por favor, completa el área y el proceso.");
             return;
         }
 
@@ -655,7 +656,7 @@ function attachSuggestionHandler() {
         suggestionContainer.style.display = "block";
         suggestionList.innerHTML = "";
 
-        fetch(`/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`)
+        fetch(`/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&process=${encodeURIComponent(processValue)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
@@ -715,7 +716,7 @@ function attachSuggestionHandler() {
                             },
                             body: new URLSearchParams({
                                 area_id: areaValue,
-                                activity_name: activityValue,
+                                process: processValue,
                                 identified_risk: item.identified_risk,
                                 consequences: item.consequences
                             })
@@ -749,6 +750,7 @@ function attachSuggestionHandler() {
             });
     });
 }
+
 
 
 
