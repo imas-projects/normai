@@ -214,13 +214,8 @@
             </div>
 
             <div class="modal-body">
-                {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                    {% for section, items in {
-                        "Patrones detectados": flow_ia_insights.patterns,
-                        "Debilidades o barreras de comunicación": flow_ia_insights.weaknesses,
-                        "Conflictos identificados": flow_ia_insights.conflicts,
-                        "Recomendaciones": flow_ia_insights.recommendations
-                    }.items %}
+                {% if insights_sections and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                    {% for section, items in insights_sections %}
                         <div class="mb-4">
                             <h6 class="fw-semibold">{{ section }}</h6>
                             {% if items %}
@@ -930,9 +925,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     // Mostrar modal si corresponde
-    const modalId = 'flowMapModal{{ table_id }}';
-    const flowModal = document.getElementById(modalId);
-    {% if open_flow_modal %}
+    {% if open_flow_modal and table_id %}
+        const modalId = 'flowMapModal{{ table_id|safe }}';
+        const flowModal = document.getElementById(modalId);
         if (flowModal) {
             const modalInstance = new bootstrap.Modal(flowModal);
             modalInstance.show();
@@ -951,6 +946,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
 
 
 
