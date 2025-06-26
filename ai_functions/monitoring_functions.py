@@ -972,9 +972,9 @@ Responde en formato JSON como este:
 
 def generate_communication_flow_map(table_id):
     """
-    Genera un grafo de flujo de comunicación a partir de una tabla específica.
-    Incluye nodos, conexiones y una inferencia IA para identificar problemas o patrones,
-    según cláusulas de la norma ISO 9001:2015.
+    Genera un informe de flujo de comunicación a partir de una tabla específica.
+    Incluye insights IA sobre patrones, debilidades, conflictos y recomendaciones
+    conforme a la norma ISO 9001:2015.
     """
     try:
         table = CommunicationTable.objects.select_related('emiter').get(id=table_id)
@@ -982,17 +982,14 @@ def generate_communication_flow_map(table_id):
 
         if not messages.exists():
             return {
-                "nodes": [],
-                "edges": [],
                 "ia_insights": {
                     "patterns": [],
                     "weaknesses": [],
+                    "conflicts": [],
                     "recommendations": ["No se encontraron mensajes en esta tabla."]
                 }
             }
 
-        edges = []
-        nodes = set()
         ia_examples = []
 
         for msg in messages:
@@ -1002,89 +999,75 @@ def generate_communication_flow_map(table_id):
             freq = msg.periodicity.name
 
             if emiter and receiver:
-                edges.append({
-                    "from": f"{emiter.name} ({emiter.area.name})",
-                    "to": f"{receiver.name} ({receiver.area.name})",
-                    "label": msg_name,
-                    "frequency": freq
-                })
-
-                nodes.add(f"{emiter.name} ({emiter.area.name})")
-                nodes.add(f"{receiver.name} ({receiver.area.name})")
-
                 ia_examples.append(f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}")
 
         prompt = f"""
-Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1 y 5.3).
+Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1, 5.3 y relacionadas).
 A continuación se muestra un resumen del flujo de comunicaciones internas entre procesos y puestos en una organización industrial:
 
 {chr(10).join(ia_examples)}
 
 Tu tarea:
-1. Detecta patrones (flujo excesivo o escaso entre ciertas áreas).
-2. Sugiere posibles debilidades o barreras de comunicación.
-3. Da una recomendación de mejora concreta según la norma ISO.
+1. Detecta patrones (por ejemplo, flujo excesivo o escaso entre ciertas áreas).
+2. Señala debilidades o barreras de comunicación.
+3. Detecta posibles conflictos, duplicidades o malentendidos frecuentes.
+4. Da una recomendación de mejora concreta según la norma ISO.
 
-Por favor, responde exclusivamente con un JSON que contenga las claves: "patterns", "weaknesses" y "recommendations". Cada una debe ser una lista de strings.
+Por favor, responde exclusivamente con un JSON que contenga las claves: "patterns", "weaknesses", "conflicts" y "recommendations". Cada una debe ser una lista de strings.
 
 Ejemplo de respuesta JSON:
-
-{{
-  "patterns": ["Patrón 1", "Patrón 2"],
-  "weaknesses": ["Debilidad 1", "Debilidad 2"],
-  "recommendations": ["Recomendación 1", "Recomendación 2"]
-}}
+{
+  "patterns": ["Patrón 1"],
+  "weaknesses": ["Debilidad 1"],
+  "conflicts": ["Conflicto 1"],
+  "recommendations": ["Recomendación 1"]
+}
 """
 
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
-            max_tokens=600,
+            max_tokens=700,
         )
 
         insights_raw = response.choices[0].message.content.strip()
-
-        # Limpieza para eliminar backticks y etiquetas JSON del string
         insights_clean = re.sub(r"```json|```", "", insights_raw).strip()
 
         try:
             insights_json = json.loads(insights_clean)
         except json.JSONDecodeError:
-            # En caso de fallo, retornamos el texto completo como recomendación para que no se pierda info
             insights_json = {
                 "patterns": [],
                 "weaknesses": [],
+                "conflicts": [],
                 "recommendations": [insights_raw]
             }
 
         return {
-            "nodes": list(nodes),
-            "edges": edges,
             "ia_insights": insights_json
         }
 
     except CommunicationTable.DoesNotExist:
         return {
-            "nodes": [],
-            "edges": [],
             "ia_insights": {
                 "patterns": [],
                 "weaknesses": [],
+                "conflicts": [],
                 "recommendations": ["Tabla no encontrada."]
             }
         }
     except Exception as e:
-        print("Error general en la generación del mapa:", str(e))
+        print("Error general en la generación del informe:", str(e))
         return {
-            "nodes": [],
-            "edges": [],
             "ia_insights": {
                 "patterns": [],
                 "weaknesses": [],
+                "conflicts": [],
                 "recommendations": [f"Error inesperado: {str(e)}"]
             }
         }
+
 
 
 def suggest_audit_fields(year: int, max_results=3):
