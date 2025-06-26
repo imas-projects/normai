@@ -633,15 +633,15 @@ function attachSuggestionHandler() {
 
     btn.addEventListener("click", function () {
         const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
-        const processInput = document.querySelector("#add-risk-identification-form input[name='process']");
+        const processSelect = document.querySelector("#add-risk-identification-form select[name='process']");
 
-        if (!areaSelect || !processInput) {
+        if (!areaSelect || !processSelect) {
             alert("No se encontraron los campos requeridos.");
             return;
         }
 
         const areaValue = areaSelect.value;
-        const processValue = processInput.value;
+        const processValue = processSelect.value;
 
         if (!areaValue || !processValue) {
             alert("Por favor, completa el área y el proceso.");
