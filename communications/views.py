@@ -401,6 +401,7 @@ def table_summarize_ia(request):
 def table_flow_map_ia(request):
     ia_flow_data = None
     table_id = None
+    insights_sections = None  # nuevo
 
     all_communicationtables = CommunicationTable.objects.all()
 
@@ -411,6 +412,15 @@ def table_flow_map_ia(request):
             try:
                 ia_flow_data = generate_communication_flow_map(table_id)
                 print("Resultado IA:", ia_flow_data)
+
+                # Preparar datos para el template
+                insights = ia_flow_data.get("ia_insights", {})
+                insights_sections = [
+                    ("Patrones detectados", insights.get("patterns", [])),
+                    ("Debilidades o barreras de comunicación", insights.get("weaknesses", [])),
+                    ("Conflictos identificados", insights.get("conflicts", [])),
+                    ("Recomendaciones", insights.get("recommendations", [])),
+                ]
             except Exception as e:
                 print(f"Error al generar el informe IA: {e}")
                 ia_flow_data = {
@@ -421,14 +431,19 @@ def table_flow_map_ia(request):
                         "recommendations": [f"Error interno: {str(e)}"]
                     }
                 }
+                insights_sections = [
+                    ("Recomendaciones", [f"Error interno: {str(e)}"])
+                ]
         else:
             print("No se recibió table_id válido en POST")
 
     context = {
         "flow_ia_insights": ia_flow_data["ia_insights"] if ia_flow_data else None,
+        "insights_sections": insights_sections,
         'all_communicationtables': all_communicationtables,
         "table_id": table_id,
         "open_flow_modal": True,
     }
 
     return render(request, "mistemplates/communication-tables.html", context)
+
