@@ -8,10 +8,10 @@ from .models import (
 class RiskIdentificationForm(forms.ModelForm):
     class Meta:
         model = RiskIdentification
-        fields = ['area', 'activity_name', 'identified_risk', 'consequences']
+        fields = ['area', 'process', 'identified_risk', 'consequences']
         widgets = {
             'area': forms.Select(attrs={'class': 'form-control'}),
-            'activity_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'process': forms.Select(attrs={'class': 'form-control'}), 
             'identified_risk': forms.TextInput(attrs={'class': 'form-control'}),
             'consequences': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
         }
