@@ -1363,6 +1363,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
 
 
 
+
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
   fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
     .then(response => response.text())
