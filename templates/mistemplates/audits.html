@@ -808,26 +808,26 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
             suggestionsDiv.innerHTML = "";
             suggestionsDiv.style.display = "block";
 
-            fetch(/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value})
+            fetch(`/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value}`)
               .then((response) => response.json())
               .then((data) => {
                 btnSuggestIA.disabled = false;
                 btnSuggestIA.textContent = originalText;
 
                 if (data.error) {
-                  suggestionsDiv.innerHTML = <div class="text-danger">Error: ${data.error}</div>;
+                  suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
                   return;
                 }
 
                 if (!data.suggestions || data.suggestions.length === 0) {
-                  suggestionsDiv.innerHTML = <div class="text-warning">No se encontraron sugerencias.</div>;
+                  suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
                   return;
                 }
 
-                suggestionsDiv.innerHTML = 
+                suggestionsDiv.innerHTML = `
                   <strong>Sugerencias de la IA:</strong>
                   <div id="suggestedAuditorsList" class="mt-2">
-                    ${data.suggestions.map((s, i) => 
+                    ${data.suggestions.map((s, i) => `
                       <div class="card mt-2 shadow-sm">
                         <div class="card-body">
                           <h6 class="card-title">Sugerencia ${i + 1}</h6>
@@ -836,9 +836,9 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                           <button type="button" class="btn btn-sm btn-outline-success selectAuditorBtn" data-idx="${i}">Seleccionar</button>
                         </div>
                       </div>
-                    ).join("")}
+                    `).join("")}
                   </div>
-                ;
+                `;
 
                 document.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
                   btn.addEventListener("click", function () {
@@ -869,30 +869,29 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                         annual_plan_id: annualPlanSelect.value,
                       }),
                     })
-                      .then((res) => res.json())
-                      .then((data) => {
-                        if (data.success) {
-                          alert(data.message || "Auditor guardado correctamente.");
-                          // Redirección a audits
-                          window.location.href = "http://34.254.185.243:8000/audits/audits/";
-                        } else {
-                          alert("Error al guardar: " + (data.error || "desconocido"));
-                          btn.disabled = false;
-                          btn.textContent = "Seleccionar";
-                        }
-                      })
-                      .catch((err) => {
-                        alert("Error inesperado: " + err);
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (data.success) {
+                        alert(data.message || "Auditor guardado correctamente.");
+                        window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                      } else {
+                        alert("Error al guardar: " + (data.error || "desconocido"));
                         btn.disabled = false;
                         btn.textContent = "Seleccionar";
-                      });
+                      }
+                    })
+                    .catch((err) => {
+                      alert("Error inesperado: " + err);
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                    });
                   });
                 });
               })
               .catch((err) => {
                 btnSuggestIA.disabled = false;
                 btnSuggestIA.textContent = originalText;
-                suggestionsDiv.innerHTML = <div class="text-danger">Error al obtener sugerencias: ${err}</div>;
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
               });
           });
         } else {
@@ -901,6 +900,8 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
       });
     });
 });
+
+
 
 
 
@@ -1212,36 +1213,36 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
           suggestionsDiv.style.display = "block";
           suggestionsDiv.innerHTML = "";
 
-          fetch(/audits/suggest-audit-questions/?requirement_id=${requirementId})
+          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}`)
             .then(res => res.json())
             .then(data => {
               suggestBtn.disabled = false;
               suggestBtn.textContent = originalText;
 
               if (data.error) {
-                suggestionsDiv.innerHTML = <div class="text-danger">${data.error}</div>;
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
                 return;
               }
 
               const questions = data.questions || [];
               if (questions.length === 0) {
-                suggestionsDiv.innerHTML = <div class="text-warning">No se encontraron sugerencias.</div>;
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
                 return;
               }
 
-              suggestionsDiv.innerHTML = 
+              suggestionsDiv.innerHTML = `
                 <strong>Sugerencias IA:</strong>
                 <div id="suggestedAuditQuestionList" class="mt-2">
-                  ${questions.map((q, i) => 
+                  ${questions.map((q, i) => `
                     <div class="card mt-2 shadow-sm">
                       <div class="card-body d-flex justify-content-between align-items-center">
                         <p class="mb-0">${q}</p>
                         <button type="button" class="btn btn-sm btn-outline-success selectAuditQuestionBtn" data-question="${encodeURIComponent(q)}">Seleccionar</button>
                       </div>
                     </div>
-                  ).join("")}
+                  `).join("")}
                 </div>
-              ;
+              `;
 
               // Funcionalidad botones seleccionar
               document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
@@ -1285,7 +1286,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
             .catch(err => {
               suggestBtn.disabled = false;
               suggestBtn.textContent = originalText;
-              suggestionsDiv.innerHTML = <div class="text-danger">Error al obtener sugerencias: ${err}</div>;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
             });
         });
 
@@ -1307,7 +1308,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
             }
           })
           .then(res => {
-            if (!res.ok && res.status !== 302) throw new Error(HTTP error! status: ${res.status});
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
             return res.text();
           })
           .then(() => {
