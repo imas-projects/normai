@@ -34,16 +34,13 @@
     <!-- Campo de texto de la pregunta -->
     <div class="mb-3">
       {{ form.question_text.label_tag }}
-      <div class="d-flex align-items-center">
-        {{ form.question_text }}
-        <button type="button" id="btnSaveManualQuestion" class="btn btn-outline-info ms-2">Guardar y agregar otra</button>
-      </div>
+      {{ form.question_text }}
       {% if form.question_text.errors %}
         <div class="text-danger small">{{ form.question_text.errors }}</div>
       {% endif %}
     </div>
 
-    <!-- Botón para guardar completo -->
+    <!-- Botón para guardar -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
