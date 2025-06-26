@@ -3,12 +3,13 @@ from django.contrib.auth.models import User
 from company.models import Area  
 from django.core.validators import RegexValidator
 from multiselectfield import MultiSelectField
+from processes.models import Process
 
 
 # Tabla de identificación de riesgo
 class RiskIdentification(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="risks")  
-    activity_name = models.CharField(max_length=255)
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="risks")
     identified_risk = models.CharField(max_length=255, unique=True)
     consequences = models.TextField()
 
@@ -16,15 +17,15 @@ class RiskIdentification(models.Model):
         db_table = 'tb_risks_identification'
 
     def __str__(self):
-        return f"{self.identified_risk} ({self.area.name})"
-    
+        return f"{self.identified_risk} ({self.process.name} - {self.area.name})"
+
     def as_dict(self):
         return {
             "area": self.area.as_dict(),
-            "activity_name": self.activity_name,
+            "process": self.process.name,
             "identified_risk": self.identified_risk,
             "consequences": self.consequences,
-        }  
+        }
 
 # Tabla de evaluación de riesgo
 class RiskEvaluation(models.Model):
