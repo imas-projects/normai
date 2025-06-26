@@ -424,8 +424,18 @@ def table_flow_map_ia(request):
         else:
             print("No se recibió table_id válido en POST")
 
+    flow_ia_sections = None
+    if ia_flow_data and "ia_insights" in ia_flow_data:
+        flow_ia_sections = {
+            "Patrones detectados": ia_flow_data["ia_insights"].get("patterns", []),
+            "Debilidades o barreras de comunicación": ia_flow_data["ia_insights"].get("weaknesses", []),
+            "Conflictos identificados": ia_flow_data["ia_insights"].get("conflicts", []),
+            "Recomendaciones": ia_flow_data["ia_insights"].get("recommendations", []),
+        }
+
     context = {
         "flow_ia_insights": ia_flow_data["ia_insights"] if ia_flow_data else None,
+        "flow_ia_sections": flow_ia_sections,
         'all_communicationtables': all_communicationtables,
         "table_id": table_id,
         "open_flow_modal": True,
