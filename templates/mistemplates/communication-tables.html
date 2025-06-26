@@ -207,15 +207,20 @@
 <!-- Modal Mapa de Comunicación IA -->
 <div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-white text-dark shadow-sm">
+        <div class="modal-content bg-white text-dark shadow-sm border-0">
             <div class="modal-header">
-                <h5 class="modal-title" id="flowMapModalLabel{{ table.id }}">Informe IA de Comunicación</h5>
+                <h5 class="modal-title fw-semibold" id="flowMapModalLabel{{ table.id }}">Informe IA de Comunicación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
-                {% if insights_sections and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                    {% for section, items in insights_sections %}
+                {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                    {% for section, items in {
+                        "Patrones detectados": flow_ia_insights.patterns,
+                        "Debilidades o barreras de comunicación": flow_ia_insights.weaknesses,
+                        "Conflictos identificados": flow_ia_insights.conflicts,
+                        "Recomendaciones": flow_ia_insights.recommendations
+                    }.items %}
                         <div class="mb-4">
                             <h6 class="fw-semibold">{{ section }}</h6>
                             {% if items %}
@@ -238,13 +243,14 @@
                 <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
                     {% csrf_token %}
                     <input type="hidden" name="table_id" value="{{ table.id }}">
-                    <button type="submit" class="btn btn-primary" id="generateFlowMapBtn">Generar Informe IA</button>
+                    <button type="submit" class="btn border text-dark px-4 py-2 generateFlowMapBtn">Generar Informe IA</button>
                 </form>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
+
 
 
 
@@ -924,9 +930,8 @@
         }
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Mostrar modal si corresponde
     {% if open_flow_modal and table_id %}
-        const modalId = 'flowMapModal{{ table_id|safe }}';
+        const modalId = 'flowMapModal{{ table_id }}';
         const flowModal = document.getElementById(modalId);
         if (flowModal) {
             const modalInstance = new bootstrap.Modal(flowModal);
@@ -934,8 +939,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     {% endif %}
 
-    // Comportamiento del botón de generación
-    const allGenerateBtns = document.querySelectorAll('#generateFlowMapBtn');
+    const allGenerateBtns = document.querySelectorAll('.generateFlowMapBtn');
     allGenerateBtns.forEach(btn => {
         const form = btn.closest('form');
         if (form) {
