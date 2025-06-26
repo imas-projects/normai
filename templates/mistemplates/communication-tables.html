@@ -238,7 +238,7 @@
                 <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
                     {% csrf_token %}
                     <input type="hidden" name="table_id" value="{{ table.id }}">
-                    <button type="submit" class="btn btn-outline-info border text-dark px-4 py-2 generateFlowMapBtn">Generar Informe IA</button>
+                    <button type="submit" class="btn btn-outline-info generateFlowMapBtn">Generar Informe IA</button>
                 </form>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
