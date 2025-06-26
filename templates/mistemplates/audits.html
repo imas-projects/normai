@@ -1195,6 +1195,9 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
 
         const form = document.getElementById("auditedEvaluationForm");
         if (!form) return;
+        const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
+        const manualQuestionInput = form.querySelector("input[name='question_text']");
+
 
         // Botón de sugerencias IA
         suggestBtn.addEventListener("click", function () {
@@ -1280,6 +1283,49 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                   });
                 });
               });
+const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
+const manualQuestionInput = form.querySelector("input[name='question_text']"); // o el selector real del campo
+
+if (manualSaveBtn && manualQuestionInput) {
+  manualSaveBtn.addEventListener("click", function () {
+    const question = manualQuestionInput.value.trim();
+    if (!question) {
+      alert("Por favor, ingresa una pregunta antes de guardar.");
+      return;
+    }
+    manualSaveBtn.disabled = true;
+    manualSaveBtn.textContent = "Guardando...";
+
+    fetch("{% url 'audits:save_audit_question' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+      },
+      body: new URLSearchParams({
+        question_text: question,
+        requirement_id: form.querySelector("select[name='requirement']").value
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      manualSaveBtn.disabled = false;
+      manualSaveBtn.textContent = "Guardar pregunta";
+
+      if (data.success) {
+        alert("Pregunta guardada correctamente.");
+        manualQuestionInput.value = ""; // limpiar campo
+      } else {
+        alert("Error al guardar: " + (data.error || "desconocido"));
+      }
+    })
+    .catch(err => {
+      alert("Error inesperado: " + err);
+      manualSaveBtn.disabled = false;
+      manualSaveBtn.textContent = "Guardar pregunta";
+    });
+  });
+}
 
             })
             .catch(err => {
