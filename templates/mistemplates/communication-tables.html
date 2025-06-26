@@ -215,12 +215,7 @@
 
             <div class="modal-body">
                 {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                    {% for section, items in {
-                        "Patrones detectados": flow_ia_insights.patterns,
-                        "Debilidades o barreras de comunicación": flow_ia_insights.weaknesses,
-                        "Conflictos identificados": flow_ia_insights.conflicts,
-                        "Recomendaciones": flow_ia_insights.recommendations
-                    }.items %}
+                    {% for section, items in flow_ia_sections.items %}
                         <div class="mb-4">
                             <h6 class="fw-semibold">{{ section }}</h6>
                             {% if items %}
@@ -250,6 +245,7 @@
         </div>
     </div>
 </div>
+
 
 
 
