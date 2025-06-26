@@ -31,18 +31,19 @@
     <!-- Contenedor donde se mostrarán las sugerencias de IA -->
     <div id="iaAuditQuestionSuggestions" class="mt-4"></div>
 
-<div class="mb-3">
-  {{ form.question_text.label_tag }}
-  <div class="d-flex align-items-center">
-    {{ form.question_text }}
-    <button type="button" id="btnSaveManualQuestion" class="btn btn-outline-info ms-2">Guardar y agregar otra</button>
-  </div>
-  {% if form.question_text.errors %}
-    <div class="text-danger small">{{ form.question_text.errors }}</div>
-  {% endif %}
-</div>
+    <!-- Campo de texto de la pregunta -->
+    <div class="mb-3">
+      {{ form.question_text.label_tag }}
+      <div class="d-flex align-items-center">
+        {{ form.question_text }}
+        <button type="button" id="btnSaveManualQuestion" class="btn btn-outline-info ms-2">Guardar y agregar otra</button>
+      </div>
+      {% if form.question_text.errors %}
+        <div class="text-danger small">{{ form.question_text.errors }}</div>
+      {% endif %}
+    </div>
 
-    <!-- Botón para guardar -->
+    <!-- Botón para guardar completo -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
