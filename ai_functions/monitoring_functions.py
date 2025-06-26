@@ -1090,7 +1090,8 @@ def suggest_audit_fields(year: int, max_results=3):
     ]
     """
 
-    historical_headers = AuditProgramHeader.objects.exclude(year=year).order_by('-year')[:10]
+    historical_headers = AuditProgramHeader.objects.filter(year=year-1)
+
 
     if not historical_headers.exists():
         prompt = f"""
