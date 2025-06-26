@@ -22,11 +22,11 @@ from openai import OpenAIError
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-def suggest_risk_fields(area_name, activity_name, max_results=3):
+def suggest_risk_fields(area_name, process_name, max_results=3):
     """
     Sugiere automáticamente hasta 3 riesgos y sus consecuencias basándose en:
     - El área seleccionada
-    - El nombre de la actividad introducida
+    - El nombre del proceso introducido
     - Riesgos existentes en la base de datos
     - Criterios de ISO 9001:2015
 
@@ -37,7 +37,7 @@ def suggest_risk_fields(area_name, activity_name, max_results=3):
     ]
     """
 
-    historical_risks = RiskIdentification.objects.select_related('area').all()
+    historical_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
     if not historical_risks.exists():
         prompt = f"""
@@ -45,7 +45,7 @@ Eres un experto en gestión de calidad ISO 9001:2015 en industria aeroespacial.
 Sugiéreme TRES posibles riesgos identificados y sus consecuencias según:
 
 Área: {area_name}
-Actividad: {activity_name}
+Proceso: {process_name}
 
 Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
 
@@ -67,15 +67,15 @@ Ejemplo:
         """
     else:
         examples = []
-        for risk in historical_risks[:10]:  # máximo 10 ejemplos
+        for risk in historical_risks[:10]: 
             examples.append(
-                f"Área: {risk.area.name} | Actividad: {risk.activity_name} | "
+                f"Área: {risk.area.name} | Proceso: {risk.process.name} | "
                 f"Riesgo: {risk.identified_risk} | Consecuencias: {risk.consequences}"
             )
 
         prompt = f"""
 Eres un asistente experto en gestión de calidad bajo la norma ISO 9001:2015 aplicada al sector aeroespacial.
-Dado un área y una actividad, sugiere TRES riesgos identificados y sus consecuencias en orden de importancia (el más crítico primero),
+Dado un área y un proceso, sugiere TRES riesgos identificados y sus consecuencias en orden de importancia (el más crítico primero),
 basándote en:
 
 - Historial de riesgos reales
@@ -87,7 +87,7 @@ Histórico de riesgos:
 
 Nueva entrada:
 Área: {area_name}
-Actividad: {activity_name}
+Proceso: {process_name}
 
 Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
 
@@ -119,7 +119,6 @@ Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
-        # Limpiar posibles delimitadores markdown
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
 
         suggestions = json.loads(clean_content)
@@ -146,26 +145,27 @@ Ejemplo:
 
 
 
+
 def suggest_controls(risk_id, max_controls=3):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+            f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
 Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level}"""  # Aquí sin .name
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
 
@@ -181,7 +181,7 @@ Histórico:
 
 Nueva entrada:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
@@ -195,7 +195,7 @@ Eres un consultor experto en calidad ISO 9001:2015 para riesgos operativos.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
@@ -235,15 +235,16 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
     except Exception as e:
         return {"error": str(e)}
 
+
 def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
@@ -257,7 +258,7 @@ Controles de detección escritos por el usuario:
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+            f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
 Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
@@ -287,7 +288,7 @@ Eres un consultor en riesgos operativos ISO 9001:2015.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
@@ -330,6 +331,7 @@ Formato JSON:
         return {"error": "No se pudo interpretar la respuesta de IA."}
     except Exception as e:
         return {"error": str(e)}
+
 
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
@@ -435,19 +437,18 @@ def suggest_treatment_action(risk_id, max_results=1):
 
     Retorna una lista con diccionarios con la clave "treatment_action" con la acción sugerida.
     """
-
     try:
-        risk = RiskIdentification.objects.get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
         evaluations = risk.evaluations.all()
     except RiskIdentification.DoesNotExist:
         return []
 
     # Construir contexto histórico con ejemplos similares (máx 5)
     historical_treatments = []
-    for other_risk in RiskIdentification.objects.filter(area=risk.area).exclude(id=risk.id)[:5]:
+    for other_risk in RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]:
         for eval in other_risk.evaluations.all():
             historical_treatments.append(
-                f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk} | "
+                f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk} | "
                 f"Evaluación: Severidad {eval.severity}, Ocurrencia {eval.occurrence}, Detección {eval.detection}, "
                 f"Nivel de riesgo {eval.risk_level}."
             )
@@ -458,7 +459,7 @@ def suggest_treatment_action(risk_id, max_results=1):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences}\n"
     )
 
@@ -532,11 +533,12 @@ Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con 
         return []
 
 
+
 def suggest_contingency_actions(risk_id, max_results=3):
     """
     Sugiere acciones de contingencia para un riesgo específico, basándose en:
     - La identificación, evaluación y tratamiento del riesgo.
-    - Datos históricos de riesgos similares.
+    - Datos históricos de riesgos similares (misma área y proceso).
     - Norma ISO 9001:2015 (Cláusulas 6.1 y 8.4).
 
     Retorna una lista de diccionarios con la clave "contingency_action".
@@ -550,7 +552,7 @@ def suggest_contingency_actions(risk_id, max_results=3):
         return text
 
     try:
-        risk = RiskIdentification.objects.get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
         evaluations = risk.evaluations.all()
         treatments = risk.treatments.all()
     except RiskIdentification.DoesNotExist:
@@ -560,7 +562,7 @@ def suggest_contingency_actions(risk_id, max_results=3):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
     )
 
@@ -574,7 +576,9 @@ def suggest_contingency_actions(risk_id, max_results=3):
             f"  Nivel de riesgo: {ev.risk_level}\n"
             f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
             f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
-        ) or "No hay evaluaciones disponibles para este riesgo."
+        )
+    if not eval_info:
+        eval_info = "No hay evaluaciones disponibles para este riesgo."
 
     treatment_info = ""
     for i, tr in enumerate(treatments, 1):
@@ -589,14 +593,15 @@ def suggest_contingency_actions(risk_id, max_results=3):
 
     # Información histórica
     historical_context = ""
+    historical_risks = RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]
 
-    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+    for other_risk in historical_risks:
         other_evals = other_risk.evaluations.all()
         other_treatments = other_risk.treatments.all()
         other_plans = ContingencyPlan.objects.filter(risk=other_risk)
 
         historical_context += (
-            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
+            f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
         for ev in other_evals:
@@ -670,7 +675,7 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta IA:", content)
 
-        content = clean_json_markdown_block(content)  # Limpieza del bloque Markdown
+        content = clean_json_markdown_block(content)
 
         suggestions = json.loads(content)
 
@@ -686,6 +691,7 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
     except Exception as e:
         print("Error al generar sugerencia IA:", e)
         return []
+
 
 
 def suggest_reevaluation_rating_ranges(risk_id):
@@ -833,7 +839,7 @@ Responde únicamente en el siguiente formato JSON:
 
 def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
@@ -841,7 +847,7 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
     )
 
@@ -858,6 +864,8 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
             f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
         )
+    if not eval_info:
+        eval_info = "Sin evaluaciones"
 
     # Tratamientos del riesgo
     treatments = risk.treatments.all()
@@ -869,6 +877,8 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             f"  Fecha objetivo: {tr.target_date}\n"
             f"  Fecha real: {tr.actual_date}\n"
         )
+    if not treatment_info:
+        treatment_info = "Sin tratamientos"
 
     # Planes de contingencia
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
@@ -876,17 +886,21 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     for plan in contingency_plans:
         actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
+    if not contingency_info:
+        contingency_info = "Sin acciones registradas"
 
-    # Contexto histórico (otros riesgos similares)
+    # Contexto histórico filtrado por misma área y proceso
     historical_context = ""
-    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+    historical_risks = RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]
+
+    for other_risk in historical_risks:
         other_evals = other_risk.evaluations.all()
         other_treatments = other_risk.treatments.all()
         other_plans = ContingencyPlan.objects.filter(risk=other_risk)
         other_reevs = other_risk.reevaluations.all()
 
         historical_context += (
-            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
+            f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
         for ev in other_evals:
@@ -912,7 +926,7 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     if not historical_context:
         historical_context = "No hay registros históricos disponibles para comparar."
 
-    # Valores actuales del usuario
+    # Valores reevaluados del usuario
     user_values = f"""
 Valores reevaluados ingresados:
 - Severidad: {severity}
@@ -920,7 +934,7 @@ Valores reevaluados ingresados:
 - Detección: {detection}
 """
 
-    # Construcción del prompt para IA
+    # Prompt para la IA
     prompt = f"""
 Eres un analista experto en riesgos según la norma ISO 9001:2015.
 
@@ -930,13 +944,13 @@ Información del riesgo:
 {risk_info}
 
 Evaluaciones previas:
-{eval_info or "Sin evaluaciones"}
+{eval_info}
 
 Tratamientos aplicados:
-{treatment_info or "Sin tratamientos"}
+{treatment_info}
 
 Acciones de contingencia:
-{contingency_info or "Sin acciones registradas"}
+{contingency_info}
 
 Contexto histórico de otros riesgos:
 {historical_context}
@@ -967,6 +981,7 @@ Responde en formato JSON como este:
 
     except Exception as e:
         return {"error": str(e)}
+
 
 
 
