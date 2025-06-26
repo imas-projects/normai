@@ -1183,68 +1183,23 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
       const container = document.getElementById("auditedEvaluationQuestionModalFormContent");
       container.innerHTML = html;
 
-      // Esperar el próximo frame para asegurar que el DOM se ha actualizado
-      requestAnimationFrame(() => {
-        const form = document.getElementById("auditedEvaluationForm");
+      setTimeout(() => {
         const suggestBtn = document.getElementById("btnSuggestAuditQuestions");
         const suggestionsDiv = document.getElementById("iaAuditQuestionSuggestions");
-        const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
-        const manualQuestionInput = form?.querySelector("input[name='question_text']");
 
-        if (!form || !suggestBtn || !suggestionsDiv || !manualSaveBtn || !manualQuestionInput) {
-          console.warn("No se encontraron todos los elementos necesarios del formulario.");
-          return;
-        }
+        if (!suggestBtn || !suggestionsDiv) return;
 
-        // Evitar múltiples listeners al reemplazar el botón por uno clonado
-        const newManualSaveBtn = manualSaveBtn.cloneNode(true);
-        manualSaveBtn.replaceWith(newManualSaveBtn);
+        suggestBtn.setAttribute("type", "button");
+        suggestionsDiv.style.display = "none";
+        suggestionsDiv.innerHTML = "";
 
-        newManualSaveBtn.addEventListener("click", function () {
-          const question = manualQuestionInput.value.trim();
-          const requirementId = form.querySelector("select[name='requirement']").value;
+        const form = document.getElementById("auditedEvaluationForm");
+        if (!form) return;
 
-          if (!question) {
-            alert("Por favor, ingresa una pregunta antes de guardar.");
-            return;
-          }
-
-          newManualSaveBtn.disabled = true;
-          newManualSaveBtn.textContent = "Guardando...";
-
-          fetch("{% url 'audits:save_audit_question' %}", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-            },
-            body: new URLSearchParams({
-              question_text: question,
-              requirement_id: requirementId
-            })
-          })
-          .then(res => res.json())
-          .then(data => {
-            newManualSaveBtn.disabled = false;
-            newManualSaveBtn.textContent = "Guardar y agregar otra";
-
-            if (data.success) {
-              alert("Pregunta guardada correctamente.");
-              manualQuestionInput.value = "";
-            } else {
-              alert("Error al guardar: " + (data.error || "desconocido"));
-            }
-          })
-          .catch(err => {
-            alert("Error inesperado: " + err);
-            newManualSaveBtn.disabled = false;
-            newManualSaveBtn.textContent = "Guardar y agregar otra";
-          });
-        });
-
-        // --- BOTÓN "Sugerir preguntas IA" ---
+        // Botón de sugerencias IA
         suggestBtn.addEventListener("click", function () {
-          const requirementId = form.querySelector("select[name='requirement']").value;
+          const requirementSelect = form.querySelector("select[name='requirement']");
+          const requirementId = requirementSelect?.value;
 
           if (!requirementId) {
             alert("Por favor, selecciona un requisito antes de solicitar sugerencias.");
@@ -1257,43 +1212,42 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
           suggestionsDiv.style.display = "block";
           suggestionsDiv.innerHTML = "";
 
-          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}`)
+          fetch(/audits/suggest-audit-questions/?requirement_id=${requirementId})
             .then(res => res.json())
             .then(data => {
               suggestBtn.disabled = false;
               suggestBtn.textContent = originalText;
 
               if (data.error) {
-                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                suggestionsDiv.innerHTML = <div class="text-danger">${data.error}</div>;
                 return;
               }
 
               const questions = data.questions || [];
               if (questions.length === 0) {
-                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                suggestionsDiv.innerHTML = <div class="text-warning">No se encontraron sugerencias.</div>;
                 return;
               }
 
-              suggestionsDiv.innerHTML = `
+              suggestionsDiv.innerHTML = 
                 <strong>Sugerencias IA:</strong>
                 <div id="suggestedAuditQuestionList" class="mt-2">
-                  ${questions.map(q => `
+                  ${questions.map((q, i) => 
                     <div class="card mt-2 shadow-sm">
                       <div class="card-body d-flex justify-content-between align-items-center">
                         <p class="mb-0">${q}</p>
                         <button type="button" class="btn btn-sm btn-outline-success selectAuditQuestionBtn" data-question="${encodeURIComponent(q)}">Seleccionar</button>
                       </div>
                     </div>
-                  `).join("")}
+                  ).join("")}
                 </div>
-              `;
+              ;
 
-              // Añadir funcionalidad a botones "Seleccionar"
+              // Funcionalidad botones seleccionar
               document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
                 button.addEventListener("click", function () {
                   const question = decodeURIComponent(this.dataset.question);
                   const btn = this;
-
                   btn.disabled = true;
                   btn.textContent = "Guardando...";
 
@@ -1301,11 +1255,11 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                     method: "POST",
                     headers: {
                       "Content-Type": "application/x-www-form-urlencoded",
-                      "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
                     },
                     body: new URLSearchParams({
                       question_text: question,
-                      requirement_id: requirementId
+                      requirement_id: form.querySelector("select[name='requirement']").value
                     })
                   })
                   .then(res => res.json())
@@ -1326,15 +1280,21 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                   });
                 });
               });
+
             })
             .catch(err => {
               suggestBtn.disabled = false;
               suggestBtn.textContent = originalText;
-              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+              suggestionsDiv.innerHTML = <div class="text-danger">Error al obtener sugerencias: ${err}</div>;
             });
         });
 
-        // --- Envío del formulario principal ---
+        // Mostrar modal
+        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Capturar submit del formulario para guardar y refrescar
         form.addEventListener("submit", function (event) {
           event.preventDefault();
 
@@ -1346,9 +1306,11 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
               "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
             }
           })
-          .then(res => res.text())
+          .then(res => {
+            if (!res.ok && res.status !== 302) throw new Error(HTTP error! status: ${res.status});
+            return res.text();
+          })
           .then(() => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById("addAuditedEvaluationQuestionModal"));
             modal.hide();
             window.location.href = "http://34.254.185.243:8000/audits/audits/";
           })
@@ -1357,13 +1319,10 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
           });
         });
 
-        // --- Mostrar modal ---
-        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      });
+      }, 100);
     });
 });
+
 
 
 
