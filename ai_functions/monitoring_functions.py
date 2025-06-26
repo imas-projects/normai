@@ -999,7 +999,9 @@ def generate_communication_flow_map(table_id):
             freq = msg.periodicity.name
 
             if emiter and receiver:
-                ia_examples.append(f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}")
+                ia_examples.append(
+                    f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}"
+                )
 
         prompt = f"""
 Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1, 5.3 y relacionadas).
@@ -1013,15 +1015,13 @@ Tu tarea:
 3. Detecta posibles conflictos, duplicidades o malentendidos frecuentes.
 4. Da una recomendación de mejora concreta según la norma ISO.
 
-Por favor, responde exclusivamente con un JSON que contenga las claves: "patterns", "weaknesses", "conflicts" y "recommendations". Cada una debe ser una lista de strings.
-
-Ejemplo de respuesta JSON:
-{
-  "patterns": ["Patrón 1"],
-  "weaknesses": ["Debilidad 1"],
-  "conflicts": ["Conflicto 1"],
-  "recommendations": ["Recomendación 1"]
-}
+Responde estrictamente con un JSON como este:
+{{
+  "patterns": ["Ejemplo de patrón"],
+  "weaknesses": ["Ejemplo de debilidad"],
+  "conflicts": ["Ejemplo de conflicto"],
+  "recommendations": ["Ejemplo de recomendación"]
+}}
 """
 
         response = client.chat.completions.create(
@@ -1037,6 +1037,7 @@ Ejemplo de respuesta JSON:
         try:
             insights_json = json.loads(insights_clean)
         except json.JSONDecodeError:
+            print("⚠️ Fallo de parsing JSON, respuesta IA:", insights_raw)
             insights_json = {
                 "patterns": [],
                 "weaknesses": [],
