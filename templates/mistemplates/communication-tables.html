@@ -207,67 +207,35 @@
 <!-- Modal Mapa de Comunicación IA -->
 <div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-white text-dark">
+        <div class="modal-content bg-white text-dark shadow-sm">
             <div class="modal-header">
-                <h5 class="modal-title" id="flowMapModalLabel{{ table.id }}">Mapa IA de Comunicación</h5>
+                <h5 class="modal-title" id="flowMapModalLabel{{ table.id }}">Informe IA de Comunicación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
                 {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                    <div class="alert alert-info">
-    <strong>Hallazgos IA:</strong>
-
-    {% if flow_ia_insights.patterns %}
-        <h6>Patrones detectados:</h6>
-        <ul>
-            {% for p in flow_ia_insights.patterns %}
-                <li>{{ p }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    {% if flow_ia_insights.weaknesses %}
-        <h6>Debilidades o barreras de comunicación:</h6>
-        <ul>
-            {% for w in flow_ia_insights.weaknesses %}
-                <li>{{ w }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    {% if flow_ia_insights.recommendations %}
-        <h6>Recomendaciones:</h6>
-        <ul>
-            {% for r in flow_ia_insights.recommendations %}
-                <li>{{ r }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-</div>
-
-
-                    <div id="graph-container-{{ table.id }}">
-                        <h6>Nodos:</h6>
-                        <ul>
-                            {% for node in flow_nodes %}
-                                <li>{{ node }}</li>
-                            {% endfor %}
-                        </ul>
-
-                        <h6>Relaciones:</h6>
-                        <ul>
-                            {% for edge in flow_edges %}
-                                <li>
-                                    De <strong>{{ edge.from }}</strong> a <strong>{{ edge.to }}</strong><br>
-                                    Mensaje: <em>{{ edge.label }}</em><br>
-                                    Frecuencia: <em>{{ edge.frequency }}</em>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    {% for section, items in {
+                        "Patrones detectados": flow_ia_insights.patterns,
+                        "Debilidades o barreras de comunicación": flow_ia_insights.weaknesses,
+                        "Conflictos identificados": flow_ia_insights.conflicts,
+                        "Recomendaciones": flow_ia_insights.recommendations
+                    }.items %}
+                        <div class="mb-4">
+                            <h6 class="fw-semibold">{{ section }}</h6>
+                            {% if items %}
+                                <ul class="ps-3">
+                                    {% for item in items %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted fst-italic">No se encontraron datos en esta sección.</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
                 {% else %}
-                    <p class="text-muted">Haz clic en el botón para generar el mapa IA.</p>
+                    <p class="text-muted">Haz clic en el botón para generar el informe IA.</p>
                 {% endif %}
             </div>
 
@@ -275,13 +243,14 @@
                 <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
                     {% csrf_token %}
                     <input type="hidden" name="table_id" value="{{ table.id }}">
-                    <button type="submit" class="btn btn-info" id="generateFlowMapBtn">Generar Mapa IA</button>
+                    <button type="submit" class="btn btn-primary" id="generateFlowMapBtn">Generar Informe IA</button>
                 </form>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
+
 
 
 
@@ -961,7 +930,8 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     // Mostrar modal si corresponde
-    const flowModal = document.getElementById('flowMapModal{{ table_id }}');
+    const modalId = 'flowMapModal{{ table_id }}';
+    const flowModal = document.getElementById(modalId);
     {% if open_flow_modal %}
         if (flowModal) {
             const modalInstance = new bootstrap.Modal(flowModal);
@@ -969,18 +939,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     {% endif %}
 
-    // Capturar el botón y el formulario
-    const generateBtn = document.getElementById('generateFlowMapBtn');
-    const form = generateBtn ? generateBtn.closest('form') : null;
-
-    if (form && generateBtn) {
-        form.addEventListener('submit', function () {
-            // Deshabilitar botón y cambiar texto para mostrar carga
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Obteniendo sugerencias...';
-        });
-    }
+    // Comportamiento del botón de generación
+    const allGenerateBtns = document.querySelectorAll('#generateFlowMapBtn');
+    allGenerateBtns.forEach(btn => {
+        const form = btn.closest('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                btn.disabled = true;
+                btn.textContent = 'Obteniendo análisis...';
+            });
+        }
+    });
 });
+
 
 
     </script>
