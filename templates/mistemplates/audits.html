@@ -808,26 +808,26 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
             suggestionsDiv.innerHTML = "";
             suggestionsDiv.style.display = "block";
 
-            fetch(`/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value}`)
+            fetch(/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value})
               .then((response) => response.json())
               .then((data) => {
                 btnSuggestIA.disabled = false;
                 btnSuggestIA.textContent = originalText;
 
                 if (data.error) {
-                  suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                  suggestionsDiv.innerHTML = <div class="text-danger">Error: ${data.error}</div>;
                   return;
                 }
 
                 if (!data.suggestions || data.suggestions.length === 0) {
-                  suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                  suggestionsDiv.innerHTML = <div class="text-warning">No se encontraron sugerencias.</div>;
                   return;
                 }
 
-                suggestionsDiv.innerHTML = `
+                suggestionsDiv.innerHTML = 
                   <strong>Sugerencias de la IA:</strong>
                   <div id="suggestedAuditorsList" class="mt-2">
-                    ${data.suggestions.map((s, i) => `
+                    ${data.suggestions.map((s, i) => 
                       <div class="card mt-2 shadow-sm">
                         <div class="card-body">
                           <h6 class="card-title">Sugerencia ${i + 1}</h6>
@@ -836,12 +836,11 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                           <button type="button" class="btn btn-sm btn-outline-success selectAuditorBtn" data-idx="${i}">Seleccionar</button>
                         </div>
                       </div>
-                    `).join("")}
+                    ).join("")}
                   </div>
-                `;
+                ;
 
-                // Delegación de evento para evitar duplicados
-                suggestionsDiv.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
+                document.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
                   btn.addEventListener("click", function () {
                     const idx = parseInt(this.dataset.idx);
                     const s = data.suggestions[idx];
@@ -893,65 +892,11 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
               .catch((err) => {
                 btnSuggestIA.disabled = false;
                 btnSuggestIA.textContent = originalText;
-                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+                suggestionsDiv.innerHTML = <div class="text-danger">Error al obtener sugerencias: ${err}</div>;
               });
           });
         } else {
           console.warn("btnSuggestAuditorIA no encontrado");
-        }
-
-        // --- Aquí agrego la lógica para "Guardar y agregar otra" sin interferir ---
-        const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
-        const form = document.getElementById("auditedEvaluationForm");
-        if (manualSaveBtn && form) {
-          // Quitamos listeners previos para evitar múltiples asignaciones
-          manualSaveBtn.replaceWith(manualSaveBtn.cloneNode(true));
-          const newBtn = document.getElementById("btnSaveManualQuestion");
-
-          newBtn.addEventListener("click", function () {
-            const questionInput = form.querySelector("input[name='question_text']");
-            const requirementSelect = form.querySelector("select[name='requirement']");
-
-            const question = questionInput ? questionInput.value.trim() : "";
-            const requirementId = requirementSelect ? requirementSelect.value : "";
-
-            if (!question) {
-              alert("Por favor, ingresa una pregunta antes de guardar.");
-              return;
-            }
-
-            newBtn.disabled = true;
-            newBtn.textContent = "Guardando...";
-
-            fetch("{% url 'audits:save_audit_question' %}", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-              },
-              body: new URLSearchParams({
-                question_text: question,
-                requirement_id: requirementId
-              })
-            })
-              .then(res => res.json())
-              .then(data => {
-                newBtn.disabled = false;
-                newBtn.textContent = "Guardar y agregar otra";
-
-                if (data.success) {
-                  alert("Pregunta guardada correctamente.");
-                  if (questionInput) questionInput.value = "";
-                } else {
-                  alert("Error al guardar: " + (data.error || "desconocido"));
-                }
-              })
-              .catch(err => {
-                alert("Error inesperado: " + err);
-                newBtn.disabled = false;
-                newBtn.textContent = "Guardar y agregar otra";
-              });
-          });
         }
       });
     });
@@ -1238,59 +1183,64 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
       const container = document.getElementById("auditedEvaluationQuestionModalFormContent");
       container.innerHTML = html;
 
-      setTimeout(() => {
+      // Esperar el próximo frame para asegurar que el DOM se ha actualizado
+      requestAnimationFrame(() => {
         const form = document.getElementById("auditedEvaluationForm");
         const suggestBtn = document.getElementById("btnSuggestAuditQuestions");
         const suggestionsDiv = document.getElementById("iaAuditQuestionSuggestions");
         const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
-        const manualQuestionInput = form.querySelector("input[name='question_text']");
+        const manualQuestionInput = form?.querySelector("input[name='question_text']");
 
-        if (!form || !suggestBtn || !suggestionsDiv) return;
-
-        // --- BOTÓN "Guardar y agregar otra" ---
-        if (manualSaveBtn && manualQuestionInput) {
-          manualSaveBtn.addEventListener("click", function () {
-            const question = manualQuestionInput.value.trim();
-            const requirementId = form.querySelector("select[name='requirement']").value;
-
-            if (!question) {
-              alert("Por favor, ingresa una pregunta antes de guardar.");
-              return;
-            }
-
-            manualSaveBtn.disabled = true;
-            manualSaveBtn.textContent = "Guardando...";
-
-            fetch("{% url 'audits:save_audit_question' %}", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-              },
-              body: new URLSearchParams({
-                question_text: question,
-                requirement_id: requirementId
-              })
-            })
-            .then(res => res.json())
-            .then(data => {
-              manualSaveBtn.disabled = false;
-              manualSaveBtn.textContent = "Guardar y agregar otra";
-
-              if (data.success) {
-                alert("Pregunta guardada correctamente.");
-                manualQuestionInput.value = "";
-              } else {
-                alert("Error al guardar: " + (data.error || "desconocido"));
-              }
-            })
-            .catch(err => {
-              alert("Error inesperado: " + err);
-              manualSaveBtn.disabled = false;
-              manualSaveBtn.textContent = "Guardar y agregar otra";
-            });
-          });
+        if (!form || !suggestBtn || !suggestionsDiv || !manualSaveBtn || !manualQuestionInput) {
+          console.warn("No se encontraron todos los elementos necesarios del formulario.");
+          return;
         }
+
+        // Evitar múltiples listeners al reemplazar el botón por uno clonado
+        const newManualSaveBtn = manualSaveBtn.cloneNode(true);
+        manualSaveBtn.replaceWith(newManualSaveBtn);
+
+        newManualSaveBtn.addEventListener("click", function () {
+          const question = manualQuestionInput.value.trim();
+          const requirementId = form.querySelector("select[name='requirement']").value;
+
+          if (!question) {
+            alert("Por favor, ingresa una pregunta antes de guardar.");
+            return;
+          }
+
+          newManualSaveBtn.disabled = true;
+          newManualSaveBtn.textContent = "Guardando...";
+
+          fetch("{% url 'audits:save_audit_question' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            },
+            body: new URLSearchParams({
+              question_text: question,
+              requirement_id: requirementId
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            newManualSaveBtn.disabled = false;
+            newManualSaveBtn.textContent = "Guardar y agregar otra";
+
+            if (data.success) {
+              alert("Pregunta guardada correctamente.");
+              manualQuestionInput.value = "";
+            } else {
+              alert("Error al guardar: " + (data.error || "desconocido"));
+            }
+          })
+          .catch(err => {
+            alert("Error inesperado: " + err);
+            newManualSaveBtn.disabled = false;
+            newManualSaveBtn.textContent = "Guardar y agregar otra";
+          });
+        });
 
         // --- BOTÓN "Sugerir preguntas IA" ---
         suggestBtn.addEventListener("click", function () {
@@ -1411,10 +1361,10 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
         const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
-
-      }, 100);
+      });
     });
 });
+
 
 
 
