@@ -840,7 +840,8 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                   </div>
                 `;
 
-                document.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
+                // Delegación de evento para evitar duplicados
+                suggestionsDiv.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
                   btn.addEventListener("click", function () {
                     const idx = parseInt(this.dataset.idx);
                     const s = data.suggestions[idx];
@@ -897,6 +898,60 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
           });
         } else {
           console.warn("btnSuggestAuditorIA no encontrado");
+        }
+
+        // --- Aquí agrego la lógica para "Guardar y agregar otra" sin interferir ---
+        const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
+        const form = document.getElementById("auditedEvaluationForm");
+        if (manualSaveBtn && form) {
+          // Quitamos listeners previos para evitar múltiples asignaciones
+          manualSaveBtn.replaceWith(manualSaveBtn.cloneNode(true));
+          const newBtn = document.getElementById("btnSaveManualQuestion");
+
+          newBtn.addEventListener("click", function () {
+            const questionInput = form.querySelector("input[name='question_text']");
+            const requirementSelect = form.querySelector("select[name='requirement']");
+
+            const question = questionInput ? questionInput.value.trim() : "";
+            const requirementId = requirementSelect ? requirementSelect.value : "";
+
+            if (!question) {
+              alert("Por favor, ingresa una pregunta antes de guardar.");
+              return;
+            }
+
+            newBtn.disabled = true;
+            newBtn.textContent = "Guardando...";
+
+            fetch("{% url 'audits:save_audit_question' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+              },
+              body: new URLSearchParams({
+                question_text: question,
+                requirement_id: requirementId
+              })
+            })
+              .then(res => res.json())
+              .then(data => {
+                newBtn.disabled = false;
+                newBtn.textContent = "Guardar y agregar otra";
+
+                if (data.success) {
+                  alert("Pregunta guardada correctamente.");
+                  if (questionInput) questionInput.value = "";
+                } else {
+                  alert("Error al guardar: " + (data.error || "desconocido"));
+                }
+              })
+              .catch(err => {
+                alert("Error inesperado: " + err);
+                newBtn.disabled = false;
+                newBtn.textContent = "Guardar y agregar otra";
+              });
+          });
         }
       });
     });
