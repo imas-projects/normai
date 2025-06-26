@@ -276,7 +276,7 @@ class AuditorEvaluation(models.Model):
 
 class LeadAuditorEvaluationQuestion(models.Model):
     question_text = models.TextField(verbose_name="Question Text")
-    type = models.TextField(choices=[('AUDITADO', 'AUDITADO'), ('AUDITOR_LIDER', 'AUDITOR_LIDER')], verbose_name="Type")
+    type = models.TextField(choices=[('AUDITADO', 'Auditado'), ('AUDITOR_LIDER', 'Auditor Lider')], verbose_name="Type")
 
     def __str__(self):
         return self.question_text
@@ -311,9 +311,9 @@ class Findings(models.Model):
         max_length=20,
         verbose_name="Finding Classification",
         choices=[
-            ('NC_MAYOR', 'NC_MAYOR'),
-            ('NC_MENOR', 'NC_MENOR'),
-            ('OPORTUNIDAD_MEJORA', 'OPORTUNIDAD_MEJORA'),
+            ('NC_MAYOR', 'No Conformidad Mayor'),
+            ('NC_MENOR', 'No Conformidad Menor'),
+            ('OPORTUNIDAD_MEJORA', 'Oportunidad de mejora'),
         ]
     )
 
