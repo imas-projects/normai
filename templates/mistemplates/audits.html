@@ -1293,6 +1293,7 @@ if (manualSaveBtn && manualQuestionInput) {
       alert("Por favor, ingresa una pregunta antes de guardar.");
       return;
     }
+
     manualSaveBtn.disabled = true;
     manualSaveBtn.textContent = "Guardando...";
 
@@ -1310,11 +1311,11 @@ if (manualSaveBtn && manualQuestionInput) {
     .then(res => res.json())
     .then(data => {
       manualSaveBtn.disabled = false;
-      manualSaveBtn.textContent = "Guardar pregunta";
+      manualSaveBtn.textContent = "Seguir haciendo preguntas";
 
       if (data.success) {
         alert("Pregunta guardada correctamente.");
-        manualQuestionInput.value = ""; // limpiar campo
+        manualQuestionInput.value = ""; // Limpiar campo
       } else {
         alert("Error al guardar: " + (data.error || "desconocido"));
       }
@@ -1322,10 +1323,11 @@ if (manualSaveBtn && manualQuestionInput) {
     .catch(err => {
       alert("Error inesperado: " + err);
       manualSaveBtn.disabled = false;
-      manualSaveBtn.textContent = "Guardar pregunta";
+      manualSaveBtn.textContent = "Seguir haciendo preguntas";
     });
   });
 }
+
 
             })
             .catch(err => {
