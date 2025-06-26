@@ -1184,25 +1184,62 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
       container.innerHTML = html;
 
       setTimeout(() => {
+        const form = document.getElementById("auditedEvaluationForm");
         const suggestBtn = document.getElementById("btnSuggestAuditQuestions");
         const suggestionsDiv = document.getElementById("iaAuditQuestionSuggestions");
-
-        if (!suggestBtn || !suggestionsDiv) return;
-
-        suggestBtn.setAttribute("type", "button");
-        suggestionsDiv.style.display = "none";
-        suggestionsDiv.innerHTML = "";
-
-        const form = document.getElementById("auditedEvaluationForm");
-        if (!form) return;
         const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
         const manualQuestionInput = form.querySelector("input[name='question_text']");
 
+        if (!form || !suggestBtn || !suggestionsDiv) return;
 
-        // Botón de sugerencias IA
+        // --- BOTÓN "Guardar y agregar otra" ---
+        if (manualSaveBtn && manualQuestionInput) {
+          manualSaveBtn.addEventListener("click", function () {
+            const question = manualQuestionInput.value.trim();
+            const requirementId = form.querySelector("select[name='requirement']").value;
+
+            if (!question) {
+              alert("Por favor, ingresa una pregunta antes de guardar.");
+              return;
+            }
+
+            manualSaveBtn.disabled = true;
+            manualSaveBtn.textContent = "Guardando...";
+
+            fetch("{% url 'audits:save_audit_question' %}", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+              },
+              body: new URLSearchParams({
+                question_text: question,
+                requirement_id: requirementId
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              manualSaveBtn.disabled = false;
+              manualSaveBtn.textContent = "Guardar y agregar otra";
+
+              if (data.success) {
+                alert("Pregunta guardada correctamente.");
+                manualQuestionInput.value = "";
+              } else {
+                alert("Error al guardar: " + (data.error || "desconocido"));
+              }
+            })
+            .catch(err => {
+              alert("Error inesperado: " + err);
+              manualSaveBtn.disabled = false;
+              manualSaveBtn.textContent = "Guardar y agregar otra";
+            });
+          });
+        }
+
+        // --- BOTÓN "Sugerir preguntas IA" ---
         suggestBtn.addEventListener("click", function () {
-          const requirementSelect = form.querySelector("select[name='requirement']");
-          const requirementId = requirementSelect?.value;
+          const requirementId = form.querySelector("select[name='requirement']").value;
 
           if (!requirementId) {
             alert("Por favor, selecciona un requisito antes de solicitar sugerencias.");
@@ -1235,7 +1272,7 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
               suggestionsDiv.innerHTML = `
                 <strong>Sugerencias IA:</strong>
                 <div id="suggestedAuditQuestionList" class="mt-2">
-                  ${questions.map((q, i) => `
+                  ${questions.map(q => `
                     <div class="card mt-2 shadow-sm">
                       <div class="card-body d-flex justify-content-between align-items-center">
                         <p class="mb-0">${q}</p>
@@ -1246,11 +1283,12 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                 </div>
               `;
 
-              // Funcionalidad botones seleccionar
+              // Añadir funcionalidad a botones "Seleccionar"
               document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
                 button.addEventListener("click", function () {
                   const question = decodeURIComponent(this.dataset.question);
                   const btn = this;
+
                   btn.disabled = true;
                   btn.textContent = "Guardando...";
 
@@ -1258,11 +1296,11 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                     method: "POST",
                     headers: {
                       "Content-Type": "application/x-www-form-urlencoded",
-                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                      "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
                     },
                     body: new URLSearchParams({
                       question_text: question,
-                      requirement_id: form.querySelector("select[name='requirement']").value
+                      requirement_id: requirementId
                     })
                   })
                   .then(res => res.json())
@@ -1283,52 +1321,6 @@ document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListene
                   });
                 });
               });
-const manualSaveBtn = document.getElementById("btnSaveManualQuestion");
-const manualQuestionInput = form.querySelector("input[name='question_text']"); // o el selector real del campo
-
-if (manualSaveBtn && manualQuestionInput) {
-  manualSaveBtn.addEventListener("click", function () {
-    const question = manualQuestionInput.value.trim();
-    if (!question) {
-      alert("Por favor, ingresa una pregunta antes de guardar.");
-      return;
-    }
-
-    manualSaveBtn.disabled = true;
-    manualSaveBtn.textContent = "Guardando...";
-
-    fetch("{% url 'audits:save_audit_question' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
-      },
-      body: new URLSearchParams({
-        question_text: question,
-        requirement_id: form.querySelector("select[name='requirement']").value
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      manualSaveBtn.disabled = false;
-      manualSaveBtn.textContent = "Seguir haciendo preguntas";
-
-      if (data.success) {
-        alert("Pregunta guardada correctamente.");
-        manualQuestionInput.value = ""; // Limpiar campo
-      } else {
-        alert("Error al guardar: " + (data.error || "desconocido"));
-      }
-    })
-    .catch(err => {
-      alert("Error inesperado: " + err);
-      manualSaveBtn.disabled = false;
-      manualSaveBtn.textContent = "Seguir haciendo preguntas";
-    });
-  });
-}
-
-
             })
             .catch(err => {
               suggestBtn.disabled = false;
@@ -1337,12 +1329,7 @@ if (manualSaveBtn && manualQuestionInput) {
             });
         });
 
-        // Mostrar modal
-        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-
-        // Capturar submit del formulario para guardar y refrescar
+        // --- Envío del formulario principal ---
         form.addEventListener("submit", function (event) {
           event.preventDefault();
 
@@ -1354,11 +1341,9 @@ if (manualSaveBtn && manualQuestionInput) {
               "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
             }
           })
-          .then(res => {
-            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
-            return res.text();
-          })
+          .then(res => res.text())
           .then(() => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById("addAuditedEvaluationQuestionModal"));
             modal.hide();
             window.location.href = "http://34.254.185.243:8000/audits/audits/";
           })
@@ -1366,6 +1351,11 @@ if (manualSaveBtn && manualQuestionInput) {
             alert("Error al guardar: " + err);
           });
         });
+
+        // --- Mostrar modal ---
+        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
 
       }, 100);
     });
