@@ -335,13 +335,16 @@ Formato JSON:
 
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
+    # Asumo que risk.process es ForeignKey, ajusta si es texto simple
+    process_value = getattr(risk.process, "name", risk.process)
+
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
@@ -360,7 +363,7 @@ Detección: {detection}
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
+            f"""Área: {eval.risk.area.name} | Actividad: {getattr(eval.risk.process, 'name', eval.risk.process)} | 
 Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
@@ -387,7 +390,7 @@ Eres un experto consultor en evaluación de riesgos ISO 9001:2015.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Actividad: {process_value}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
 
@@ -408,13 +411,11 @@ Formato JSON:
         )
 
         raw_response = response.choices[0].message.content.strip()
-        print("Respuesta IA cruda:", raw_response)  # Útil para debug
+        print("Respuesta IA cruda:", raw_response)  
 
         try:
-            # Primero intenta decodificar directamente
             data = json.loads(raw_response)
         except json.JSONDecodeError:
-            # Si falla, intenta extraer el JSON del texto completo
             json_text_match = re.search(r'\{[^}]*risk_level[^}]*\}', raw_response, re.DOTALL)
             if not json_text_match:
                 return {"error": f"No se encontró un objeto JSON válido en la respuesta: {raw_response}"}
@@ -427,6 +428,7 @@ Formato JSON:
 
     except Exception as e:
         return {"error": str(e)}
+
 
 
 def suggest_treatment_action(risk_id, max_results=1):
@@ -696,15 +698,18 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
 
 def suggest_reevaluation_rating_ranges(risk_id):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
+
+    # Obtener nombre de proceso o valor directamente
+    process_value = getattr(risk.process, "name", risk.process)
 
     # Información base del riesgo
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Actividad: {process_value}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
     )
 
@@ -836,6 +841,7 @@ Responde únicamente en el siguiente formato JSON:
 
     except Exception as e:
         return {"error": str(e)}
+
 
 def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     try:
