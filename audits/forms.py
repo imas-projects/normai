@@ -32,12 +32,13 @@ class AnnualPlanForm(forms.ModelForm):
     class Meta:
         model = AnnualPlan
         fields = [
-            'annual_program', 'lider', 'audit_opening_date', 'audit_opening_time',
-            'audit_opening_location', 'audit_closing_date', 'audit_closing_time', 'audit_closing_location'
+            'annual_program', 
+            'audit_opening_date', 'audit_opening_time',
+            'audit_opening_location', 'audit_closing_date',
+            'audit_closing_time', 'audit_closing_location'
         ]
         widgets = {
             'annual_program': forms.Select(attrs={'class': 'form-control'}),
-            'lider': forms.Select(attrs={'class': 'form-control'}),
             'audit_opening_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'audit_opening_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'audit_opening_location': forms.TextInput(attrs={'class': 'form-control'}),
@@ -45,6 +46,7 @@ class AnnualPlanForm(forms.ModelForm):
             'audit_closing_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'audit_closing_location': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 
 class AnnualPlanAuditorForm(forms.ModelForm):
     class Meta:
