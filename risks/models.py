@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from company.models import Area  
+from company.models import Area, Position
 from django.core.validators import RegexValidator
 from multiselectfield import MultiSelectField
 from processes.models import Process
@@ -70,7 +70,7 @@ class RiskEvaluation(models.Model):
 class RiskTreatment(models.Model):
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='treatments')
     treatment_action = models.TextField()
-    responsible = models.ManyToManyField(User)
+    responsible = models.ManyToManyField(Position)  # Cambio aquí
     target_date = models.DateField()
     actual_date = models.DateField()
 
@@ -84,19 +84,22 @@ class RiskTreatment(models.Model):
         return {
             "treatment_action": self.treatment_action,
             "responsible": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.responsible.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.responsible.all()],
             "target_date": self.target_date,
             "actual_date": self.actual_date,
         }
 
 
+
 # Tabla de planes de contingencia
-class ContingencyPlan(models.Model):
+ContingencyPlan(models.Model):
     ACTION_CHOICES = [
         ("N/A", "N/A"),
         ("ALT_PROCEDURES", "Establecer procedimientos alternativos"),
@@ -113,8 +116,8 @@ class ContingencyPlan(models.Model):
 
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='actions')
     contingency_actions = MultiSelectField(choices=ACTION_CHOICES)
-    responsible = models.ManyToManyField(User, related_name="responsible_for_contingency")
-    communicate_to = models.ManyToManyField(User, related_name="communicate_to_contingency")
+    responsible = models.ManyToManyField(Position, related_name="responsible_for_contingency") 
+    communicate_to = models.ManyToManyField(Position, related_name="communicate_to_contingency") 
 
     class Meta:
         db_table = 'tb_risks_contingency_plan'
@@ -127,19 +130,23 @@ class ContingencyPlan(models.Model):
         return {
             "contingency_actions": [dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions],
             "responsible": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.responsible.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.responsible.all()],
             "communicate_to": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.communicate_to.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.communicate_to.all()],
         }
 
 
