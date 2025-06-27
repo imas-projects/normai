@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from company.models import Position
 from .models import (
     RiskIdentification, RiskEvaluation, RiskTreatment,
     ContingencyPlan, Reevaluation
@@ -40,9 +41,9 @@ class RiskEvaluationForm(forms.ModelForm):
 
 class RiskTreatmentForm(forms.ModelForm):
     responsible = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Responsible"
+        label="Responsible Position"
     )
 
     class Meta:
@@ -64,15 +65,15 @@ class ContingencyPlanForm(forms.ModelForm):
     )
 
     responsible = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Responsible"
+        label="Responsible Position(s)"
     )
 
     communicate_to = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Communicate To"
+        label="Communicate To Position(s)"
     )
 
     class Meta:
