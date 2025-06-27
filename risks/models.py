@@ -99,7 +99,7 @@ class RiskTreatment(models.Model):
 
 
 # Tabla de planes de contingencia
-ContingencyPlan(models.Model):
+class ContingencyPlan(models.Model):
     ACTION_CHOICES = [
         ("N/A", "N/A"),
         ("ALT_PROCEDURES", "Establecer procedimientos alternativos"),
