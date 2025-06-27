@@ -135,7 +135,7 @@ def annual_audit_plan(request):
 
 def conduct_internal_audits(request):
     plans = AnnualPlan.objects.select_related(
-        "annual_program__process", "lider"
+        "annual_program__process"
     ).prefetch_related(
         "auditors__user",
         "audited_users__user",
@@ -177,7 +177,6 @@ def conduct_internal_audits(request):
             "plan_id": plan.id,
             "process": plan.annual_program.process.name,
             "year": plan.annual_program.program_header.year,
-            "leader": plan.lider.get_full_name(),
             "auditors": [aud.user.get_full_name() for aud in plan.auditors.all()],
             "audited_users": [au.user.get_full_name() for au in plan.audited_users.all()],
             "checklist": checklist,
