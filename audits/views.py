@@ -93,11 +93,12 @@ def annual_audit_program(request):
 
 # === ANNUAL AUDIT PLAN ===
 
+from itertools import zip_longest
+
 def annual_audit_plan(request):
     plans = AnnualPlan.objects.select_related(
         "annual_program__program_header",
         "annual_program__process",
-        "lider"
     ).prefetch_related(
         "auditors__user",
         "audited_users__user"
@@ -115,7 +116,6 @@ def annual_audit_plan(request):
             "process": plan.annual_program.process.name if plan.annual_program and plan.annual_program.process else None,
             "year": plan.annual_program.program_header.year if plan.annual_program and plan.annual_program.program_header else None,
             "month": plan.annual_program.month if plan.annual_program else None,
-            "lider": plan.lider.get_full_name() if plan.lider else "No leader assigned",
             "audit_opening_date": plan.audit_opening_date,
             "audit_closing_date": plan.audit_closing_date,
             "audit_opening_location": plan.audit_opening_location,
@@ -128,6 +128,7 @@ def annual_audit_plan(request):
     return render(request, 'mistemplates/annual_audit_plan.html', {
         "audit_data": audit_data,
     })
+
 
 
 # === CONDUCT INTERNAL AUDITS ===
