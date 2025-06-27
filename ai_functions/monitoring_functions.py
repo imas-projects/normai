@@ -1369,13 +1369,12 @@ def suggest_auditor_ai(program_id: int, max_results=5):
     except AnnualProgram.DoesNotExist:
         return []
 
-    # Obtener líderes y auditados actuales para excluirlos
-    current_leader_id = AnnualPlan.objects.filter(annual_program=annual_program).values_list('lider_id', flat=True).first()
+    # Obtener auditados actuales para excluirlos
     current_audited_ids = set(AnnualPlanAudited.objects.filter(
         annual_plan__annual_program=annual_program
     ).values_list('user_id', flat=True))
 
-    excluded_user_ids = {current_leader_id} if current_leader_id else set()
+    excluded_user_ids = set()
     excluded_user_ids.update(current_audited_ids)
 
     today = date.today()
@@ -1395,18 +1394,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 3
         users_scores[uid]["reasons"].append("Experiencia previa como auditor en este proceso")
 
-    # 2. Ha sido líder en auditorías del proceso
-    past_leaders = AnnualPlan.objects.filter(
-        annual_program__process=process
-    ).select_related('lider')
-
-    for plan in past_leaders:
-        if plan.lider:
-            uid = plan.lider.id
-            if uid in excluded_user_ids:
-                continue
-            users_scores[uid]["score"] += 2
-            users_scores[uid]["reasons"].append("Fue líder en auditoría de este proceso")
+    # 2. (Eliminado líder)
 
     # 3. Ha sido auditado en este proceso
     audited_users = AnnualPlanAudited.objects.filter(
@@ -1420,46 +1408,28 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-    # 4. Evaluaciones positivas como auditor
+    # 4. Evaluaciones positivas como auditor (ahora consideramos al usuario evaluado directamente)
     good_evals = AuditorEvaluation.objects.filter(
         audit_plan__annual_program__process=process,
         rate__gte=7
-    ).select_related('audit_plan__lider')
+    ).select_related('user')
 
     for eval in good_evals:
-        if eval.audit_plan and eval.audit_plan.lider:
-            uid = eval.audit_plan.lider.id
+        if eval.user:
+            uid = eval.user.id
             if uid in excluded_user_ids:
                 continue
             users_scores[uid]["score"] += 1
             users_scores[uid]["reasons"].append("Evaluado con buen desempeño en auditorías")
 
-    # 5. Requisitos técnicos similares
-    process_reqs = ProcessRequirement.objects.filter(process=process).values_list('requirement_id', flat=True)
+    # 5. (Eliminado requisitos técnicos similares)
 
-    similar_checklists = Checklist.objects.filter(
-        question__requirement_id__in=process_reqs
-    ).select_related('audit_plan__lider')
-
-    for checklist in similar_checklists:
-        if checklist.audit_plan and checklist.audit_plan.lider:
-            uid = checklist.audit_plan.lider.id
-            if uid in excluded_user_ids:
-                continue
-            users_scores[uid]["score"] += 1
-            users_scores[uid]["reasons"].append("Experiencia auditando requisitos normativos similares")
-
-    # BONUS: Sumar puntos a usuarios que NO han hecho auditorías este año (incentivar nuevos)
-    # Buscamos usuarios que no están en los registros de auditorías o liderazgos en el año actual
+    # BONUS: Incentivar nuevos recursos (usuarios sin auditorías este año)
     all_users_ids = set(User.objects.values_list('id', flat=True))
     users_with_audit_this_year = set(
         AnnualPlanAuditor.objects.filter(
             annual_plan__audit_opening_date__gte=start_year
         ).values_list('user_id', flat=True)
-    ) | set(
-        AnnualPlan.objects.filter(
-            audit_opening_date__gte=start_year
-        ).values_list('lider_id', flat=True)
     ) | set(
         AnnualPlanAudited.objects.filter(
             annual_plan__audit_opening_date__gte=start_year
@@ -1473,7 +1443,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["reasons"].append("No ha trabajado en auditorías este año, potencial nuevo recurso")
 
     # 6. Penalización máxima por saturación reciente (últimos 3 meses)
-    # Si tiene alguna auditoría como líder, auditor o auditado en últimos 3 meses, se excluye
+    # Excluir usuarios con auditorías recientes como auditor o auditado
     for uid in list(users_scores.keys()):
         if uid in excluded_user_ids:
             continue
@@ -1488,12 +1458,7 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         if last_apa and last_apa.annual_plan.audit_opening_date:
             last_dates.append(last_apa.annual_plan.audit_opening_date)
 
-        last_leader = AnnualPlan.objects.filter(lider_id=uid).order_by('-audit_opening_date').first()
-        if last_leader and last_leader.audit_opening_date:
-            last_dates.append(last_leader.audit_opening_date)
-
         if last_dates and max(last_dates) > three_months_ago:
-            # Eliminamos al usuario para que no esté en el top, penalización máxima:
             users_scores.pop(uid)
             continue
 
@@ -1555,6 +1520,7 @@ Devuelve JSON con: user_id, username, full_name, score, justification.
     except Exception as e:
         print(f"Error GPT: {e}")
         return top_candidates
+
 
 
 def suggest_audit_questions(requirement_obj, process_name, max_results=5):
