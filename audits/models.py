@@ -85,12 +85,6 @@ class AnnualPlan(models.Model):
         related_name="annual_plans",
         verbose_name="Annual Program"
     )
-    lider = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        related_name="annual_plans",
-        verbose_name="Audit Leader"
-    )
     audit_opening_date = models.DateField(verbose_name="Audit Opening Date")
     audit_opening_time = models.TimeField(verbose_name="Audit Opening Time")
     audit_opening_location = models.TextField(verbose_name="Audit Opening Location")
@@ -108,13 +102,6 @@ class AnnualPlan(models.Model):
         return {
             "id": self.id,
             "annual_program": self.annual_program.as_dict(),
-            "lider": {
-                "id": self.lider.id,
-                "username": self.lider.username,
-                "first_name": self.lider.first_name,
-                "last_name": self.lider.last_name,
-                "email": self.lider.email
-            },
             "audit_opening_date": self.audit_opening_date,
             "audit_opening_time": self.audit_opening_time,
             "audit_opening_location": self.audit_opening_location,
