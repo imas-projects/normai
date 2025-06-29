@@ -32,7 +32,7 @@ def suggest_risk_fields(area_name, process_name, max_results=3):
 
     Retorna una lista de diccionarios como:
     [
-        {"identified_risk": "...", "consequences": "..."},
+        {"identified_risk": "...", "consequences": "...", "source": "..."},
         ...
     ]
     """
@@ -47,21 +47,26 @@ Sugiéreme TRES posibles riesgos identificados y sus consecuencias según:
 Área: {area_name}
 Proceso: {process_name}
 
-Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
+Cada sugerencia debe incluir también la fuente del riesgo (por ejemplo: "ISO 9001:2015", "Experiencia previa", "Auditoría interna", etc.).
+
+Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk", "consequences", "source".
 
 Ejemplo:
 [
   {{
     "identified_risk": "Riesgo más crítico",
-    "consequences": "Consecuencias más graves"
+    "consequences": "Consecuencias más graves",
+    "source": "ISO 9001:2015"
   }},
   {{
     "identified_risk": "Riesgo intermedio",
-    "consequences": "Consecuencias intermedias"
+    "consequences": "Consecuencias intermedias",
+    "source": "Auditoría interna"
   }},
   {{
     "identified_risk": "Riesgo menos crítico",
-    "consequences": "Consecuencias menos graves"
+    "consequences": "Consecuencias menos graves",
+    "source": "Experiencia previa"
   }}
 ]
         """
@@ -70,7 +75,7 @@ Ejemplo:
         for risk in historical_risks[:10]: 
             examples.append(
                 f"Área: {risk.area.name} | Proceso: {risk.process.name} | "
-                f"Riesgo: {risk.identified_risk} | Consecuencias: {risk.consequences}"
+                f"Riesgo: {risk.identified_risk} | Consecuencias: {risk.consequences} | Fuente: {risk.source or 'No especificada'}"
             )
 
         prompt = f"""
@@ -89,21 +94,24 @@ Nueva entrada:
 Área: {area_name}
 Proceso: {process_name}
 
-Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
+Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk", "consequences", "source".
 
 Ejemplo:
 [
   {{
     "identified_risk": "Riesgo más crítico",
-    "consequences": "Consecuencias más graves"
+    "consequences": "Consecuencias más graves",
+    "source": "ISO 9001:2015"
   }},
   {{
     "identified_risk": "Riesgo intermedio",
-    "consequences": "Consecuencias intermedias"
+    "consequences": "Consecuencias intermedias",
+    "source": "Auditoría interna"
   }},
   {{
     "identified_risk": "Riesgo menos crítico",
-    "consequences": "Consecuencias menos graves"
+    "consequences": "Consecuencias menos graves",
+    "source": "Experiencia previa"
   }}
 ]
         """
@@ -120,14 +128,14 @@ Ejemplo:
         print("Respuesta cruda de IA:", repr(content))
 
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
-
         suggestions = json.loads(clean_content)
 
         if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
             return [
                 {
                     "identified_risk": item.get("identified_risk", "").strip(),
-                    "consequences": item.get("consequences", "").strip()
+                    "consequences": item.get("consequences", "").strip(),
+                    "source": item.get("source", "").strip()
                 }
                 for item in suggestions[:max_results]
             ]
@@ -142,6 +150,7 @@ Ejemplo:
     except Exception as e:
         print("Error al generar sugerencia IA:", str(e))
         return []
+
 
 
 
@@ -161,7 +170,7 @@ def suggest_controls(risk_id, max_controls=3):
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -184,6 +193,7 @@ Nueva entrada:
 Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source}
 
 Responde SOLO con un objeto JSON, sin explicaciones, sin texto adicional.
 Formato:
@@ -198,6 +208,8 @@ Dado:
 Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source}
+
 
 Sugiere exactamente 3 controles preventivos y 3 de detección.
 
@@ -215,7 +227,6 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
 
         content = response.choices[0].message.content.strip()
 
-        # Extraer el primer bloque JSON válido
         match = re.search(r"\{.*?\}", content, re.DOTALL)
         if not match:
             print("Respuesta no contiene JSON válido:", content)
@@ -234,6 +245,7 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
 
     except Exception as e:
         return {"error": str(e)}
+
 
 
 def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
@@ -259,7 +271,7 @@ Controles de detección escritos por el usuario:
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -291,6 +303,7 @@ Dado:
 Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source} 
 
 {controls_text}
 
@@ -364,7 +377,7 @@ Detección: {detection}
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Actividad: {getattr(eval.risk.process, 'name', eval.risk.process)} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -393,6 +406,7 @@ Dado:
 Actividad: {process_value}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source} 
 
 {controls_text}
 
@@ -463,6 +477,7 @@ def suggest_treatment_action(risk_id, max_results=1):
         f"Área: {risk.area.name}\n"
         f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     eval_info = ""
@@ -566,6 +581,7 @@ def suggest_contingency_actions(risk_id, max_results=3):
         f"Área: {risk.area.name}\n"
         f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     eval_info = ""
@@ -711,6 +727,7 @@ def suggest_reevaluation_rating_ranges(risk_id):
         f"Área: {risk.area.name}\n"
         f"Actividad: {process_value}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     # Evaluaciones iniciales del riesgo actual
@@ -855,6 +872,7 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
         f"Área: {risk.area.name}\n"
         f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     # Evaluaciones propias del riesgo
