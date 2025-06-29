@@ -11,7 +11,13 @@
         <div class="text-danger small">{{ form.audit_report.errors }}</div>
       {% endif %}
     </div>
-
+    
+    <div class="mb-3">
+      <button type="button" id="suggestCorrectiveActionBtn" class="btn btn-info">
+        Obtener sugerencias IA
+      </button>
+    </div>
+    
     <div class="mb-3">
       {{ form.corrective_action.label_tag }}
       {{ form.corrective_action }}
@@ -34,12 +40,6 @@
       {% if form.responsible_user.errors %}
         <div class="text-danger small">{{ form.responsible_user.errors }}</div>
       {% endif %}
-    </div>
-
-    <div class="mb-3">
-      <button type="button" id="suggestCorrectiveActionBtn" class="btn btn-info">
-        Obtener sugerencias IA
-      </button>
     </div>
 
     <button type="submit" class="btn btn-success">Guardar</button>
