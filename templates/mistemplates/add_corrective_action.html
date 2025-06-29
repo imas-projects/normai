@@ -5,6 +5,14 @@
     {% csrf_token %}
 
     <div class="mb-3">
+      {{ form.audit_report.label_tag }}
+      {{ form.audit_report }}
+      {% if form.audit_report.errors %}
+        <div class="text-danger small">{{ form.audit_report.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
       {{ form.corrective_action.label_tag }}
       {{ form.corrective_action }}
       {% if form.corrective_action.errors %}
@@ -29,11 +37,9 @@
     </div>
 
     <div class="mb-3">
-      {{ form.audit_report.label_tag }}
-      {{ form.audit_report }}
-      {% if form.audit_report.errors %}
-        <div class="text-danger small">{{ form.audit_report.errors }}</div>
-      {% endif %}
+      <button type="button" id="suggestCorrectiveActionBtn" class="btn btn-info">
+        Obtener sugerencias IA
+      </button>
     </div>
 
     <button type="submit" class="btn btn-success">Guardar</button>
