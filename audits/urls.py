@@ -31,5 +31,6 @@ urlpatterns = [
     path("suggest-compliance-rate/", views.suggest_compliance_rate_view, name="suggest_compliance_rate"),
     path('add_lead_auditor_evaluation_question/', views.add_lead_auditor_evaluation_question, name='add_lead_auditor_evaluation_question'),
     path('add_corrective_action/', views.add_corrective_action, name='add_corrective_action'),
+    path('suggest_corrective_action/', views.suggest_corrective_action_view, name='suggest_corrective_action'),
     path('add_corrective_action_followup/', views.add_corrective_action_followup, name='add_corrective_action_followup'),
 ]
