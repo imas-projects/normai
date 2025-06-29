@@ -88,10 +88,8 @@ class ContingencyPlanForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.instance = kwargs.get('instance', None)
         super().__init__(*args, **kwargs)
-
-        if self.instance:
+        if self.instance and self.instance.pk:
             self.fields['responsible'].initial = self.instance.responsible.all()
             self.fields['communicate_to'].initial = self.instance.communicate_to.all()
 
@@ -102,10 +100,10 @@ class ContingencyPlanForm(forms.ModelForm):
             instance.responsible.clear()
             instance.communicate_to.clear()
 
-            for position in self.cleaned_data['responsible']:
+            for position in self.cleaned_data.get('responsible', []):
                 ContingencyPlanResponsible.objects.create(contingencyplan=instance, position=position)
 
-            for position in self.cleaned_data['communicate_to']:
+            for position in self.cleaned_data.get('communicate_to', []):
                 ContingencyPlanCommunicateTo.objects.create(contingencyplan=instance, position=position)
 
         return instance
