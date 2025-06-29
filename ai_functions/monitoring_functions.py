@@ -170,7 +170,7 @@ def suggest_controls(risk_id, max_controls=3):
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risks.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -271,7 +271,7 @@ Controles de detección escritos por el usuario:
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risks.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -377,7 +377,7 @@ Detección: {detection}
     if similar_evaluations.exists():
         historical_lines = [
             f"""Área: {eval.risk.area.name} | Actividad: {getattr(eval.risk.process, 'name', eval.risk.process)} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.source} |
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risks.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
