@@ -1070,7 +1070,8 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
         suggestBtn.addEventListener("click", function () {
           console.log("Solicitando sugerencias de IA para el informe de auditoría...");
 
-          const auditSelect = document.querySelector("#add-audit-report-form select[name='audit']");
+const auditSelect = document.querySelector("#add-audit-report-form select[name='audit_plan']");
+
           if (!auditSelect || !auditSelect.value) {
             alert("Por favor, selecciona una auditoría antes de solicitar sugerencias.");
             return;
