@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
+from django.db.models import Q, Count
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -45,7 +46,6 @@ def audits_home(request):
     audit_plans = AnnualPlan.objects.filter(
         annual_program__program_header__year=current_year
     )
-
     total_planificadas = audit_plans.count()
     realizadas = AuditReport.objects.filter(audit_plan__in=audit_plans).count()
     porcentaje_cumplimiento = (
@@ -53,27 +53,40 @@ def audits_home(request):
     )
 
     # === Indicador 2: Acciones correctivas abiertas / cerradas ===
-    # Subquery para obtener el último seguimiento por acción correctiva
     latest_followup_subquery = CorrectiveActionFollowUp.objects.filter(
         corrective_action=OuterRef('pk')
     ).order_by('-followup_date')
 
-    # Anotar cada CorrectiveAction con el status de su último seguimiento
     corrective_actions = CorrectiveAction.objects.annotate(
         last_status=Subquery(latest_followup_subquery.values('status')[:1])
     )
 
-    # Filtrar acciones abiertas
     acciones_abiertas = corrective_actions.filter(
         last_status__in=['PENDING', 'IN_PROGRESS']
     ).count()
-
     total_acciones = corrective_actions.exclude(last_status__isnull=True).count()
-
     porcentaje_acciones_abiertas = (
         (acciones_abiertas / total_acciones) * 100 if total_acciones > 0 else 0
     )
 
+    # === Indicador 3: Tasa de No Conformidades ===
+    # Clasificaciones válidas como NC
+    nc_classifications = ['NC_MAYOR', 'NC_MENOR']
+
+    # Auditorías con al menos una NC
+    audit_ids_with_nc = Findings.objects.filter(
+        classification__in=nc_classifications
+    ).values('audit_plan').distinct()
+
+    total_auditorias_con_nc = AnnualPlan.objects.filter(
+        id__in=audit_ids_with_nc
+    ).count()
+
+    tasa_nc = (
+        (total_auditorias_con_nc / realizadas) * 100 if realizadas > 0 else 0
+    )
+
+    # === Contexto final ===
     contexto = {
         'realizadas': realizadas,
         'planificadas': total_planificadas,
@@ -81,6 +94,8 @@ def audits_home(request):
         'acciones_abiertas': acciones_abiertas,
         'acciones_totales': total_acciones,
         'acciones_porcentaje': round(porcentaje_acciones_abiertas, 2),
+        'tasa_nc': round(tasa_nc, 2),
+        'auditorias_con_nc': total_auditorias_con_nc,
     }
 
     return render(request, 'mistemplates/audits.html', contexto)
