@@ -69,21 +69,49 @@ class ContingencyPlanForm(forms.ModelForm):
     responsible = forms.ModelMultipleChoiceField(
         queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Responsible Position(s)"
+        label="Responsible Position(s)",
+        required=False
     )
 
     communicate_to = forms.ModelMultipleChoiceField(
         queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Communicate To Position(s)"
+        label="Communicate To Position(s)",
+        required=False
     )
 
     class Meta:
         model = ContingencyPlan
-        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']
+        fields = ['risk', 'contingency_actions']
+
         widgets = {
             'risk': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        # Pop instance early to use for initial data
+        self.instance = kwargs.get('instance', None)
+        super().__init__(*args, **kwargs)
+
+        if self.instance:
+            self.fields['responsible'].initial = self.instance.responsible.all()
+            self.fields['communicate_to'].initial = self.instance.communicate_to.all()
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+
+        if commit:
+            instance.responsible.clear()
+            instance.communicate_to.clear()
+
+            for position in self.cleaned_data['responsible']:
+                ContingencyPlanResponsible.objects.create(contingencyplan=instance, position=position)
+
+            for position in self.cleaned_data['communicate_to']:
+                ContingencyPlanCommunicateTo.objects.create(contingencyplan=instance, position=position)
+
+        return instance
+
 
 class ReevaluationForm(forms.ModelForm):
     class Meta:
