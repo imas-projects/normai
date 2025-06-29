@@ -69,6 +69,7 @@ def save_selected_risk_identification(request):
         process_id = request.POST.get("process_id")
         identified_risk = request.POST.get("identified_risk")
         consequences = request.POST.get("consequences")
+        source = request.POST.get("source")  # Nuevo campo
 
         if not all([area_id, process_id, identified_risk, consequences]):
             return JsonResponse({"error": "Faltan datos"}, status=400)
@@ -80,7 +81,8 @@ def save_selected_risk_identification(request):
             area=area,
             process=process,
             identified_risk=identified_risk,
-            consequences=consequences
+            consequences=consequences,
+            source=source
         )
 
         return JsonResponse({"success": True, "id": risk.id})
