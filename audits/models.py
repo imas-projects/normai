@@ -32,17 +32,14 @@ class ProcessRequirement(models.Model):
         Process,
         on_delete=models.CASCADE
     )
-    requirement = models.ForeignKey(
-        'company.Requirement',  
-        on_delete=models.CASCADE
-    )
+    requirement = models.CharField(max_length=200, verbose_name="Requirement Name")
 
     class Meta:
         db_table = 'tb_audit_process_requirements'
         unique_together = ('process', 'requirement')
 
     def __str__(self):
-        return f"{self.process.name} -> {self.requirement.name}"
+        return f"{self.process.name} -> {self.requirement}"
 
 class AnnualProgram(models.Model):
     program_header = models.ForeignKey(
@@ -209,12 +206,13 @@ class Checklist(models.Model):
 
 class AuditedEvaluationQuestion(models.Model):
     requirement = models.ForeignKey(
-        Requirement,
+        ProcessRequirement,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         verbose_name="Requirement"
     )
+
     question_text = models.TextField(verbose_name="Question Text")
 
     def __str__(self):
@@ -226,7 +224,7 @@ class AuditedEvaluationQuestion(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.as_dict() if self.requirement else None,
+            "requirement": self.requirement.requirement if self.requirement else None,
             "question_text": self.question_text,
         }
 class AuditorEvaluation(models.Model):
@@ -287,12 +285,13 @@ class Findings(models.Model):
         verbose_name="Audit Plan"
     )
     requirement = models.ForeignKey(
-        'company.Requirement',
+        ProcessRequirement,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         verbose_name="Requirement"
     )
+
     finding_text = models.TextField(verbose_name="Finding")
     classification = models.CharField(
         max_length=20,
@@ -318,7 +317,7 @@ class Findings(models.Model):
         return {
             "id": self.id,
             "audit_plan_id": self.audit_plan.id,
-            "requirement_id": self.requirement.id if self.requirement else None,
+            "requirement": self.requirement.requirement if self.requirement else None,
             "finding_text": self.finding_text,
             "classification": self.classification,
         }
@@ -330,7 +329,8 @@ class AuditReport(models.Model):
         verbose_name="Audit Plan"
     )
     summary = models.TextField(verbose_name="Summary of Audit Development")
-    strengths = models.TextField(verbose_name="Strengths")
+    recommendations = models.TextField(verbose_name="Recommendations")  
+    conclusions = models.TextField(verbose_name="Conclusions") 
 
     def __str__(self):
         return self.summary[:50]
@@ -343,6 +343,76 @@ class AuditReport(models.Model):
             "id": self.id,
             "audit_id": self.audit.id,  
             "summary": self.summary,
-            "strengths": self.strengths,
+            "recommendations": self.recommendations,
+            "conclusions": self.conclusions,
+        }
+
+class CorrectiveAction(models.Model):
+    corrective_action = models.TextField(verbose_name="Corrective Action")
+    due_date = models.DateField(verbose_name="Due Date")
+    responsible_user = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        verbose_name="Responsible User"
+    )
+    audit_report = models.ForeignKey(
+        'AuditReport',
+        on_delete=models.PROTECT,
+        related_name="corrective_actions",
+        verbose_name="Audit Report"
+    )
+
+    def __str__(self):
+        return f"{self.corrective_action[:50]} (Due: {self.due_date})"
+
+    class Meta:
+        db_table = 'tb_audit_corrective_actions'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "corrective_action": self.corrective_action,
+            "due_date": self.due_date,
+            "responsible_user": {
+                "id": self.responsible_user.id,
+                "username": self.responsible_user.username,
+                "email": self.responsible_user.email,
+            },
+            "audit_report_id": self.audit_report.id,
+        }
+
+
+class CorrectiveActionFollowUp(models.Model):
+    corrective_action = models.ForeignKey(
+        CorrectiveAction,
+        on_delete=models.CASCADE,
+        related_name="followups",
+        verbose_name="Corrective Action"
+    )
+    followup_date = models.DateField(verbose_name="Follow-up Date")
+    status = models.CharField(
+        max_length=50,
+        verbose_name="Status",
+        choices=[
+            ('PENDING', 'Pending'),
+            ('IN_PROGRESS', 'In Progress'),
+            ('COMPLETED', 'Completed'),
+        ]
+    )
+    comments = models.TextField(verbose_name="Comments", null=True, blank=True)
+
+    def __str__(self):
+        return f"Follow-up on {self.corrective_action.id} - {self.status}"
+
+    class Meta:
+        db_table = 'tb_audit_corrective_actions_followup'
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "corrective_action_id": self.corrective_action.id,
+            "followup_date": self.followup_date,
+            "status": self.status,
+            "comments": self.comments,
         }
 
