@@ -18,6 +18,8 @@
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
                         <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Add Findings</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Add Audit Report</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Add Corrective Action</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Add Corrective Action Follow-up</a></li>
                     </ul>
                 </div>
                 <!-- Título centrado -->
@@ -301,6 +303,43 @@
     </div>
 </div>
 
+<!-- Modal para Add Corrective Action -->
+<div class="modal fade" id="addCorrectiveActionModal" tabindex="-1" aria-labelledby="addCorrectiveActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Add Corrective Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Add Corrective Action Follow-up -->
+<div class="modal fade" id="addCorrectiveActionFollowupModal" tabindex="-1" aria-labelledby="addCorrectiveActionFollowupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Add Corrective Action Follow-up</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionFollowupModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+            
+            
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
@@ -720,6 +759,29 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
       }, 100);
     });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("openAddCorrectiveActionModal").addEventListener("click", function() {
+        fetch("{% url 'audits:add_corrective_action' %}")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("correctiveActionModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addCorrectiveActionModal")).show();
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("openAddCorrectiveActionFollowupModal").addEventListener("click", function() {
+        fetch("{% url 'audits:add_corrective_action_followup' %}")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("correctiveActionFollowupModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addCorrectiveActionFollowupModal")).show();
+        });
+    });
+});
+
 </script>
 {% endblock extra_js %}
 
