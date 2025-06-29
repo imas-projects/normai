@@ -8,10 +8,10 @@
 
     <!-- Selección del Plan de Auditoría -->
     <div class="mb-3">
-      {{ form.audit.label_tag }}
-      {{ form.audit }}
-      {% if form.audit.errors %}
-        <div class="text-danger small">{{ form.audit.errors }}</div>
+      {{ form.audit_plan.label_tag }}
+      {{ form.audit_plan }}
+      {% if form.audit_plan.errors %}
+        <div class="text-danger small">{{ form.audit_plan.errors }}</div>
       {% endif %}
     </div>
 
@@ -34,12 +34,21 @@
       {% endif %}
     </div>
 
-    <!-- Campo de fortalezas -->
+    <!-- Campo de recomendaciones -->
     <div class="mb-3">
-      {{ form.strengths.label_tag }}
-      {{ form.strengths }}
-      {% if form.strengths.errors %}
-        <div class="text-danger small">{{ form.strengths.errors }}</div>
+      {{ form.recommendations.label_tag }}
+      {{ form.recommendations }}
+      {% if form.recommendations.errors %}
+        <div class="text-danger small">{{ form.recommendations.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Campo de conclusiones -->
+    <div class="mb-3">
+      {{ form.conclusions.label_tag }}
+      {{ form.conclusions }}
+      {% if form.conclusions.errors %}
+        <div class="text-danger small">{{ form.conclusions.errors }}</div>
       {% endif %}
     </div>
 
