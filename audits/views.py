@@ -35,7 +35,7 @@ from .models import (
 
 from processes.models import Process
 
-from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields
+from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields, suggest_corrective_actions
 
 # === BASIC VIEWS ===
 
@@ -600,9 +600,27 @@ def add_corrective_action(request):
     return _add_form_view(
         request,
         CorrectiveActionForm,
-        'audits:conduct_internal_audits', 
+        'audits:conduct_internal_audits',
         'mistemplates/add_corrective_action.html'
     )
+
+def suggest_corrective_action_view(request):
+    audit_report_id = request.GET.get("audit_report_id")
+
+    if not audit_report_id:
+        return HttpResponseBadRequest("Falta el parámetro 'audit_report_id'")
+
+    try:
+        audit_report = get_object_or_404(AuditReport, pk=audit_report_id)
+        suggestions = suggest_corrective_actions(audit_report.id)
+        return JsonResponse({"suggestions": suggestions})
+
+    except Exception as e:
+        import traceback
+        print("Error en suggest_corrective_action_view:", e)
+        traceback.print_exc()
+        return JsonResponse({"error": f"Error al generar las acciones correctivas: {str(e)}"}, status=500)
+
 
 def add_corrective_action_followup(request):
     return _add_form_view(
