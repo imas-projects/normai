@@ -499,30 +499,23 @@ def suggest_compliance_rate_view(request):
     question_id = request.GET.get("question_id")
 
     if not audit_id or not question_id:
-        return HttpResponseBadRequest("Faltan parámetros: audit_id y question_id son obligatorios.")
+        return HttpResponseBadRequest("Faltan parámetros")
 
     try:
-        checklist = Checklist.objects.get(
-            audit_plan__id=audit_id,
-            question__id=question_id
-        )
+        checklist_obj = Checklist.objects.get(audit_plan_id=audit_id, question_id=question_id)
+        rating = suggest_compliance_rating(checklist_obj)
+        if rating is None:
+            return JsonResponse({"error": "Error IA: Error al obtener sugerencia de IA."}, status=500)
+        return JsonResponse({"rating": rating})
+
     except Checklist.DoesNotExist:
-        tb = traceback.format_exc()
-        return JsonResponse({"error": "No se encontró un Checklist con ese audit_id y question_id.", "traceback": tb}, status=400)
-    except Exception:
-        tb = traceback.format_exc()
-        return JsonResponse({"error": "Error inesperado al buscar el Checklist.", "traceback": tb}, status=500)
+        return JsonResponse({"error": "Checklist no encontrado"}, status=404)
 
-    try:
-        suggested_rate = suggest_compliance_rating(checklist)
-    except Exception:
-        tb = traceback.format_exc()
-        return JsonResponse({"error": "Error al obtener sugerencia de IA.", "traceback": tb}, status=500)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"error": f"Error interno: {str(e)}"}, status=500)
 
-    if suggested_rate is None:
-        return JsonResponse({"error": "La IA no pudo determinar un rate válido."}, status=422)
-
-    return JsonResponse({"rate": suggested_rate})
 
 
 def add_lead_auditor_evaluation_question(request):
