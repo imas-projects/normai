@@ -93,9 +93,9 @@ class FindingsForm(forms.ModelForm):
 class AuditReportForm(forms.ModelForm):
     class Meta:
         model = AuditReport
-        fields = ['audit', 'summary', 'recommendations']
+        fields = ['audit_plan', 'summary', 'recommendations']
         widgets = {
-            'audit': forms.Select(attrs={'class': 'form-control'}),
+            'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'recommendations': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
