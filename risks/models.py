@@ -121,14 +121,14 @@ class ContingencyPlan(models.Model):
     contingency_actions = MultiSelectField(choices=ACTION_CHOICES)
 
     responsible = models.ManyToManyField(
-        Position,
+        'Position',
         through='ContingencyPlanResponsible',
-        related_name='responsible_for_contingency'
+        related_name="responsible_for_contingency"
     )
     communicate_to = models.ManyToManyField(
-        Position,
+        'Position',
         through='ContingencyPlanCommunicateTo',
-        related_name='communicate_to_contingency'
+        related_name="communicate_to_contingency"
     )
 
     class Meta:
@@ -138,10 +138,32 @@ class ContingencyPlan(models.Model):
         actions = ", ".join([dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions[:3]])
         return f"Contingency Plan: {actions}"
 
+    def as_dict(self):
+        return {
+            "contingency_actions": [dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions],
+            "responsible": [{
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.responsible.all()],
+            "communicate_to": [{
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.communicate_to.all()],
+        }
 
 class ContingencyPlanResponsible(models.Model):
     contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
-    position = models.ForeignKey(Position, on_delete=models.CASCADE)
+    position = models.ForeignKey('Position', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'tb_risks_contingency_plan_responsible'
@@ -151,12 +173,13 @@ class ContingencyPlanResponsible(models.Model):
 
 class ContingencyPlanCommunicateTo(models.Model):
     contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
-    position = models.ForeignKey(Position, on_delete=models.CASCADE)
+    position = models.ForeignKey('Position', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'tb_risks_contingency_plan_communicate_to'
         unique_together = ('contingencyplan', 'position')
         managed = False
+
 
 
 # Tabla de reevaluación
