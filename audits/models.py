@@ -323,8 +323,9 @@ class Findings(models.Model):
         }
 
 class AuditReport(models.Model):
-    audit = models.ForeignKey(
-        'AnnualPlan', 
+    audit_plan = models.ForeignKey(
+        'AnnualPlan',
+        db_column='audit_plan_id',
         on_delete=models.PROTECT,
         verbose_name="Audit Plan"
     )
@@ -341,11 +342,12 @@ class AuditReport(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audit_plan": self.audit.id,
+            "audit_plan_id": self.audit_plan.id, 
             "summary": self.summary,
             "recommendations": self.recommendations,
             "conclusions": self.conclusions,
         }
+
 
 class CorrectiveAction(models.Model):
     corrective_action = models.TextField(verbose_name="Corrective Action")
