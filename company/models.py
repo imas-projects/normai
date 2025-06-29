@@ -25,13 +25,16 @@ class ExternalSupplier(models.Model):
         return self.name
     
 class ExternalClient(models.Model):
-    name=models.TextField()
+    name = models.TextField()
+    sector = models.CharField(max_length=50, null=True, blank=True)
+    country = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'tb_company_external_client'
 
     def __str__(self):
         return self.name
+
     
 #Areas
 class Area(models.Model):
