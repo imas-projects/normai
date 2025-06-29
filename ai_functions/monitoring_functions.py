@@ -3,6 +3,7 @@ import openai
 import json
 import re
 from django.utils.timezone import now
+import traceback
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 from collections import defaultdict
@@ -1779,18 +1780,21 @@ OPORTUNIDAD_MEJORA
 
 def suggest_audit_report_fields(audit_plan_id: int):
     """
-    Genera automáticamente un resumen (summary) y fortalezas (strengths) para un AuditReport
-    basado en hallazgos, cumplimiento, criterios y contexto ISO 9001:2015.
+    Genera automáticamente los campos para un AuditReport basado en la auditoría:
+    - summary
+    - recommendations
+    - conclusions
 
-    Requiere:
-    - audit_plan_id: ID del AnnualPlan.
+    Basado en el contexto ISO 9001:2015, hallazgos y checklist.
 
     Devuelve:
     {
         "summary": "...",
-        "strengths": "..."
+        "recommendations": "...",
+        "conclusions": "..."
     }
     """
+
     def safe_str(value):
         if isinstance(value, str):
             return value.strip()
@@ -1830,32 +1834,34 @@ def suggest_audit_report_fields(audit_plan_id: int):
         prompt = f"""
 Eres un auditor experto en la norma ISO 9001:2015, especialmente en la cláusula 9.1.2 (seguimiento, medición, análisis y evaluación).
 
-Debes redactar un **informe de auditoría** con dos secciones:
-- summary: resumen estructurado y claro del desarrollo de la auditoría
-- strengths: fortalezas detectadas en el proceso auditado
+Tu tarea es generar un informe de auditoría con tres secciones clave:
+1. **summary**: Resumen claro del desarrollo de la auditoría.
+2. **recommendations**: Recomendaciones prácticas derivadas de los hallazgos.
+3. **conclusions**: Conclusión general sobre el cumplimiento del proceso auditado.
 
-Toma en cuenta:
-- **Objetivo:** {header.objective}
-- **Alcance:** {header.scope}
-- **Criterios de auditoría:** {header.audit_criteria}
-- **Estándares de seguridad:** {header.security_standards}
-- **Proceso auditado:** {process.name} ({process.process_code})
-- **Hallazgos encontrados:** {chr(10).join(finding_texts) or 'Ninguno'}
-- **Cumplimiento general:** {compliance_summary['compliant']}/{compliance_summary['total']} ítems cumplidos
-- **Fortalezas (resumidas de la checklist):** {chr(10).join(strengths_list) or 'Ninguna observada'}
+Información base:
+- Objetivo: {header.objective}
+- Alcance: {header.scope}
+- Criterios de auditoría: {header.audit_criteria}
+- Estándares de seguridad: {header.security_standards}
+- Proceso auditado: {process.name} ({process.process_code})
+- Hallazgos encontrados: {chr(10).join(finding_texts) or 'Ninguno'}
+- Cumplimiento checklist: {compliance_summary['compliant']} de {compliance_summary['total']} ítems cumplidos
+- Fortalezas observadas: {chr(10).join(strengths_list) or 'Ninguna observada'}
 
-Por favor, responde en JSON con las claves:
+Responde exclusivamente en formato JSON con las siguientes claves:
 - "summary"
-- "strengths"
+- "recommendations"
+- "conclusions"
 
-La redacción debe ser profesional, precisa y orientada a las recomendaciones de auditoría interna bajo ISO 9001:2015.
-        """
+Tu redacción debe ser profesional, objetiva y alineada con las buenas prácticas de auditoría interna bajo ISO 9001:2015.
+"""
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
-            max_tokens=800,
+            max_tokens=900,
         )
 
         content = response.choices[0].message.content.strip()
@@ -1864,14 +1870,17 @@ La redacción debe ser profesional, precisa y orientada a las recomendaciones de
 
         return {
             "summary": safe_str(suggestions.get("summary", "")),
-            "strengths": safe_str(suggestions.get("strengths", ""))
+            "recommendations": safe_str(suggestions.get("recommendations", "")),
+            "conclusions": safe_str(suggestions.get("conclusions", ""))
         }
 
     except Exception as e:
-        print(f"Error al generar informe IA: {str(e)}")
+        print("Error al generar informe IA:", str(e))
+        print(traceback.format_exc())
         return {
             "summary": "",
-            "strengths": ""
+            "recommendations": "",
+            "conclusions": ""
         }
 
 
