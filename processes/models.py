@@ -100,12 +100,14 @@ class ProcessMeasurement(models.Model):
     measurement_process_parameter = models.TextField()
     measurement_process_range = models.TextField(blank=True, null=True)
     measurement_process_equipment = models.TextField(blank=True, null=True)
+    equipment = models.CharField(max_length=50, null=True, blank=True) 
 
     class Meta:
         db_table = 'tb_process_measurement_process'
 
     def __str__(self):
         return self.measurement_process_parameter
+
     
 # Tabla mediciones productos
 class ProductMeasurement(models.Model):
@@ -113,6 +115,7 @@ class ProductMeasurement(models.Model):
     measurement_product_parameter = models.TextField()
     measurement_product_range = models.TextField(blank=True, null=True)
     measurement_product_equipment = models.TextField(blank=True, null=True)
+    equipment = models.CharField(max_length=50, blank=True, null=True) 
 
     class Meta:
         db_table = 'tb_process_measurement_product'
