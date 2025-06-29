@@ -417,7 +417,6 @@ def classify_finding_view(request):
 
     return JsonResponse({"classification": classification})
 
-
 def add_audit_report(request):
     return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
 
