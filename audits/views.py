@@ -398,12 +398,14 @@ def classify_finding_view(request):
             requirement = ProcessRequirement.objects.get(id=requirement_id)
         except ProcessRequirement.DoesNotExist:
             tb = traceback.format_exc()
+            print(tb)
             return JsonResponse({
                 "error": f"Requisito con ID {requirement_id} no encontrado.",
                 "traceback": tb
             }, status=400)
         except Exception:
             tb = traceback.format_exc()
+            print(tb)
             return JsonResponse({
                 "error": "Error inesperado al obtener el requisito.",
                 "traceback": tb
@@ -413,12 +415,14 @@ def classify_finding_view(request):
         classification = classify_finding_ia(finding_text, requirement)
     except Exception:
         tb = traceback.format_exc()
+        print(tb) 
         return JsonResponse({"error": "Error al clasificar con IA.", "traceback": tb}, status=500)
 
     if classification is None:
         return JsonResponse({"error": "La IA no pudo determinar una clasificación válida."}, status=422)
 
     return JsonResponse({"classification": classification})
+
 
 def add_audit_report(request):
     return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
