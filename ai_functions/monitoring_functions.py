@@ -1884,3 +1884,91 @@ Tu redacción debe ser profesional, objetiva y alineada con las buenas práctica
         }
 
 
+def suggest_corrective_actions(audit_report_id: int):
+    """
+    Genera automáticamente hasta 5 sugerencias de acciones correctivas basadas
+    en el contexto de un AuditReport.
+
+    Retorna una lista de strings con las sugerencias.
+
+    Ejemplo retorno:
+    [
+        "Implementar control de calidad en el proceso X...",
+        "Capacitar al personal en la norma ISO 9001:2015...",
+        ...
+    ]
+    """
+
+    def safe_str(value):
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=False).strip()
+        elif value is None:
+            return ""
+        else:
+            return str(value).strip()
+
+    try:
+        audit_report = AuditReport.objects.select_related(
+            'audit_plan__annual_program__program_header',
+            'audit_plan__annual_program__process'
+        ).get(id=audit_report_id)
+
+        header = audit_report.audit_plan.annual_program.program_header
+        process = audit_report.audit_plan.annual_program.process
+
+        prompt = f"""
+Eres un auditor experto en la norma ISO 9001:2015.
+
+Tu tarea es generar cinco sugerencias de acciones correctivas claras, prácticas y efectivas basadas en el siguiente informe de auditoría:
+
+Resumen del informe:
+{audit_report.summary}
+
+Recomendaciones:
+{audit_report.recommendations}
+
+Conclusiones:
+{audit_report.conclusions}
+
+Contexto adicional:
+- Objetivo del programa anual: {header.objective}
+- Alcance: {header.scope}
+- Criterios de auditoría: {header.audit_criteria}
+- Proceso auditado: {process.name} ({process.process_code})
+
+Devuelve solo un JSON con una clave "corrective_actions" que contenga una lista con cinco strings con las acciones correctivas sugeridas.
+
+Ejemplo:
+{{
+  "corrective_actions": [
+    "Acción correctiva 1",
+    "Acción correctiva 2",
+    "Acción correctiva 3",
+    "Acción correctiva 4",
+    "Acción correctiva 5"
+  ]
+}}
+
+Sé concreto, profesional y directo.
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=600,
+        )
+
+        content = response.choices[0].message.content.strip()
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        corrective_actions = suggestions.get("corrective_actions", [])
+        return [safe_str(action) for action in corrective_actions][:5]
+
+    except Exception as e:
+        print("Error al generar acciones correctivas IA:", str(e))
+        print(traceback.format_exc())
+        return []
