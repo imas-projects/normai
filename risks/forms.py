@@ -82,14 +82,12 @@ class ContingencyPlanForm(forms.ModelForm):
 
     class Meta:
         model = ContingencyPlan
-        fields = ['risk', 'contingency_actions']
-
+        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']  
         widgets = {
             'risk': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
-        # Pop instance early to use for initial data
         self.instance = kwargs.get('instance', None)
         super().__init__(*args, **kwargs)
 
