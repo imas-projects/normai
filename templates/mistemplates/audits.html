@@ -329,6 +329,16 @@
 </div>
 
 
+<style>
+  /* Tamaño más pequeño para estos dos gráficos doughnut */
+  #auditoriasChart, #ncChart {
+    max-width: 250px;
+    max-height: 250px;
+    margin: auto;
+  }
+</style>
+
+
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
@@ -336,25 +346,35 @@
 
 {% block extra_js %}
 <script>
-    // Auditorías Realizadas / Planificadas
-    new Chart(document.getElementById('auditoriasChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Realizadas', 'Pendientes'],
-            datasets: [{
-                data: [{{ realizadas }}, {{ pendientes }}],
-                backgroundColor: ['#198754', '#dee2e6'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            cutout: '60%',
-            plugins: {
-                tooltip: { enabled: true },
-                legend: { position: 'bottom' }
+// Auditorías Realizadas / Planificadas
+new Chart(document.getElementById('auditoriasChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Realizadas', 'Pendientes'],
+        datasets: [{
+            data: [{{ realizadas }}, {{ pendientes }}],
+            backgroundColor: ['#198754', '#dee2e6'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        cutout: '75%',  // dona más fina
+        plugins: {
+            tooltip: { enabled: true },
+            legend: {
+                position: 'bottom',
+                labels: {
+                    font: {
+                        size: 12  // letra más pequeña
+                    }
+                }
             }
-        }
-    });
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+    }
+});
+
 
     // Acciones Correctivas Abiertas / Cerradas
     new Chart(document.getElementById('accionesChart'), {
@@ -377,25 +397,35 @@
         }
     });
 
-    // Tasa de No Conformidades
-    new Chart(document.getElementById('ncChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Con NC', 'Sin NC'],
-            datasets: [{
-                data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
-                backgroundColor: ['#dc3545', '#6c757d'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            cutout: '60%',
-            plugins: {
-                tooltip: { enabled: true },
-                legend: { position: 'bottom' }
+// Tasa de No Conformidades
+new Chart(document.getElementById('ncChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Con NC', 'Sin NC'],
+        datasets: [{
+            data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
+            backgroundColor: ['#dc3545', '#6c757d'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        cutout: '75%',
+        plugins: {
+            tooltip: { enabled: true },
+            legend: {
+                position: 'bottom',
+                labels: {
+                    font: {
+                        size: 12
+                    }
+                }
             }
-        }
-    });
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+    }
+});
+
 </script>
 
 <script>
