@@ -805,8 +805,6 @@ document.getElementById("openAddCorrectiveActionModal").addEventListener("click"
 
         suggestBtn.setAttribute("type", "button");
         if (suggestionsDiv) {
-          suggestionsDiv.style.display = "none";
-          suggestionsDiv.innerHTML = "";
         }
 
         suggestBtn.addEventListener("click", function () {
@@ -877,11 +875,10 @@ document.querySelectorAll(".applyCorrectiveSuggestionBtn").forEach(button => {
 
     form.querySelector("input[name='corrective_action']").value = s;
 
-    suggestionsDiv.style.display = "none";
-    suggestionsDiv.innerHTML = "";
     form.querySelector("input[name='corrective_action']").focus();
   });
 });
+
 
             })
             .catch(err => {
