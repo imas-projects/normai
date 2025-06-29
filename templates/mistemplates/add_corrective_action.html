@@ -1,0 +1,41 @@
+{% load static %}
+<div class="container mt-4">
+  <h2>Agregar Acción Correctiva</h2>
+  <form method="post" action="{% url 'audits:add_corrective_action' %}">
+    {% csrf_token %}
+
+    <div class="mb-3">
+      {{ form.corrective_action.label_tag }}
+      {{ form.corrective_action }}
+      {% if form.corrective_action.errors %}
+        <div class="text-danger small">{{ form.corrective_action.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.due_date.label_tag }}
+      {{ form.due_date }}
+      {% if form.due_date.errors %}
+        <div class="text-danger small">{{ form.due_date.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.responsible_user.label_tag }}
+      {{ form.responsible_user }}
+      {% if form.responsible_user.errors %}
+        <div class="text-danger small">{{ form.responsible_user.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      {{ form.audit_report.label_tag }}
+      {{ form.audit_report }}
+      {% if form.audit_report.errors %}
+        <div class="text-danger small">{{ form.audit_report.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+  </form>
+</div>
