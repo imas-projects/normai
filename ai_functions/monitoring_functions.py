@@ -1572,31 +1572,29 @@ Devuelve JSON con: user_id, username, full_name, score, justification.
 
 
 
-def suggest_audit_questions(requirement_obj, process_name, max_results=5):
+def suggest_audit_questions(requirement_obj, process_name=None, max_results=5):
     """
-    Genera dinámicamente preguntas de auditoría para un objeto Requirement,
+    Genera dinámicamente preguntas de auditoría para un objeto ProcessRequirement,
     aplicadas a un proceso específico.
 
-    - requirement_obj: instancia del modelo Requirement
-    - process_name: string, ej. "Producción aeroespacial"
+    - requirement_obj: instancia del modelo ProcessRequirement
+    - process_name: nombre del proceso (opcional, si no se usa el del modelo)
     - max_results: número de preguntas a sugerir (máx. 5 por defecto)
 
     Retorna una lista de strings con preguntas sugeridas por IA.
     """
 
-    # Usamos el nombre como identificador del requisito (ej. "8.5.1")
-    clause_identifier = requirement_obj.name
+    # Usamos el campo `requirement` como identificador del requisito (ej. "8.5.1")
+    clause_identifier = requirement_obj.requirement
 
-    # Texto más descriptivo para enriquecer el prompt (si decides añadirlo en el modelo más adelante)
-    clause_description = getattr(requirement_obj, "description", "")  # si decides agregarlo
+    # Si no se pasa explícitamente el nombre del proceso, lo sacamos del modelo
+    process_name = process_name or requirement_obj.process.name
 
     # Prompt enriquecido
     prompt = f"""
 Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015, con experiencia específica en la industria aeroespacial.
 
 Quiero que generes {max_results} preguntas de auditoría bien formuladas, prácticas y alineadas con el requisito/cláusula "{clause_identifier}" de la norma ISO 9001:2015.
-
-{f'Descripción del requisito: {clause_description}' if clause_description else ''}
 
 Estas preguntas deben estar orientadas a auditar el proceso de: "{process_name}".
 
@@ -1612,7 +1610,7 @@ Por favor responde únicamente con una lista JSON de strings. Ejemplo:
   "¿Pregunta 2...?",
   ...
 ]
-    """
+"""
 
     try:
         response = client.chat.completions.create(
@@ -1642,6 +1640,7 @@ Por favor responde únicamente con una lista JSON de strings. Ejemplo:
     except Exception as e:
         print("Error general al generar preguntas de auditoría:", str(e))
         return []
+
 
 def suggest_compliance_rating(checklist_obj):
     """
