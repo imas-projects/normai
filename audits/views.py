@@ -164,8 +164,8 @@ def conduct_internal_audits(request):
             "rate": eval.rate
         } for eval in auditor_evals]
 
-        report = AuditReport.objects.filter(audit=plan).first()
-        report_data = None
+        report = AuditReport.objects.filter(audit_plan=plan).first()
+        report_data = report.as_dict() if report else None
         findings_data = []
 
         lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(type='AUDITOR_LIDER')
