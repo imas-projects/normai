@@ -1731,9 +1731,10 @@ def classify_finding_ia(finding_text, requirement_obj=None):
     Retorna una string: 'NC_MAYOR', 'NC_MENOR' u 'OPORTUNIDAD_MEJORA'
     """
 
-    # Identificador de cláusula
-    clause_identifier = requirement_obj.name if requirement_obj else ""
-    clause_description = getattr(requirement_obj, "description", "") if requirement_obj else ""
+    clause_identifier = ""
+    if requirement_obj:
+        # Accede de forma segura al atributo 'requirement'
+        clause_identifier = getattr(requirement_obj, "requirement", "")
 
     prompt = f"""
 Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015.
@@ -1746,7 +1747,6 @@ Quiero que clasifiques el siguiente hallazgo en una de las siguientes categoría
 Tu clasificación debe basarse en los criterios de la norma ISO 9001:2015.
 
 {f'Este hallazgo está relacionado con la cláusula "{clause_identifier}".' if clause_identifier else ''}
-{f'Descripción de la cláusula: {clause_description}' if clause_description else ''}
 
 Texto del hallazgo:
 \"\"\"{finding_text}\"\"\"
