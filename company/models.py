@@ -16,13 +16,16 @@ class Documentation(models.Model):
     
 #Proveedores externos
 class ExternalSupplier(models.Model):
-    name=models.TextField()
+    name = models.TextField()
+    supply_type = models.CharField(max_length=50, null=True, blank=True)
+    country = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'tb_company_external_supplier'
 
     def __str__(self):
         return self.name
+
     
 class ExternalClient(models.Model):
     name = models.TextField()
