@@ -760,16 +760,73 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
     });
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("openAddCorrectiveActionModal").addEventListener("click", function() {
-        fetch("{% url 'audits:add_corrective_action' %}")
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("correctiveActionModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addCorrectiveActionModal")).show();
+document.getElementById("openAddCorrectiveActionModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_corrective_action' %}")
+    .then(response => response.text())
+    .then(html => {
+      const container = document.getElementById("correctiveActionModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestCorrectiveActionBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Corrective Action");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        suggestBtn.addEventListener("click", function () {
+          const form = container.querySelector("form");
+          const auditReportSelect = form.querySelector("select[name='audit_report']");
+
+          if (!auditReportSelect || !auditReportSelect.value) {
+            alert("Por favor, selecciona un informe de auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditReportId = auditReportSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+
+          fetch(`/audits/suggest_corrective_action/?audit_report_id=${auditReportId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                alert("Error: " + data.error);
+                return;
+              }
+
+              // Aquí podrías mostrar sugerencias en un contenedor si decides agregarlo al HTML
+
+              alert("Sugerencias obtenidas:\n" + JSON.stringify(data.suggestions, null, 2));
+
+              // Opcional: rellenar campos del formulario con la primera sugerencia
+              if (data.suggestions && data.suggestions.length > 0) {
+                const s = data.suggestions[0];
+                if (s.corrective_action) form.querySelector("input[name='corrective_action']").value = s.corrective_action;
+                if (s.due_date) form.querySelector("input[name='due_date']").value = s.due_date;
+                if (s.responsible_user) form.querySelector("select[name='responsible_user']").value = s.responsible_user;
+              }
+
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              alert("Error al obtener sugerencias: " + err);
+            });
         });
+
+        new bootstrap.Modal(document.getElementById("addCorrectiveActionModal")).show();
+      }, 100);
     });
 });
+
 
 document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("openAddCorrectiveActionFollowupModal").addEventListener("click", function() {
