@@ -12,6 +12,7 @@ class RiskIdentification(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="risks")
     identified_risk = models.CharField(max_length=255, unique=True)
     consequences = models.TextField()
+    source = models.CharField(max_length=64, null=True, blank=True)  # ← nuevo campo
 
     class Meta:
         db_table = 'tb_risks_identification'
@@ -25,7 +26,9 @@ class RiskIdentification(models.Model):
             "process": self.process.name,
             "identified_risk": self.identified_risk,
             "consequences": self.consequences,
+            "source": self.source,
         }
+
 
 # Tabla de evaluación de riesgo
 class RiskEvaluation(models.Model):
