@@ -1457,7 +1457,7 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
                   return;
                 }
 
-                const suggestedRate = parseFloat(data.rate);
+                const suggestedRate = parseFloat(data.rating);
                 if (!isNaN(suggestedRate)) {
                   rateInput.value = suggestedRate;
                   alert("Sugerencia IA aplicada correctamente.");
