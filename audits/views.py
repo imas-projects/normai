@@ -48,6 +48,7 @@ def audits_home(request):
     )
     total_planificadas = audit_plans.count()
     realizadas = AuditReport.objects.filter(audit_plan__in=audit_plans).count()
+    pendientes = total_planificadas - realizadas
     porcentaje_cumplimiento = (
         (realizadas / total_planificadas) * 100 if total_planificadas > 0 else 0
     )
@@ -65,15 +66,14 @@ def audits_home(request):
         last_status__in=['PENDING', 'IN_PROGRESS']
     ).count()
     total_acciones = corrective_actions.exclude(last_status__isnull=True).count()
+    cerradas = total_acciones - acciones_abiertas
     porcentaje_acciones_abiertas = (
         (acciones_abiertas / total_acciones) * 100 if total_acciones > 0 else 0
     )
 
     # === Indicador 3: Tasa de No Conformidades ===
-    # Clasificaciones válidas como NC
     nc_classifications = ['NC_MAYOR', 'NC_MENOR']
 
-    # Auditorías con al menos una NC
     audit_ids_with_nc = Findings.objects.filter(
         classification__in=nc_classifications
     ).values('audit_plan').distinct()
@@ -81,6 +81,7 @@ def audits_home(request):
     total_auditorias_con_nc = AnnualPlan.objects.filter(
         id__in=audit_ids_with_nc
     ).count()
+    auditorias_sin_nc = realizadas - total_auditorias_con_nc
 
     tasa_nc = (
         (total_auditorias_con_nc / realizadas) * 100 if realizadas > 0 else 0
@@ -89,13 +90,18 @@ def audits_home(request):
     # === Contexto final ===
     contexto = {
         'realizadas': realizadas,
+        'pendientes': pendientes,
         'planificadas': total_planificadas,
         'porcentaje': round(porcentaje_cumplimiento, 2),
+
         'acciones_abiertas': acciones_abiertas,
+        'cerradas': cerradas,
         'acciones_totales': total_acciones,
         'acciones_porcentaje': round(porcentaje_acciones_abiertas, 2),
-        'tasa_nc': round(tasa_nc, 2),
+
         'auditorias_con_nc': total_auditorias_con_nc,
+        'sin_nc': auditorias_sin_nc,
+        'tasa_nc': round(tasa_nc, 2),
     }
 
     return render(request, 'mistemplates/audits.html', contexto)
