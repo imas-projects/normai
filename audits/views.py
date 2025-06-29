@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.timezone import now
+from django.db.models import OuterRef, Subquery
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -28,7 +29,7 @@ from .models import (
     AuditReport,
     Findings,
     AuditedEvaluationQuestion,
-    LeadAuditorEvaluationQuestion
+    LeadAuditorEvaluationQuestion, CorrectiveAction, CorrectiveActionFollowUp
 )
 
 from processes.models import Process
@@ -40,22 +41,46 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 def audits_home(request):
     current_year = now().year
 
+    # === Indicador 1: Auditorías realizadas / planificadas ===
     audit_plans = AnnualPlan.objects.filter(
         annual_program__program_header__year=current_year
     )
 
     total_planificadas = audit_plans.count()
-
     realizadas = AuditReport.objects.filter(audit_plan__in=audit_plans).count()
-
     porcentaje_cumplimiento = (
         (realizadas / total_planificadas) * 100 if total_planificadas > 0 else 0
+    )
+
+    # === Indicador 2: Acciones correctivas abiertas / cerradas ===
+    # Subquery para obtener el último seguimiento por acción correctiva
+    latest_followup_subquery = CorrectiveActionFollowUp.objects.filter(
+        corrective_action=OuterRef('pk')
+    ).order_by('-followup_date')
+
+    # Anotar cada CorrectiveAction con el status de su último seguimiento
+    corrective_actions = CorrectiveAction.objects.annotate(
+        last_status=Subquery(latest_followup_subquery.values('status')[:1])
+    )
+
+    # Filtrar acciones abiertas
+    acciones_abiertas = corrective_actions.filter(
+        last_status__in=['PENDING', 'IN_PROGRESS']
+    ).count()
+
+    total_acciones = corrective_actions.exclude(last_status__isnull=True).count()
+
+    porcentaje_acciones_abiertas = (
+        (acciones_abiertas / total_acciones) * 100 if total_acciones > 0 else 0
     )
 
     contexto = {
         'realizadas': realizadas,
         'planificadas': total_planificadas,
         'porcentaje': round(porcentaje_cumplimiento, 2),
+        'acciones_abiertas': acciones_abiertas,
+        'acciones_totales': total_acciones,
+        'acciones_porcentaje': round(porcentaje_acciones_abiertas, 2),
     }
 
     return render(request, 'mistemplates/audits.html', contexto)
