@@ -341,7 +341,7 @@ class AuditReport(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "audit_id": self.audit.id,  
+            "audit_plan": self.audit.id
             "summary": self.summary,
             "recommendations": self.recommendations,
             "conclusions": self.conclusions,
