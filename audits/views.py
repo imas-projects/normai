@@ -456,21 +456,14 @@ def suggest_audit_questions_view(request):
         return HttpResponseBadRequest("Falta el parámetro 'requirement_id'.")
 
     try:
-        requirement = Requirement.objects.get(pk=requirement_id)
-    except Requirement.DoesNotExist:
+        process_requirement = ProcessRequirement.objects.select_related("process").get(pk=requirement_id)
+    except ProcessRequirement.DoesNotExist:
         return HttpResponseBadRequest("El requisito especificado no existe.")
-
-    # Buscar proceso asociado en ProcessRequirement
-    # Si hay más de uno, puedes elegir el primero o devolver error o manejar lista
-    process_requirement = ProcessRequirement.objects.filter(requirement=requirement).first()
-
-    if not process_requirement:
-        return HttpResponseBadRequest("No se encontró proceso asociado al requisito.")
 
     process_name = process_requirement.process.name
 
     try:
-        questions = suggest_audit_questions(requirement, process_name)
+        questions = suggest_audit_questions(process_requirement, process_name)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
