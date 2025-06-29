@@ -1658,7 +1658,7 @@ def suggest_compliance_rating(checklist_obj):
     question_text = checklist_obj.question.question_text
     requirement_name = checklist_obj.question.requirement.requirement if checklist_obj.question.requirement else "N/A"
     evidence = checklist_obj.evidence or ""
-    process_name = checklist_obj.audit_plan.process.name 
+    process_name = checklist_obj.audit_plan.annual_program.process.name  # CORREGIDO
     clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
 
     # Prompt para IA
@@ -1692,7 +1692,7 @@ Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # o el que uses
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
             max_tokens=10,
