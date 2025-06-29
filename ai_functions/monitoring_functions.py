@@ -631,7 +631,12 @@ def suggest_contingency_actions(risk_id, max_results=3):
             historical_context += f"  Tratamiento: {tr.treatment_action}\n"
 
         for plan in other_plans:
-            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            actions = ", ".join(
+                filter(
+                    None,
+                    (dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions)
+                )
+            )
             historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
 
         historical_context += "\n"
