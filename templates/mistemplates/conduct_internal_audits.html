@@ -851,42 +851,38 @@ document.getElementById("openAddCorrectiveActionModal").addEventListener("click"
                 return;
               }
 
-              // Mostrar las sugerencias en formato similar al ejemplo
-              suggestionsDiv.innerHTML = `
-                <strong>Sugerencias generadas por IA:</strong>
-                <div id="suggestionListCorrective" class="mt-2">
-                  ${suggestions.map((s, i) => `
-                    <div class="card mt-2 shadow-sm">
-                      <div class="card-body">
-                        <p><strong>Acción Correctiva:</strong></p>
-                        <div>${formatSuggestionField(s.corrective_action)}</div>
-                        <p class="mt-2"><strong>Fecha límite:</strong> ${s.due_date || 'No especificada'}</p>
-                        <p class="mt-2"><strong>Usuario responsable:</strong> ${s.responsible_user || 'No especificado'}</p>
-                        <button type="button" class="btn btn-sm btn-outline-success applyCorrectiveSuggestionBtn" data-idx="${i}">
-                          Usar esta sugerencia
-                        </button>
-                      </div>
-                    </div>
-                  `).join("")}
-                </div>
-              `;
+suggestionsDiv.innerHTML = `
+  <strong>Sugerencias generadas por IA:</strong>
+  <div id="suggestionListCorrective" class="mt-2">
+    ${suggestions.map((s, i) => `
+      <div class="card mt-2 shadow-sm">
+        <div class="card-body">
+          <p><strong>Acción Correctiva:</strong></p>
+          <div>${s}</div>  <!-- s es string -->
+          <button type="button" class="btn btn-sm btn-outline-success applyCorrectiveSuggestionBtn" data-idx="${i}">
+            Usar esta sugerencia
+          </button>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+`;
 
               // Agregar evento a cada botón para aplicar la sugerencia
-              document.querySelectorAll(".applyCorrectiveSuggestionBtn").forEach(button => {
-                button.addEventListener("click", function () {
-                  const idx = parseInt(this.dataset.idx);
-                  const s = suggestions[idx];
-                  if (!s) return;
+document.querySelectorAll(".applyCorrectiveSuggestionBtn").forEach(button => {
+  button.addEventListener("click", function () {
+    const idx = parseInt(this.dataset.idx);
+    const s = suggestions[idx];
+    if (!s) return;
 
-                  if (s.corrective_action) form.querySelector("input[name='corrective_action']").value = s.corrective_action;
-                  if (s.due_date) form.querySelector("input[name='due_date']").value = s.due_date;
-                  if (s.responsible_user) form.querySelector("select[name='responsible_user']").value = s.responsible_user;
+    form.querySelector("input[name='corrective_action']").value = s;
 
-                  suggestionsDiv.style.display = "none";
-                  suggestionsDiv.innerHTML = "";
-                  form.querySelector("input[name='corrective_action']").focus();
-                });
-              });
+    suggestionsDiv.style.display = "none";
+    suggestionsDiv.innerHTML = "";
+    form.querySelector("input[name='corrective_action']").focus();
+  });
+});
+
             })
             .catch(err => {
               suggestBtn.disabled = false;
