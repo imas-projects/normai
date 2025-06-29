@@ -1658,7 +1658,7 @@ def suggest_compliance_rating(checklist_obj):
     question_text = checklist_obj.question.question_text
     requirement_name = checklist_obj.question.requirement.name if checklist_obj.question.requirement else "N/A"
     evidence = checklist_obj.evidence or ""
-    process_name = checklist_obj.audit_plan.annual_program.process.name
+    process_name = checklist_obj.audit_plan.process.name  # ✅ CORREGIDO
     clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
 
     # Prompt para IA
