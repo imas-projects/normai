@@ -691,7 +691,8 @@ function attachSuggestionHandler() {
                       <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                           <strong>Riesgo:</strong> ${item.identified_risk}<br>
-                          <strong>Consecuencia:</strong> ${item.consequences}
+                          <strong>Consecuencia:</strong> ${item.consequences}<br>
+                          <strong>Fuente:</strong> ${item.source}
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-success selectSuggestionBtn">Seleccionar</button>
                       </div>
@@ -720,7 +721,8 @@ function attachSuggestionHandler() {
                                 area_id: areaValue,
                                 process_id: processValue,  
                                 identified_risk: item.identified_risk,
-                                consequences: item.consequences
+                                consequences: item.consequences,
+                                source: item.source
                             })
                         })
                         .then(res => res.json())
