@@ -1539,8 +1539,8 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
         data: {
             labels: ['Realizadas', 'Pendientes'],
             datasets: [{
-                data: [{{ realizadas }}, {{ planificadas|add:"-{}".format(realizadas) }}],
-                backgroundColor: ['#198754', '#dee2e6'],  // verde y gris claro
+                data: [{{ realizadas }}, {{ pendientes }}],
+                backgroundColor: ['#198754', '#dee2e6'],
                 borderWidth: 1
             }]
         },
@@ -1560,8 +1560,8 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
             labels: ['Abiertas', 'Cerradas'],
             datasets: [{
                 label: 'Acciones',
-                data: [{{ acciones_abiertas }}, {{ acciones_totales|add:"-{}".format(acciones_abiertas) }}],
-                backgroundColor: ['#ffc107', '#0d6efd']  // amarillo y azul
+                data: [{{ acciones_abiertas }}, {{ cerradas }}],
+                backgroundColor: ['#ffc107', '#0d6efd']
             }]
         },
         options: {
@@ -1580,8 +1580,8 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
         data: {
             labels: ['Con NC', 'Sin NC'],
             datasets: [{
-                data: [{{ auditorias_con_nc }}, {{ realizadas|add:"-{}".format(auditorias_con_nc) }}],
-                backgroundColor: ['#dc3545', '#6c757d'], // rojo y gris oscuro
+                data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
+                backgroundColor: ['#dc3545', '#6c757d'],
                 borderWidth: 1
             }]
         },
@@ -1594,6 +1594,7 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
         }
     });
 </script>
+
 
 
 
