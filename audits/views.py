@@ -62,7 +62,7 @@ def annual_audit_program(request):
     program_ids = annual_programs.values_list("id", flat=True)
 
     requirements_by_process = defaultdict(list)
-    for pr in ProcessRequirement.objects.select_related("process", "requirement"):
+    for pr in ProcessRequirement.objects.select_related("process"):
         requirements_by_process[pr.process_id].append(pr.requirement)
 
     annual_programs_by_year = OrderedDict()
@@ -90,6 +90,7 @@ def annual_audit_program(request):
         'annual_programs_by_year': annual_programs_by_year,
         'users': all_users,
     })
+
 
 # === ANNUAL AUDIT PLAN ===
 
@@ -151,7 +152,7 @@ def conduct_internal_audits(request):
         checklist = [{
             "orden": item.orden,
             "question": item.question.question_text,
-            "requirement": item.question.requirement.name if item.question.requirement else "N/A",
+            "requirement": item.question.requirement,
             "compliance": item.compliance,
             "evidence": item.evidence,
         } for item in checklist_items]
