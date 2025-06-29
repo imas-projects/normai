@@ -1661,7 +1661,6 @@ def suggest_compliance_rating(checklist_obj):
     process_name = checklist_obj.audit_plan.annual_program.process.name  # CORREGIDO
     clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
 
-    # Prompt para IA
     prompt = f"""
 Eres un auditor experto en calidad bajo la norma ISO 9001:2015, especialmente en el sector industrial.
 
@@ -1687,7 +1686,8 @@ Tu evaluación debe seguir los criterios de ISO 9001:2015.
 
 ---
 
-Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
+IMPORTANTE: Solo escribe el número entero del 0 al 10 sin texto adicional.
+Ejemplo correcto: 8
     """
 
     try:
@@ -1699,9 +1699,14 @@ Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
         )
 
         result = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", repr(result))  # Para depurar si hace falta
 
-        # Extraer el número sugerido
-        match = re.search(r"\b([0-9]|10)\b", result)
+        # Priorizar capturar '10' primero, luego un dígito
+        match = re.search(r"\b(10|[0-9])\b", result)
+        if not match:
+            # Intentar captura más permisiva
+            match = re.search(r"(10|[0-9])", result)
+
         if match:
             rating = int(match.group(1))
             return rating if 0 <= rating <= 10 else None
@@ -1712,6 +1717,7 @@ Solo responde con el número entero sugerido (0 a 10). Ejemplo: `8`
     except Exception as e:
         print("Error al obtener sugerencia de rating:", str(e))
         return None
+
 
 
 def classify_finding_ia(finding_text, requirement_obj=None):
