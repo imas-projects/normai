@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.timezone import now
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -37,7 +38,28 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 # === BASIC VIEWS ===
 
 def audits_home(request):
-    return render(request, 'mistemplates/audits.html')
+    current_year = now().year
+
+    audit_plans = AnnualPlan.objects.filter(
+        annual_program__program_header__year=current_year
+    )
+
+    total_planificadas = audit_plans.count()
+
+    realizadas = AuditReport.objects.filter(audit_plan__in=audit_plans).count()
+
+    porcentaje_cumplimiento = (
+        (realizadas / total_planificadas) * 100 if total_planificadas > 0 else 0
+    )
+
+    contexto = {
+        'realizadas': realizadas,
+        'planificadas': total_planificadas,
+        'porcentaje': round(porcentaje_cumplimiento, 2),
+    }
+
+    return render(request, 'mistemplates/audits.html', contexto)
+
 
 # === ANNUAL AUDIT PROGRAM ===
 
