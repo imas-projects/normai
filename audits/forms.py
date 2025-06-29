@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import (
     AuditProgramHeader, AnnualProgram, AnnualPlan,
     AnnualPlanAuditor, AnnualPlanAudited, Checklist, Findings, AuditReport,
-    ProcessRequirement, AuditedEvaluationQuestion, AuditorEvaluation, LeadAuditorEvaluationQuestion
+    ProcessRequirement, AuditedEvaluationQuestion, AuditorEvaluation, LeadAuditorEvaluationQuestion, CorrectiveAction, CorrectiveActionFollowUp
 )
 
 class AuditProgramHeaderForm(forms.ModelForm):
@@ -93,11 +93,12 @@ class FindingsForm(forms.ModelForm):
 class AuditReportForm(forms.ModelForm):
     class Meta:
         model = AuditReport
-        fields = ['audit_plan', 'summary', 'recommendations']
+        fields = ['audit_plan', 'summary', 'recommendations', 'conclusions']
         widgets = {
             'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'recommendations': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'conclusions': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
 
@@ -137,4 +138,27 @@ class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
         widgets = {
             'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'type': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+class CorrectiveActionForm(forms.ModelForm):
+    class Meta:
+        model = CorrectiveAction
+        fields = ['corrective_action', 'due_date', 'responsible_user', 'audit_report']
+        widgets = {
+            'corrective_action': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'responsible_user': forms.Select(attrs={'class': 'form-control'}),
+            'audit_report': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class CorrectiveActionFollowUpForm(forms.ModelForm):
+    class Meta:
+        model = CorrectiveActionFollowUp
+        fields = ['corrective_action', 'followup_date', 'status', 'comments']
+        widgets = {
+            'corrective_action': forms.Select(attrs={'class': 'form-control'}),
+            'followup_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
