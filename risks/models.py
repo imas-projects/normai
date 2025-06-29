@@ -121,12 +121,12 @@ class ContingencyPlan(models.Model):
     contingency_actions = MultiSelectField(choices=ACTION_CHOICES)
 
     responsible = models.ManyToManyField(
-        'Position',
+        'company.Position',
         through='ContingencyPlanResponsible',
         related_name="responsible_for_contingency"
     )
     communicate_to = models.ManyToManyField(
-        'Position',
+        'company.Position',
         through='ContingencyPlanCommunicateTo',
         related_name="communicate_to_contingency"
     )
@@ -161,9 +161,10 @@ class ContingencyPlan(models.Model):
             } for position in self.communicate_to.all()],
         }
 
+
 class ContingencyPlanResponsible(models.Model):
     contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
-    position = models.ForeignKey('Position', on_delete=models.CASCADE)
+    position = models.ForeignKey('company.Position', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'tb_risks_contingency_plan_responsible'
@@ -173,7 +174,7 @@ class ContingencyPlanResponsible(models.Model):
 
 class ContingencyPlanCommunicateTo(models.Model):
     contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
-    position = models.ForeignKey('Position', on_delete=models.CASCADE)
+    position = models.ForeignKey('company.Position', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'tb_risks_contingency_plan_communicate_to'
