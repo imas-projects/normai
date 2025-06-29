@@ -334,6 +334,69 @@
 
 {% block extra_js %}
 <script>
+    // Auditorías Realizadas / Planificadas
+    new Chart(document.getElementById('auditoriasChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Realizadas', 'Pendientes'],
+            datasets: [{
+                data: [{{ realizadas }}, {{ pendientes }}],
+                backgroundColor: ['#198754', '#dee2e6'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            cutout: '60%',
+            plugins: {
+                tooltip: { enabled: true },
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Acciones Correctivas Abiertas / Cerradas
+    new Chart(document.getElementById('accionesChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Abiertas', 'Cerradas'],
+            datasets: [{
+                label: 'Acciones',
+                data: [{{ acciones_abiertas }}, {{ cerradas }}],
+                backgroundColor: ['#ffc107', '#0d6efd']
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: true }
+            }
+        }
+    });
+
+    // Tasa de No Conformidades
+    new Chart(document.getElementById('ncChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Con NC', 'Sin NC'],
+            datasets: [{
+                data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
+                backgroundColor: ['#dc3545', '#6c757d'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            cutout: '60%',
+            plugins: {
+                tooltip: { enabled: true },
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+
+<script>
 document.getElementById("openAddProcessRequirementModal").addEventListener("click", function () {
     fetch("{% url 'audits:add_process_requirement' %}")
         .then(response => response.text())
@@ -1531,71 +1594,6 @@ document.getElementById("openAddAuditorEvaluationModal").addEventListener("click
 
 
 </script>
-
-<script>
-    // Auditorías Realizadas / Planificadas
-    new Chart(document.getElementById('auditoriasChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Realizadas', 'Pendientes'],
-            datasets: [{
-                data: [{{ realizadas }}, {{ pendientes }}],
-                backgroundColor: ['#198754', '#dee2e6'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            cutout: '60%',
-            plugins: {
-                tooltip: { enabled: true },
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-
-    // Acciones Correctivas Abiertas / Cerradas
-    new Chart(document.getElementById('accionesChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Abiertas', 'Cerradas'],
-            datasets: [{
-                label: 'Acciones',
-                data: [{{ acciones_abiertas }}, {{ cerradas }}],
-                backgroundColor: ['#ffc107', '#0d6efd']
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true }
-            }
-        }
-    });
-
-    // Tasa de No Conformidades
-    new Chart(document.getElementById('ncChart'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Con NC', 'Sin NC'],
-            datasets: [{
-                data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
-                backgroundColor: ['#dc3545', '#6c757d'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            cutout: '60%',
-            plugins: {
-                tooltip: { enabled: true },
-                legend: { position: 'bottom' }
-            }
-        }
-    });
-</script>
-
-
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
