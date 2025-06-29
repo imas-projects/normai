@@ -437,7 +437,7 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
         suggestBtn.addEventListener("click", function () {
           console.log("Solicitando sugerencias de IA para el informe de auditoría...");
 
-          const auditSelect = document.querySelector("#add-audit-report-form select[name='audit']");
+          const auditSelect = document.querySelector("#add-audit-report-form select[name='audit_plan']");
           if (!auditSelect || !auditSelect.value) {
             alert("Por favor, selecciona una auditoría antes de solicitar sugerencias.");
             return;
@@ -467,37 +467,44 @@ document.getElementById("openAddAuditReportModal").addEventListener("click", fun
                 return;
               }
 
-              suggestionsDiv.innerHTML = `
-                <strong>Sugerencias generadas por IA:</strong>
-                <div id="suggestionListReport" class="mt-2">
-                  ${suggestions.map((s, i) => `
-                    <div class="card mt-2 shadow-sm">
-                      <div class="card-body">
-                        <p><strong>Resumen:</strong></p>
-                        <div>${formatSuggestionField(s.summary)}</div>
-                        <p class="mt-2"><strong>Fortalezas:</strong></p>
-                        <div>${formatSuggestionField(s.strengths)}</div>
-                        <button type="button" class="btn btn-sm btn-outline-success applyAuditReportSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
-                      </div>
-                    </div>
-                  `).join("")}
-                </div>
-              `;
+suggestionsDiv.innerHTML = `
+  <strong>Sugerencias generadas por IA:</strong>
+  <div id="suggestionListReport" class="mt-2">
+    ${suggestions.map((s, i) => `
+      <div class="card mt-2 shadow-sm">
+        <div class="card-body">
+          <p><strong>Resumen:</strong></p>
+          <div>${formatSuggestionField(s.summary)}</div>
+          <p class="mt-2"><strong>Recomendaciones:</strong></p>
+          <div>${formatSuggestionField(s.recommendations)}</div>
+          <p class="mt-2"><strong>Conclusiones:</strong></p>
+          <div>${formatSuggestionField(s.conclusions)}</div>
+          <button type="button" class="btn btn-sm btn-outline-success applyAuditReportSuggestionBtn" data-idx="${i}">
+            Usar esta sugerencia
+          </button>
+        </div>
+      </div>
+    `).join("")}
+  </div>
+`;
 
-              document.querySelectorAll(".applyAuditReportSuggestionBtn").forEach(applyBtn => {
-                applyBtn.addEventListener("click", function () {
-                  const idx = parseInt(this.dataset.idx);
-                  const s = suggestions[idx];
-                  if (!s) return;
 
-                  document.querySelector("textarea[name='summary']").value = s.summary;
-                  document.querySelector("textarea[name='strengths']").value = s.strengths;
+document.querySelectorAll(".applyAuditReportSuggestionBtn").forEach(applyBtn => {
+  applyBtn.addEventListener("click", function () {
+    const idx = parseInt(this.dataset.idx);
+    const s = suggestions[idx];
+    if (!s) return;
 
-                  suggestionsDiv.style.display = "none";
-                  suggestionsDiv.innerHTML = "";
-                  document.querySelector("textarea[name='summary']").focus();
-                });
-              });
+    document.querySelector("textarea[name='summary']").value = s.summary;
+    document.querySelector("textarea[name='recommendations']").value = s.recommendations;
+    document.querySelector("textarea[name='conclusions']").value = s.conclusions;
+
+    suggestionsDiv.style.display = "none";
+    suggestionsDiv.innerHTML = "";
+    document.querySelector("textarea[name='summary']").focus();
+  });
+});
+
             })
             .catch(err => {
               suggestBtn.disabled = false;
