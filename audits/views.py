@@ -392,8 +392,8 @@ def classify_finding_view(request):
     requirement = None
     if requirement_id:
         try:
-            requirement = Requirement.objects.get(id=requirement_id)
-        except Requirement.DoesNotExist:
+            requirement = ProcessRequirement.objects.get(id=requirement_id)
+        except ProcessRequirement.DoesNotExist:
             tb = traceback.format_exc()
             return JsonResponse({
                 "error": f"Requisito con ID {requirement_id} no encontrado.",
