@@ -339,7 +339,7 @@ def add_checklist(request):
         else:
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
     return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
-
+    
 
 def add_findings(request):
     ia_error = None
@@ -364,6 +364,8 @@ def add_findings(request):
                         ia_error = "La IA no pudo determinar una clasificación."
                 except Exception as e:
                     ia_error = f"Error al clasificar con IA: {str(e)}"
+                    ia_error += "\n" + traceback.format_exc()
+                    print(ia_error)  # También imprimir en consola para debug
 
             # Mostrar el formulario con el campo classification autoseleccionado
             return render(request, "mistemplates/add_findings.html", {
@@ -381,6 +383,7 @@ def add_findings(request):
         form = FindingsForm()
 
     return render(request, "mistemplates/add_findings.html", {"form": form})
+
 
 def classify_finding_view(request):
     finding_text = request.GET.get("finding_text")
