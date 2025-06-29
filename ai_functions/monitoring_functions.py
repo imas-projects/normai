@@ -768,7 +768,12 @@ def suggest_reevaluation_rating_ranges(risk_id):
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
     contingency_info = ""
     for plan in contingency_plans:
-        actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
+        actions = ", ".join(
+            filter(
+                None,
+                (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+            )
+        )
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
 
     if not contingency_info:
@@ -952,7 +957,12 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             historical_context += f"  Tratamiento: {tr.treatment_action}\n"
 
         for plan in other_plans:
-            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            actions = ", ".join(
+                filter(
+                    None,
+                    (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+                )
+            )
             historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
 
         for ree in other_reevs:
