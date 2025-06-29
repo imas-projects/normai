@@ -527,6 +527,24 @@ def suggest_compliance_rate_view(request):
 def add_lead_auditor_evaluation_question(request):
     return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_lead_auditor_evaluation_question.html')
 
+
+def add_corrective_action(request):
+    return _add_form_view(
+        request,
+        CorrectiveActionForm,
+        'audits:conduct_internal_audits', 
+        'mistemplates/add_corrective_action.html'
+    )
+
+def add_corrective_action_followup(request):
+    return _add_form_view(
+        request,
+        CorrectiveActionFollowUpForm,
+        'audits:conduct_internal_audits',  
+        'mistemplates/add_corrective_action_followup.html'
+    )
+
+
 '''
 # === AJAX VIEWS ===
 
