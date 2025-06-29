@@ -1452,15 +1452,20 @@ def suggest_auditor_ai(program_id: int, max_results=5):
         users_scores[uid]["score"] += 1
         users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
 
-    # 4. Evaluaciones positivas como auditor (ahora consideramos al usuario evaluado directamente)
+    # 4. Evaluaciones positivas como auditor (ahora consideramos a los usuarios asociados al plan evaluado)
     good_evals = AuditorEvaluation.objects.filter(
         audit_plan__annual_program__process=process,
         rate__gte=7
-    ).select_related('user')
+    )
 
     for eval in good_evals:
-        if eval.user:
-            uid = eval.user.id
+        # Obtener los auditores vinculados al plan
+        auditor_users = AnnualPlanAuditor.objects.filter(
+            annual_plan=eval.audit_plan
+        ).select_related('user')
+
+        for auditor in auditor_users:
+            uid = auditor.user.id
             if uid in excluded_user_ids:
                 continue
             users_scores[uid]["score"] += 1
