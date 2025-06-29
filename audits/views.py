@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_protect
 from .forms import (
     AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm,
     AnnualPlanAuditorForm, AnnualPlanAuditedForm, ChecklistForm, FindingsForm, AuditReportForm,
-    ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm
+    ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm, CorrectiveActionForm, CorrectiveActionFollowUpForm
 )
 from company.models import Requirement
 
