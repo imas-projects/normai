@@ -404,6 +404,18 @@
 {{ auditorias_values|json_script:"auditorias-values" }}
 
 
+<div class="card mt-4">
+    <div class="card-header border-0 align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Distribución de No Conformidades por Clasificación</h4>
+    </div>
+    <div class="card-body">
+        <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
+    </div>
+</div>
+
+{{ clasificaciones_labels|json_script:"clasificaciones-labels" }}
+{{ clasificaciones_values|json_script:"clasificaciones-values" }}
+
                                     </div><!-- end col -->
                                 </div> <!-- end row-->
                             </div> <!-- end col-->
@@ -984,6 +996,41 @@ document.addEventListener("DOMContentLoaded", function () {
     chart.render();
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var labels = JSON.parse(document.getElementById('clasificaciones-labels').textContent);
+    var values = JSON.parse(document.getElementById('clasificaciones-values').textContent);
+
+    var options = {
+        chart: {
+            type: 'pie',
+            height: 350,
+        },
+        series: values,
+        labels: labels,
+        colors: ['#556ee6', '#34c38f', '#f46a6a'],  // Ajusta colores a gusto
+        legend: {
+            position: 'bottom',
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    width: 300
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }]
+    };
+
+    var chart = new ApexCharts(document.querySelector("#nc_distribution_chart"), options);
+    chart.render();
+});
+</script>
+
 
 {% endblock extra_js %}
 
