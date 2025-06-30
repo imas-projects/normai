@@ -400,6 +400,10 @@
     </div>
 </div>
 
+{{ auditorias_labels|json_script:"auditorias-labels" }}
+{{ auditorias_values|json_script:"auditorias-values" }}
+
+
                                     </div><!-- end col -->
                                 </div> <!-- end row-->
                             </div> <!-- end col-->
@@ -937,34 +941,36 @@
 <script src="{% static 'js/pages/dashboard-blog.init.js'%}"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var options = {
-            chart: {
-                type: 'bar',
-                height: 300,
-                toolbar: { show: false }
-            },
-            series: [{
-                name: 'Auditorías',
-                data: {{ auditorias_values|safe }}
-            }],
-            xaxis: {
-                categories: {{ auditorias_labels|safe }},
-                title: { text: 'Mes' }
-            },
-            yaxis: {
-                title: { text: 'Número de Auditorías' }
-            },
-            colors: ['#556ee6'],  // Puedes personalizar el color
-            dataLabels: { enabled: false },
-            grid: {
-                borderColor: '#f1f1f1'
-            }
-        };
+document.addEventListener("DOMContentLoaded", function () {
+    var auditoriasLabels = JSON.parse(document.getElementById('auditorias-labels').textContent);
+    var auditoriasValues = JSON.parse(document.getElementById('auditorias-values').textContent);
 
-        var chart = new ApexCharts(document.querySelector("#audit_trend_chart"), options);
-        chart.render();
-    });
+    var options = {
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Auditorías',
+            data: auditoriasValues
+        }],
+        xaxis: {
+            categories: auditoriasLabels,
+            title: { text: 'Mes' }
+        },
+        yaxis: {
+            title: { text: 'Número de Auditorías' }
+        },
+        colors: ['#556ee6'],
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#f1f1f1' }
+    };
+
+    var chart = new ApexCharts(document.querySelector("#audit_trend_chart"), options);
+    chart.render();
+});
+
 </script>
 
 {% endblock extra_js %}
