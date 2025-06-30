@@ -98,23 +98,6 @@
                     </div>
                 </div>
             </div>
-<!-- Auditorías Realizadas / Planificadas -->
-<div class="card p-4 shadow mt-5 bg-light">
-    <h4>Auditorías Realizadas / Planificadas</h4>
-    <canvas id="auditoriasChart" height="100"></canvas>
-</div>
-
-<!-- Acciones Correctivas Abiertas / Cerradas -->
-<div class="card p-4 shadow mt-4 bg-light">
-    <h4>Acciones Correctivas Abiertas / Cerradas</h4>
-    <canvas id="accionesChart" height="100"></canvas>
-</div>
-
-<!-- Tasa de No Conformidades -->
-<div class="card p-4 shadow mt-4 bg-light">
-    <h4>Tasa de No Conformidades</h4>
-    <canvas id="ncChart" height="100"></canvas>
-</div>
         </div>
     </div>
 </div>
@@ -368,104 +351,12 @@
             
 
 
-<style>
-  /* Tamaño más pequeño para estos dos gráficos doughnut */
-  #auditoriasChart, #ncChart {
-    max-width: 250px;
-    max-height: 250px;
-    margin: auto;
-  }
-</style>
-
-
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
 {% endblock content %}
 
 {% block extra_js %}
-<script>
-// Auditorías Realizadas / Planificadas
-new Chart(document.getElementById('auditoriasChart'), {
-    type: 'doughnut',
-    data: {
-        labels: ['Realizadas', 'Pendientes'],
-        datasets: [{
-            data: [{{ realizadas }}, {{ pendientes }}],
-            backgroundColor: ['#198754', '#dee2e6'],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        cutout: '75%',  // dona más fina
-        plugins: {
-            tooltip: { enabled: true },
-            legend: {
-                position: 'bottom',
-                labels: {
-                    font: {
-                        size: 12  // letra más pequeña
-                    }
-                }
-            }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-    }
-});
-
-
-    // Acciones Correctivas Abiertas / Cerradas
-    new Chart(document.getElementById('accionesChart'), {
-        type: 'bar',
-        data: {
-            labels: ['Abiertas', 'Cerradas'],
-            datasets: [{
-                label: 'Acciones',
-                data: [{{ acciones_abiertas }}, {{ cerradas }}],
-                backgroundColor: ['#ffc107', '#0d6efd']
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true }
-            }
-        }
-    });
-
-// Tasa de No Conformidades
-new Chart(document.getElementById('ncChart'), {
-    type: 'doughnut',
-    data: {
-        labels: ['Con NC', 'Sin NC'],
-        datasets: [{
-            data: [{{ auditorias_con_nc }}, {{ sin_nc }}],
-            backgroundColor: ['#dc3545', '#6c757d'],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        cutout: '75%',
-        plugins: {
-            tooltip: { enabled: true },
-            legend: {
-                position: 'bottom',
-                labels: {
-                    font: {
-                        size: 12
-                    }
-                }
-            }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-    }
-});
-
-</script>
 
 <script>
 document.getElementById("openAddProcessRequirementModal").addEventListener("click", function () {
