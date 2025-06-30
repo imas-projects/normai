@@ -4,7 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
-
+from collections import defaultdict
+from django.db.models.functions import TruncMonth
+from django.db.models import Count
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
 
 # Create your views here.
@@ -58,6 +60,25 @@ def wellcome_view(request):
         (total_auditorias_con_nc / realizadas) * 100 if realizadas > 0 else 0
     )
 
+    # === Gráfico: Tendencia de Auditorías Realizadas por Mes ===
+    auditorias_por_mes_qs = (
+        AnnualPlan.objects.filter(
+            annual_program__program_header__year=current_year,
+            id__in=AuditReport.objects.values_list('audit_plan_id', flat=True)
+        )
+        .annotate(month=TruncMonth('audit_opening_date'))
+        .values('month')
+        .annotate(total=Count('id'))
+        .order_by('month')
+    )
+
+    auditorias_labels = []
+    auditorias_values = []
+
+    for entry in auditorias_por_mes_qs:
+        auditorias_labels.append(entry['month'].strftime('%b'))  # Ej: 'Ene', 'Feb'
+        auditorias_values.append(entry['total'])
+
     # === Contexto final ===
     contexto = {
         'realizadas': realizadas,
@@ -73,6 +94,9 @@ def wellcome_view(request):
         'auditorias_con_nc': total_auditorias_con_nc,
         'sin_nc': auditorias_sin_nc,
         'tasa_nc': round(tasa_nc, 2),
+
+        'auditorias_labels': auditorias_labels,
+        'auditorias_values': auditorias_values,
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
