@@ -34,8 +34,7 @@ document.getElementById('sign-up-form').addEventListener('submit', function (eve
             firstname: document.getElementById('firstname').value,
             lastname: document.getElementById('lastname').value,
             useremail: document.getElementById('useremail').value,
-            password: document.getElementById('password-input').value,       
-            group: document.getElementById('group').value,      
+            password: document.getElementById('password-input').value,           
     };
     
     fetch('/authentication/sign-up/', {

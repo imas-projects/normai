@@ -200,6 +200,7 @@ def create_message(request):
             message_channel = MessageChanel.objects.create(
                 message_id=message.id,
                 channel_id=selected_channels,
+                table_id = communication_table_id
             )
             message_channel.save()
             

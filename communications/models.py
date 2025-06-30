@@ -128,6 +128,7 @@ class CommunicationTable(models.Model):
 class MessageChanel(models.Model):
     message = models.ForeignKey(Message, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Message", null=False)
     channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Channel", null=False)
+    table = models.ForeignKey(CommunicationTable, on_delete=models.PROTECT, related_name="message_channels", verbose_name="Channel", null=True, blank=True)
 
     class Meta:
         db_table = 'tb_communication_channels'  # Nombre de la tabla
