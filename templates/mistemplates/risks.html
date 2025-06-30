@@ -124,66 +124,69 @@
 
 
 <div class="mt-3">
-    {% for area, risks in grouped_risks.items %}
-    <div class="accordion" id="accordion{{ area|slugify }}">
-        <div class="accordion-item">
-            <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area|slugify }}">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#collapse{{ area|slugify }}" 
-                    aria-expanded="false" 
-                    aria-controls="collapse{{ area|slugify }}">
-                    {{ area.name }}  <!-- Asumiendo que 'area' tiene un atributo 'name' -->
-                </button>
-                <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
-                    <i class="ri-file-download-line"></i> Download PDF
-                </a>
-            </h2>
+    {% for key, risks in grouped_risks.items %}
+        {% with area=key.0 process=key.1 %}
+        <div class="accordion" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
+            <div class="accordion-item">
+                <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse{{ area.name|slugify }}-{{ process.name|slugify }}" 
+                        aria-expanded="false" 
+                        aria-controls="collapse{{ area.name|slugify }}-{{ process.name|slugify }}">
+                        {{ area.name }} - {{ process.name }}
+                    </button>
+                    <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
+                        <i class="ri-file-download-line"></i> Download PDF
+                    </a>
+                </h2>
 
-            <div id="collapse{{ area|slugify }}" class="accordion-collapse collapse"
-                aria-labelledby="heading{{ area|slugify }}">
-                <div class="accordion-body">
-                    {% for risk in risks %}
-                    <div class="card mb-3" style="background-color: #e9ecef; color: black;">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <table class="table table-bordered" style="border-color: #6c757d;">
-                                        <tbody>
-                                            <tr>
-                                                <th style="font-size: 18px; width: 30%;">Risk Name:</th>
-                                                <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th style="font-size: 18px;">Activity Name:</th>
-                                                <td style="font-size: 18px;">{{ risk.activity_name }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th style="font-size: 18px;">Consequences:</th>
-                                                <td style="font-size: 18px;">{{ risk.consequences }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="col-md-4 text-center">
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                            data-bs-target="#modalRiskEvaluation{{ risk.id }}">
-                                            Risk Evaluation
-                                        </button>
-                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                            data-bs-target="#modalRiskTreatment{{ risk.id }}">
-                                            Risk Treatment
-                                        </button>
-                                        <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                            data-bs-target="#modalContingencyPlan{{ risk.id }}">
-                                            Contingency Plan
-                                        </button>
-                                        <button class="btn btn-dark w-100" data-bs-toggle="modal"
-                                            data-bs-target="#modalReevaluation{{ risk.id }}">
-                                            Reevaluation
-                                        </button>
+                <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse"
+                    aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
+                    <div class="accordion-body">
+                        {% for risk in risks %}
+                        <div class="card mb-3" style="background-color: #e9ecef; color: black;">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-bordered" style="border-color: #6c757d;">
+                                            <tbody>
+                                                <tr>
+                                                    <th style="font-size: 18px; width: 30%;">Risk Name:</th>
+                                                    <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th style="font-size: 18px;">Process:</th>
+                                                    <td style="font-size: 18px;">{{ risk.process.name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th style="font-size: 18px;">Consequences:</th>
+                                                    <td style="font-size: 18px;">{{ risk.consequences }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
+                                    <div class="col-md-4 text-center">
+                                        <div class="d-flex flex-column gap-2">
+                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                                data-bs-target="#modalRiskEvaluation{{ risk.id }}">
+                                                Risk Evaluation
+                                            </button>
+                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                                data-bs-target="#modalRiskTreatment{{ risk.id }}">
+                                                Risk Treatment
+                                            </button>
+                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
+                                                data-bs-target="#modalContingencyPlan{{ risk.id }}">
+                                                Contingency Plan
+                                            </button>
+                                            <button class="btn btn-dark w-100" data-bs-toggle="modal"
+                                                data-bs-target="#modalReevaluation{{ risk.id }}">
+                                                Reevaluation
+                                            </button>
+                                        </div>
+                                    </div>
+
+
 <!-- Botones de Edición y Eliminación -->
 <div class="col-md-2 d-flex flex-column align-items-end align-self-start">
     <div class="dropdown">
@@ -503,13 +506,13 @@
                             </div>
                         </div>
                     </div>
-
                     {% endfor %}  <!-- Cierre del for de risks -->
                 </div>
             </div>
         </div>
     </div>
-    {% endfor %}  <!-- Cierre del for de departments -->
+    {% endwith %}
+    {% endfor %}
 </div>
 
 {% block footer %}
@@ -630,18 +633,18 @@ function attachSuggestionHandler() {
 
     btn.addEventListener("click", function () {
         const areaSelect = document.querySelector("#add-risk-identification-form select[name='area']");
-        const activityInput = document.querySelector("#add-risk-identification-form input[name='activity_name']");
+        const processSelect = document.querySelector("#add-risk-identification-form select[name='process']");
 
-        if (!areaSelect || !activityInput) {
+        if (!areaSelect || !processSelect) {
             alert("No se encontraron los campos requeridos.");
             return;
         }
 
         const areaValue = areaSelect.value;
-        const activityValue = activityInput.value;
+        const processValue = processSelect.value;
 
-        if (!areaValue || !activityValue) {
-            alert("Por favor, completa el área y la actividad.");
+        if (!areaValue || !processValue) {
+            alert("Por favor, completa el área y el proceso.");
             return;
         }
 
@@ -649,9 +652,13 @@ function attachSuggestionHandler() {
         btn.disabled = true;
         btn.textContent = "Obteniendo sugerencias...";
 
-        const url = `/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&activity_name=${encodeURIComponent(activityValue)}`;
+        const suggestionContainer = document.getElementById("suggestionContainer");
+        const suggestionList = document.getElementById("suggestionList");
 
-        fetch(url)
+        suggestionContainer.style.display = "block";
+        suggestionList.innerHTML = "";
+
+        fetch(`/risks/get_suggestions/?area=${encodeURIComponent(areaValue)}&process=${encodeURIComponent(processValue)}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Error ${response.status}: No se pudo obtener sugerencias.`);
@@ -671,39 +678,71 @@ function attachSuggestionHandler() {
                     return;
                 }
 
-                const container = document.getElementById("suggestionContainer");
-                const list = document.getElementById("suggestionList");
-
-                if (!Array.isArray(data)) {
-                    alert("No se encontraron sugerencias válidas.");
+                if (!Array.isArray(data) || data.length === 0) {
+                    suggestionList.innerHTML = `<div class="text-warning">No se encontraron sugerencias válidas.</div>`;
                     return;
                 }
 
-                list.innerHTML = "";
-
                 data.forEach(item => {
-                    const div = document.createElement("div");
-                    div.className = "alert alert-secondary";
+                    const card = document.createElement("div");
+                    card.className = "card mt-2 shadow-sm";
 
-                    div.innerHTML = `
-                        <strong>Riesgo:</strong> ${item.identified_risk}<br>
-                        <strong>Consecuencia:</strong> ${item.consequences}<br>
-                        <button type="button" class="btn btn-sm btn-primary mt-2 select-suggestion-btn">Usar esta sugerencia</button>
+                    card.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>Riesgo:</strong> ${item.identified_risk}<br>
+                          <strong>Consecuencia:</strong> ${item.consequences}<br>
+                          <strong>Fuente:</strong> ${item.source}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success selectSuggestionBtn">Seleccionar</button>
+                      </div>
                     `;
 
-                    list.appendChild(div);
+                    suggestionList.appendChild(card);
 
-                    const selectBtn = div.querySelector(".select-suggestion-btn");
+                    const selectBtn = card.querySelector(".selectSuggestionBtn");
+
                     selectBtn.addEventListener("click", () => {
-                        const form = document.getElementById("add-risk-identification-form");
-                        form.querySelector("input[name='identified_risk']").value = item.identified_risk;
-                        form.querySelector("textarea[name='consequences']").value = item.consequences;
+                        selectBtn.disabled = true;
+                        selectBtn.textContent = "Guardando...";
 
-                        container.style.display = "none";
+                        // Prepara datos para guardar
+                        const form = document.getElementById("add-risk-identification-form");
+                        const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+
+                        fetch("/risks/save-selected-risk/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                                "X-CSRFToken": csrfToken,
+                                "X-Requested-With": "XMLHttpRequest"
+                            },
+                            body: new URLSearchParams({
+                                area_id: areaValue,
+                                process_id: processValue,  
+                                identified_risk: item.identified_risk,
+                                consequences: item.consequences,
+                                source: item.source
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert("Sugerencia guardada correctamente.");
+                                card.remove();  // Remueve esta sugerencia de la lista
+                            } else {
+                                alert("Error al guardar: " + (data.error || "desconocido"));
+                                selectBtn.disabled = false;
+                                selectBtn.textContent = "Seleccionar";
+                            }
+                        })
+                        .catch(err => {
+                            alert("Error inesperado: " + err);
+                            selectBtn.disabled = false;
+                            selectBtn.textContent = "Seleccionar";
+                        });
                     });
                 });
-
-                container.style.display = "block";
             })
             .catch(error => {
                 alert("Error al obtener sugerencias.");
@@ -715,6 +754,8 @@ function attachSuggestionHandler() {
             });
     });
 }
+
+
 
 
 function attachEvaluationSuggestions() {
@@ -739,72 +780,81 @@ function attachEvaluationSuggestions() {
     const preventiveList = document.getElementById("preventiveSuggestionsList");
     const detectionList = document.getElementById("detectionSuggestionsList");
 
-    const suggestControlsBtn = document.getElementById("suggest-controls-btn");
-    if (suggestControlsBtn) {
-        suggestControlsBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+const suggestControlsBtn = document.getElementById("suggest-controls-btn");
+if (suggestControlsBtn) {
+    suggestControlsBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestControlsBtn.textContent;
-            suggestControlsBtn.disabled = true;
-            suggestControlsBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestControlsBtn.textContent;
+        suggestControlsBtn.disabled = true;
+        suggestControlsBtn.textContent = "Obteniendo sugerencias...";
 
-            fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
+        fetch(`${suggestControlsBtn.dataset.url}?risk_id=${riskId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
 
-                    preventiveList.innerHTML = "";
-                    detectionList.innerHTML = "";
+                preventiveList.innerHTML = "";
+                detectionList.innerHTML = "";
 
-                    data.preventive_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "alert alert-info mb-2";
-                        div.innerHTML = `
-                            <strong>Preventivo:</strong> ${control}<br>
-                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
-                        `;
-                        div.querySelector("button").addEventListener("click", () => {
-                            if (preventiveControlsField.value) {
-                                preventiveControlsField.value += `\n${control}`;
-                            } else {
-                                preventiveControlsField.value = control;
-                            }
-                            div.remove();
-                        });
-                        preventiveList.appendChild(div);
+                data.preventive_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
+
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Preventivo:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
+
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (preventiveControlsField.value) {
+                            preventiveControlsField.value += `\n${control}`;
+                        } else {
+                            preventiveControlsField.value = control;
+                        }
+                        div.remove();
                     });
-
-                    data.detection_controls.forEach(control => {
-                        const div = document.createElement("div");
-                        div.className = "alert alert-warning mb-2";
-                        div.innerHTML = `
-                            <strong>Detección:</strong> ${control}<br>
-                            <button type="button" class="btn btn-sm btn-primary mt-1">Usar este control</button>
-                        `;
-                        div.querySelector("button").addEventListener("click", () => {
-                            if (detectionControlsField.value) {
-                                detectionControlsField.value += `\n${control}`;
-                            } else {
-                                detectionControlsField.value = control;
-                            }
-                            div.remove();
-                        });
-                        detectionList.appendChild(div);
-                    });
-
-                    suggestionsContainer.style.display = "block";
-                })
-                .catch(err => {
-                    console.error("Error obteniendo controles:", err);
-                    alert("Ocurrió un error al obtener controles sugeridos.");
-                })
-                .finally(() => {
-                    suggestControlsBtn.disabled = false;
-                    suggestControlsBtn.textContent = originalText;
+                    preventiveList.appendChild(div);
                 });
-        });
-    }
+
+                data.detection_controls.forEach(control => {
+                    const div = document.createElement("div");
+                    div.className = "card mt-2 shadow-sm";
+
+                    div.innerHTML = `
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0"><strong>Detección:</strong> ${control}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectControlBtn">Seleccionar</button>
+                      </div>
+                    `;
+
+                    div.querySelector("button").addEventListener("click", () => {
+                        if (detectionControlsField.value) {
+                            detectionControlsField.value += `\n${control}`;
+                        } else {
+                            detectionControlsField.value = control;
+                        }
+                        div.remove();
+                    });
+
+                    detectionList.appendChild(div);
+                });
+
+                suggestionsContainer.style.display = "block";
+            })
+            .catch(err => {
+                console.error("Error obteniendo controles:", err);
+                alert("Ocurrió un error al obtener controles sugeridos.");
+            })
+            .finally(() => {
+                suggestControlsBtn.disabled = false;
+                suggestControlsBtn.textContent = originalText;
+            });
+    });
+}
 
     const suggestRangesBtn = document.getElementById("suggest-ranges-btn");
     if (suggestRangesBtn) {
@@ -869,43 +919,73 @@ function attachEvaluationSuggestions() {
         });
     }
 
-    const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener("click", () => {
-            const riskId = riskSelect.value;
-            if (!riskId) return alert("Selecciona un riesgo primero.");
+const suggestRiskLevelBtn = document.getElementById("suggest-risk-level-btn");
+if (suggestRiskLevelBtn) {
+    suggestRiskLevelBtn.addEventListener("click", () => {
+        const riskId = riskSelect.value;
+        if (!riskId) return alert("Selecciona un riesgo primero.");
 
-            const originalText = suggestRiskLevelBtn.textContent;
-            suggestRiskLevelBtn.disabled = true;
-            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+        const originalText = suggestRiskLevelBtn.textContent;
+        suggestRiskLevelBtn.disabled = true;
+        suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
 
-            const params = new URLSearchParams({
-                risk_id: riskId,
-                preventive_controls: preventiveControlsField.value,
-                detection_controls: detectionControlsField.value,
-                severity: severityField.value,
-                occurrence: occurrenceField.value,
-                detection: detectionField.value
-            });
-
-            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
-                    riskLevelField.value = data.risk_level;
-                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
-                })
-                .catch(err => {
-                    console.error("Error obteniendo nivel de riesgo:", err);
-                    alert("Ocurrió un error al obtener el nivel de riesgo.");
-                })
-                .finally(() => {
-                    suggestRiskLevelBtn.disabled = false;
-                    suggestRiskLevelBtn.textContent = originalText;
-                });
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            preventive_controls: preventiveControlsField.value,
+            detection_controls: detectionControlsField.value,
+            severity: severityField.value,
+            occurrence: occurrenceField.value,
+            detection: detectionField.value
         });
-    }
+
+        fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
+
+                // Mapeo de la respuesta con emojis/textos a los valores que espera el select
+                const mapping = {
+                    "🟥 Riesgo Alto": "High",
+                    "🟨 Riesgo Moderado": "Moderate",
+                    "🟩 Riesgo Bajo": "Low",
+                    // Por si hay alguna variación en español
+                    "🟥 Risk High": "High",
+                    "🟨 Risk Moderate": "Moderate",
+                    "🟩 Risk Low": "Low",
+                };
+
+                // Extraemos solo el valor, sin emoji ni texto extra
+                let riskLevelValue = null;
+                for (const key in mapping) {
+                    if (data.risk_level.includes(key)) {
+                        riskLevelValue = mapping[key];
+                        break;
+                    }
+                }
+
+                if (!riskLevelValue) {
+                    // Si no coincide con nada, intentar asignar el string tal cual o alertar
+                    riskLevelValue = data.risk_level; // fallback
+                    alert(`Nivel de riesgo sugerido recibido, pero no reconocido: ${data.risk_level}`);
+                } else {
+                    // Seteamos el select por valor
+                    riskLevelField.value = riskLevelValue;
+                    alert(`Nivel de riesgo sugerido seleccionado`);
+                }
+            })
+            .catch(err => {
+                console.error("Error obteniendo nivel de riesgo:", err);
+                alert("Ocurrió un error al obtener el nivel de riesgo.");
+            })
+            .finally(() => {
+                suggestRiskLevelBtn.disabled = false;
+                suggestRiskLevelBtn.textContent = originalText;
+            });
+    });
 }
+
+}
+
 
 
 function attachTreatmentSuggestions() {
@@ -1006,11 +1086,12 @@ function attachTreatmentSuggestions() {
                     card.className = "card mb-2";
 
                     card.innerHTML = `
-                        <div class="card-body">
-                            <strong>Acción sugerida ${index + 1}:</strong> ${action}<br>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <p class="mb-0"><strong>Acción sugerida ${index + 1}:</strong> ${action}</p>
+                            <button type="button" class="btn btn-outline-success btn-sm">Seleccionar</button>
                         </div>
                     `;
+                    
 
                     const useBtn = card.querySelector("button");
                     useBtn.addEventListener("click", function () {
@@ -1088,29 +1169,38 @@ function attachContingencySuggestions() {
                 suggestionContainer.style.display = "block";
 
                 data.forEach((item, index) => {
-                    const action = item.contingency_action || "(sin acción sugerida)";
-                    const card = document.createElement("div");
-                    card.className = "card mb-2";
+    const action = item.contingency_action || "(sin acción sugerida)";
+    const card = document.createElement("div");
+    card.className = "card mb-2";
 
-                    card.innerHTML = `
-                        <div class="card-body">
-                            <strong>Acción sugerida ${index + 1}:</strong> ${action}<br>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2">Usar esta sugerencia</button>
-                        </div>
-                    `;
+    card.innerHTML = `
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <p class="mb-0"><strong>Acción sugerida ${index + 1}:</strong> ${action}</p>
+            <button type="button" class="btn btn-outline-success btn-sm">Seleccionar</button>
+        </div>
+    `;
 
-                    const useBtn = card.querySelector("button");
-                    useBtn.addEventListener("click", function () {
-                        Array.from(contingencySelect.options).forEach(option => {
-                            if (option.text.trim() === action.trim()) {
-                                option.selected = true;
-                            }
-                        });
-                        suggestionContainer.style.display = "none";
-                    });
+    const useBtn = card.querySelector("button");
+    useBtn.addEventListener("click", function () {
+    // Añadimos esta acción al select múltiple, sin borrar las anteriores
+    Array.from(contingencySelect.options).forEach(option => {
+        if (option.text.trim() === action.trim()) {
+            option.selected = true;
+        }
+    });
 
-                    suggestionList.appendChild(card);
-                });
+    // Eliminamos la tarjeta específica que se seleccionó
+    card.remove();
+
+    // Si ya no quedan tarjetas dentro de suggestionList, ocultamos el contenedor completo
+    if (suggestionList.children.length === 0) {
+        suggestionContainer.style.display = "none";
+    }
+});
+
+    suggestionList.appendChild(card);
+});
+
             })
             .catch(error => {
                 console.error(error);
@@ -1194,45 +1284,72 @@ function attachReevaluationSuggestions() {
     }
 
     const suggestRiskLevelBtn = document.getElementById("suggest-reevaluation-risk-level-btn");
-    if (suggestRiskLevelBtn) {
-        suggestRiskLevelBtn.addEventListener("click", () => {
-            const riskId = riskSelect ? riskSelect.value : null;
-            if (!riskId) {
-                alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
-                return;
-            }
+if (suggestRiskLevelBtn) {
+    suggestRiskLevelBtn.addEventListener("click", () => {
+        const riskId = riskSelect ? riskSelect.value : null;
+        if (!riskId) {
+            alert("Por favor, selecciona un riesgo antes de solicitar sugerencias.");
+            return;
+        }
 
-            // Muestra estado de carga
-            suggestRiskLevelBtn.disabled = true;
-            suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
-            riskLevelDisplay.textContent = "";
+        // Muestra estado de carga
+        suggestRiskLevelBtn.disabled = true;
+        suggestRiskLevelBtn.textContent = "Obteniendo sugerencias...";
+        riskLevelDisplay.textContent = "";
 
-            const params = new URLSearchParams({
-                risk_id: riskId,
-                severity: severityField.value,
-                occurrence: occurrenceField.value,
-                detection: detectionField.value
-            });
-
-            fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) return alert(data.error);
-
-                    riskLevelField.value = data.risk_level;
-                    riskLevelDisplay.textContent = `Nivel sugerido: ${data.risk_level}`;
-                })
-                .catch(err => {
-                    console.error("Error obteniendo nivel de riesgo reevaluado:", err);
-                    alert("Ocurrió un error al obtener sugerencias del nivel de riesgo.");
-                })
-                .finally(() => {
-                    suggestRiskLevelBtn.disabled = false;
-                    suggestRiskLevelBtn.textContent = "Sugerir nivel de riesgo reevaluado";
-                });
+        const params = new URLSearchParams({
+            risk_id: riskId,
+            severity: severityField.value,
+            occurrence: occurrenceField.value,
+            detection: detectionField.value
         });
-    }
+
+        fetch(`${suggestRiskLevelBtn.dataset.url}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
+
+                // Mapeo con emojis/textos a valores del select
+                const mapping = {
+                    "🟥 Riesgo Alto": "High",
+                    "🟨 Riesgo Moderado": "Moderate",
+                    "🟩 Riesgo Bajo": "Low",
+                    "🟥 Risk High": "High",
+                    "🟨 Risk Moderate": "Moderate",
+                    "🟩 Risk Low": "Low",
+                };
+
+                let riskLevelValue = null;
+                for (const key in mapping) {
+                    if (data.risk_level.includes(key)) {
+                        riskLevelValue = mapping[key];
+                        break;
+                    }
+                }
+
+                if (!riskLevelValue) {
+                    riskLevelValue = data.risk_level; // fallback
+                    alert(`Nivel de riesgo sugerido recibido, pero no reconocido: ${data.risk_level}`);
+                } else {
+                    riskLevelField.value = riskLevelValue;
+                    alert(`Nivel de riesgo sugerido seleccionado`);
+                }
+
+            })
+            .catch(err => {
+                console.error("Error obteniendo nivel de riesgo reevaluado:", err);
+                alert("Ocurrió un error al obtener sugerencias del nivel de riesgo.");
+            })
+            .finally(() => {
+                suggestRiskLevelBtn.disabled = false;
+                suggestRiskLevelBtn.textContent = "Sugerir nivel de riesgo reevaluado";
+            });
+    });
 }
+
+}
+
+
 
 
 

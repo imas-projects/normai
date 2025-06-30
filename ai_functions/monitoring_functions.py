@@ -2,29 +2,43 @@ from openai import OpenAI
 import openai
 import json
 import re
+from django.utils.timezone import now
+import traceback
+from django.core.exceptions import ValidationError
+from datetime import date, timedelta
+from collections import defaultdict
+from django.db.models import Count
 from risks.models import RiskIdentification, RiskEvaluation, ContingencyPlan
+from communications.models import CommunicationTable, CommunicationMessage
+from processes.models import Process
+from audits.models import (
+    AnnualProgram, AuditProgramHeader,
+    AnnualPlanAuditor, AnnualPlanAudited, AnnualPlan,
+    User, Findings, ProcessRequirement, Checklist, AuditorEvaluation, AuditReport
+)
+from django.contrib.auth.models import User  
 from django.conf import settings
 from collections import Counter
 from openai import OpenAIError
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-def suggest_risk_fields(area_name, activity_name, max_results=3):
+def suggest_risk_fields(area_name, process_name, max_results=3):
     """
     Sugiere automáticamente hasta 3 riesgos y sus consecuencias basándose en:
     - El área seleccionada
-    - El nombre de la actividad introducida
+    - El nombre del proceso introducido
     - Riesgos existentes en la base de datos
     - Criterios de ISO 9001:2015
 
     Retorna una lista de diccionarios como:
     [
-        {"identified_risk": "...", "consequences": "..."},
+        {"identified_risk": "...", "consequences": "...", "source": "..."},
         ...
     ]
     """
 
-    historical_risks = RiskIdentification.objects.select_related('area').all()
+    historical_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
     if not historical_risks.exists():
         prompt = f"""
@@ -32,37 +46,42 @@ Eres un experto en gestión de calidad ISO 9001:2015 en industria aeroespacial.
 Sugiéreme TRES posibles riesgos identificados y sus consecuencias según:
 
 Área: {area_name}
-Actividad: {activity_name}
+Proceso: {process_name}
 
-Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
+Cada sugerencia debe incluir también la fuente del riesgo (por ejemplo: "ISO 9001:2015", "Experiencia previa", "Auditoría interna", etc.).
+
+Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk", "consequences", "source".
 
 Ejemplo:
 [
   {{
     "identified_risk": "Riesgo más crítico",
-    "consequences": "Consecuencias más graves"
+    "consequences": "Consecuencias más graves",
+    "source": "ISO 9001:2015"
   }},
   {{
     "identified_risk": "Riesgo intermedio",
-    "consequences": "Consecuencias intermedias"
+    "consequences": "Consecuencias intermedias",
+    "source": "Auditoría interna"
   }},
   {{
     "identified_risk": "Riesgo menos crítico",
-    "consequences": "Consecuencias menos graves"
+    "consequences": "Consecuencias menos graves",
+    "source": "Experiencia previa"
   }}
 ]
         """
     else:
         examples = []
-        for risk in historical_risks[:10]:  # máximo 10 ejemplos
+        for risk in historical_risks[:10]: 
             examples.append(
-                f"Área: {risk.area.name} | Actividad: {risk.activity_name} | "
-                f"Riesgo: {risk.identified_risk} | Consecuencias: {risk.consequences}"
+                f"Área: {risk.area.name} | Proceso: {risk.process.name} | "
+                f"Riesgo: {risk.identified_risk} | Consecuencias: {risk.consequences} | Fuente: {risk.source or 'No especificada'}"
             )
 
         prompt = f"""
 Eres un asistente experto en gestión de calidad bajo la norma ISO 9001:2015 aplicada al sector aeroespacial.
-Dado un área y una actividad, sugiere TRES riesgos identificados y sus consecuencias en orden de importancia (el más crítico primero),
+Dado un área y un proceso, sugiere TRES riesgos identificados y sus consecuencias en orden de importancia (el más crítico primero),
 basándote en:
 
 - Historial de riesgos reales
@@ -74,23 +93,26 @@ Histórico de riesgos:
 
 Nueva entrada:
 Área: {area_name}
-Actividad: {activity_name}
+Proceso: {process_name}
 
-Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk" y "consequences".
+Por favor responde ÚNICAMENTE con una lista JSON de 3 objetos, cada uno con las claves EXACTAS: "identified_risk", "consequences", "source".
 
 Ejemplo:
 [
   {{
     "identified_risk": "Riesgo más crítico",
-    "consequences": "Consecuencias más graves"
+    "consequences": "Consecuencias más graves",
+    "source": "ISO 9001:2015"
   }},
   {{
     "identified_risk": "Riesgo intermedio",
-    "consequences": "Consecuencias intermedias"
+    "consequences": "Consecuencias intermedias",
+    "source": "Auditoría interna"
   }},
   {{
     "identified_risk": "Riesgo menos crítico",
-    "consequences": "Consecuencias menos graves"
+    "consequences": "Consecuencias menos graves",
+    "source": "Experiencia previa"
   }}
 ]
         """
@@ -106,16 +128,15 @@ Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
-        # Limpiar posibles delimitadores markdown
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
-
         suggestions = json.loads(clean_content)
 
         if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
             return [
                 {
                     "identified_risk": item.get("identified_risk", "").strip(),
-                    "consequences": item.get("consequences", "").strip()
+                    "consequences": item.get("consequences", "").strip(),
+                    "source": item.get("source", "").strip()
                 }
                 for item in suggestions[:max_results]
             ]
@@ -133,26 +154,28 @@ Ejemplo:
 
 
 
+
+
 def suggest_controls(risk_id, max_controls=3):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+            f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risk.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
-Nivel: {eval.risk_level}"""  # Aquí sin .name
+Nivel: {eval.risk_level}"""
             for eval in similar_evaluations[:10]
         ]
 
@@ -168,9 +191,10 @@ Histórico:
 
 Nueva entrada:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source}
 
 Responde SOLO con un objeto JSON, sin explicaciones, sin texto adicional.
 Formato:
@@ -182,9 +206,11 @@ Eres un consultor experto en calidad ISO 9001:2015 para riesgos operativos.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source}
+
 
 Sugiere exactamente 3 controles preventivos y 3 de detección.
 
@@ -202,7 +228,6 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
 
         content = response.choices[0].message.content.strip()
 
-        # Extraer el primer bloque JSON válido
         match = re.search(r"\{.*?\}", content, re.DOTALL)
         if not match:
             print("Respuesta no contiene JSON válido:", content)
@@ -222,15 +247,17 @@ Responde SOLO con un objeto JSON, sin texto adicional. Formato:
     except Exception as e:
         return {"error": str(e)}
 
+
+
 def suggest_rating_ranges(risk_id, preventive_controls, detection_controls):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
@@ -244,8 +271,8 @@ Controles de detección escritos por el usuario:
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+            f"""Área: {eval.risk.area.name} | Proceso: {eval.risk.process.name} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risk.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -274,9 +301,10 @@ Eres un consultor en riesgos operativos ISO 9001:2015.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Proceso: {risk.process.name}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source} 
 
 {controls_text}
 
@@ -318,15 +346,19 @@ Formato JSON:
     except Exception as e:
         return {"error": str(e)}
 
+
 def suggest_risk_level(risk_id, preventive_controls, detection_controls, severity, occurrence, detection):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
+    # Asumo que risk.process es ForeignKey, ajusta si es texto simple
+    process_value = getattr(risk.process, "name", risk.process)
+
     similar_evaluations = RiskEvaluation.objects.filter(
         risk__area=risk.area,
-        risk__activity_name=risk.activity_name,
+        risk__process=risk.process,
         risk__identified_risk=risk.identified_risk
     )
 
@@ -345,8 +377,8 @@ Detección: {detection}
 
     if similar_evaluations.exists():
         historical_lines = [
-            f"""Área: {eval.risk.area.name} | Actividad: {eval.risk.activity_name} | 
-Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | 
+            f"""Área: {eval.risk.area.name} | Actividad: {getattr(eval.risk.process, 'name', eval.risk.process)} | 
+Riesgo: {eval.risk.identified_risk} | Consecuencias: {eval.risk.consequences} | Basado en: {eval.risk.source} |
 Controles preventivos: {eval.current_preventive_controls or "N/A"} | 
 Controles de detección: {eval.current_detection_controls or "N/A"} | 
 Severidad: {eval.severity}, Ocurrencia: {eval.occurrence}, Detección: {eval.detection} | 
@@ -372,9 +404,10 @@ Eres un experto consultor en evaluación de riesgos ISO 9001:2015.
 
 Dado:
 Área: {risk.area.name}
-Actividad: {risk.activity_name}
+Actividad: {process_value}
 Riesgo: {risk.identified_risk}
 Consecuencias: {risk.consequences}
+Basado en: {risk.source} 
 
 {controls_text}
 
@@ -393,13 +426,11 @@ Formato JSON:
         )
 
         raw_response = response.choices[0].message.content.strip()
-        print("Respuesta IA cruda:", raw_response)  # Útil para debug
+        print("Respuesta IA cruda:", raw_response)  
 
         try:
-            # Primero intenta decodificar directamente
             data = json.loads(raw_response)
         except json.JSONDecodeError:
-            # Si falla, intenta extraer el JSON del texto completo
             json_text_match = re.search(r'\{[^}]*risk_level[^}]*\}', raw_response, re.DOTALL)
             if not json_text_match:
                 return {"error": f"No se encontró un objeto JSON válido en la respuesta: {raw_response}"}
@@ -414,6 +445,7 @@ Formato JSON:
         return {"error": str(e)}
 
 
+
 def suggest_treatment_action(risk_id, max_results=1):
     """
     Sugiere acciones correctivas de tratamiento para un riesgo específico basado en:
@@ -422,19 +454,18 @@ def suggest_treatment_action(risk_id, max_results=1):
 
     Retorna una lista con diccionarios con la clave "treatment_action" con la acción sugerida.
     """
-
     try:
-        risk = RiskIdentification.objects.get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
         evaluations = risk.evaluations.all()
     except RiskIdentification.DoesNotExist:
         return []
 
     # Construir contexto histórico con ejemplos similares (máx 5)
     historical_treatments = []
-    for other_risk in RiskIdentification.objects.filter(area=risk.area).exclude(id=risk.id)[:5]:
+    for other_risk in RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]:
         for eval in other_risk.evaluations.all():
             historical_treatments.append(
-                f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk} | "
+                f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk} | "
                 f"Evaluación: Severidad {eval.severity}, Ocurrencia {eval.occurrence}, Detección {eval.detection}, "
                 f"Nivel de riesgo {eval.risk_level}."
             )
@@ -445,8 +476,9 @@ def suggest_treatment_action(risk_id, max_results=1):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     eval_info = ""
@@ -519,11 +551,12 @@ Por favor responde ÚNICAMENTE con una lista JSON con {max_results} objetos con 
         return []
 
 
+
 def suggest_contingency_actions(risk_id, max_results=3):
     """
     Sugiere acciones de contingencia para un riesgo específico, basándose en:
     - La identificación, evaluación y tratamiento del riesgo.
-    - Datos históricos de riesgos similares.
+    - Datos históricos de riesgos similares (misma área y proceso).
     - Norma ISO 9001:2015 (Cláusulas 6.1 y 8.4).
 
     Retorna una lista de diccionarios con la clave "contingency_action".
@@ -537,7 +570,7 @@ def suggest_contingency_actions(risk_id, max_results=3):
         return text
 
     try:
-        risk = RiskIdentification.objects.get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
         evaluations = risk.evaluations.all()
         treatments = risk.treatments.all()
     except RiskIdentification.DoesNotExist:
@@ -547,8 +580,9 @@ def suggest_contingency_actions(risk_id, max_results=3):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     eval_info = ""
@@ -561,7 +595,9 @@ def suggest_contingency_actions(risk_id, max_results=3):
             f"  Nivel de riesgo: {ev.risk_level}\n"
             f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
             f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
-        ) or "No hay evaluaciones disponibles para este riesgo."
+        )
+    if not eval_info:
+        eval_info = "No hay evaluaciones disponibles para este riesgo."
 
     treatment_info = ""
     for i, tr in enumerate(treatments, 1):
@@ -576,14 +612,15 @@ def suggest_contingency_actions(risk_id, max_results=3):
 
     # Información histórica
     historical_context = ""
+    historical_risks = RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]
 
-    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+    for other_risk in historical_risks:
         other_evals = other_risk.evaluations.all()
         other_treatments = other_risk.treatments.all()
         other_plans = ContingencyPlan.objects.filter(risk=other_risk)
 
         historical_context += (
-            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
+            f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
         for ev in other_evals:
@@ -595,7 +632,12 @@ def suggest_contingency_actions(risk_id, max_results=3):
             historical_context += f"  Tratamiento: {tr.treatment_action}\n"
 
         for plan in other_plans:
-            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            actions = ", ".join(
+                filter(
+                    None,
+                    (dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions)
+                )
+            )
             historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
 
         historical_context += "\n"
@@ -657,7 +699,7 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta IA:", content)
 
-        content = clean_json_markdown_block(content)  # Limpieza del bloque Markdown
+        content = clean_json_markdown_block(content)
 
         suggestions = json.loads(content)
 
@@ -675,18 +717,23 @@ Devuelve tu respuesta EXCLUSIVAMENTE en formato JSON. Ejemplo:
         return []
 
 
+
 def suggest_reevaluation_rating_ranges(risk_id):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
+
+    # Obtener nombre de proceso o valor directamente
+    process_value = getattr(risk.process, "name", risk.process)
 
     # Información base del riesgo
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Actividad: {process_value}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     # Evaluaciones iniciales del riesgo actual
@@ -722,7 +769,12 @@ def suggest_reevaluation_rating_ranges(risk_id):
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
     contingency_info = ""
     for plan in contingency_plans:
-        actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
+        actions = ", ".join(
+            filter(
+                None,
+                (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+            )
+        )
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
 
     if not contingency_info:
@@ -747,7 +799,13 @@ def suggest_reevaluation_rating_ranges(risk_id):
             historical_context += f"  Tratamiento: {tr.treatment_action}\n"
 
         for plan in ContingencyPlan.objects.filter(risk=other_risk):
-            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            actions = ", ".join(
+                filter(
+                    None,
+                    (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+                )
+            )
+
             historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
 
         for ree in other_risk.reevaluations.all():
@@ -818,9 +876,10 @@ Responde únicamente en el siguiente formato JSON:
     except Exception as e:
         return {"error": str(e)}
 
+
 def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     try:
-        risk = RiskIdentification.objects.select_related("area").get(id=risk_id)
+        risk = RiskIdentification.objects.select_related("area", "process").get(id=risk_id)
     except RiskIdentification.DoesNotExist:
         return {"error": "No se encontró el riesgo especificado."}
 
@@ -828,8 +887,9 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     risk_info = (
         f"Riesgo identificado: {risk.identified_risk}\n"
         f"Área: {risk.area.name}\n"
-        f"Actividad: {risk.activity_name}\n"
+        f"Proceso: {risk.process.name}\n"
         f"Consecuencias: {risk.consequences or 'No especificado'}\n"
+        f"Basado en: {risk.source}\n"
     )
 
     # Evaluaciones propias del riesgo
@@ -845,6 +905,8 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             f"  Controles preventivos: {ev.current_preventive_controls or 'Ninguno'}\n"
             f"  Controles de detección: {ev.current_detection_controls or 'Ninguno'}\n"
         )
+    if not eval_info:
+        eval_info = "Sin evaluaciones"
 
     # Tratamientos del riesgo
     treatments = risk.treatments.all()
@@ -856,24 +918,35 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             f"  Fecha objetivo: {tr.target_date}\n"
             f"  Fecha real: {tr.actual_date}\n"
         )
+    if not treatment_info:
+        treatment_info = "Sin tratamientos"
 
     # Planes de contingencia
     contingency_plans = ContingencyPlan.objects.filter(risk=risk)
     contingency_info = ""
     for plan in contingency_plans:
-        actions = ", ".join([dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions])
+        actions = ", ".join(
+            filter(
+                None,
+                (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+            )
+        )
         contingency_info += f"Acciones de contingencia aplicadas: {actions}\n"
+    if not contingency_info:
+        contingency_info = "Sin acciones registradas"
 
-    # Contexto histórico (otros riesgos similares)
+    # Contexto histórico filtrado por misma área y proceso
     historical_context = ""
-    for other_risk in RiskIdentification.objects.exclude(id=risk.id)[:5]:
+    historical_risks = RiskIdentification.objects.filter(area=risk.area, process=risk.process).exclude(id=risk.id)[:5]
+
+    for other_risk in historical_risks:
         other_evals = other_risk.evaluations.all()
         other_treatments = other_risk.treatments.all()
         other_plans = ContingencyPlan.objects.filter(risk=other_risk)
         other_reevs = other_risk.reevaluations.all()
 
         historical_context += (
-            f"Área: {other_risk.area.name} | Riesgo: {other_risk.identified_risk}\n"
+            f"Área: {other_risk.area.name} | Proceso: {other_risk.process.name} | Riesgo: {other_risk.identified_risk}\n"
         )
 
         for ev in other_evals:
@@ -885,7 +958,12 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
             historical_context += f"  Tratamiento: {tr.treatment_action}\n"
 
         for plan in other_plans:
-            actions = ", ".join([dict(plan.ACTION_CHOICES).get(a) for a in plan.contingency_actions])
+            actions = ", ".join(
+                filter(
+                    None,
+                    (dict(plan.ACTION_CHOICES).get(code) for code in plan.contingency_actions)
+                )
+            )
             historical_context += f"  Acciones de contingencia aplicadas: {actions}\n"
 
         for ree in other_reevs:
@@ -899,7 +977,7 @@ def suggest_reevaluation_risk_level(risk_id, severity, occurrence, detection):
     if not historical_context:
         historical_context = "No hay registros históricos disponibles para comparar."
 
-    # Valores actuales del usuario
+    # Valores reevaluados del usuario
     user_values = f"""
 Valores reevaluados ingresados:
 - Severidad: {severity}
@@ -907,7 +985,7 @@ Valores reevaluados ingresados:
 - Detección: {detection}
 """
 
-    # Construcción del prompt para IA
+    # Prompt para la IA
     prompt = f"""
 Eres un analista experto en riesgos según la norma ISO 9001:2015.
 
@@ -917,13 +995,13 @@ Información del riesgo:
 {risk_info}
 
 Evaluaciones previas:
-{eval_info or "Sin evaluaciones"}
+{eval_info}
 
 Tratamientos aplicados:
-{treatment_info or "Sin tratamientos"}
+{treatment_info}
 
 Acciones de contingencia:
-{contingency_info or "Sin acciones registradas"}
+{contingency_info}
 
 Contexto histórico de otros riesgos:
 {historical_context}
@@ -954,3 +1032,943 @@ Responde en formato JSON como este:
 
     except Exception as e:
         return {"error": str(e)}
+
+
+
+
+def generate_communication_flow_map(table_id):
+    """
+    Genera un informe de flujo de comunicación a partir de una tabla específica.
+    Incluye insights IA sobre patrones, debilidades, conflictos y recomendaciones
+    conforme a la norma ISO 9001:2015.
+    """
+    try:
+        table = CommunicationTable.objects.select_related('emiter').get(id=table_id)
+        messages = CommunicationMessage.objects.select_related('receiver', 'message', 'periodicity').filter(table=table)
+
+        if not messages.exists():
+            return {
+                "ia_insights": {
+                    "patterns": [],
+                    "weaknesses": [],
+                    "conflicts": [],
+                    "recommendations": ["No se encontraron mensajes en esta tabla."]
+                }
+            }
+
+        ia_examples = []
+
+        for msg in messages:
+            emiter = table.emiter
+            receiver = msg.receiver
+            msg_name = msg.message.name
+            freq = msg.periodicity.name
+
+            if emiter and receiver:
+                ia_examples.append(
+                    f"De: {emiter.name} → A: {receiver.name} | Frecuencia: {freq} | Mensaje: {msg_name}"
+                )
+
+        prompt = f"""
+Eres un experto en auditoría interna y mejora continua según la norma ISO 9001:2015 (cláusulas 4.4.1, 5.3 y relacionadas).
+A continuación se muestra un resumen del flujo de comunicaciones internas entre procesos y puestos en una organización industrial:
+
+{chr(10).join(ia_examples)}
+
+Tu tarea:
+1. Detecta patrones (por ejemplo, flujo excesivo o escaso entre ciertas áreas).
+2. Señala debilidades o barreras de comunicación.
+3. Detecta posibles conflictos, duplicidades o malentendidos frecuentes.
+4. Da una recomendación de mejora concreta según la norma ISO.
+
+Responde estrictamente con un JSON como este:
+{{
+  "patterns": ["Ejemplo de patrón"],
+  "weaknesses": ["Ejemplo de debilidad"],
+  "conflicts": ["Ejemplo de conflicto"],
+  "recommendations": ["Ejemplo de recomendación"]
+}}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=700,
+        )
+
+        insights_raw = response.choices[0].message.content.strip()
+        insights_clean = re.sub(r"```json|```", "", insights_raw).strip()
+
+        try:
+            insights_json = json.loads(insights_clean)
+        except json.JSONDecodeError:
+            print("⚠️ Fallo de parsing JSON, respuesta IA:", insights_raw)
+            insights_json = {
+                "patterns": [],
+                "weaknesses": [],
+                "conflicts": [],
+                "recommendations": [insights_raw]
+            }
+
+        return {
+            "ia_insights": insights_json
+        }
+
+    except CommunicationTable.DoesNotExist:
+        return {
+            "ia_insights": {
+                "patterns": [],
+                "weaknesses": [],
+                "conflicts": [],
+                "recommendations": ["Tabla no encontrada."]
+            }
+        }
+    except Exception as e:
+        print("Error general en la generación del informe:", str(e))
+        return {
+            "ia_insights": {
+                "patterns": [],
+                "weaknesses": [],
+                "conflicts": [],
+                "recommendations": [f"Error inesperado: {str(e)}"]
+            }
+        }
+
+
+
+def suggest_audit_fields(year: int, max_results=3):
+    """
+    Sugiere automáticamente hasta 3 combinaciones de objetivo, alcance, criterios y estándares,
+    basándose en:
+    - Registros históricos del modelo AuditProgramHeader
+    - Reglas y buenas prácticas de la norma ISO 9001:2015
+
+    Retorna una lista de diccionarios:
+    [
+        {
+            "objective": "...",
+            "scope": "...",
+            "audit_criteria": "...",
+            "security_standards": "..."
+        },
+        ...
+    ]
+    """
+
+    historical_headers = AuditProgramHeader.objects.filter(year=year-1)
+
+
+    if not historical_headers.exists():
+        prompt = f"""
+Eres un experto en auditorías internas de calidad bajo la norma ISO 9001:2015.
+
+Basándote en buenas prácticas y la norma ISO 9001:2015, sugiéreme TRES propuestas completas (objetivo, alcance, criterios de auditoría y estándares de seguridad)
+para un programa de auditoría anual del año {year}.
+
+Responde únicamente en formato JSON, como una lista de 3 objetos con las claves:
+- "objective"
+- "scope"
+- "audit_criteria"
+- "security_standards"
+
+Ejemplo:
+[
+  {{
+    "objective": "Asegurar la conformidad del sistema de gestión con la norma ISO 9001:2015",
+    "scope": "Todas las áreas del sistema de gestión de calidad",
+    "audit_criteria": "ISO 9001:2015 cláusulas 4 a 10",
+    "security_standards": "Controles de seguridad según política interna y requisitos legales aplicables"
+  }},
+  ...
+]
+"""
+    else:
+        examples = []
+        for h in historical_headers:
+            examples.append(
+                f"Año: {h.year} | "
+                f"Objetivo: {h.objective.strip()} | "
+                f"Alcance: {h.scope.strip()} | "
+                f"Criterios: {h.audit_criteria.strip()} | "
+                f"Estándares: {h.security_standards.strip()}"
+            )
+
+        prompt = f"""
+Eres un auditor líder experto en ISO 9001:2015.
+
+Usando el siguiente historial de programas de auditoría anteriores, genera TRES propuestas de objetivo, alcance, criterios de auditoría y estándares de seguridad
+para el año {year}. Sigue el formato anterior, en orden de prioridad (más completo o relevante primero).
+
+Historial:
+{chr(10).join(examples)}
+
+Por favor responde en JSON como una lista de objetos con las claves:
+- "objective"
+- "scope"
+- "audit_criteria"
+- "security_standards"
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=800,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("Respuesta IA (cruda):", repr(content))
+
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        if isinstance(suggestions, list) and all(isinstance(item, dict) for item in suggestions):
+            return [
+                {
+                    "objective": item.get("objective", "").strip(),
+                    "scope": item.get("scope", "").strip(),
+                    "audit_criteria": item.get("audit_criteria", "").strip(),
+                    "security_standards": item.get("security_standards", "").strip()
+                }
+                for item in suggestions[:max_results]
+            ]
+
+        print("Formato inesperado:", type(suggestions))
+        return []
+
+    except json.JSONDecodeError as jde:
+        print("Error JSON:", str(jde))
+        print("Contenido no parseable:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general IA:", str(e))
+        return []
+
+
+def suggest_annual_processes_ai(program_header_id: int, max_results=3):
+    """
+    Sugiere automáticamente hasta 3 procesos y meses para auditar en un AuditProgramHeader dado,
+    basándose en:
+    - Historial de AnnualProgram
+    - Indicadores de criticidad del modelo Process
+    - Clasificaciones de hallazgos (NC mayor, menor)
+    - Buenas prácticas ISO 9001:2015
+    """
+    try:
+        header = AuditProgramHeader.objects.get(id=program_header_id)
+    except AuditProgramHeader.DoesNotExist:
+        return []
+
+    year = header.year
+    all_processes = Process.objects.all()
+    if not all_processes.exists():
+        return []
+
+    today = date.today()
+    past_programs = AnnualProgram.objects.exclude(program_header__year=year).select_related('process', 'program_header')
+    past_findings = Findings.objects.select_related('report__audit__annual_program__process')
+
+    # --- Preparar historial si lo hay ---
+    if past_programs.exists():
+        audit_history = defaultdict(list)
+        for entry in past_programs:
+            audit_history[entry.process.id].append(entry.month)
+
+        findings_by_process = defaultdict(lambda: {"NC_MAYOR": 0, "NC_MENOR": 0})
+        for f in past_findings:
+            try:
+                process_id = f.report.audit.annual_program.process.id
+                findings_by_process[process_id][f.classification] += 1
+            except:
+                continue
+
+        process_data_examples = []
+        for process in all_processes:
+            entry = {
+                "process_name": process.name,
+                "process_code": process.process_code,
+                "months_audited": audit_history.get(process.id, []),
+                "review_date": str(process.review_date) if process.review_date else "None",
+                "creation_date": str(process.creation_date),
+                "staff_roles": bool(process.staff_roles),
+                "equipment": bool(process.equipment),
+                "materials": bool(process.materials),
+                "transport_resources": bool(process.transport_resources),
+                "nc_mayor": findings_by_process[process.id]["NC_MAYOR"],
+                "nc_menor": findings_by_process[process.id]["NC_MENOR"]
+            }
+            process_data_examples.append(entry)
+
+        prompt = f"""
+Eres un auditor líder experto en ISO 9001:2015.
+
+Con base en el siguiente historial de auditorías y características de los procesos, sugiere TRES combinaciones de proceso y mes para auditar en el año {year}.
+Prioriza:
+- Procesos con más no conformidades (NC_MAYOR > NC_MENOR)
+- Procesos con alta complejidad (campos poblados)
+- Procesos no auditados recientemente o nuevos
+- Procesos sin revisión reciente
+- Distribución de auditorías a lo largo del año (meses menos usados)
+
+Cada sugerencia debe incluir:
+- process_name
+- process_code
+- suggested_month
+- justification (una frase clara con el razonamiento)
+
+Datos:
+{json.dumps(process_data_examples[:15], indent=2)}
+
+Responde en formato JSON como una lista de objetos con las claves:
+- "process_name"
+- "process_code"
+- "suggested_month"
+- "justification"
+"""
+    else:
+        # --- Sin historial, guiarse solo por ISO 9001:2015 ---
+        fallback_processes = all_processes[:10]
+        process_data = [
+            {
+                "process_name": p.name,
+                "process_code": p.process_code,
+                "creation_date": str(p.creation_date),
+                "review_date": str(p.review_date) if p.review_date else "None",
+                "staff_roles": bool(p.staff_roles),
+                "equipment": bool(p.equipment),
+                "materials": bool(p.materials),
+                "transport_resources": bool(p.transport_resources),
+            }
+            for p in fallback_processes
+        ]
+
+        prompt = f"""
+No hay historial de auditorías disponibles.
+
+Eres un experto en auditoría ISO 9001:2015 y tienes la siguiente lista de procesos activos. 
+Basándote en su criticidad, fecha de creación, complejidad (campos poblados), y la norma ISO 9001:2015, 
+sugiere TRES procesos con el mes ideal para auditarlos este año ({year}).
+
+Cada sugerencia debe contener:
+- process_name
+- process_code
+- suggested_month
+- justification (basada en los datos disponibles)
+
+Datos:
+{json.dumps(process_data, indent=2)}
+
+Responde en JSON como lista de objetos con esas claves.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=1000,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("IA Response:", repr(content))
+
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        data = json.loads(clean_content)
+
+        MONTHS_MAP = {
+            "January": 1, "February": 2, "March": 3, "April": 4,
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        }
+
+        if isinstance(data, list) and all(isinstance(item, dict) for item in data):
+            return [
+                {
+                    "process_name": item.get("process_name", "").strip(),
+                    "process_code": item.get("process_code", "").strip(),
+                    "suggested_month": item.get("suggested_month", "January"),
+                    "justification": item.get("justification", "").strip()
+                }
+                for item in data[:max_results]
+            ]
+
+        print("Formato inesperado:", type(data))
+        return []
+
+    except json.JSONDecodeError as e:
+        print("Error JSON:", str(e))
+        print("Contenido recibido:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general IA:", str(e))
+        return []
+
+
+def suggest_auditor_ai(program_id: int, max_results=5):
+    try:
+        annual_program = AnnualProgram.objects.select_related('program_header', 'process').get(id=program_id)
+        header = annual_program.program_header
+        process = annual_program.process
+    except AnnualProgram.DoesNotExist:
+        return []
+
+    # Obtener auditados actuales para excluirlos
+    current_audited_ids = set(AnnualPlanAudited.objects.filter(
+        annual_plan__annual_program=annual_program
+    ).values_list('user_id', flat=True))
+
+    excluded_user_ids = set()
+    excluded_user_ids.update(current_audited_ids)
+
+    today = date.today()
+    three_months_ago = today - timedelta(days=90)
+    start_year = date(today.year, 1, 1)
+    users_scores = defaultdict(lambda: {"score": 0, "reasons": []})
+
+    # 1. Ha sido auditor en planes con este proceso
+    past_auditors = AnnualPlanAuditor.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user')
+
+    for auditor in past_auditors:
+        uid = auditor.user.id
+        if uid in excluded_user_ids:
+            continue
+        users_scores[uid]["score"] += 3
+        users_scores[uid]["reasons"].append("Experiencia previa como auditor en este proceso")
+
+    # 2. (Eliminado líder)
+
+    # 3. Ha sido auditado en este proceso
+    audited_users = AnnualPlanAudited.objects.filter(
+        annual_plan__annual_program__process=process
+    ).select_related('user')
+
+    for audited in audited_users:
+        uid = audited.user.id
+        if uid in excluded_user_ids:
+            continue
+        users_scores[uid]["score"] += 1
+        users_scores[uid]["reasons"].append("Ha sido auditado en este proceso, conoce el contexto")
+
+    # 4. Evaluaciones positivas como auditor (ahora consideramos a los usuarios asociados al plan evaluado)
+    good_evals = AuditorEvaluation.objects.filter(
+        audit_plan__annual_program__process=process,
+        rate__gte=7
+    )
+
+    for eval in good_evals:
+        # Obtener los auditores vinculados al plan
+        auditor_users = AnnualPlanAuditor.objects.filter(
+            annual_plan=eval.audit_plan
+        ).select_related('user')
+
+        for auditor in auditor_users:
+            uid = auditor.user.id
+            if uid in excluded_user_ids:
+                continue
+            users_scores[uid]["score"] += 1
+            users_scores[uid]["reasons"].append("Evaluado con buen desempeño en auditorías")
+
+    # 5. (Eliminado requisitos técnicos similares)
+
+    # BONUS: Incentivar nuevos recursos (usuarios sin auditorías este año)
+    all_users_ids = set(User.objects.values_list('id', flat=True))
+    users_with_audit_this_year = set(
+        AnnualPlanAuditor.objects.filter(
+            annual_plan__audit_opening_date__gte=start_year
+        ).values_list('user_id', flat=True)
+    ) | set(
+        AnnualPlanAudited.objects.filter(
+            annual_plan__audit_opening_date__gte=start_year
+        ).values_list('user_id', flat=True)
+    )
+
+    users_without_audit_this_year = all_users_ids - users_with_audit_this_year - excluded_user_ids
+
+    for uid in users_without_audit_this_year:
+        users_scores[uid]["score"] += 2
+        users_scores[uid]["reasons"].append("No ha trabajado en auditorías este año, potencial nuevo recurso")
+
+    # 6. Penalización máxima por saturación reciente (últimos 3 meses)
+    # Excluir usuarios con auditorías recientes como auditor o auditado
+    for uid in list(users_scores.keys()):
+        if uid in excluded_user_ids:
+            continue
+
+        last_dates = []
+
+        last_ap = AnnualPlanAuditor.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_ap and last_ap.annual_plan.audit_opening_date:
+            last_dates.append(last_ap.annual_plan.audit_opening_date)
+
+        last_apa = AnnualPlanAudited.objects.filter(user_id=uid).order_by('-annual_plan__audit_opening_date').first()
+        if last_apa and last_apa.annual_plan.audit_opening_date:
+            last_dates.append(last_apa.annual_plan.audit_opening_date)
+
+        if last_dates and max(last_dates) > three_months_ago:
+            users_scores.pop(uid)
+            continue
+
+    # Preparar lista para GPT
+    scored_users = []
+    for uid, info in users_scores.items():
+        if uid in excluded_user_ids:
+            continue
+        try:
+            user = User.objects.get(id=uid)
+            scored_users.append({
+                "user_id": uid,
+                "username": user.username,
+                "full_name": f"{user.first_name} {user.last_name}",
+                "score": info["score"],
+                "justification": "; ".join(info["reasons"])[:200]
+            })
+        except User.DoesNotExist:
+            continue
+
+    scored_users.sort(key=lambda x: x["score"], reverse=True)
+    top_candidates = scored_users[:max_results]
+
+    if not top_candidates:
+        top_candidates = [{
+            "user_id": 0,
+            "username": "N/A",
+            "full_name": "N/A",
+            "score": 0,
+            "justification": "No hay datos suficientes para sugerir auditores. Se recomienda seleccionar según la norma ISO 9001:2015."
+        }]
+
+    prompt = f"""
+Eres un asistente experto en auditorías ISO. A continuación tienes una lista de candidatos para ser auditores de un plan anual de auditoría. Cada uno tiene un puntaje y una justificación técnica:
+
+{json.dumps(top_candidates, indent=2)}
+
+Si no hay candidatos válidos, indica que debe seleccionarse según criterio profesional y normas ISO.
+
+Devuelve JSON con: user_id, username, full_name, score, justification.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Eres un asistente experto en auditorías ISO."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4,
+        )
+        gpt_response = response.choices[0].message.content
+        clean_response = re.sub(r'^```json|```$', '', gpt_response).strip()
+        return json.loads(clean_response)
+    except json.JSONDecodeError as jde:
+        print(f"Error al decodificar JSON: {jde}")
+        print("Contenido recibido:", repr(clean_response))
+        return top_candidates
+    except Exception as e:
+        print(f"Error GPT: {e}")
+        return top_candidates
+
+
+
+def suggest_audit_questions(requirement_obj, process_name=None, max_results=5):
+    """
+    Genera dinámicamente preguntas de auditoría para un objeto ProcessRequirement,
+    aplicadas a un proceso específico.
+
+    - requirement_obj: instancia del modelo ProcessRequirement
+    - process_name: nombre del proceso (opcional, si no se usa el del modelo)
+    - max_results: número de preguntas a sugerir (máx. 5 por defecto)
+
+    Retorna una lista de strings con preguntas sugeridas por IA.
+    """
+
+    # Usamos el campo `requirement` como identificador del requisito (ej. "8.5.1")
+    clause_identifier = requirement_obj.requirement
+
+    # Si no se pasa explícitamente el nombre del proceso, lo sacamos del modelo
+    process_name = process_name or requirement_obj.process.name
+
+    # Prompt enriquecido
+    prompt = f"""
+Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015, con experiencia específica en la industria aeroespacial.
+
+Quiero que generes {max_results} preguntas de auditoría bien formuladas, prácticas y alineadas con el requisito/cláusula "{clause_identifier}" de la norma ISO 9001:2015.
+
+Estas preguntas deben estar orientadas a auditar el proceso de: "{process_name}".
+
+Cada pregunta debe:
+- Estar en español
+- Ser clara, directa, y enfocada en verificar el cumplimiento del requisito
+- Ser útil para identificar conformidades o no conformidades en una auditoría real
+
+Por favor responde únicamente con una lista JSON de strings. Ejemplo:
+
+[
+  "¿Pregunta 1...?",
+  "¿Pregunta 2...?",
+  ...
+]
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=700,
+        )
+
+        content = response.choices[0].message.content.strip()
+        print("Respuesta cruda de IA:", repr(content))
+
+        # Limpiar posibles delimitadores de markdown
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        questions = json.loads(clean_content)
+
+        if isinstance(questions, list) and all(isinstance(q, str) for q in questions):
+            return [q.strip() for q in questions[:max_results]]
+
+        print("Formato inesperado de respuesta IA:", type(questions))
+        return []
+
+    except json.JSONDecodeError as jde:
+        print("Error al parsear JSON:", str(jde))
+        print("Contenido recibido:", repr(clean_content))
+        return []
+    except Exception as e:
+        print("Error general al generar preguntas de auditoría:", str(e))
+        return []
+
+
+def suggest_compliance_rating(checklist_obj):
+    """
+    Usa IA para sugerir un rating (0-10) de cumplimiento basado en:
+    - La pregunta de auditoría
+    - La evidencia ingresada
+    - El requisito asociado
+    - Criterios de la norma ISO 9001:2015
+
+    checklist_obj: instancia de Checklist con campos 'evidence', 'question', 'orden', etc.
+
+    Retorna un entero entre 0 y 10, o None si no se puede obtener.
+    """
+
+    question_text = checklist_obj.question.question_text
+    requirement_name = checklist_obj.question.requirement.requirement if checklist_obj.question.requirement else "N/A"
+    evidence = checklist_obj.evidence or ""
+    process_name = checklist_obj.audit_plan.annual_program.process.name  # CORREGIDO
+    clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
+
+    prompt = f"""
+Eres un auditor experto en calidad bajo la norma ISO 9001:2015, especialmente en el sector industrial.
+
+Te presento una **pregunta de auditoría**, una **evidencia objetiva** recabada durante la auditoría, y el requisito de la norma que aplica.
+
+Debes analizar y proponer un grado de cumplimiento del 0 al 10, donde:
+- 0 significa "incumplimiento total"
+- 10 significa "cumplimiento total"
+- Los valores intermedios reflejan distintos niveles de cumplimiento parcial.
+
+Tu evaluación debe seguir los criterios de ISO 9001:2015.
+
+---
+
+**Requisito/cláusula ISO:** {requirement_name}
+{f'Descripción del requisito: {clause_description}' if clause_description else ''}
+
+**Proceso auditado:** {process_name}
+
+**Pregunta de auditoría:** {question_text}
+
+**Evidencia obtenida:** {evidence}
+
+---
+
+IMPORTANTE: Solo escribe el número entero del 0 al 10 sin texto adicional.
+Ejemplo correcto: 8
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=10,
+        )
+
+        result = response.choices[0].message.content.strip()
+        print("Respuesta IA cruda:", repr(result))  # Para depurar si hace falta
+
+        # Priorizar capturar '10' primero, luego un dígito
+        match = re.search(r"\b(10|[0-9])\b", result)
+        if not match:
+            # Intentar captura más permisiva
+            match = re.search(r"(10|[0-9])", result)
+
+        if match:
+            rating = int(match.group(1))
+            return rating if 0 <= rating <= 10 else None
+        else:
+            print("Respuesta IA inesperada:", result)
+            return None
+
+    except Exception as e:
+        print("Error al obtener sugerencia de rating:", str(e))
+        return None
+
+
+
+def classify_finding_ia(finding_text, requirement_obj=None):
+    """
+    Clasifica automáticamente un hallazgo según la norma ISO 9001:2015 usando IA.
+
+    Parámetros:
+    - finding_text: Texto del hallazgo ingresado por el auditor.
+    - requirement_obj: (opcional) Instancia del modelo Requirement asociada al hallazgo.
+
+    Retorna una string: 'NC_MAYOR', 'NC_MENOR' u 'OPORTUNIDAD_MEJORA'
+    """
+
+    clause_identifier = ""
+    if requirement_obj:
+        # Accede de forma segura al atributo 'requirement'
+        clause_identifier = getattr(requirement_obj, "requirement", "")
+
+    prompt = f"""
+Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015.
+
+Quiero que clasifiques el siguiente hallazgo en una de las siguientes categorías:
+- NC_MAYOR: No conformidad mayor
+- NC_MENOR: No conformidad menor
+- OPORTUNIDAD_MEJORA: Oportunidad de mejora
+
+Tu clasificación debe basarse en los criterios de la norma ISO 9001:2015.
+
+{f'Este hallazgo está relacionado con la cláusula "{clause_identifier}".' if clause_identifier else ''}
+
+Texto del hallazgo:
+\"\"\"{finding_text}\"\"\"
+
+Responde únicamente con uno de estos tres valores exactos (sin comillas ni explicación):
+NC_MAYOR
+NC_MENOR
+OPORTUNIDAD_MEJORA
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=10,
+        )
+
+        result = response.choices[0].message.content.strip().upper()
+
+        if result in ["NC_MAYOR", "NC_MENOR", "OPORTUNIDAD_MEJORA"]:
+            return result
+
+        print("Respuesta IA no válida:", repr(result))
+        return None
+
+    except Exception as e:
+        print("Error en clasificación IA:", str(e))
+        return None
+
+def suggest_audit_report_fields(audit_plan_id: int):
+    """
+    Genera automáticamente los campos para un AuditReport basado en la auditoría:
+    - summary
+    - recommendations
+    - conclusions
+
+    Basado en el contexto ISO 9001:2015, hallazgos y checklist.
+
+    Devuelve:
+    {
+        "summary": "...",
+        "recommendations": "...",
+        "conclusions": "..."
+    }
+    """
+
+    def safe_str(value):
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=False).strip()
+        elif value is None:
+            return ""
+        else:
+            return str(value).strip()
+
+    try:
+        audit_plan = AnnualPlan.objects.select_related(
+            'annual_program__program_header',
+            'annual_program__process'
+        ).prefetch_related(
+            'findings',
+            'checklists__question',
+        ).get(id=audit_plan_id)
+
+        header = audit_plan.annual_program.program_header
+        process = audit_plan.annual_program.process
+
+        findings = audit_plan.findings.all()
+        checklist = audit_plan.checklists.all()
+
+        compliance_summary = {
+            "total": checklist.count(),
+            "compliant": checklist.filter(compliance=True).count(),
+            "non_compliant": checklist.filter(compliance=False).count()
+        }
+
+        finding_texts = [f"- {f.finding_text} ({f.classification})" for f in findings]
+        strengths_list = [
+            f.question.question_text for f in checklist.filter(compliance=True)[:5]
+        ]
+
+        prompt = f"""
+Eres un auditor experto en la norma ISO 9001:2015, especialmente en la cláusula 9.1.2 (seguimiento, medición, análisis y evaluación).
+
+Tu tarea es generar un informe de auditoría con tres secciones clave:
+1. **summary**: Resumen claro del desarrollo de la auditoría.
+2. **recommendations**: Recomendaciones prácticas derivadas de los hallazgos.
+3. **conclusions**: Conclusión general sobre el cumplimiento del proceso auditado.
+
+Información base:
+- Objetivo: {header.objective}
+- Alcance: {header.scope}
+- Criterios de auditoría: {header.audit_criteria}
+- Estándares de seguridad: {header.security_standards}
+- Proceso auditado: {process.name} ({process.process_code})
+- Hallazgos encontrados: {chr(10).join(finding_texts) or 'Ninguno'}
+- Cumplimiento checklist: {compliance_summary['compliant']} de {compliance_summary['total']} ítems cumplidos
+- Fortalezas observadas: {chr(10).join(strengths_list) or 'Ninguna observada'}
+
+Responde exclusivamente en formato JSON con las siguientes claves:
+- "summary"
+- "recommendations"
+- "conclusions"
+
+Tu redacción debe ser profesional, objetiva y alineada con las buenas prácticas de auditoría interna bajo ISO 9001:2015.
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3,
+            max_tokens=900,
+        )
+
+        content = response.choices[0].message.content.strip()
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        return {
+            "summary": safe_str(suggestions.get("summary", "")),
+            "recommendations": safe_str(suggestions.get("recommendations", "")),
+            "conclusions": safe_str(suggestions.get("conclusions", ""))
+        }
+
+    except Exception as e:
+        print("Error al generar informe IA:", str(e))
+        print(traceback.format_exc())
+        return {
+            "summary": "",
+            "recommendations": "",
+            "conclusions": ""
+        }
+
+
+def suggest_corrective_actions(audit_report_id: int):
+    """
+    Genera automáticamente hasta 5 sugerencias de acciones correctivas basadas
+    en el contexto de un AuditReport.
+
+    Retorna una lista de strings con las sugerencias.
+
+    Ejemplo retorno:
+    [
+        "Implementar control de calidad en el proceso X...",
+        "Capacitar al personal en la norma ISO 9001:2015...",
+        ...
+    ]
+    """
+
+    def safe_str(value):
+        if isinstance(value, str):
+            return value.strip()
+        elif isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=False).strip()
+        elif value is None:
+            return ""
+        else:
+            return str(value).strip()
+
+    try:
+        audit_report = AuditReport.objects.select_related(
+            'audit_plan__annual_program__program_header',
+            'audit_plan__annual_program__process'
+        ).get(id=audit_report_id)
+
+        header = audit_report.audit_plan.annual_program.program_header
+        process = audit_report.audit_plan.annual_program.process
+
+        prompt = f"""
+Eres un auditor experto en la norma ISO 9001:2015.
+
+Tu tarea es generar cinco sugerencias de acciones correctivas claras, prácticas y efectivas basadas en el siguiente informe de auditoría:
+
+Resumen del informe:
+{audit_report.summary}
+
+Recomendaciones:
+{audit_report.recommendations}
+
+Conclusiones:
+{audit_report.conclusions}
+
+Contexto adicional:
+- Objetivo del programa anual: {header.objective}
+- Alcance: {header.scope}
+- Criterios de auditoría: {header.audit_criteria}
+- Proceso auditado: {process.name} ({process.process_code})
+
+Devuelve solo un JSON con una clave "corrective_actions" que contenga una lista con cinco strings con las acciones correctivas sugeridas.
+
+Ejemplo:
+{{
+  "corrective_actions": [
+    "Acción correctiva 1",
+    "Acción correctiva 2",
+    "Acción correctiva 3",
+    "Acción correctiva 4",
+    "Acción correctiva 5"
+  ]
+}}
+
+Sé concreto, profesional y directo.
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+            max_tokens=600,
+        )
+
+        content = response.choices[0].message.content.strip()
+        clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
+        suggestions = json.loads(clean_content)
+
+        corrective_actions = suggestions.get("corrective_actions", [])
+        return [safe_str(action) for action in corrective_actions][:5]
+
+    except Exception as e:
+        print("Error al generar acciones correctivas IA:", str(e))
+        print(traceback.format_exc())
+        return []

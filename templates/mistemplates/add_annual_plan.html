@@ -1,9 +1,10 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Plan Anual de Auditoría</h2>
-  <form method="post" action="{% url 'audits:add_annual_plan' %}">
+  <form method="post" action="{% url 'audits:add_annual_plan' %}" id="addAnnualPlanForm">
     {% csrf_token %}
 
+    <!-- Programa Anual -->
     <div class="mb-3">
       {{ form.annual_program.label_tag }}
       {{ form.annual_program }}
@@ -12,14 +13,7 @@
       {% endif %}
     </div>
 
-    <div class="mb-3">
-      {{ form.lider.label_tag }}
-      {{ form.lider }}
-      {% if form.lider.errors %}
-        <div class="text-danger small">{{ form.lider.errors }}</div>
-      {% endif %}
-    </div>
-
+    <!-- Apertura -->
     <div class="mb-3">
       {{ form.audit_opening_date.label_tag }}
       {{ form.audit_opening_date }}
@@ -44,6 +38,7 @@
       {% endif %}
     </div>
 
+    <!-- Cierre -->
     <div class="mb-3">
       {{ form.audit_closing_date.label_tag }}
       {{ form.audit_closing_date }}
@@ -68,7 +63,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón final -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
-

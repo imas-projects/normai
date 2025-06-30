@@ -9,6 +9,7 @@ from company.models import Area, Position, UserPosition
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 import json
+from ai_functions.monitoring_functions import generate_communication_flow_map
 
 
 # Create your views here.
@@ -393,5 +394,52 @@ def table_summarize_ia(request):
             "table_id": table_id,
             "open_summary_modal": True,
         }
+
+    return render(request, "mistemplates/communication-tables.html", context)
+
+
+
+def table_flow_map_ia(request):
+    ia_flow_data = None
+    table_id = None
+
+    all_communicationtables = CommunicationTable.objects.all()
+
+    if request.method == "POST":
+        table_id = request.POST.get("table_id")
+        if table_id:
+            print("Generando mapa para tabla ID:", table_id)
+            try:
+                ia_flow_data = generate_communication_flow_map(table_id)
+                print("Resultado IA:", ia_flow_data)
+            except Exception as e:
+                print(f"Error al generar mapa IA: {e}")
+                ia_flow_data = {
+                    "ia_insights": {
+                        "patterns": [],
+                        "weaknesses": [],
+                        "conflicts": [],
+                        "recommendations": [f"Error interno: {str(e)}"]
+                    }
+                }
+        else:
+            print("No se recibió table_id válido en POST")
+
+    flow_ia_sections = None
+    if ia_flow_data and "ia_insights" in ia_flow_data:
+        flow_ia_sections = {
+            "Patrones detectados": ia_flow_data["ia_insights"].get("patterns", []),
+            "Debilidades o barreras de comunicación": ia_flow_data["ia_insights"].get("weaknesses", []),
+            "Conflictos identificados": ia_flow_data["ia_insights"].get("conflicts", []),
+            "Recomendaciones": ia_flow_data["ia_insights"].get("recommendations", []),
+        }
+
+    context = {
+        "flow_ia_insights": ia_flow_data["ia_insights"] if ia_flow_data else None,
+        "flow_ia_sections": flow_ia_sections,
+        'all_communicationtables': all_communicationtables,
+        "table_id": table_id,
+        "open_flow_modal": True,
+    }
 
     return render(request, "mistemplates/communication-tables.html", context)

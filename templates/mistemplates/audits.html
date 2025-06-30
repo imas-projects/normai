@@ -3,6 +3,8 @@
 {% block title %}Internal Audits{% endblock title %}
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 {% endblock extra_css %}
 {% block content %}
 
@@ -34,7 +36,6 @@
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
                             <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramUserModal">Add Annual Program User</a></li>
                         </ul>
                     </div>
                 </div>
@@ -77,6 +78,8 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
                                 <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Add Findings</a></li>
                                 <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Add Audit Report</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Add Corrective Action</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Add Corrective Action Follow-up</a></li>
                             </ul>
                         </div>
 
@@ -145,24 +148,6 @@
                     </div>
                     <div class="modal-body">
                         <div id="annualProgramModalFormContent">
-                            <!-- Aquí se cargará dinámicamente el formulario -->
-                        </div>
-                    </div>
-                    <div class="modal-footer"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal for adding Annual Program User-->
-        <div class="modal fade" id="addAnnualProgramUserModal" tabindex="-1" aria-labelledby="addAnnualProgramUserModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addAnnualProgramUserModalLabel">Add Annual Program User</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="annualProgramUserModalFormContent">
                             <!-- Aquí se cargará dinámicamente el formulario -->
                         </div>
                     </div>
@@ -328,6 +313,43 @@
     </div>
 </div>
 
+<!-- Modal para Add Corrective Action -->
+<div class="modal fade" id="addCorrectiveActionModal" tabindex="-1" aria-labelledby="addCorrectiveActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Add Corrective Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Add Corrective Action Follow-up -->
+<div class="modal fade" id="addCorrectiveActionFollowupModal" tabindex="-1" aria-labelledby="addCorrectiveActionFollowupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Add Corrective Action Follow-up</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionFollowupModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+            
+
 
 {% block footer %}
 {% include "partials/footer.html" %}
@@ -335,127 +357,1394 @@
 {% endblock content %}
 
 {% block extra_js %}
+
 <script>
 document.getElementById("openAddProcessRequirementModal").addEventListener("click", function () {
     fetch("{% url 'audits:add_process_requirement' %}")
         .then(response => response.text())
         .then(html => {
-            document.getElementById("processRequirementModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addProcessRequirementModal")).show();
+            const modalContainer = document.getElementById("processRequirementModalFormContent");
+            modalContainer.innerHTML = html;
+
+            const modalEl = document.getElementById("addProcessRequirementModal");
+            const modalInstance = new bootstrap.Modal(modalEl);
+            modalInstance.show();
+
+            const form = modalEl.querySelector("form");
+            if (form) {
+                form.addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+                    const action = form.getAttribute("action");
+                    const method = form.getAttribute("method") || "POST";
+
+                    fetch(action, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        redirect: "follow"
+                    })
+                        .then(res => {
+                            // ✅ Como se guarda correctamente, redirigimos manualmente
+                            if (res.redirected) {
+                                window.location.href = "/audits/audits/";
+                            } else {
+                                return res.text().then(html => {
+                                    modalContainer.innerHTML = html;
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            modalContainer.innerHTML = `<div class='text-danger'>Error de red: ${error}</div>`;
+                        });
+                });
+            }
         });
 });
 
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
+
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_program_header' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+      const container = document.getElementById("auditProgramHeaderModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
+        suggestionsDiv.style.display = "none"; // Ocultar inicialmente
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Botón de sugerencia pulsado");
+
+          const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
+          if (!yearInput || !yearInput.value) {
+            alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
+            return;
+          }
+
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_program_fields/?year=${yearInput.value}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Objetivo:</strong> ${s.objective}</p>
+                        <p><strong>Alcance:</strong> ${s.scope}</p>
+                        <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
+                        <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              document.querySelectorAll(".applySuggestionBtn").forEach(applyBtn => {
+                applyBtn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  document.querySelector("textarea[name='objective']").value = s.objective;
+                  document.querySelector("textarea[name='scope']").value = s.scope;
+                  document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
+                  document.querySelector("textarea[name='security_standards']").value = s.security_standards;
+
+                  suggestionsDiv.style.display = "none";
+                  suggestionsDiv.innerHTML = "";
+
+                  document.querySelector("textarea[name='objective']").focus();
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal"));
+        modal.show();
+
+        // Interceptar el envío del formulario para forzar el reload
+        const modalElement = document.getElementById("addAuditProgramHeaderModal");
+        const form = modalElement.querySelector("form");
+
+        if (form) {
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const action = form.getAttribute("action");
+            const method = form.getAttribute("method") || "POST";
+
+            fetch(action, {
+              method: method,
+              body: formData,
+              headers: {
+                "X-Requested-With": "XMLHttpRequest"
+              },
+            })
+              .then(response => {
+                if (response.redirected) {
+                  window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                } else {
+                  return response.text().then(html => {
+                    container.innerHTML = html;
+                  });
+                }
+              })
+              .catch(error => {
+                console.error("Error al enviar el formulario:", error);
+              });
+          });
+        }
+
+      }, 100);
     });
 });
 
-document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program' %}")
+
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+      document.getElementById("annualProgramModalFormContent").innerHTML = html;
+      const modalEl = document.getElementById("addAnnualProgramModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      const btnSuggestIA = document.getElementById("btnSuggestIA");
+      const suggestionsDiv = document.getElementById("iaSuggestions");
+
+      if (btnSuggestIA) {
+        btnSuggestIA.setAttribute("type", "button");
+
+        btnSuggestIA.addEventListener("click", function () {
+          const programHeaderSelect = document.querySelector("#id_program_header");
+          if (!programHeaderSelect || !programHeaderSelect.value) {
+            alert("Por favor seleccione un Program Header primero.");
+            return;
+          }
+
+          const originalText = btnSuggestIA.textContent;
+          btnSuggestIA.disabled = true;
+          btnSuggestIA.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+            .then(res => res.json())
+            .then(data => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                return;
+              }
+
+              const MONTH_NAME_TO_NUM = {
+                january: 1, february: 2, march: 3, april: 4,
+                may: 5, june: 6, july: 7, august: 8,
+                september: 9, october: 10, november: 11, december: 12
+              };
+
+              const MONTH_NAME_TO_ES = {
+                january: "Enero", february: "Febrero", march: "Marzo", april: "Abril",
+                may: "Mayo", june: "Junio", july: "Julio", august: "Agosto",
+                september: "Septiembre", october: "Octubre", november: "Noviembre", december: "Diciembre"
+              };
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => {
+                    const rawMonth = s.suggested_month || "";
+                    const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
+                    const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
+                    return `
+                      <div class="card mt-2 shadow-sm">
+                        <div class="card-body">
+                          <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                          <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                          <p><strong>Mes sugerido:</strong> <em>${monthEs}</em></p>
+                          <p><strong>Justificación:</strong> ${s.justification}</p>
+                          <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
+                            data-idx="${i}">Seleccionar</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              `;
+
+              document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
+                btn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  const processSelect = document.querySelector("#id_process");
+
+                  let matchingOption = Array.from(processSelect.options).find(opt =>
+                    opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                  );
+
+                  if (!matchingOption) {
+                    alert("No se encontró el proceso en la lista del formulario.");
+                    return;
+                  }
+
+                  const process_id = matchingOption.value;
+                  const program_header_id = programHeaderSelect.value;
+
+                  const rawMonth = s.suggested_month || "";
+                  const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
+                  const month = MONTH_NAME_TO_NUM[monthKey] || "";
+
+                  const thisBtn = this;
+                  thisBtn.disabled = true;
+                  thisBtn.textContent = "Guardando...";
+
+                  fetch("{% url 'audits:save_annual_program_suggestion' %}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/x-www-form-urlencoded",
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: new URLSearchParams({
+                      program_header_id,
+                      process_id,
+                      month
+                    })
+                  })
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.success) {
+                        alert("Sugerencia guardada correctamente.");
+                        thisBtn.closest(".card").remove();
+                      } else {
+                        alert("Error al guardar: " + (data.error || "desconocido"));
+                        thisBtn.disabled = false;
+                        thisBtn.textContent = "Seleccionar";
+                      }
+                    })
+                    .catch(err => {
+                      alert("Error inesperado: " + err);
+                      thisBtn.disabled = false;
+                      thisBtn.textContent = "Seleccionar";
+                    });
+                });
+              });
+            })
+            .catch(err => {
+              btnSuggestIA.disabled = false;
+              btnSuggestIA.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+      }
+
+      // Interceptar envío del formulario del modal y redirigir al guardar
+      const form = modalEl.querySelector("form");
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const formData = new FormData(form);
+          const action = form.getAttribute("action");
+          const method = form.getAttribute("method") || "POST";
+
+          fetch(action, {
+            method: method,
+            body: formData,
+            headers: {
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          })
+            .then(response => {
+              if (response.redirected) {
+                window.location.href = "http://34.254.185.243:8000/audits/audits/";
+              } else {
+                return response.text().then(html => {
+                  document.getElementById("annualProgramModalFormContent").innerHTML = html;
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error al enviar el formulario:", error);
+            });
+        });
+      }
     });
 });
 
-document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program_user' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
+
+document.addEventListener("DOMContentLoaded", function () {
+  const openAnnualPlanBtn = document.getElementById("openAddAnnualPlanModal");
+  if (openAnnualPlanBtn) {
+    openAnnualPlanBtn.addEventListener("click", function () {
+      fetch("{% url 'audits:add_annual_plan' %}")
+        .then(response => response.text())
+        .then(html => {
+          const container = document.getElementById("annualPlanModalFormContent");
+          container.innerHTML = html;
+
+          const modalEl = document.getElementById("addAnnualPlanModal");
+          new bootstrap.Modal(modalEl).show();
+
+          const form = modalEl.querySelector("form");
+          if (form) {
+            form.addEventListener("submit", function (e) {
+              e.preventDefault();
+              const formData = new FormData(form);
+              const action = form.getAttribute("action");
+              const method = form.getAttribute("method") || "POST";
+
+              fetch(action, {
+                method: method,
+                body: formData,
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest"
+                }
+              })
+                .then(response => {
+                  if (response.redirected) {
+                    window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                  } else {
+                    return response.text().then(html => {
+                      container.innerHTML = html;
+                    });
+                  }
+                })
+                .catch(error => {
+                  console.error("Error al enviar el formulario:", error);
+                });
+            });
+          }
+        });
+    });
+  }
+
+  const openAuditorBtn = document.getElementById("openAddAnnualPlanAuditedModal");
+  if (openAuditorBtn) {
+    openAuditorBtn.addEventListener("click", function () {
+      fetch("{% url 'audits:add_annual_plan_audited' %}")
+        .then(response => response.text())
+        .then(html => {
+          const container = document.getElementById("annualPlanAuditedModalFormContent");
+          container.innerHTML = html;
+
+          const modalEl = document.getElementById("addAnnualPlanAuditedModal");
+          new bootstrap.Modal(modalEl).show();
+
+          const form = modalEl.querySelector("form");
+          if (form) {
+            form.addEventListener("submit", function (e) {
+              e.preventDefault();
+              const formData = new FormData(form);
+              const action = form.getAttribute("action");
+              const method = form.getAttribute("method") || "POST";
+
+              fetch(action, {
+                method: method,
+                body: formData,
+                headers: {
+                  "X-Requested-With": "XMLHttpRequest"
+                }
+              })
+                .then(response => {
+                  if (response.redirected) {
+                    window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                  } else {
+                    return response.text().then(html => {
+                      container.innerHTML = html;
+                    });
+                  }
+                })
+                .catch(error => {
+                  console.error("Error al enviar el formulario:", error);
+                });
+            });
+          }
+        });
+    });
+  }
+});
+
+
+
+document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_plan_auditor' %}")
+    .then((response) => response.text())
+    .then((html) => {
+      document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
+
+      const modalEl = document.getElementById("addAnnualPlanAuditorModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      requestAnimationFrame(() => {
+        const btnSuggestIA = document.getElementById("btnSuggestAuditorIA");
+        const suggestionsDiv = document.getElementById("auditorSuggestionsIA");
+
+        if (btnSuggestIA) {
+          btnSuggestIA.setAttribute("type", "button");
+
+          btnSuggestIA.addEventListener("click", function () {
+            const annualPlanSelect = document.querySelector("#id_annual_plan");
+
+            if (!annualPlanSelect || !annualPlanSelect.value) {
+              alert("Por favor seleccione un Plan Anual primero.");
+              return;
+            }
+
+            const originalText = btnSuggestIA.textContent;
+            btnSuggestIA.disabled = true;
+            btnSuggestIA.textContent = "Obteniendo sugerencias...";
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "block";
+
+            fetch(`/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value}`)
+              .then((response) => response.json())
+              .then((data) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
+
+                if (data.error) {
+                  suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                  return;
+                }
+
+                if (!data.suggestions || data.suggestions.length === 0) {
+                  suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                  return;
+                }
+
+                suggestionsDiv.innerHTML = `
+                  <strong>Sugerencias de la IA:</strong>
+                  <div id="suggestedAuditorsList" class="mt-2">
+                    ${data.suggestions.map((s, i) => `
+                      <div class="card mt-2 shadow-sm">
+                        <div class="card-body">
+                          <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                          <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
+                          <p><strong>Justificación:</strong> ${s.justification}</p>
+                          <button type="button" class="btn btn-sm btn-outline-success selectAuditorBtn" data-idx="${i}">Seleccionar</button>
+                        </div>
+                      </div>
+                    `).join("")}
+                  </div>
+                `;
+
+                document.querySelectorAll(".selectAuditorBtn").forEach((btn) => {
+                  btn.addEventListener("click", function () {
+                    const idx = parseInt(this.dataset.idx);
+                    const s = data.suggestions[idx];
+                    if (!s) return;
+
+                    const btn = this;
+                    btn.disabled = true;
+                    btn.textContent = "Guardando...";
+
+                    const annualPlanSelect = document.querySelector("#id_annual_plan");
+                    if (!annualPlanSelect || !annualPlanSelect.value) {
+                      alert("Falta seleccionar Plan Anual.");
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                      return;
+                    }
+
+                    fetch("{% url 'audits:save_selected_auditor' %}", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                      },
+                      body: new URLSearchParams({
+                        user_id: s.user_id,
+                        annual_plan_id: annualPlanSelect.value,
+                      }),
+                    })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (data.success) {
+                        alert(data.message || "Auditor guardado correctamente.");
+                        window.location.href = "http://34.254.185.243:8000/audits/audits/";
+                      } else {
+                        alert("Error al guardar: " + (data.error || "desconocido"));
+                        btn.disabled = false;
+                        btn.textContent = "Seleccionar";
+                      }
+                    })
+                    .catch((err) => {
+                      alert("Error inesperado: " + err);
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                    });
+                  });
+                });
+              })
+              .catch((err) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+              });
+          });
+        } else {
+          console.warn("btnSuggestAuditorIA no encontrado");
+        }
+      });
     });
 });
 
-document.getElementById("openAddAnnualPlanModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan' %}")
+
+
+
+
+
+
+document.getElementById("openAddFindingsModal").addEventListener("click", function (e) {
+  e.preventDefault();  // evitar navegación
+
+  fetch("{% url 'audits:add_findings' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualPlanModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+      const container = document.getElementById("findingsModalFormContent");
+      container.innerHTML = html;
+
+      // Mostrar modal
+      const modalEl = document.getElementById("addFindingsModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      // Configurar botón IA
+      setupIaClassification();
+
+      // Detectar el submit del formulario para hacer el fetch POST y controlar refresco y cierre modal
+      const form = document.getElementById("findingsForm");
+      if (!form) return;
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        fetch(form.action, {
+          method: form.method,
+          body: formData,
+          headers: {
+            "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+          }
+        })
+          .then(res => {
+            // Aceptamos que la respuesta puede ser redirección (302)
+            // La idea es que la respuesta es correcta y guardó
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+
+            return res.text(); // o json si devuelves json
+          })
+          .then(data => {
+            // Cerrar modal
+            modal.hide();
+
+            // Refrescar la página deseada
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
+      });
     });
 });
 
-document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan_auditor' %}")
+function setupIaClassification() {
+  const form = document.getElementById("findingsForm");
+  if (!form) return;
+
+  const suggestBtn = document.getElementById("btnSuggestFindingClassification");
+  const requirementSelect = form.querySelector("select[name='requirement']");
+  const findingInput = form.querySelector("textarea[name='finding_text']");
+  const classificationSelect = form.querySelector("select[name='classification']");
+  const feedback = document.getElementById("iaFindingClassificationFeedback");
+
+  if (feedback) feedback.style.display = "none";
+
+  if (!suggestBtn) return;
+
+  suggestBtn.addEventListener("click", () => {
+    const requirementId = requirementSelect.value;
+    const findingText = findingInput.value;
+
+    if (!requirementId || !findingText.trim()) {
+      alert("Por favor, selecciona un requisito y escribe el texto del hallazgo.");
+      return;
+    }
+
+    const originalText = suggestBtn.textContent;
+    suggestBtn.disabled = true;
+    suggestBtn.textContent = "Obteniendo...";
+
+    fetch(`/audits/classify-finding/?requirement_id=${requirementId}&finding_text=${encodeURIComponent(findingText)}`)
+      .then(res => res.json())
+      .then(data => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+
+        if (data.error) {
+          alert("Error IA: " + data.error);
+          return;
+        }
+
+        const suggested = data.classification;
+        const option = Array.from(classificationSelect.options).find(opt => opt.value === suggested);
+
+        if (option) {
+          classificationSelect.value = suggested;
+          alert("Clasificación sugerida.");
+          if (feedback) {
+            feedback.textContent = `Clasificación sugerida por IA: ${option.text}`;
+            feedback.style.display = "block";
+          }
+        } else {
+          alert("Clasificación sugerida no válida.");
+        }
+      })
+      .catch(err => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+        alert("Error inesperado: " + err);
+      });
+  });
+}
+
+
+document.getElementById("openAddAuditReportModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_report' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
+      const container = document.getElementById("auditReportModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditReportBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Audit Report");
+          return;
+        }
+
+        function formatSuggestionField(content) {
+          try {
+            const parsed = JSON.parse(content);
+
+            if (Array.isArray(parsed)) {
+              return `<ul>${parsed.map(item => `<li>${item}</li>`).join("")}</ul>`;
+            } else if (typeof parsed === "object") {
+              return `<ul>${Object.entries(parsed)
+                .map(([key, val]) => {
+                  if (Array.isArray(val)) {
+                    return `<li><strong>${key}:</strong><ul>${val.map(i => `<li>${i}</li>`).join("")}</ul></li>`;
+                  } else if (typeof val === "object") {
+                    return `<li><strong>${key}:</strong> <pre>${JSON.stringify(val, null, 2)}</pre></li>`;
+                  } else {
+                    return `<li><strong>${key}:</strong> ${val}</li>`;
+                  }
+                })
+                .join("")}</ul>`;
+            } else {
+              return `<p>${content}</p>`;
+            }
+          } catch (e) {
+            return `<p>${content}</p>`;
+          }
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditReportSuggestionsContainer");
+        suggestionsDiv.style.display = "none";
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Solicitando sugerencias de IA para el informe de auditoría...");
+
+const auditSelect = document.querySelector("#add-audit-report-form select[name='audit_plan']");
+
+          if (!auditSelect || !auditSelect.value) {
+            alert("Por favor, selecciona una auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditId = auditSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_report/?audit_plan_id=${auditId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+suggestionsDiv.innerHTML = `
+  <strong>Sugerencias generadas por IA:</strong>
+  <div id="suggestionListReport" class="mt-2">
+    ${suggestions.map((s, i) => `
+      <div class="card mt-2 shadow-sm">
+        <div class="card-body">
+          <p><strong>Resumen:</strong></p>
+          <div>${formatSuggestionField(s.summary)}</div>
+          <p class="mt-2"><strong>Recomendaciones:</strong></p>
+          <div>${formatSuggestionField(s.recommendations)}</div>
+          <p class="mt-2"><strong>Conclusiones:</strong></p>
+          <div>${formatSuggestionField(s.conclusions)}</div>
+          <button type="button" class="btn btn-sm btn-outline-success applyAuditReportSuggestionBtn" data-idx="${i}">
+            Usar esta sugerencia
+          </button>
+        </div>
+      </div>
+    `).join("")}
+  </div>
+`;
+
+
+document.querySelectorAll(".applyAuditReportSuggestionBtn").forEach(applyBtn => {
+  applyBtn.addEventListener("click", function () {
+    const idx = parseInt(this.dataset.idx);
+    const s = suggestions[idx];
+    if (!s) return;
+
+    document.querySelector("textarea[name='summary']").value = s.summary;
+    document.querySelector("textarea[name='recommendations']").value = s.recommendations;
+    document.querySelector("textarea[name='conclusions']").value = s.conclusions;
+
+    suggestionsDiv.style.display = "none";
+    suggestionsDiv.innerHTML = "";
+    document.querySelector("textarea[name='summary']").focus();
+  });
+});
+
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
+        // Mostrar modal
+        const modalEl = document.getElementById("addAuditReportModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Capturamos submit para manejar el guardado y refresco de la página
+        const form = document.getElementById("add-audit-report-form");
+        if (!form) return;
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+            .then(res => {
+              if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+              return res.text();
+            })
+            .then(data => {
+              modal.hide();
+              window.location.href = "http://34.254.185.243:8000/audits/audits/";
+            })
+            .catch(err => {
+              alert("Error al guardar: " + err);
+            });
+        });
+
+      }, 100);
     });
 });
 
-document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan_audited' %}")
+
+document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audited_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+      const container = document.getElementById("auditedEvaluationQuestionModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("btnSuggestAuditQuestions");
+        const suggestionsDiv = document.getElementById("iaAuditQuestionSuggestions");
+
+        if (!suggestBtn || !suggestionsDiv) return;
+
+        suggestBtn.setAttribute("type", "button");
+        suggestionsDiv.style.display = "none";
+        suggestionsDiv.innerHTML = "";
+
+        const form = document.getElementById("auditedEvaluationForm");
+        if (!form) return;
+
+        // Botón de sugerencias IA
+        suggestBtn.addEventListener("click", function () {
+          const requirementSelect = form.querySelector("select[name='requirement']");
+          const requirementId = requirementSelect?.value;
+
+          if (!requirementId) {
+            alert("Por favor, selecciona un requisito antes de solicitar sugerencias.");
+            return;
+          }
+
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.style.display = "block";
+          suggestionsDiv.innerHTML = "";
+
+          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const questions = data.questions || [];
+              if (questions.length === 0) {
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias IA:</strong>
+                <div id="suggestedAuditQuestionList" class="mt-2">
+                  ${questions.map((q, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0">${q}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectAuditQuestionBtn" data-question="${encodeURIComponent(q)}">Seleccionar</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              // Funcionalidad botones seleccionar
+              document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
+                button.addEventListener("click", function () {
+                  const question = decodeURIComponent(this.dataset.question);
+                  const btn = this;
+                  btn.disabled = true;
+                  btn.textContent = "Guardando...";
+
+                  fetch("{% url 'audits:save_audit_question' %}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/x-www-form-urlencoded",
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: new URLSearchParams({
+                      question_text: question,
+                      requirement_id: form.querySelector("select[name='requirement']").value
+                    })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert("Pregunta guardada correctamente.");
+                      btn.closest(".card").remove();
+                    } else {
+                      alert("Error al guardar: " + (data.error || "desconocido"));
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                    }
+                  })
+                  .catch(err => {
+                    alert("Error inesperado: " + err);
+                    btn.disabled = false;
+                    btn.textContent = "Seleccionar";
+                  });
+                });
+              });
+
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
+        // Mostrar modal
+        const modalEl = document.getElementById("addAuditedEvaluationQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Capturar submit del formulario para guardar y refrescar
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => {
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.text();
+          })
+          .then(() => {
+            modal.hide();
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
+        });
+
+      }, 100);
     });
 });
 
-document.getElementById("openAddFindingsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_findings' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("findingsModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
-    });
-});
 
-document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_report' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditReportModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
-    });
-});
 
-document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audited_evaluation_question' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
-    });
-});
+
+
 
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
+  fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("leadAuditorEvaluationQuestionModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addLeadAuditorEvaluationQuestionModal")).show();
+      const container = document.getElementById("leadAuditorEvaluationQuestionModalFormContent");
+      container.innerHTML = html;
+
+      const modalEl = document.getElementById("addLeadAuditorEvaluationQuestionModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      const form = container.querySelector("form");
+      if (!form) return;
+
+      form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+          method: form.method,
+          body: formData,
+          headers: {
+            "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+          }
+        })
+        .then(res => {
+          if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.text();
+        })
+        .then(() => {
+          modal.hide();
+          window.location.href = "http://34.254.185.243:8000/audits/audits/";
+        })
+        .catch(err => {
+          alert("Error al guardar: " + err);
+        });
+      });
     });
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
-        fetch("{% url 'audits:add_checklist' %}")  
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById("checklistQuestionModalFormContent").innerHTML = html;
-            new bootstrap.Modal(document.getElementById("addChecklistQuestionModal")).show();
+  document.getElementById("openAddChecklistQuestionModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_checklist' %}")
+      .then(response => response.text())
+      .then(html => {
+        const container = document.getElementById("checklistQuestionModalFormContent");
+        container.innerHTML = html;
+
+        const modalEl = document.getElementById("addChecklistQuestionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        const form = container.querySelector("form");
+        if (!form) return;
+
+        form.addEventListener("submit", function(event) {
+          event.preventDefault();
+
+          const formData = new FormData(form);
+
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+          .then(res => {
+            if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.text();
+          })
+          .then(() => {
+            modal.hide();
+            window.location.href = "http://34.254.185.243:8000/audits/audits/";
+          })
+          .catch(err => {
+            alert("Error al guardar: " + err);
+          });
         });
+      });
+  });
+});
+
+
+document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_auditor_evaluation' %}")
+    .then(response => response.text())
+    .then(html => {
+      const container = document.getElementById("auditorEvaluationModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("btnSuggestRateIA");
+        const form = document.getElementById("auditorEvaluationForm");
+
+        if (!form) return;
+
+        // Configurar botón de sugerencia IA
+        if (suggestBtn) {
+          suggestBtn.addEventListener("click", function () {
+            const auditSelect = form.querySelector("select[name='audit_plan']");
+            const questionSelect = form.querySelector("select[name='question']");
+            const rateInput = form.querySelector("input[name='rate']");
+
+            const auditId = auditSelect?.value;
+            const questionId = questionSelect?.value;
+
+            if (!auditId || !questionId) {
+              alert("Selecciona una auditoría y una pregunta antes de sugerir un valor.");
+              return;
+            }
+
+            const originalText = suggestBtn.textContent;
+            suggestBtn.disabled = true;
+            suggestBtn.textContent = "Obteniendo...";
+
+            fetch(`/audits/suggest-compliance-rate/?audit_id=${auditId}&question_id=${questionId}`)
+              .then(res => res.json())
+              .then(data => {
+                suggestBtn.disabled = false;
+                suggestBtn.textContent = originalText;
+
+                if (data.error) {
+                  alert("Error IA: " + data.error);
+                  return;
+                }
+
+                const suggestedRate = parseFloat(data.rating);
+                if (!isNaN(suggestedRate)) {
+                  rateInput.value = suggestedRate;
+                  alert("Sugerencia IA aplicada correctamente.");
+                } else {
+                  alert("La IA no devolvió un valor numérico válido.");
+                }
+              })
+              .catch(err => {
+                suggestBtn.disabled = false;
+                suggestBtn.textContent = originalText;
+                alert("Error al obtener sugerencia IA: " + err);
+              });
+          });
+        }
+
+        // Capturar submit para enviar con fetch y refrescar página al guardar
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(form);
+
+          fetch(form.action, {
+            method: form.method,
+            body: formData,
+            headers: {
+              "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+          })
+            .then(res => {
+              if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+              return res.text();
+            })
+            .then(() => {
+              bootstrap.Modal.getInstance(document.getElementById("addAuditorEvaluationModal")).hide();
+              window.location.href = "http://34.254.185.243:8000/audits/audits/";
+            })
+            .catch(err => {
+              alert("Error al guardar: " + err);
+            });
+        });
+
+        new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+      }, 100);
     });
 });
 
-document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_auditor_evaluation' %}")
+document.getElementById("openAddCorrectiveActionModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_corrective_action' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditorEvaluationModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+      const container = document.getElementById("correctiveActionModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestCorrectiveActionBtn");
+        const suggestionsDiv = document.getElementById("correctiveActionSuggestionsContainer");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Corrective Action");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        suggestBtn.addEventListener("click", function () {
+          const form = container.querySelector("form");
+          const auditReportSelect = form.querySelector("select[name='audit_report']");
+
+          if (!auditReportSelect || !auditReportSelect.value) {
+            alert("Por favor, selecciona un informe de auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditReportId = auditReportSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+
+          if (suggestionsDiv) {
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "block";
+          }
+
+          fetch(`/audits/suggest_corrective_action/?audit_report_id=${auditReportId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                if (suggestionsDiv) {
+                  suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                } else {
+                  alert("Error: " + data.error);
+                }
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                if (suggestionsDiv) {
+                  suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                }
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias generadas por IA:</strong>
+                <div id="suggestionListCorrective" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <p><strong>Acción Correctiva:</strong></p>
+                        <div>${s}</div>
+                        <button type="button" class="btn btn-sm btn-outline-success applyCorrectiveSuggestionBtn" data-idx="${i}">
+                          Usar esta sugerencia
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+
+              const form = container.querySelector("form");
+
+              suggestionsDiv.querySelectorAll(".applyCorrectiveSuggestionBtn").forEach(button => {
+                button.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx, 10);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  const correctiveActionInput = form.querySelector("input[name='corrective_action'], textarea[name='corrective_action']");
+                  if (correctiveActionInput) {
+                    correctiveActionInput.value = s;
+                    correctiveActionInput.focus();
+                    suggestionsDiv.style.display = "none";
+                    suggestionsDiv.innerHTML = "";
+                  }
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              if (suggestionsDiv) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+              } else {
+                alert("Error al obtener sugerencias: " + err);
+              }
+            });
+        });
+
+        const modalEl = document.getElementById("addCorrectiveActionModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Aquí agregamos el manejo del submit para guardar sin recargar la página
+        const form = container.querySelector("form");
+        if (form) {
+          form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            fetch(form.action, {
+              method: form.method,
+              body: formData,
+              headers: {
+                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+              }
+            })
+              .then(res => {
+                if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.text();
+              })
+              .then(data => {
+                modal.hide();
+                // Mantener en la página audits/
+                window.location.href = "/audits/audits/";
+              })
+              .catch(err => {
+                alert("Error al guardar: " + err);
+              });
+          });
+        }
+      }, 100);
     });
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("openAddCorrectiveActionFollowupModal").addEventListener("click", function() {
+    fetch("{% url 'audits:add_corrective_action_followup' %}")
+      .then(response => response.text())
+      .then(html => {
+        const container = document.getElementById("correctiveActionFollowupModalFormContent");
+        container.innerHTML = html;
+
+        const modalEl = document.getElementById("addCorrectiveActionFollowupModal");
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Agregamos manejo submit para guardar sin salir de la página audits/
+        const form = container.querySelector("form");
+        if (form) {
+          form.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            fetch(form.action, {
+              method: form.method,
+              body: formData,
+              headers: {
+                "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value
+              }
+            })
+            .then(res => {
+              if (!res.ok && res.status !== 302) throw new Error(`HTTP error! status: ${res.status}`);
+              return res.text();
+            })
+            .then(data => {
+              modal.hide();
+              // Mantener en la página audits/
+              window.location.href = "/audits/audits/";
+            })
+            .catch(err => {
+              alert("Error al guardar seguimiento: " + err);
+            });
+          });
+        }
+      });
+  });
 });
 
 </script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 

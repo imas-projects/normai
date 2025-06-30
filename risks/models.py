@@ -1,30 +1,34 @@
 from django.db import models
 from django.contrib.auth.models import User
-from company.models import Area  
+from company.models import Area, Position
 from django.core.validators import RegexValidator
 from multiselectfield import MultiSelectField
+from processes.models import Process
 
 
 # Tabla de identificación de riesgo
 class RiskIdentification(models.Model):
     area = models.ForeignKey(Area, on_delete=models.CASCADE, related_name="risks")  
-    activity_name = models.CharField(max_length=255)
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="risks")
     identified_risk = models.CharField(max_length=255, unique=True)
     consequences = models.TextField()
+    source = models.CharField(max_length=64, null=True, blank=True)  # ← nuevo campo
 
     class Meta:
         db_table = 'tb_risks_identification'
 
     def __str__(self):
-        return f"{self.identified_risk} ({self.area.name})"
-    
+        return f"{self.identified_risk} ({self.process.name} - {self.area.name})"
+
     def as_dict(self):
         return {
             "area": self.area.as_dict(),
-            "activity_name": self.activity_name,
+            "process": self.process.name,
             "identified_risk": self.identified_risk,
             "consequences": self.consequences,
-        }  
+            "source": self.source,
+        }
+
 
 # Tabla de evaluación de riesgo
 class RiskEvaluation(models.Model):
@@ -69,7 +73,7 @@ class RiskEvaluation(models.Model):
 class RiskTreatment(models.Model):
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='treatments')
     treatment_action = models.TextField()
-    responsible = models.ManyToManyField(User)
+    responsible = models.ManyToManyField(Position)  # Cambio aquí
     target_date = models.DateField()
     actual_date = models.DateField()
 
@@ -83,15 +87,18 @@ class RiskTreatment(models.Model):
         return {
             "treatment_action": self.treatment_action,
             "responsible": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.responsible.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.responsible.all()],
             "target_date": self.target_date,
             "actual_date": self.actual_date,
         }
+
 
 
 # Tabla de planes de contingencia
@@ -112,8 +119,17 @@ class ContingencyPlan(models.Model):
 
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='actions')
     contingency_actions = MultiSelectField(choices=ACTION_CHOICES)
-    responsible = models.ManyToManyField(User, related_name="responsible_for_contingency")
-    communicate_to = models.ManyToManyField(User, related_name="communicate_to_contingency")
+
+    responsible = models.ManyToManyField(
+        'company.Position',
+        through='ContingencyPlanResponsible',
+        related_name="responsible_for_contingency"
+    )
+    communicate_to = models.ManyToManyField(
+        'company.Position',
+        through='ContingencyPlanCommunicateTo',
+        related_name="communicate_to_contingency"
+    )
 
     class Meta:
         db_table = 'tb_risks_contingency_plan'
@@ -126,20 +142,45 @@ class ContingencyPlan(models.Model):
         return {
             "contingency_actions": [dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions],
             "responsible": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.responsible.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.responsible.all()],
             "communicate_to": [{
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email
-            } for user in self.communicate_to.all()],
+                "id": position.id,
+                "name": position.name,
+                "code": position.code,
+                "area": {
+                    "id": position.area.id,
+                    "name": position.area.name
+                }
+            } for position in self.communicate_to.all()],
         }
+
+
+class ContingencyPlanResponsible(models.Model):
+    contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
+    position = models.ForeignKey('company.Position', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'tb_risks_contingency_plan_responsible'
+        unique_together = ('contingencyplan', 'position')
+        managed = False
+
+
+class ContingencyPlanCommunicateTo(models.Model):
+    contingencyplan = models.ForeignKey('ContingencyPlan', on_delete=models.CASCADE)
+    position = models.ForeignKey('company.Position', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'tb_risks_contingency_plan_communicate_to'
+        unique_together = ('contingencyplan', 'position')
+        managed = False
+
 
 
 # Tabla de reevaluación

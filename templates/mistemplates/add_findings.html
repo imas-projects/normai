@@ -1,14 +1,14 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Hallazgo</h2>
-  <form method="post" action="{% url 'audits:add_findings' %}">
+  <form method="post" action="{% url 'audits:add_findings' %}" id="findingsForm">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.report.label_tag }}
-      {{ form.report }}
-      {% if form.report.errors %}
-        <div class="text-danger small">{{ form.report.errors }}</div>
+      {{ form.audit_plan.label_tag }}
+      {{ form.audit_plan }}
+      {% if form.audit_plan.errors %}
+        <div class="text-danger small">{{ form.audit_plan.errors }}</div>
       {% endif %}
     </div>
 
@@ -28,6 +28,11 @@
       {% endif %}
     </div>
 
+    <!-- Botón para Clasificar con IA antes del campo Clasificación -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestFindingClassification" class="btn btn-info">Clasificar con IA</button>
+    </div>
+    
     <div class="mb-3">
       {{ form.classification.label_tag }}
       {{ form.classification }}
@@ -36,6 +41,11 @@
       {% endif %}
     </div>
 
-    <button type="submit" class="btn btn-success">Guardar</button>
+
+    <button type="submit" name="save" class="btn btn-success mt-3">Guardar</button>
+
+    {% if ia_error %}
+      <div class="alert alert-danger mt-3">{{ ia_error }}</div>
+    {% endif %}
   </form>
 </div>

@@ -1,9 +1,9 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    AuditProgramHeader, AnnualProgram, AnnualPlan, AnnualProgramUser,
+    AuditProgramHeader, AnnualProgram, AnnualPlan,
     AnnualPlanAuditor, AnnualPlanAudited, Checklist, Findings, AuditReport,
-    ProcessRequirement, AuditedEvaluationQuestion, AuditorEvaluation, LeadAuditorEvaluationQuestion
+    ProcessRequirement, AuditedEvaluationQuestion, AuditorEvaluation, LeadAuditorEvaluationQuestion, CorrectiveAction, CorrectiveActionFollowUp
 )
 
 class AuditProgramHeaderForm(forms.ModelForm):
@@ -28,25 +28,17 @@ class AnnualProgramForm(forms.ModelForm):
             'month': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12, 'placeholder': 'Month (1-12)'}),
         }
 
-class AnnualProgramUserForm(forms.ModelForm):
-    class Meta:
-        model = AnnualProgramUser
-        fields = ['annual_program', 'user']
-        widgets = {
-            'annual_program': forms.Select(attrs={'class': 'form-control'}),
-            'user': forms.Select(attrs={'class': 'form-control'}),
-        }
-
 class AnnualPlanForm(forms.ModelForm):
     class Meta:
         model = AnnualPlan
         fields = [
-            'annual_program', 'lider', 'audit_opening_date', 'audit_opening_time',
-            'audit_opening_location', 'audit_closing_date', 'audit_closing_time', 'audit_closing_location'
+            'annual_program', 
+            'audit_opening_date', 'audit_opening_time',
+            'audit_opening_location', 'audit_closing_date',
+            'audit_closing_time', 'audit_closing_location'
         ]
         widgets = {
             'annual_program': forms.Select(attrs={'class': 'form-control'}),
-            'lider': forms.Select(attrs={'class': 'form-control'}),
             'audit_opening_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'audit_opening_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'audit_opening_location': forms.TextInput(attrs={'class': 'form-control'}),
@@ -54,6 +46,7 @@ class AnnualPlanForm(forms.ModelForm):
             'audit_closing_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
             'audit_closing_location': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 
 class AnnualPlanAuditorForm(forms.ModelForm):
     class Meta:
@@ -88,23 +81,26 @@ class ChecklistForm(forms.ModelForm):
 class FindingsForm(forms.ModelForm):
     class Meta:
         model = Findings
-        fields = ['report', 'requirement', 'finding_text', 'classification']
+        fields = ['audit_plan', 'requirement', 'finding_text', 'classification']
         widgets = {
-            'report': forms.Select(attrs={'class': 'form-control'}),
+            'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'requirement': forms.Select(attrs={'class': 'form-control'}),
             'finding_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'classification': forms.Select(attrs={'class': 'form-control'}),
         }
 
+
 class AuditReportForm(forms.ModelForm):
     class Meta:
         model = AuditReport
-        fields = ['audit', 'summary', 'strengths']
+        fields = ['audit_plan', 'summary', 'recommendations', 'conclusions']
         widgets = {
-            'audit': forms.Select(attrs={'class': 'form-control'}),
+            'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'strengths': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'recommendations': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'conclusions': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
 
 class ProcessRequirementForm(forms.ModelForm):
     class Meta:
@@ -112,7 +108,7 @@ class ProcessRequirementForm(forms.ModelForm):
         fields = ['process', 'requirement']
         widgets = {
             'process': forms.Select(attrs={'class': 'form-control'}),
-            'requirement': forms.Select(attrs={'class': 'form-control'}),
+            'requirement': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 class AuditedEvaluationQuestionForm(forms.ModelForm):
@@ -127,12 +123,12 @@ class AuditedEvaluationQuestionForm(forms.ModelForm):
 class AuditorEvaluationForm(forms.ModelForm):
     class Meta:
         model = AuditorEvaluation
-        fields = ['audit', 'question', 'orden', 'rate']
+        fields = ['audit_plan', 'question', 'orden', 'rate']
         widgets = {
-            'audit': forms.Select(attrs={'class': 'form-control'}),
+            'audit_plan': forms.Select(attrs={'class': 'form-control'}),
             'question': forms.Select(attrs={'class': 'form-control'}),
             'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'rate': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 10}),  # Ajusta el rango si es necesario
+            'rate': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 10}),
         }
 
 class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
@@ -142,4 +138,27 @@ class LeadAuditorEvaluationQuestionForm(forms.ModelForm):
         widgets = {
             'question_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'type': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+class CorrectiveActionForm(forms.ModelForm):
+    class Meta:
+        model = CorrectiveAction
+        fields = ['corrective_action', 'due_date', 'responsible_user', 'audit_report']
+        widgets = {
+            'corrective_action': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'responsible_user': forms.Select(attrs={'class': 'form-control'}),
+            'audit_report': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class CorrectiveActionFollowUpForm(forms.ModelForm):
+    class Meta:
+        model = CorrectiveActionFollowUp
+        fields = ['corrective_action', 'followup_date', 'status', 'comments']
+        widgets = {
+            'corrective_action': forms.Select(attrs={'class': 'form-control'}),
+            'followup_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'comments': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }

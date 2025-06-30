@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from company.models import Position
 from .models import (
     RiskIdentification, RiskEvaluation, RiskTreatment,
     ContingencyPlan, Reevaluation
@@ -8,13 +9,15 @@ from .models import (
 class RiskIdentificationForm(forms.ModelForm):
     class Meta:
         model = RiskIdentification
-        fields = ['area', 'activity_name', 'identified_risk', 'consequences']
+        fields = ['area', 'process', 'identified_risk', 'consequences', 'source']
         widgets = {
             'area': forms.Select(attrs={'class': 'form-control'}),
-            'activity_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'process': forms.Select(attrs={'class': 'form-control'}), 
             'identified_risk': forms.TextInput(attrs={'class': 'form-control'}),
             'consequences': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'source': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 
 class RiskEvaluationForm(forms.ModelForm):
     class Meta:
@@ -40,9 +43,9 @@ class RiskEvaluationForm(forms.ModelForm):
 
 class RiskTreatmentForm(forms.ModelForm):
     responsible = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Responsible"
+        label="Responsible Position"
     )
 
     class Meta:
@@ -64,23 +67,47 @@ class ContingencyPlanForm(forms.ModelForm):
     )
 
     responsible = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Responsible"
+        label="Responsible Position(s)",
+        required=False
     )
 
     communicate_to = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=Position.objects.all(),
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
-        label="Communicate To"
+        label="Communicate To Position(s)",
+        required=False
     )
 
     class Meta:
         model = ContingencyPlan
-        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']
+        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']  
         widgets = {
             'risk': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['responsible'].initial = self.instance.responsible.all()
+            self.fields['communicate_to'].initial = self.instance.communicate_to.all()
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+
+        if commit:
+            instance.responsible.clear()
+            instance.communicate_to.clear()
+
+            for position in self.cleaned_data.get('responsible', []):
+                ContingencyPlanResponsible.objects.create(contingencyplan=instance, position=position)
+
+            for position in self.cleaned_data.get('communicate_to', []):
+                ContingencyPlanCommunicateTo.objects.create(contingencyplan=instance, position=position)
+
+        return instance
+
 
 class ReevaluationForm(forms.ModelForm):
     class Meta:

@@ -1,9 +1,11 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Pregunta de Evaluación Auditada</h2>
-  <form method="post" action="{% url 'audits:add_audited_evaluation_question' %}">
+
+  <form method="post" action="{% url 'audits:add_audited_evaluation_question' %}" id="auditedEvaluationForm">
     {% csrf_token %}
 
+    <!-- Campo para seleccionar el requisito -->
     <div class="mb-3">
       {{ form.requirement.label_tag }}
       {{ form.requirement }}
@@ -12,6 +14,24 @@
       {% endif %}
     </div>
 
+    <!-- Campo para introducir el nombre del proceso -->
+    <div class="mb-3">
+      {{ form.process_name.label_tag }}
+      {{ form.process_name }}
+      {% if form.process_name.errors %}
+        <div class="text-danger small">{{ form.process_name.errors }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Botón para obtener sugerencias IA -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestAuditQuestions" class="btn btn-info">Sugerir preguntas IA</button>
+    </div>
+
+    <!-- Contenedor donde se mostrarán las sugerencias de IA -->
+    <div id="iaAuditQuestionSuggestions" class="mt-4"></div>
+
+    <!-- Campo de texto de la pregunta -->
     <div class="mb-3">
       {{ form.question_text.label_tag }}
       {{ form.question_text }}
@@ -20,7 +40,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón para guardar -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>
-

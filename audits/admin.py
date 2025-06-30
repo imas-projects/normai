@@ -5,7 +5,6 @@ from . import models
 admin.site.register(models.AuditProgramHeader)
 admin.site.register(models.ProcessRequirement)
 admin.site.register(models.AnnualProgram)
-admin.site.register(models.AnnualProgramUser)
 admin.site.register(models.AnnualPlan)
 admin.site.register(models.AnnualPlanAuditor)
 admin.site.register(models.AnnualPlanAudited)

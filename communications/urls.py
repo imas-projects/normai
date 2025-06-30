@@ -24,4 +24,7 @@ urlpatterns = [
 
     path('summarize-table/', views.table_summarize_ia, name='table-summarize-ia'),
     path('save-summarize-table/', views.save_table_summarize_ia, name='save_table_summarize_ia'),
+
+    path('flow-map/', views.table_flow_map_ia, name='table_flow_map_ia'),
+
 ]

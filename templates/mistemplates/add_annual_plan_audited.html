@@ -1,9 +1,10 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Auditado al Plan Anual</h2>
-  <form method="post" action="{% url 'audits:add_annual_plan_audited' %}">
+  <form method="post" action="{% url 'audits:add_annual_plan_audited' %}" id="addAnnualPlanAuditedForm">
     {% csrf_token %}
 
+    <!-- Plan Anual -->
     <div class="mb-3">
       {{ form.annual_plan.label_tag }}
       {{ form.annual_plan }}
@@ -12,6 +13,7 @@
       {% endif %}
     </div>
 
+    <!-- Selector de usuario (auditado) -->
     <div class="mb-3">
       {{ form.user.label_tag }}
       {{ form.user }}
@@ -20,6 +22,7 @@
       {% endif %}
     </div>
 
+    <!-- Botón final -->
     <button type="submit" class="btn btn-success">Guardar</button>
   </form>
 </div>

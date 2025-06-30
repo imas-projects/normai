@@ -1,7 +1,7 @@
 {% load static %}
 <div class="container mt-4">
   <h2>Agregar Programa Anual</h2>
-  <form method="post" action="{% url 'audits:add_annual_program' %}">
+  <form method="post" action="{% url 'audits:add_annual_program' %}" id="annualProgramForm">
     {% csrf_token %}
     
     <div class="mb-3">
@@ -11,7 +11,15 @@
         <div class="text-danger small">{{ form.program_header.errors }}</div>
       {% endif %}
     </div>
-    
+
+    <!-- Botón de sugerencias IA con clase y estilo más parecido -->
+    <div class="mb-3">
+      <button type="button" id="btnSuggestIA" class="btn btn-info">Sugerir procesos IA</button>
+    </div>
+
+    <!-- Contenedor de sugerencias, visible siempre -->
+    <div id="iaSuggestions" class="mt-4"></div>
+
     <div class="mb-3">
       {{ form.process.label_tag }}
       {{ form.process }}
@@ -30,6 +38,6 @@
     </div>
     
     <button type="submit" class="btn btn-success">Guardar</button>
+    
   </form>
 </div>
-

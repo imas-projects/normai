@@ -10,6 +10,7 @@ urlpatterns = [
   path('', create_risk, name='risks'),
   path('download-risks-pdf/<str:area_name>/', generate_risks_pdf, name='download_risks_pdf'),
   path('add-risk-identification/', add_risk_identification, name='add_risk_identification'),
+  path('save-selected-risk/', views.save_selected_risk_identification, name='save_selected_risk_identification'),
   path('get_suggestions/', views.get_suggestions, name='get_suggestions'),
   path('add-risk-evaluation/', add_risk_evaluation, name='add_risk_evaluation'),
   path('get-controls-suggestions/', get_controls_suggestions, name='get_controls_suggestions'),

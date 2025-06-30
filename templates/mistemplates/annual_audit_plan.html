@@ -37,7 +37,6 @@
                                         <th>Process</th>
                                         <th>Year</th>
                                         <th>Month</th>
-                                        <th>Leader</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -46,7 +45,6 @@
                                         <td>{{ plan.process }}</td>
                                         <td>{{ plan.year }}</td>
                                         <td>{{ plan.month }}</td>
-                                        <td>{{ plan.lider }}</td>
                                     </tr>
                                     {% empty %}
                                     <tr>
@@ -168,30 +166,136 @@
 
 {% block extra_js %}
 <script>
-document.getElementById("openAddAnnualPlanModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualPlanModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+document.addEventListener("DOMContentLoaded", function () {
+  const openAnnualPlanBtn = document.getElementById("openAddAnnualPlanModal");
+  if (openAnnualPlanBtn) {
+    openAnnualPlanBtn.addEventListener("click", function () {
+      fetch("{% url 'audits:add_annual_plan' %}")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("annualPlanModalFormContent").innerHTML = html;
+          new bootstrap.Modal(document.getElementById("addAnnualPlanModal")).show();
+        });
     });
+  }
+
+  const openAuditorBtn = document.getElementById("openAddAnnualPlanAuditedModal");
+  if (openAuditorBtn) {
+    openAuditorBtn.addEventListener("click", function () {
+      fetch("{% url 'audits:add_annual_plan_audited' %}")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
+          new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+        });
+    });
+  }
 });
 
-document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan_auditor' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditorModal")).show();
-    });
-});
 
-document.getElementById("openAddAnnualPlanAuditedModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_plan_audited' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualPlanAuditedModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualPlanAuditedModal")).show();
+
+document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_plan_auditor' %}")
+    .then((response) => response.text())
+    .then((html) => {
+      document.getElementById("annualPlanAuditorModalFormContent").innerHTML = html;
+
+      const modalEl = document.getElementById("addAnnualPlanAuditorModal");
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+
+      // Esperar a que el DOM esté listo
+      requestAnimationFrame(() => {
+        const btnSuggestIA = document.getElementById("btnSuggestAuditorIA");
+        const suggestionsDiv = document.getElementById("auditorSuggestionsIA");
+
+        if (btnSuggestIA) {
+          btnSuggestIA.setAttribute("type", "button");
+
+          btnSuggestIA.addEventListener("click", function () {
+            const annualPlanSelect = document.querySelector("#id_annual_plan");
+
+            if (!annualPlanSelect || !annualPlanSelect.value) {
+              alert("Por favor seleccione un Plan Anual primero.");
+              return;
+            }
+
+            const originalText = btnSuggestIA.textContent;
+            btnSuggestIA.disabled = true;
+            btnSuggestIA.textContent = "Obteniendo sugerencias...";
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "block";
+
+            fetch(`/audits/suggest-auditor/?annual_plan_id=${annualPlanSelect.value}`)
+              .then((response) => response.json())
+              .then((data) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
+
+                if (data.error) {
+                  suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+                  return;
+                }
+
+                if (!data.suggestions || data.suggestions.length === 0) {
+                  suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                  return;
+                }
+
+                suggestionsDiv.innerHTML = `
+                  <strong>Sugerencias de la IA:</strong>
+                  <div id="suggestedAuditorsList" class="mt-2">
+                    ${data.suggestions.map((s, i) => `
+                      <div class="card mt-2 shadow-sm">
+                        <div class="card-body">
+                          <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                          <p><strong>Usuario sugerido:</strong> ${s.full_name} (${s.username})</p>
+                          <p><strong>Rol sugerido:</strong> ${s.suggested_role || "N/A"}</p>
+                          <p><strong>Justificación:</strong> ${s.justification}</p>
+                          <button type="button" class="btn btn-sm btn-outline-success applyAuditorSuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                        </div>
+                      </div>
+                    `).join("")}
+                  </div>
+                `;
+
+                document.querySelectorAll(".applyAuditorSuggestionBtn").forEach((btn) => {
+                  btn.addEventListener("click", function () {
+                    const idx = parseInt(this.dataset.idx);
+                    const s = data.suggestions[idx];
+                    if (!s) return;
+
+                    const auditorSelect = document.querySelector("#id_user");
+
+                    if (auditorSelect) {
+                      let optionToSelect = Array.from(auditorSelect.options).find(
+                        (opt) =>
+                          opt.text.includes(s.full_name) || opt.text.includes(s.username)
+                      );
+
+                      if (optionToSelect) {
+                        auditorSelect.value = optionToSelect.value;
+                      } else {
+                        console.warn("Usuario sugerido no encontrado en el select de auditor.");
+                      }
+
+                      auditorSelect.focus();
+                    }
+
+                    suggestionsDiv.innerHTML = "";
+                  });
+                });
+              })
+              .catch((err) => {
+                btnSuggestIA.disabled = false;
+                btnSuggestIA.textContent = originalText;
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+              });
+          });
+        } else {
+          console.warn("btnSuggestAuditorIA no encontrado");
+        }
+      });
     });
 });
 

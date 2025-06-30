@@ -19,7 +19,6 @@
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
                             <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramUserModal">Add Annual Program User</a></li>
                         </ul>
                     </div>
                 </div>
@@ -161,24 +160,6 @@
             </div>
         </div>
 
-        <!-- Modal for adding Annual Program User-->
-        <div class="modal fade" id="addAnnualProgramUserModal" tabindex="-1" aria-labelledby="addAnnualProgramUserModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addAnnualProgramUserModalLabel">Add Annual Program User</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="annualProgramUserModalFormContent">
-                            <!-- Aquí se cargará dinámicamente el formulario -->
-                        </div>
-                    </div>
-                    <div class="modal-footer"></div>
-                </div>
-            </div>
-        </div>
-
         {% block footer %}
         {% include "partials/footer.html" %}
         {% endblock footer %}
@@ -186,31 +167,261 @@
 
 {% block extra_js %}
 <script>
-document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_program_header' %}")
+document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_program_header' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditProgramHeaderModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditProgramHeaderModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditFieldsBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditSuggestionsContainer");
+        suggestionsDiv.style.display = "none"; // Ocultar inicialmente
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Botón de sugerencia pulsado");
+
+          const yearInput = document.querySelector("#add-audit-program-header-form input[name='year']");
+          if (!yearInput || !yearInput.value) {
+            alert("Por favor, introduce un año válido antes de solicitar sugerencias.");
+            return;
+          }
+
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_program_fields/?year=${yearInput.value}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias de la IA:</strong>
+                <div id="suggestionList" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Objetivo:</strong> ${s.objective}</p>
+                        <p><strong>Alcance:</strong> ${s.scope}</p>
+                        <p><strong>Criterios de Auditoría:</strong> ${s.audit_criteria}</p>
+                        <p><strong>Normas de Seguridad:</strong> ${s.security_standards}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn" data-idx="${i}">Usar esta sugerencia</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              document.querySelectorAll(".applySuggestionBtn").forEach(applyBtn => {
+                applyBtn.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  // Aplicar valores en los campos
+                  document.querySelector("textarea[name='objective']").value = s.objective;
+                  document.querySelector("textarea[name='scope']").value = s.scope;
+                  document.querySelector("textarea[name='audit_criteria']").value = s.audit_criteria;
+                  document.querySelector("textarea[name='security_standards']").value = s.security_standards;
+
+                  // Aquí hacemos que desaparezca el div de sugerencias
+                  suggestionsDiv.style.display = "none";
+                  suggestionsDiv.innerHTML = "";
+
+                  // Opcional: hacer foco en el primer campo, por ejemplo objective
+                  document.querySelector("textarea[name='objective']").focus();
+
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
         new bootstrap.Modal(document.getElementById("addAuditProgramHeaderModal")).show();
+      }, 100);
     });
 });
 
-document.getElementById("openAddAnnualProgramModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program' %}")
+document.getElementById("openAddAnnualProgramModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_annual_program' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("annualProgramModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramModal")).show();
+      document.getElementById("annualProgramModalFormContent").innerHTML = html;
+      const modal = new bootstrap.Modal(document.getElementById("addAnnualProgramModal"));
+      modal.show();
+
+      const btnSuggestIA = document.getElementById("btnSuggestIA");
+      const suggestionsDiv = document.getElementById("iaSuggestions");
+
+      if (!btnSuggestIA) return;
+
+      btnSuggestIA.setAttribute("type", "button");
+
+      btnSuggestIA.addEventListener("click", function () {
+        const programHeaderSelect = document.querySelector("#id_program_header");
+        if (!programHeaderSelect || !programHeaderSelect.value) {
+          alert("Por favor seleccione un Program Header primero.");
+          return;
+        }
+
+        const originalText = btnSuggestIA.textContent;
+        btnSuggestIA.disabled = true;
+        btnSuggestIA.textContent = "Obteniendo sugerencias...";
+        suggestionsDiv.innerHTML = "";
+        suggestionsDiv.style.display = "block";
+
+        fetch(`/audits/suggest-annual-program-processes/?program_header_id=${programHeaderSelect.value}`)
+          .then(res => res.json())
+          .then(data => {
+            btnSuggestIA.disabled = false;
+            btnSuggestIA.textContent = originalText;
+
+            if (data.error) {
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error: ${data.error}</div>`;
+              return;
+            }
+
+            const suggestions = data.suggestions || [];
+            if (suggestions.length === 0) {
+              suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+              return;
+            }
+
+            // Mapas con keys en minúsculas para evitar problemas con mayúsculas/minúsculas
+            const MONTH_NAME_TO_NUM = {
+              january: 1, february: 2, march: 3, april: 4,
+              may: 5, june: 6, july: 7, august: 8,
+              september: 9, october: 10, november: 11, december: 12
+            };
+
+            const MONTH_NAME_TO_ES = {
+              january: "Enero", february: "Febrero", march: "Marzo", april: "Abril",
+              may: "Mayo", june: "Junio", july: "Julio", august: "Agosto",
+              september: "Septiembre", october: "Octubre", november: "Noviembre", december: "Diciembre"
+            };
+
+            suggestionsDiv.innerHTML = `
+              <strong>Sugerencias de la IA:</strong>
+              <div id="suggestionList" class="mt-2">
+                ${suggestions.map((s, i) => {
+                  // Validar que sea string y no null/undefined
+                  const rawMonth = s.suggested_month || "";
+                  const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
+                  const monthEs = MONTH_NAME_TO_ES[monthKey] || "Sin mes asignado";
+                  return `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <h6 class="card-title">Sugerencia ${i + 1}</h6>
+                        <p><strong>Proceso:</strong> <em>${s.process_name}</em> (Código: ${s.process_code})</p>
+                        <p><strong>Mes sugerido:</strong> <em>${monthEs}</em></p>
+                        <p><strong>Justificación:</strong> ${s.justification}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success applySuggestionBtn"
+                          data-idx="${i}">Seleccionar</button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `;
+
+            document.querySelectorAll(".applySuggestionBtn").forEach(btn => {
+              btn.addEventListener("click", function () {
+                const idx = parseInt(this.dataset.idx);
+                const s = suggestions[idx];
+                if (!s) return;
+
+                const processSelect = document.querySelector("#id_process");
+
+                let matchingOption = Array.from(processSelect.options).find(opt =>
+                  opt.text.includes(s.process_name) || opt.text.includes(s.process_code)
+                );
+
+                if (!matchingOption) {
+                  alert("No se encontró el proceso en la lista del formulario.");
+                  return;
+                }
+
+                const process_id = matchingOption.value;
+                const program_header_id = programHeaderSelect.value;
+
+                // Convertir nombre del mes en número para el modelo
+                const rawMonth = s.suggested_month || "";
+                const monthKey = (typeof rawMonth === "string" ? rawMonth.trim().toLowerCase() : "");
+                const month = MONTH_NAME_TO_NUM[monthKey] || "";
+
+                const thisBtn = this;
+                thisBtn.disabled = true;
+                thisBtn.textContent = "Guardando...";
+
+                fetch("{% url 'audits:save_annual_program_suggestion' %}", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                  },
+                  body: new URLSearchParams({
+                    program_header_id,
+                    process_id,
+                    month
+                  })
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert("Sugerencia guardada correctamente.");
+                      thisBtn.closest(".card").remove();
+                    } else {
+                      alert("Error al guardar: " + (data.error || "desconocido"));
+                      thisBtn.disabled = false;
+                      thisBtn.textContent = "Seleccionar";
+                    }
+                  })
+                  .catch(err => {
+                    alert("Error inesperado: " + err);
+                    thisBtn.disabled = false;
+                    thisBtn.textContent = "Seleccionar";
+                  });
+              });
+            });
+          })
+          .catch(err => {
+            btnSuggestIA.disabled = false;
+            btnSuggestIA.textContent = originalText;
+            suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+          });
+      });
     });
 });
 
-document.getElementById("openAddAnnualProgramUserModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_annual_program_user' %}")
-    .then(response => response.text())
-    .then(html => {
-        document.getElementById("annualProgramUserModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addAnnualProgramUserModal")).show();
-    });
-});
+
 </script>
 {% endblock extra_js %}

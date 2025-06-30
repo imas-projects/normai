@@ -18,6 +18,8 @@
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
                         <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Add Findings</a></li>
                         <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Add Audit Report</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Add Corrective Action</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Add Corrective Action Follow-up</a></li>
                     </ul>
                 </div>
                 <!-- Título centrado -->
@@ -301,6 +303,43 @@
     </div>
 </div>
 
+<!-- Modal para Add Corrective Action -->
+<div class="modal fade" id="addCorrectiveActionModal" tabindex="-1" aria-labelledby="addCorrectiveActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Add Corrective Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Add Corrective Action Follow-up -->
+<div class="modal fade" id="addCorrectiveActionFollowupModal" tabindex="-1" aria-labelledby="addCorrectiveActionFollowupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Add Corrective Action Follow-up</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="correctiveActionFollowupModalFormContent">
+                    <!-- Aquí se cargará dinámicamente el formulario -->
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
+            
+            
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
@@ -308,32 +347,333 @@
 
 {% block extra_js %}
 <script>
-document.getElementById("openAddFindingsModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_findings' %}")
+document.getElementById("openAddFindingsModal").addEventListener("click", function (e) {
+  e.preventDefault();  // evitar navegación
+
+  fetch("{% url 'audits:add_findings' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("findingsModalFormContent").innerHTML = html;
-        new bootstrap.Modal(document.getElementById("addFindingsModal")).show();
+      const container = document.getElementById("findingsModalFormContent");
+      container.innerHTML = html;
+
+      // Mostrar modal
+      const modal = new bootstrap.Modal(document.getElementById("addFindingsModal"));
+      modal.show();
+
+      // Ahora configurar el botón Clasificar con IA dentro del modal
+      setupIaClassification();
     });
 });
 
-document.getElementById("openAddAuditReportModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audit_report' %}")
+function setupIaClassification() {
+  const form = document.getElementById("findingsForm");
+  if (!form) return;
+
+  const suggestBtn = document.getElementById("btnSuggestFindingClassification");
+  const requirementSelect = form.querySelector("select[name='requirement']");
+  const findingInput = form.querySelector("textarea[name='finding_text']");
+  const classificationSelect = form.querySelector("select[name='classification']");
+  const feedback = document.getElementById("iaFindingClassificationFeedback");
+
+  // Ocultar feedback inicialmente
+  if (feedback) feedback.style.display = "none";
+
+  if (!suggestBtn) return;
+
+  suggestBtn.addEventListener("click", () => {
+    const requirementId = requirementSelect.value;
+    const findingText = findingInput.value;
+
+    if (!requirementId || !findingText.trim()) {
+      alert("Por favor, selecciona un requisito y escribe el texto del hallazgo.");
+      return;
+    }
+
+    const originalText = suggestBtn.textContent;
+    suggestBtn.disabled = true;
+    suggestBtn.textContent = "Obteniendo...";
+
+    fetch(`/audits/classify-finding/?requirement_id=${requirementId}&finding_text=${encodeURIComponent(findingText)}`)
+      .then(res => res.json())
+      .then(data => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+
+        if (data.error) {
+          alert("Error IA: " + data.error);
+          return;
+        }
+
+        const suggested = data.classification;
+        const option = Array.from(classificationSelect.options).find(opt => opt.value === suggested);
+
+        if (option) {
+          classificationSelect.value = suggested;
+          alert("Clasificación sugerida.");
+          if (feedback) {
+            feedback.textContent = `Clasificación sugerida por IA: ${option.text}`;
+            feedback.style.display = "block";
+          }
+        } else {
+          alert("Clasificación sugerida no válida.");
+        }
+      })
+      .catch(err => {
+        suggestBtn.disabled = false;
+        suggestBtn.textContent = originalText;
+        alert("Error inesperado: " + err);
+      });
+  });
+}
+
+
+document.getElementById("openAddAuditReportModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audit_report' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditReportModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditReportModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestAuditReportBtn");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Audit Report");
+          return;
+        }
+
+        function formatSuggestionField(content) {
+          try {
+            const parsed = JSON.parse(content);
+
+            if (Array.isArray(parsed)) {
+              return `<ul>${parsed.map(item => `<li>${item}</li>`).join("")}</ul>`;
+            } else if (typeof parsed === "object") {
+              return `<ul>${Object.entries(parsed)
+                .map(([key, val]) => {
+                  if (Array.isArray(val)) {
+                    return `<li><strong>${key}:</strong><ul>${val.map(i => `<li>${i}</li>`).join("")}</ul></li>`;
+                  } else if (typeof val === "object") {
+                    return `<li><strong>${key}:</strong> <pre>${JSON.stringify(val, null, 2)}</pre></li>`;
+                  } else {
+                    return `<li><strong>${key}:</strong> ${val}</li>`;
+                  }
+                })
+                .join("")}</ul>`;
+            } else {
+              return `<p>${content}</p>`;
+            }
+          } catch (e) {
+            return `<p>${content}</p>`;
+          }
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        const suggestionsDiv = document.getElementById("auditReportSuggestionsContainer");
+        suggestionsDiv.style.display = "none";
+
+        suggestBtn.addEventListener("click", function () {
+          console.log("Solicitando sugerencias de IA para el informe de auditoría...");
+
+          const auditSelect = document.querySelector("#add-audit-report-form select[name='audit_plan']");
+          if (!auditSelect || !auditSelect.value) {
+            alert("Por favor, selecciona una auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditId = auditSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.innerHTML = "";
+          suggestionsDiv.style.display = "block";
+
+          fetch(`/audits/suggest_audit_report/?audit_plan_id=${auditId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                return;
+              }
+
+suggestionsDiv.innerHTML = `
+  <strong>Sugerencias generadas por IA:</strong>
+  <div id="suggestionListReport" class="mt-2">
+    ${suggestions.map((s, i) => `
+      <div class="card mt-2 shadow-sm">
+        <div class="card-body">
+          <p><strong>Resumen:</strong></p>
+          <div>${formatSuggestionField(s.summary)}</div>
+          <p class="mt-2"><strong>Recomendaciones:</strong></p>
+          <div>${formatSuggestionField(s.recommendations)}</div>
+          <p class="mt-2"><strong>Conclusiones:</strong></p>
+          <div>${formatSuggestionField(s.conclusions)}</div>
+          <button type="button" class="btn btn-sm btn-outline-success applyAuditReportSuggestionBtn" data-idx="${i}">
+            Usar esta sugerencia
+          </button>
+        </div>
+      </div>
+    `).join("")}
+  </div>
+`;
+
+
+document.querySelectorAll(".applyAuditReportSuggestionBtn").forEach(applyBtn => {
+  applyBtn.addEventListener("click", function () {
+    const idx = parseInt(this.dataset.idx);
+    const s = suggestions[idx];
+    if (!s) return;
+
+    document.querySelector("textarea[name='summary']").value = s.summary;
+    document.querySelector("textarea[name='recommendations']").value = s.recommendations;
+    document.querySelector("textarea[name='conclusions']").value = s.conclusions;
+
+    suggestionsDiv.style.display = "none";
+    suggestionsDiv.innerHTML = "";
+    document.querySelector("textarea[name='summary']").focus();
+  });
+});
+
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
         new bootstrap.Modal(document.getElementById("addAuditReportModal")).show();
+      }, 100);
     });
 });
 
-document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_audited_evaluation_question' %}")
+
+document.getElementById("openAddAuditedEvaluationQuestionModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_audited_evaluation_question' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditedEvaluationQuestionModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditedEvaluationQuestionModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("btnSuggestAuditQuestions");
+        const suggestionsDiv = document.getElementById("iaAuditQuestionSuggestions");
+
+        if (!suggestBtn || !suggestionsDiv) return;
+
+        suggestBtn.setAttribute("type", "button");
+        suggestionsDiv.style.display = "none";
+        suggestionsDiv.innerHTML = "";
+
+        const form = document.getElementById("auditedEvaluationForm");
+
+        suggestBtn.addEventListener("click", function () {
+          const requirementSelect = form.querySelector("select[name='requirement']");
+          const requirementId = requirementSelect?.value;
+
+          if (!requirementId) {
+            alert("Por favor, selecciona un requisito antes de solicitar sugerencias.");
+            return;
+          }
+
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+          suggestionsDiv.style.display = "block";
+          suggestionsDiv.innerHTML = "";
+
+          fetch(`/audits/suggest-audit-questions/?requirement_id=${requirementId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                return;
+              }
+
+              const questions = data.questions || [];
+              if (questions.length === 0) {
+                suggestionsDiv.innerHTML = `<div class="text-warning">No se encontraron sugerencias.</div>`;
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias IA:</strong>
+                <div id="suggestedAuditQuestionList" class="mt-2">
+                  ${questions.map((q, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body d-flex justify-content-between align-items-center">
+                        <p class="mb-0">${q}</p>
+                        <button type="button" class="btn btn-sm btn-outline-success selectAuditQuestionBtn" data-question="${encodeURIComponent(q)}">Seleccionar</button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              `;
+
+              // Agregar funcionalidad a botones de seleccionar
+              document.querySelectorAll(".selectAuditQuestionBtn").forEach(button => {
+                button.addEventListener("click", function () {
+                  const question = decodeURIComponent(this.dataset.question);
+                  const btn = this;
+                  btn.disabled = true;
+                  btn.textContent = "Guardando...";
+
+                  fetch("{% url 'audits:save_audit_question' %}", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/x-www-form-urlencoded",
+                      "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: new URLSearchParams({
+                      question_text: question,
+                      requirement_id: requirementSelect.value
+                    })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert("Pregunta guardada correctamente.");
+                      btn.closest(".card").remove();
+                    } else {
+                      alert("Error al guardar: " + (data.error || "desconocido"));
+                      btn.disabled = false;
+                      btn.textContent = "Seleccionar";
+                    }
+                  })
+                  .catch(err => {
+                    alert("Error inesperado: " + err);
+                    btn.disabled = false;
+                    btn.textContent = "Seleccionar";
+                  });
+                });
+              });
+
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+            });
+        });
+
         new bootstrap.Modal(document.getElementById("addAuditedEvaluationQuestionModal")).show();
+      }, 100);
     });
 });
+
 
 document.getElementById("openAddLeadAuditorEvaluationQuestionModal").addEventListener("click", function() {
     fetch("{% url 'audits:add_lead_auditor_evaluation_question' %}")
@@ -355,14 +695,199 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function() {
-    fetch("{% url 'audits:add_auditor_evaluation' %}")
+document.getElementById("openAddAuditorEvaluationModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_auditor_evaluation' %}")
     .then(response => response.text())
     .then(html => {
-        document.getElementById("auditorEvaluationModalFormContent").innerHTML = html;
+      const container = document.getElementById("auditorEvaluationModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("btnSuggestRateIA");
+        const feedback = document.getElementById("iaSuggestionFeedback");
+        const form = document.getElementById("auditorEvaluationForm");
+
+        if (!suggestBtn || !form) return;
+
+        suggestBtn.addEventListener("click", function () {
+          const auditSelect = form.querySelector("select[name='audit_plan']");
+          const questionSelect = form.querySelector("select[name='question']");
+          const rateInput = form.querySelector("input[name='rate']");
+
+          const auditId = auditSelect?.value;
+          const questionId = questionSelect?.value;
+
+          if (!auditId || !questionId) {
+            alert("Selecciona una auditoría y una pregunta antes de sugerir un valor.");
+            return;
+          }
+
+          // UI feedback
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo...";
+
+          fetch(`/audits/suggest-compliance-rate/?audit_id=${auditId}&question_id=${questionId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                alert("Error IA: " + data.error);
+                return;
+              }
+
+              // Rellenar el campo rate
+              const suggestedRate = parseFloat(data.rating);
+              if (!isNaN(suggestedRate)) {
+                rateInput.value = suggestedRate;
+                alert("Sugerencia IA aplicada correctamente.");
+              } else {
+                alert("La IA no devolvió un valor numérico válido.");
+              }
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              alert("Error al obtener sugerencia IA: " + err);
+            });
+        });
+
+        // Mostrar el modal
         new bootstrap.Modal(document.getElementById("addAuditorEvaluationModal")).show();
+      }, 100);
     });
 });
+
+document.getElementById("openAddCorrectiveActionModal").addEventListener("click", function () {
+  fetch("{% url 'audits:add_corrective_action' %}")
+    .then(response => response.text())
+    .then(html => {
+      const container = document.getElementById("correctiveActionModalFormContent");
+      container.innerHTML = html;
+
+      setTimeout(() => {
+        const suggestBtn = document.getElementById("suggestCorrectiveActionBtn");
+        const suggestionsDiv = document.getElementById("correctiveActionSuggestionsContainer");
+
+        if (!suggestBtn) {
+          console.warn("No se encontró el botón de sugerencias para Add Corrective Action");
+          return;
+        }
+
+        suggestBtn.setAttribute("type", "button");
+
+        suggestBtn.addEventListener("click", function () {
+          const form = container.querySelector("form");
+          const auditReportSelect = form.querySelector("select[name='audit_report']");
+
+          if (!auditReportSelect || !auditReportSelect.value) {
+            alert("Por favor, selecciona un informe de auditoría antes de solicitar sugerencias.");
+            return;
+          }
+
+          const auditReportId = auditReportSelect.value;
+          const originalText = suggestBtn.textContent;
+          suggestBtn.disabled = true;
+          suggestBtn.textContent = "Obteniendo sugerencias...";
+
+          if (suggestionsDiv) {
+            suggestionsDiv.innerHTML = "";
+            suggestionsDiv.style.display = "block";
+          }
+
+          fetch(`/audits/suggest_corrective_action/?audit_report_id=${auditReportId}`)
+            .then(res => res.json())
+            .then(data => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+
+              if (data.error) {
+                if (suggestionsDiv) {
+                  suggestionsDiv.innerHTML = `<div class="text-danger">${data.error}</div>`;
+                } else {
+                  alert("Error: " + data.error);
+                }
+                return;
+              }
+
+              const suggestions = data.suggestions || [];
+              if (suggestions.length === 0) {
+                if (suggestionsDiv) {
+                  suggestionsDiv.innerHTML = '<div class="text-warning">No se encontraron sugerencias.</div>';
+                }
+                return;
+              }
+
+              suggestionsDiv.innerHTML = `
+                <strong>Sugerencias generadas por IA:</strong>
+                <div id="suggestionListCorrective" class="mt-2">
+                  ${suggestions.map((s, i) => `
+                    <div class="card mt-2 shadow-sm">
+                      <div class="card-body">
+                        <p><strong>Acción Correctiva:</strong></p>
+                        <div>${s}</div>
+                        <button type="button" class="btn btn-sm btn-outline-success applyCorrectiveSuggestionBtn" data-idx="${i}">
+                          Usar esta sugerencia
+                        </button>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+
+              // Seleccionar el form dentro de container (para que esté en el scope correcto)
+              const form = container.querySelector("form");
+
+              // Agregar evento a cada botón para aplicar la sugerencia
+              suggestionsDiv.querySelectorAll(".applyCorrectiveSuggestionBtn").forEach(button => {
+                button.addEventListener("click", function () {
+                  const idx = parseInt(this.dataset.idx, 10);
+                  const s = suggestions[idx];
+                  if (!s) return;
+
+                  const correctiveActionInput = form.querySelector("input[name='corrective_action'], textarea[name='corrective_action']");
+                  if (correctiveActionInput) {
+                    correctiveActionInput.value = s;
+                    correctiveActionInput.focus();
+                    // Opcional: esconder las sugerencias al aplicar
+                    suggestionsDiv.style.display = "none";
+                    suggestionsDiv.innerHTML = "";
+                  }
+                });
+              });
+            })
+            .catch(err => {
+              suggestBtn.disabled = false;
+              suggestBtn.textContent = originalText;
+              if (suggestionsDiv) {
+                suggestionsDiv.innerHTML = `<div class="text-danger">Error al obtener sugerencias: ${err}</div>`;
+              } else {
+                alert("Error al obtener sugerencias: " + err);
+              }
+            });
+        });
+
+        new bootstrap.Modal(document.getElementById("addCorrectiveActionModal")).show();
+      }, 100);
+    });
+});
+
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("openAddCorrectiveActionFollowupModal").addEventListener("click", function() {
+        fetch("{% url 'audits:add_corrective_action_followup' %}")
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("correctiveActionFollowupModalFormContent").innerHTML = html;
+            new bootstrap.Modal(document.getElementById("addCorrectiveActionFollowupModal")).show();
+        });
+    });
+});
+
 </script>
 {% endblock extra_js %}
 

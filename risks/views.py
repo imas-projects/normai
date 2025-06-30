@@ -4,6 +4,7 @@ from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm
 from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from collections import defaultdict
 from django.http import FileResponse
 from reportlab.lib.pagesizes import letter
@@ -18,18 +19,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 import json
+from processes.models import Process
 
 from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions, suggest_reevaluation_rating_ranges, suggest_reevaluation_risk_level
 
 def create_risk(request):
-    all_risks = RiskIdentification.objects.select_related('area').all() 
+    all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
+    # Agrupar por Área y Proceso
     grouped_risks = {}
     for risk in all_risks:
-        area = risk.area 
-        if area not in grouped_risks:
-            grouped_risks[area] = []
-        grouped_risks[area].append(risk)
+        key = (risk.area, risk.process)
+        if key not in grouped_risks:
+            grouped_risks[key] = []
+        grouped_risks[key].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -44,6 +47,7 @@ def create_risk(request):
         'reevaluations': reevaluations,
     })
 
+
 def add_risk_identification(request):
     if request.method == 'POST':
         form = RiskIdentificationForm(request.POST)
@@ -57,20 +61,49 @@ def add_risk_identification(request):
         'form': form
     })
 
+@require_POST
+@csrf_exempt  
+def save_selected_risk_identification(request):
+    try:
+        area_id = request.POST.get("area_id")
+        process_id = request.POST.get("process_id")
+        identified_risk = request.POST.get("identified_risk")
+        consequences = request.POST.get("consequences")
+        source = request.POST.get("source")  
+
+        if not all([area_id, process_id, identified_risk, consequences, source]):
+            return JsonResponse({"error": "Faltan datos"}, status=400)
+
+        area = Area.objects.get(pk=area_id)
+        process = Process.objects.get(pk=process_id)
+
+        risk = RiskIdentification.objects.create(
+            area=area,
+            process=process,
+            identified_risk=identified_risk,
+            consequences=consequences,
+            source=source
+        )
+
+        return JsonResponse({"success": True, "id": risk.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 def get_suggestions(request):
     area_id = request.GET.get('area')
-    activity_name = request.GET.get('activity_name')
+    process_id = request.GET.get('process')
 
-    if not area_id or not activity_name:
+    if not area_id or not process_id:
         return JsonResponse({'error': 'Faltan parámetros'}, status=400)
 
     try:
         area_obj = Area.objects.get(id=area_id)
-        area_name = area_obj.name
-    except Area.DoesNotExist:
-        return JsonResponse({'error': 'Área no encontrada'}, status=404)
+        process_obj = Process.objects.get(id=process_id)
+    except (Area.DoesNotExist, Process.DoesNotExist):
+        return JsonResponse({'error': 'Área o proceso no encontrado'}, status=404)
 
-    suggestions = suggest_risk_fields(area_name, activity_name)
+    suggestions = suggest_risk_fields(area_obj.name, process_obj.name)
 
     if not suggestions or not isinstance(suggestions, list):
         return JsonResponse({'error': 'No se encontraron sugerencias'}, status=404)
@@ -205,7 +238,7 @@ def add_risk_treatment(request):
         if form.is_valid():
             form.save()
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
+                return JsonResponse({'success': True, 'message': 'Tratamiento de riesgo guardado correctamente'}, status=200)
             else:
                 return redirect('risks:add_risk_treatment') 
 
@@ -253,7 +286,7 @@ def add_contingency_plan(request):
         form = ContingencyPlanForm(request.POST)
         if form.is_valid():
             form.save()
-            return JsonResponse({'message': 'Contingency plan saved successfully'}, status=200)  
+            return JsonResponse({'success': True, 'message': 'Contingency plan saved successfully'}, status=200)  
         else:
             return JsonResponse({'error': form.errors}, status=400)
     else:
@@ -469,7 +502,7 @@ def generate_risks_pdf(request, area_name):
             try:
                 risk_name = str(risk.identified_risk).replace('<', '&lt;').replace('>', '&gt;')
                 elements.append(Paragraph(f"Risk #{idx}: {risk_name}", bold_style))
-                elements.append(Paragraph(f"Activity Name: {risk.activity_name}", normal_style))
+                elements.append(Paragraph(f"Process: {risk.process}", normal_style))  # <-- Cambio aquí
                 elements.append(Paragraph(f"Consequences: {risk.consequences}", normal_style))
                 elements.append(Spacer(1, 12))  
 
@@ -582,4 +615,4 @@ def generate_risks_pdf(request, area_name):
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename=f"risks_{area.name}.pdf") 
+    return FileResponse(buffer, as_attachment=True, filename=f"risks_{area.name}.pdf")
