@@ -78,6 +78,34 @@ def wellcome_view(request):
     for entry in auditorias_por_mes_qs:
         auditorias_labels.append(entry['month'].strftime('%b'))  # Ej: 'Ene', 'Feb'
         auditorias_values.append(entry['total'])
+        
+
+    # === Distribución de No Conformidades por Clasificación ===
+    # Filtramos findings relacionados con auditorías del año actual
+    findings_dist = (
+        Findings.objects
+        .filter(audit_plan__annual_program__program_header__year=current_year)
+        .values('classification')
+        .annotate(total=Count('id'))
+    )
+
+    # Mapear para mostrar etiquetas legibles y evitar que falte alguna categoría
+    clasificaciones_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+
+    # Inicializar con 0 para todas las categorías
+    clasificaciones_labels = []
+    clasificaciones_values = []
+
+    for key, label in clasificaciones_map.items():
+        clasificaciones_labels.append(label)
+        # Buscar el total correspondiente o 0 si no existe
+        total = next((f['total'] for f in findings_dist if f['classification'] == key), 0)
+        clasificaciones_values.append(total)
+
 
     # === Contexto final ===
     contexto = {
@@ -97,6 +125,9 @@ def wellcome_view(request):
 
         'auditorias_labels': auditorias_labels,
         'auditorias_values': auditorias_values,
+
+        'clasificaciones_labels': clasificaciones_labels,
+        'clasificaciones_values': clasificaciones_values,
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
