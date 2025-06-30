@@ -25,18 +25,15 @@ class ProcessOutput(models.Model):
 
 # Tabla de desempeño 
 class PerformanceIndicator(models.Model):
-    process = models.ForeignKey('Process', on_delete=models.CASCADE)
-    performanceindicator = models.ForeignKey('PerformanceIndicator', on_delete=models.CASCADE)
-    min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    min_max = models.CharField(max_length=10, choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')], null=True, blank=True)
+    name = models.TextField()
+    effective = models.BooleanField(default=False) #Si mide eficacia
+    efficient = models.BooleanField(default=False) #Si mide eficiencia
 
     class Meta:
-        db_table = 'tb_process_performance_indicators'
-        unique_together = ('process', 'performanceindicator')
+        db_table = 'tb_performance_indicator'
 
     def _str_(self):
-        return f"{self.process} - {self.performanceindicator}"
+        return self.name
 
 # Tabla de Proceso 
 class Process(models.Model):
@@ -194,4 +191,21 @@ class ProductMeasurementRecord(models.Model):
     def __str__(self):
         status = "OK" if self.result_ok else "Not OK"
         return f"{self.measurement_name} ({self.product_reference}) - {self.process} [{status}]"
+
+class ProcessPerformanceIndicator(models.Model):
+    process = models.ForeignKey('Process', on_delete=models.CASCADE)
+    performance_indicator = models.ForeignKey('PerformanceIndicator', on_delete=models.CASCADE)
+    min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    min_max = models.CharField(max_length=10, choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')], null=True, blank=True)
+
+    class Meta:
+        db_table = 'tb_process_performance_indicators'
+        unique_together = ('process', 'performanceindicator')
+
+    def _str_(self):
+        return f"{self.process} - {self.performanceindicator}"
+
+
+
 
