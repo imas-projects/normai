@@ -100,13 +100,13 @@ class ProcessMeasurement(models.Model):
     measurement_process_parameter = models.TextField()
     measurement_process_range = models.TextField(blank=True, null=True)
     measurement_process_equipment = models.TextField(blank=True, null=True)
-    equipment = models.CharField(max_length=50, null=True, blank=True) 
 
     class Meta:
         db_table = 'tb_process_measurement_process'
 
     def __str__(self):
         return self.measurement_process_parameter
+
 
     
 # Tabla mediciones productos
@@ -122,52 +122,6 @@ class ProductMeasurement(models.Model):
 
     def __str__(self):
         return self.measurement_product_parameter
-
-
-from django.db import models
-
-class ProcessPerformanceMeasurement(models.Model):
-    process = models.ForeignKey(
-        'Process',
-        on_delete=models.CASCADE,
-        verbose_name="Process"
-    )
-    performance_indicator = models.ForeignKey(
-        'PerformanceIndicator',
-        on_delete=models.CASCADE,
-        verbose_name="Performance Indicator"
-    )
-    date = models.DateField(verbose_name="Date")
-    measured_value = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="Measured Value")
-    target_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True, verbose_name="Target Value")
-    unit = models.TextField(null=True, blank=True, verbose_name="Unit") 
-    comment = models.TextField(null=True, blank=True, verbose_name="Comment")
-
-    class Meta:
-        db_table = 'tb_process_performance_measurements'
-
-    def __str__(self):
-        return f"{self.process} - {self.performance_indicator} ({self.date}): {self.measured_value}{self.unit or ''}"
-
-
-class ProcessMeasurementRecord(models.Model):
-    process = models.ForeignKey(
-        'Process',
-        on_delete=models.CASCADE,
-        verbose_name="Process"
-    )
-    measurement_name = models.TextField(verbose_name="Measurement Name")
-    date = models.DateField(verbose_name="Date")
-    measured_value = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="Measured Value")
-    target_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True, verbose_name="Target Value")
-    unit = models.TextField(null=True, blank=True, verbose_name="Unit")
-    comment = models.TextField(null=True, blank=True, verbose_name="Comment")
-
-    class Meta:
-        db_table = 'tb_process_measurement_records'
-
-    def __str__(self):
-        return f"{self.measurement_name} - {self.process} ({self.date}): {self.measured_value}{self.unit or ''}"
 
 
 class ProcessMeasurementRecord(models.Model):
