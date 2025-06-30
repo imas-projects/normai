@@ -26,14 +26,15 @@ class ProcessOutput(models.Model):
 # Tabla de desempeño 
 class PerformanceIndicator(models.Model):
     name = models.TextField()
-    effective = models.BooleanField(default=False) #Si mide eficacia
-    efficient = models.BooleanField(default=False) #Si mide eficiencia
+    effective = models.BooleanField(default=False)
+    efficient = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'tb_performance_indicator'
 
-    def _str_(self):
+    def __str__(self):  
         return self.name
+
 
 # Tabla de Proceso 
 class Process(models.Model):
@@ -197,15 +198,19 @@ class ProcessPerformanceIndicator(models.Model):
     performance_indicator = models.ForeignKey('PerformanceIndicator', on_delete=models.CASCADE)
     min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    min_max = models.CharField(max_length=10, choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')], null=True, blank=True)
+    min_max = models.CharField(
+        max_length=10,
+        choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')],
+        null=True,
+        blank=True
+    )
 
     class Meta:
         db_table = 'tb_process_performance_indicators'
-        unique_together = ('process', 'performanceindicator')
+        unique_together = ('process', 'performance_indicator')
+        managed = False 
 
-    def _str_(self):
-        return f"{self.process} - {self.performanceindicator}"
-
-
+    def __str__(self): 
+        return f"{self.process} - {self.performance_indicator}"
 
 
