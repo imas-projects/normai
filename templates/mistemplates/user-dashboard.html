@@ -1002,6 +1002,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var labels = JSON.parse(document.getElementById('clasificaciones-labels').textContent);
     var values = JSON.parse(document.getElementById('clasificaciones-values').textContent);
 
+    console.log('Labels:', labels);
+    console.log('Values:', values);
+
     var options = {
         chart: {
             type: 'pie',
@@ -1009,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         series: values,
         labels: labels,
-        colors: ['#556ee6', '#34c38f', '#f46a6a'],  // Ajusta colores a gusto
+        colors: ['#556ee6', '#34c38f', '#f46a6a'],
         legend: {
             position: 'bottom',
         },
@@ -1029,6 +1032,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var chart = new ApexCharts(document.querySelector("#nc_distribution_chart"), options);
     chart.render();
 });
+
 </script>
 
 
