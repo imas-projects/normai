@@ -84,7 +84,7 @@ def wellcome_view(request):
     # Filtramos findings relacionados con auditorías del año actual
     findings_dist = (
         Findings.objects
-        .filter(audit_plan__annual_program__program_header__year=current_year)
+        #.filter(audit_plan__annual_program__program_header__year=current_year)
         .values('classification')
         .annotate(total=Count('id'))
     )
