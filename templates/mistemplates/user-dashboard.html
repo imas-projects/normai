@@ -940,10 +940,23 @@
 <!-- Dashboard init -->
 <script src="{% static 'js/pages/dashboard-blog.init.js'%}"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     var auditoriasLabels = JSON.parse(document.getElementById('auditorias-labels').textContent);
     var auditoriasValues = JSON.parse(document.getElementById('auditorias-values').textContent);
+
+    console.log('Labels:', auditoriasLabels);
+    console.log('Values:', auditoriasValues);
+
+    var chartContainer = document.querySelector("#audit_trend_chart");
+    console.log('Chart container:', chartContainer);
+
+    if (!chartContainer) {
+        console.error('No se encontró el contenedor para el gráfico.');
+        return;
+    }
 
     var options = {
         chart: {
@@ -967,10 +980,9 @@ document.addEventListener("DOMContentLoaded", function () {
         grid: { borderColor: '#f1f1f1' }
     };
 
-    var chart = new ApexCharts(document.querySelector("#audit_trend_chart"), options);
+    var chart = new ApexCharts(chartContainer, options);
     chart.render();
 });
-
 </script>
 
 {% endblock extra_js %}
