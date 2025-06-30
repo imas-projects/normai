@@ -391,6 +391,15 @@
                                                 </div>
                                             </div><!-- end card body -->
                                         </div><!-- end card -->
+<div class="card mt-4">
+    <div class="card-header border-0 align-items-center d-flex">
+        <h4 class="card-title mb-0 flex-grow-1">Tendencia de Auditorías Realizadas por Mes</h4>
+    </div>
+    <div class="card-body">
+        <div id="audit_trend_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+    </div>
+</div>
+
                                     </div><!-- end col -->
                                 </div> <!-- end row-->
                             </div> <!-- end col-->
@@ -926,6 +935,38 @@
 
 <!-- Dashboard init -->
 <script src="{% static 'js/pages/dashboard-blog.init.js'%}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var options = {
+            chart: {
+                type: 'bar',
+                height: 300,
+                toolbar: { show: false }
+            },
+            series: [{
+                name: 'Auditorías',
+                data: {{ auditorias_values|safe }}
+            }],
+            xaxis: {
+                categories: {{ auditorias_labels|safe }},
+                title: { text: 'Mes' }
+            },
+            yaxis: {
+                title: { text: 'Número de Auditorías' }
+            },
+            colors: ['#556ee6'],  // Puedes personalizar el color
+            dataLabels: { enabled: false },
+            grid: {
+                borderColor: '#f1f1f1'
+            }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#audit_trend_chart"), options);
+        chart.render();
+    });
+</script>
+
 {% endblock extra_js %}
 
 
