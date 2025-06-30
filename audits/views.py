@@ -40,71 +40,7 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 # === BASIC VIEWS ===
 
 def audits_home(request):
-    current_year = now().year
-
-    # === Indicador 1: Auditorías realizadas / planificadas ===
-    audit_plans = AnnualPlan.objects.filter(
-        annual_program__program_header__year=current_year
-    )
-    total_planificadas = audit_plans.count()
-    realizadas = AuditReport.objects.filter(audit_plan__in=audit_plans).count()
-    pendientes = total_planificadas - realizadas
-    porcentaje_cumplimiento = (
-        (realizadas / total_planificadas) * 100 if total_planificadas > 0 else 0
-    )
-
-    # === Indicador 2: Acciones correctivas abiertas / cerradas ===
-    latest_followup_subquery = CorrectiveActionFollowUp.objects.filter(
-        corrective_action=OuterRef('pk')
-    ).order_by('-followup_date')
-
-    corrective_actions = CorrectiveAction.objects.annotate(
-        last_status=Subquery(latest_followup_subquery.values('status')[:1])
-    )
-
-    acciones_abiertas = corrective_actions.filter(
-        last_status__in=['PENDING', 'IN_PROGRESS']
-    ).count()
-    total_acciones = corrective_actions.exclude(last_status__isnull=True).count()
-    cerradas = total_acciones - acciones_abiertas
-    porcentaje_acciones_abiertas = (
-        (acciones_abiertas / total_acciones) * 100 if total_acciones > 0 else 0
-    )
-
-    # === Indicador 3: Tasa de No Conformidades ===
-    nc_classifications = ['NC_MAYOR', 'NC_MENOR']
-
-    audit_ids_with_nc = Findings.objects.filter(
-        classification__in=nc_classifications
-    ).values('audit_plan').distinct()
-
-    total_auditorias_con_nc = AnnualPlan.objects.filter(
-        id__in=audit_ids_with_nc
-    ).count()
-    auditorias_sin_nc = realizadas - total_auditorias_con_nc
-
-    tasa_nc = (
-        (total_auditorias_con_nc / realizadas) * 100 if realizadas > 0 else 0
-    )
-
-    # === Contexto final ===
-    contexto = {
-        'realizadas': realizadas,
-        'pendientes': pendientes,
-        'planificadas': total_planificadas,
-        'porcentaje': round(porcentaje_cumplimiento, 2),
-
-        'acciones_abiertas': acciones_abiertas,
-        'cerradas': cerradas,
-        'acciones_totales': total_acciones,
-        'acciones_porcentaje': round(porcentaje_acciones_abiertas, 2),
-
-        'auditorias_con_nc': total_auditorias_con_nc,
-        'sin_nc': auditorias_sin_nc,
-        'tasa_nc': round(tasa_nc, 2),
-    }
-
-    return render(request, 'mistemplates/audits.html', contexto)
+    return render(request, 'mistemplates/audits.html')
 
 
 # === ANNUAL AUDIT PROGRAM ===
