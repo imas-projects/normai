@@ -100,13 +100,13 @@ class ProcessMeasurement(models.Model):
     measurement_process_parameter = models.TextField()
     measurement_process_range = models.TextField(blank=True, null=True)
     measurement_process_equipment = models.TextField(blank=True, null=True)
-    equipment = models.CharField(max_length=50, null=True, blank=True) 
 
     class Meta:
         db_table = 'tb_process_measurement_process'
 
     def __str__(self):
         return self.measurement_process_parameter
+
 
     
 # Tabla mediciones productos
@@ -124,37 +124,11 @@ class ProductMeasurement(models.Model):
         return self.measurement_product_parameter
 
 
-from django.db import models
-
-class ProcessPerformanceMeasurement(models.Model):
-    process = models.ForeignKey(
-        'Process',
-        on_delete=models.CASCADE,
-        verbose_name="Process"
-    )
-    performance_indicator = models.ForeignKey(
-        'PerformanceIndicator',
-        on_delete=models.CASCADE,
-        verbose_name="Performance Indicator"
-    )
-    date = models.DateField(verbose_name="Date")
-    measured_value = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="Measured Value")
-    target_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True, verbose_name="Target Value")
-    unit = models.TextField(null=True, blank=True, verbose_name="Unit") 
-    comment = models.TextField(null=True, blank=True, verbose_name="Comment")
-
-    class Meta:
-        db_table = 'tb_process_performance_measurements'
-
-    def __str__(self):
-        return f"{self.process} - {self.performance_indicator} ({self.date}): {self.measured_value}{self.unit or ''}"
-
-
 class ProcessMeasurementRecord(models.Model):
-    process = models.ForeignKey(
-        'Process',
+    process_measurement = models.ForeignKey(
+        ProcessMeasurement,
         on_delete=models.CASCADE,
-        verbose_name="Process"
+        verbose_name="Process Measurement"
     )
     measurement_name = models.TextField(verbose_name="Measurement Name")
     date = models.DateField(verbose_name="Date")
@@ -167,17 +141,16 @@ class ProcessMeasurementRecord(models.Model):
         db_table = 'tb_process_measurement_records'
 
     def __str__(self):
-        return f"{self.measurement_name} - {self.process} ({self.date}): {self.measured_value}{self.unit or ''}"
-
+        return f"{self.measurement_name} - {self.process_measurement} ({self.date}): {self.measured_value}{self.unit or ''}"
 
 class ProductMeasurementRecord(models.Model):
-    process = models.ForeignKey(
-        'Process',
+    product_measurement = models.ForeignKey(
+        ProductMeasurement,
         on_delete=models.CASCADE,
-        verbose_name="Process"
+        verbose_name="Product Measurement"
     )
-    measurement_name = models.TextField(verbose_name="Measurement Name")  
-    product_reference = models.TextField(verbose_name="Product Reference")  
+    measurement_name = models.TextField(verbose_name="Measurement Name")
+    product_reference = models.TextField(verbose_name="Product Reference")
     date = models.DateField(verbose_name="Date")
     measured_value = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="Measured Value")
     tolerance_min = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True, verbose_name="Tolerance Min")
@@ -191,26 +164,4 @@ class ProductMeasurementRecord(models.Model):
 
     def __str__(self):
         status = "OK" if self.result_ok else "Not OK"
-        return f"{self.measurement_name} ({self.product_reference}) - {self.process} [{status}]"
-
-class ProcessPerformanceIndicator(models.Model):
-    process = models.ForeignKey('Process', on_delete=models.CASCADE)
-    performance_indicator = models.ForeignKey('PerformanceIndicator', on_delete=models.CASCADE)
-    min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
-    min_max = models.CharField(
-        max_length=10,
-        choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')],
-        null=True,
-        blank=True
-    )
-
-    class Meta:
-        db_table = 'tb_process_performance_indicators'
-        unique_together = ('process', 'performance_indicator')
-        managed = False 
-
-    def __str__(self): 
-        return f"{self.process} - {self.performance_indicator}"
-
-
+        return f"{self.measurement_name} ({self.product_reference}) - {self.product_measurement} [{status}]"

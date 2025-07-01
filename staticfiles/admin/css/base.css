@@ -5,7 +5,7 @@
 /* VARIABLE DEFINITIONS */
 html[data-theme="light"],
 :root {
-    --primary: #4f5fb0;
+    --primary: #79aec8;
     --secondary: #417690;
     --accent: #f5dd5d;
     --primary-fg: #fff;
@@ -1121,6 +1121,7 @@ a.deletelink:focus, a.deletelink:hover {
     margin: 0;
     border-top: 1px solid var(--hairline-color);
     width: 100%;
+    box-sizing: border-box;
 }
 
 .paginator a:link, .paginator a:visited {
