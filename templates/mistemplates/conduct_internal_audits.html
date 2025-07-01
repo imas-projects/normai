@@ -44,9 +44,9 @@
   <div class="col-lg-12">
     {% for audit in audit_data %}
     <div class="card mb-4 shadow-sm">
-<div class="card-header bg-dark text-center" style="color: white;">
-  <h3 class="mb-0">Auditoría: {{ audit.process }}</h3>
-</div>
+      <div class="card-header bg-dark text-center" style="color: white !important;">
+        <h3 class="mb-0">Auditoría: {{ audit.process }}</h3>
+      </div>
 
       <div class="card-body fs-5">
         <div class="row">
@@ -58,7 +58,7 @@
             <ul class="list-group mb-3">
               {% for item in audit.checklist %}
               <li class="list-group-item">
-                <strong>Q{{ item.orden }}:</strong> {{ item.question }}<br>
+                <strong>{{ item.orden_label }}:</strong> {{ item.question }}<br>
                 <strong>Cumplimiento:</strong> {{ item.compliance|yesno:"Sí,No" }}<br>
                 {% if item.evidence %}
                 <strong>Evidencia:</strong> {{ item.evidence }}
@@ -76,7 +76,10 @@
             <ul class="list-group mb-3">
               {% for f in audit.findings %}
               <li class="list-group-item">
-                <strong>Clasificación:</strong> {{ f.classification }}<br>
+                <strong>Clasificación:</strong> {{ f.classification_text }}<br>
+                {% if f.requirement %}
+                <strong>Requisito:</strong> {{ f.requirement }}<br>
+                {% endif %}
                 {{ f.text }}
               </li>
               {% endfor %}
@@ -92,7 +95,7 @@
               {% for ca in audit.corrective_actions %}
               <li class="list-group-item">
                 <strong>Acción:</strong> {{ ca.corrective_action }}<br>
-                <strong>Responsable:</strong> {{ ca.responsible_user.username }}<br>
+                <strong>Responsable:</strong> {{ ca.responsible_user.full_name }}<br>
                 <strong>Fecha Límite:</strong> {{ ca.due_date }}
 
                 {% if ca.followups %}
@@ -127,8 +130,8 @@
             <ul class="list-group mb-3">
               {% for eval in audit.auditor_evaluation %}
               <li class="list-group-item">
-                <strong>P{{ eval.orden }}:</strong> {{ eval.question.question_text }}<br>
-                <em><strong>Requerimiento:</strong> {{ eval.question.requirement }}</em><br>
+                <strong>{{ eval.orden_label|default:"P" }}:</strong> {{ eval.question.question_text }}<br>
+                <strong>Requerimiento:</strong> {{ eval.question.requirement }}<br>
                 <strong>Valoración:</strong> {{ eval.rate }}
               </li>
               {% endfor %}
@@ -155,6 +158,7 @@
     {% endfor %}
   </div>
 </div>
+
 
 
 
