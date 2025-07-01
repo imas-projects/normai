@@ -176,12 +176,15 @@ def wellcome_view(request):
         total_findings=Count('processrequirement__findings')
     ).order_by('-total_findings')
 
-    current_date = timezone.now().date()
+        current_date = timezone.now().date()
     end_date = current_date + timedelta(days=30)
+
     risk_treatments = RiskTreatment.objects.filter(target_date__range=(current_date, end_date))
     processes = Process.objects.filter(review_date__range=(current_date, end_date))
     communications = CommunicationTable.objects.filter(review_date__range=(current_date, end_date))
     corrective_actions = CorrectiveAction.objects.filter(due_date__range=(current_date, end_date))
+    annual_plans = AnnualPlan.objects.filter(audit_opening_date__range=(current_date, end_date))
+
     activities = []
 
     for rt in risk_treatments:
@@ -216,7 +219,16 @@ def wellcome_view(request):
             "responsible": ca.responsible_user.username,
         })
 
+    for ap in annual_plans:
+        activities.append({
+            "date": ap.audit_opening_date,
+            "name": f"Annual Audit Plan: {ap.annual_program}",
+            "type": "Audit Plan",
+            "responsible": "",
+        })
+
     activities.sort(key=lambda x: x['date'])
+
 
 
 
