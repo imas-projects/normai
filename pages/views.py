@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
+from collections import OrderedDict
+from django.db.models.functions import TruncMonth
 from django.shortcuts import render
 from decimal import Decimal
 from datetime import date, timedelta
@@ -99,9 +101,9 @@ def wellcome_view(request):
 
     # === Indicador 5: Índice de Mejora Continua ===
     ultimo_mes = hoy - timedelta(days=30)
-    ultimo_dosmeses = hoy - timedelta(days=60)
+    ultimo_dosmese = hoy - timedelta(days=60)
     actuales = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes).values('performance_indicator').annotate(avg_actual=Avg('measured_value'))
-    anteriores = ProcessPerformanceMeasurements.objects.filter(date__range=(ultimo_dosmeses, ultimo_mes)).values('performance_indicator').annotate(avg_anterior=Avg('measured_value'))
+    anteriores = ProcessPerformanceMeasurements.objects.filter(date__range=(ultimo_dosmese, ultimo_mes)).values('performance_indicator').annotate(avg_anterior=Avg('measured_value'))
 
     anteriores_dict = {a['performance_indicator']: a['avg_anterior'] for a in anteriores}
 
@@ -247,8 +249,83 @@ def wellcome_view(request):
     activities.sort(key=lambda x: x['date'])
 
 
+    # === Gráfico: Número de Alertas Por Proceso ===
+    process_todos = ProcessPerformanceIndicators.objects.all()
+
+    alertas_por_proceso = defaultdict(int)
+    mediciones = ProcessPerformanceMeasurements.objects.all()
+    indicadores = ProcessPerformanceIndicators.objects.all()
+
+    indicadores_dict = {
+        (i.process_id, i.performanceindicator_id): i
+        for i in indicadores
+    }
+
+    for ppm in mediciones:
+        key = (ppm.process_id, ppm.performance_indicator_id)
+        if key in indicadores_dict:
+            indicador = indicadores_dict[key]
+            min_val = indicador.min_acceptable_value
+            max_val = indicador.max_acceptable_value
+
+            if (
+                (min_val is not None and ppm.measured_value < min_val) or
+                (max_val is not None and ppm.measured_value > max_val)
+            ):
+                alertas_por_proceso[ppm.process] += 1 
+    
+    process_labels = [proceso.name for proceso in alertas_por_proceso.keys()]
+    process_values = [total for total in alertas_por_proceso.values()]
 
 
+    # === Gráfico: Tendencia Índice de Mejora Continua === #
+
+    mediciones = (
+        ProcessPerformanceMeasurements.objects
+        .annotate(month=TruncMonth('date'))
+        .values('month', 'performance_indicator')
+        .annotate(avg_valor=Avg('measured_value'))
+        .order_by('month')
+    )
+
+    # 2. Organizar por mes → {mes: {indicador: promedio}}
+    datos_por_mes = OrderedDict()
+    for fila in mediciones:
+        mes = fila['month'].strftime("%Y-%m")  # ej: '2025-06'
+        kpi = fila['performance_indicator']
+        avg = fila['avg_valor']
+
+        if mes not in datos_por_mes:
+            datos_por_mes[mes] = {}
+        datos_por_mes[mes][kpi] = avg
+
+    # 3. Calcular % de variación mes a mes
+    kpis_labels = []
+    kpis_values = []
+
+    meses_ordenados = list(datos_por_mes.keys())
+
+    for i in range(1, len(meses_ordenados)):
+        mes_anterior = datos_por_mes[meses_ordenados[i - 1]]
+        mes_actual = datos_por_mes[meses_ordenados[i]]
+
+        total_variacion = 0
+        indicadores_contados = 0
+
+        for kpi_id, valor_actual in mes_actual.items():
+            valor_anterior = mes_anterior.get(kpi_id)
+            if valor_anterior and valor_anterior != 0:
+                variacion = ((valor_actual - valor_anterior) / valor_anterior) * 100
+                total_variacion += variacion
+                indicadores_contados += 1
+
+        if indicadores_contados > 0:
+            promedio_mes = total_variacion / indicadores_contados
+        else:
+            promedio_mes = 0
+
+        kpis_labels.append(meses_ordenados[i])
+        kpis_values.append(round(promedio_mes, 2))
 
     # === Contexto final ===
     contexto = {
@@ -280,11 +357,19 @@ def wellcome_view(request):
         'clasificaciones_labels': clasificaciones_labels,
         'clasificaciones_values': clasificaciones_values,
 
+        'process_labels ':process_labels ,
+        'process_values':process_values,
+
+        'kpis_labels': kpis_labels,
+        'kpis_values': kpis_values,
+
         'areas': areas,
 
         'processes_with_findings': processes_with_findings,
 
         "activities": activities,
+
+        "alertas_por_proceso": dict(alertas_por_proceso)
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)

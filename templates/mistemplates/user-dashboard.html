@@ -114,7 +114,7 @@
                 </div>
             </div>
         </div>
-    </div><!-- end col --> 
+    </div><!-- end col -->
                                 </div><!-- end row -->
                             </div><!-- end card body -->
                         </div><!-- end card -->
@@ -212,53 +212,50 @@
                                     </div> <!-- end col-->
                                 </div> <!-- end row-->
     
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="card card-animate">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between">
-                                                    <div>
-                                                        <p class="fw-medium text-muted mb-0">Users</p>
-                                                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="28.05">0</span>k</h2>
-                                                        <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0">
-                                                            <i class="ri-arrow-up-line align-middle"></i> 16.24 %
-                                                        </span> vs. previous month</p>
-                                                    </div>
-                                                    <div>
-                                                        <div class="avatar-sm flex-shrink-0">
-                                                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
-                                                                <i data-feather="users" class="text-info"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div><!-- end card body -->
-                                        </div> <!-- end card-->
-                                    </div> <!-- end col-->
-    
-                                    <div class="col-md-6">
-                                        <div class="card card-animate">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between">
-                                                    <div>
-                                                        <p class="fw-medium text-muted mb-0">Users</p>
-                                                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="28.05">0</span>k</h2>
-                                                        <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0">
-                                                            <i class="ri-arrow-up-line align-middle"></i> 16.24 %
-                                                        </span> vs. previous month</p>
-                                                    </div>
-                                                    <div>
-                                                        <div class="avatar-sm flex-shrink-0">
-                                                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
-                                                                <i data-feather="users" class="text-info"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div><!-- end card body -->
-                                        </div> <!-- end card-->
-                                    </div> <!-- end col-->
-                                </div> <!-- end row-->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="fw-medium text-muted mb-0">Número Total de Procesos</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold">{{total_procesos}}</h2>
+                    </div>
+                    <div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
+                                <i data-feather="users" class="text-info"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end card body -->
+        </div> <!-- end card-->
+    </div> <!-- end col-->
+
+    <div class="col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="fw-medium text-muted mb-0">Users</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="28.05">0</span>k</h2>
+                        <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0">
+                            <i class="ri-arrow-up-line align-middle"></i> 16.24 %
+                        </span> vs. previous month</p>
+                    </div>
+                    <div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
+                                <i data-feather="users" class="text-info"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end card body -->
+        </div> <!-- end card-->
+    </div> <!-- end col-->
+</div> <!-- end row-->
     
 
 <div class="row">
@@ -355,14 +352,14 @@
                             </div><!-- end col -->
                 
 <div class="row">
-    <!-- Tendencia de Auditorías -->
+    <!-- Tendencia de Alerta Procesos -->
     <div class="col-xxl-4 col-md-6">
         <div class="card">
             <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Tendencia de Auditorías Realizadas por Mes</h4>
+                <h4 class="card-title mb-0 flex-grow-1">Indicadores en Alerta por Proceso</h4>
             </div>
             <div class="card-body pb-0">
-                <div id="audit_trend_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+                <div id="process_alert_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
             </div>
         </div>
     </div>
@@ -379,40 +376,16 @@
         </div>
     </div>
 
-    <!-- Balance Overview -->
+    <!-- Evolución Mensual del Índice de Mejora Continua -->
     <div class="col-xxl-4">
         <div class="card card-height-100">
             <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Balance Overview</h4>
+                <h4 class="card-title mb-0 flex-grow-1">Evolución Mensual del Índice de Mejora Continua</h4>
                 <div class="flex-shrink-0">
-                    <div class="dropdown card-header-dropdown">
-                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Current Year<i class="mdi mdi-chevron-down ms-1"></i></span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="#">Today</a>
-                            <a class="dropdown-item" href="#">Last Week</a>
-                            <a class="dropdown-item" href="#">Last Month</a>
-                            <a class="dropdown-item" href="#">Current Year</a>
-                        </div>
-                    </div>
                 </div>
             </div><!-- end card header -->
             <div class="card-body px-0">
-                <ul class="list-inline main-chart text-center mb-0">
-                    <li class="list-inline-item chart-border-left me-0 border-0">
-                        <h4 class="text-primary">$584k <span class="text-muted d-inline-block fs-13 align-middle ms-2">Revenue</span></h4>
-                    </li>
-                    <li class="list-inline-item chart-border-left me-0">
-                        <h4>$497k<span class="text-muted d-inline-block fs-13 align-middle ms-2">Expenses</span>
-                        </h4>
-                    </li>
-                    <li class="list-inline-item chart-border-left me-0">
-                        <h4><span data-plugin="counterup">3.6</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Profit Ratio</span></h4>
-                    </li>
-                </ul>
-
-                <div id="revenue-expenses-charts" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+                <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
             </div>
         </div><!-- end card -->
     </div><!-- end col -->
@@ -424,6 +397,12 @@
 
 {{ clasificaciones_labels|json_script:"clasificaciones-labels" }}
 {{ clasificaciones_values|json_script:"clasificaciones-values" }}
+
+{{ process_labels|json_script:"process-labels" }}
+{{ process_values|json_script:"process-values" }}
+
+{{ kpis_labels|json_script:"kpis-labels" }}
+{{ kpis_values|json_script:"kpis-values" }}
 
 
 
@@ -545,6 +524,113 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </script>
 
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var processLabels = JSON.parse(document.getElementById('process-labels').textContent);
+    var processValues = JSON.parse(document.getElementById('process-values').textContent);
+
+    var options = {
+        chart: {
+            type: 'bar',
+            height: 300,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Procesos',
+            data: processValues
+        }],
+        xaxis: {
+            categories: processLabels,
+            title: { text: 'Proceso' }
+        },
+        yaxis: {
+            title: { text: 'Número de Alertas' }
+        },
+        colors: ['#FFA500'],
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#f1f1f1' }
+    };
+
+    const containers = ['#process_alert_chart', '#process_alert_chart_mini'];
+
+    containers.forEach(id => {
+        const el = document.querySelector(id);
+        if (el) {
+            const chart = new ApexCharts(el, options);
+            chart.render();
+        } else {
+            console.warn(`No se encontró el contenedor: ${id}`);
+        }
+    });
+});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const monthLabels = JSON.parse(document.getElementById('kpis-labels').textContent);
+    const monthValues = JSON.parse(document.getElementById('kpis-values').textContent);
+
+    const options = {
+        chart: {
+            type: 'line',
+            height: 350,
+            zoom: { enabled: false },
+            toolbar: { show: true }
+        },
+        series: [{
+            name: "Variación %",
+            data: monthValues
+        }],
+        xaxis: {
+            categories: monthLabels,
+            title: { text: 'Mes' }
+        },
+        yaxis: {
+            title: { text: 'Variación Promedio (%)' },
+            labels: {
+                formatter: function (val) {
+                    return val.toFixed(1) + "%";
+                }
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        markers: {
+            size: 5
+        },
+        colors: ['#007bff'],
+        dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+                return val.toFixed(1) + "%";
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    return val.toFixed(2) + "%";
+                }
+            }
+        },
+        grid: {
+            borderColor: '#e0e0e0'
+        }
+    };
+
+    const container = document.querySelector("#kpi_trend_chart");
+    if (container) {
+        const chart = new ApexCharts(container, options);
+        chart.render();
+    } else {
+        console.warn("No se encontró el contenedor #kpi_trend_chart");
+    }
+});
+</script>
 
 {% endblock extra_js %}
 
