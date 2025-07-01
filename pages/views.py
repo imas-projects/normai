@@ -220,12 +220,16 @@ def wellcome_view(request):
         })
 
     for ap in annual_plans:
+        auditors_qs = ap.auditors.all() 
+        auditors_names = ", ".join([auditor.user.get_full_name() or auditor.user.username for auditor in auditors_qs])
+
         activities.append({
-            "date": ap.audit_opening_date, 
+            "date": ap.audit_opening_date,
             "name": f"Annual Audit Plan: {ap.annual_program}",
             "type": "Audit Plan",
-            "responsible": "",
+            "responsible": auditors_names,
         })
+
 
     activities.sort(key=lambda x: x['date'])
 
