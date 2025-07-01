@@ -11,7 +11,7 @@ from django.db.models import OuterRef, Subquery
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
-from processes.models import Process, PerformanceIndicator, ProcessPerformanceMeasurements
+from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
 from company.models import Area
 from risks.models import RiskTreatment
 from communications.models import CommunicationTable
@@ -76,7 +76,7 @@ def wellcome_view(request):
     ultimo_mes = hoy - timedelta(days=30)
     ultimo_dosmes = hoy - timedelta(days=60)
 
-    recientes_process_perform_measure = #ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
+    recientes_process_perform_measure = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
     alerta = []
 
     for ppm in recientes_process_perform_measure:
