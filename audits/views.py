@@ -49,8 +49,12 @@ def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
 
     today = datetime.today()
+    
+    # Mes anterior al actual
     start_month = today.month - 1 if today.month > 1 else 12
     start_year = today.year if today.month > 1 else today.year - 1
+
+    # Construir month_range original (12 meses empezando por mes anterior)
     month_range = [(start_year, start_month)]
     for _ in range(11):
         y, m = month_range[-1]
@@ -58,12 +62,21 @@ def annual_audit_program(request):
         next_year = y + (1 if next_month == 1 else 0)
         month_range.append((next_year, next_month))
 
-    annual_programs = AnnualProgram.objects.filter(
-        program_header__year__in={y for y, _ in month_range},
-        month__in={m for _, m in month_range}
-    ).select_related("program_header", "process").order_by('program_header__year', 'month')
+    # Todos los meses del año actual (enero a diciembre)
+    current_year = today.year
+    all_months_current_year = [(current_year, m) for m in range(1, 13)]
 
-    program_ids = annual_programs.values_list("id", flat=True)
+    # Combinar y ordenar sin repeticiones
+    combined_months = sorted(set(all_months_current_year) | set(month_range))
+
+    # Obtener programas filtrados para estos años y meses
+    years = {y for y, _ in combined_months}
+    months = {m for _, m in combined_months}
+
+    annual_programs = AnnualProgram.objects.filter(
+        program_header__year__in=years,
+        month__in=months
+    ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
     requirements_by_process = defaultdict(list)
     for pr in ProcessRequirement.objects.select_related("process"):
@@ -73,7 +86,7 @@ def annual_audit_program(request):
     
     all_users = User.objects.all()
 
-    for y, m in month_range:
+    for y, m in combined_months:
         month_name = datetime(y, m, 1).strftime('%B')
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
@@ -94,6 +107,7 @@ def annual_audit_program(request):
         'annual_programs_by_year': annual_programs_by_year,
         'users': all_users,
     })
+
 
 
 # === ANNUAL AUDIT PLAN ===
