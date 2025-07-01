@@ -55,31 +55,6 @@
                             </table>
                         </div>
 <div id="timeline-chart"></div>
-                    </div>
-
-                    <div class="col-md-6 mt-5">
-                        <h3 class="text-center">Reuniones de Auditorias</h3>
-                        <div class="row">
-                            {% for plan in audit_data %}
-                            <div class="col-md-12">
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-primary">Reunion de Apertura</h5>
-                                        <p><strong>Localizacion:</strong> {{ plan.audit_opening_location }}</p>
-                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_opening_date }} {{ plan.audit_opening_time }}</p>
-
-                                        <h5 class="card-title text-danger">Closing Meeting</h5>
-                                        <p><strong>Localizacion:</strong> {{ plan.audit_closing_location }}</p>
-                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_closing_date }} {{ plan.audit_closing_time }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <p class="text-center">no hay planes disponibles.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
 
 <div class="mt-5">
     <h3 class="text-center">Equipo Auditor y Auditados</h3>
@@ -108,6 +83,32 @@
         </table>
     </div>
 </div>
+                    </div>
+
+                    <div class="col-md-6 mt-5">
+                        <h3 class="text-center">Reuniones de Auditorias</h3>
+                        <div class="row">
+                            {% for plan in audit_data %}
+                            <div class="col-md-12">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-primary">Reunion de Apertura</h5>
+                                        <p><strong>Localizacion:</strong> {{ plan.audit_opening_location }}</p>
+                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_opening_date }} {{ plan.audit_opening_time }}</p>
+
+                                        <h5 class="card-title text-danger">Closing Meeting</h5>
+                                        <p><strong>Localizacion:</strong> {{ plan.audit_closing_location }}</p>
+                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_closing_date }} {{ plan.audit_closing_time }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-center">no hay planes disponibles.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
 
 
 <!-- Modal -->
