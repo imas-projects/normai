@@ -189,7 +189,7 @@ def wellcome_view(request):
 
     for rt in risk_treatments:
         activities.append({
-            "date": rt.target_date,
+            "date": rt.target_date, 
             "name": f"Risk Treatment: {rt.treatment_action[:40]}",
             "type": "Risk",
             "responsible": ", ".join([pos.name for pos in rt.responsible.all()]),
@@ -197,7 +197,7 @@ def wellcome_view(request):
 
     for p in processes:
         activities.append({
-            "date": p.review_date,
+            "date": p.review_date, 
             "name": f"Process Review: {p.name}",
             "type": "Process",
             "responsible": p.responsible.name if p.responsible else "",
@@ -205,7 +205,7 @@ def wellcome_view(request):
 
     for c in communications:
         activities.append({
-            "date": c.review_date,
+            "date": c.review_date, 
             "name": f"Communication Review: {c.code}",
             "type": "Communication",
             "responsible": c.reviewed_by.name if c.reviewed_by else "",
@@ -213,7 +213,7 @@ def wellcome_view(request):
 
     for ca in corrective_actions:
         activities.append({
-            "date": ca.due_date,
+            "date": ca.due_date, 
             "name": f"Corrective Action: {ca.corrective_action[:40]}",
             "type": "Audit",
             "responsible": ca.responsible_user.username,
@@ -221,7 +221,7 @@ def wellcome_view(request):
 
     for ap in annual_plans:
         activities.append({
-            "date": ap.audit_opening_date,
+            "date": ap.audit_opening_date, 
             "name": f"Annual Audit Plan: {ap.annual_program}",
             "type": "Audit Plan",
             "responsible": "",
