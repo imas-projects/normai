@@ -165,3 +165,18 @@ class ProductMeasurementRecord(models.Model):
     def __str__(self):
         status = "OK" if self.result_ok else "Not OK"
         return f"{self.measurement_name} ({self.product_reference}) - {self.product_measurement} [{status}]"
+
+
+class ProcessPerformanceIndicator(models.Model):
+    process = models.ForeignKey('Process', on_delete=models.CASCADE)
+    performanceindicator = models.ForeignKey('PerformanceIndicator', on_delete=models.CASCADE)
+    min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    min_max = models.CharField(max_length=10, choices=[('min', 'Min'), ('max', 'Max'), ('range', 'Range')], null=True, blank=True)
+
+    class Meta:
+        db_table = 'tb_process_performance_indicators'
+        unique_together = ('process', 'performanceindicator')
+
+    def __str__(self):
+        return f"{self.process} - {self.performanceindicator}"
