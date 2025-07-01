@@ -342,9 +342,6 @@
     </div>
     </div>
                                 </div>
-
-{{ auditorias_labels|json_script:"auditorias-labels" }}
-{{ auditorias_values|json_script:"auditorias-values" }}
                 
                             <div class="col-xxl-4">
                                 <div class="row">
@@ -751,8 +748,9 @@
                             </div>
                             </div><!-- end col -->
                 
- <div class="row">
-    <div class="col-xxl-3 col-md-6">
+<div class="row">
+    <!-- Tendencia de Auditorías -->
+    <div class="col-xxl-4 col-md-6">
         <div class="card">
             <div class="card-header align-items-center d-flex">
                 <h4 class="card-title mb-0 flex-grow-1">Tendencia de Auditorías Realizadas por Mes</h4>
@@ -762,66 +760,64 @@
             </div>
         </div>
     </div>
- </div>
 
-            
+    <!-- Distribución de No Conformidades -->
+    <div class="col-xxl-4 col-md-6">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1">Distribución de No Conformidades por Clasificación</h4>
+            </div>
+            <div class="card-body pb-0">
+                <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Overview -->
+    <div class="col-xxl-4">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1">Balance Overview</h4>
+                <div class="flex-shrink-0">
+                    <div class="dropdown card-header-dropdown">
+                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Current Year<i class="mdi mdi-chevron-down ms-1"></i></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="#">Today</a>
+                            <a class="dropdown-item" href="#">Last Week</a>
+                            <a class="dropdown-item" href="#">Last Month</a>
+                            <a class="dropdown-item" href="#">Current Year</a>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end card header -->
+            <div class="card-body px-0">
+                <ul class="list-inline main-chart text-center mb-0">
+                    <li class="list-inline-item chart-border-left me-0 border-0">
+                        <h4 class="text-primary">$584k <span class="text-muted d-inline-block fs-13 align-middle ms-2">Revenue</span></h4>
+                    </li>
+                    <li class="list-inline-item chart-border-left me-0">
+                        <h4>$497k<span class="text-muted d-inline-block fs-13 align-middle ms-2">Expenses</span>
+                        </h4>
+                    </li>
+                    <li class="list-inline-item chart-border-left me-0">
+                        <h4><span data-plugin="counterup">3.6</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Profit Ratio</span></h4>
+                    </li>
+                </ul>
+
+                <div id="revenue-expenses-charts" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+            </div>
+        </div><!-- end card -->
+    </div><!-- end col -->
+</div><!-- end row -->
+
+<!-- Scripts para gráficas -->
 {{ auditorias_labels|json_script:"auditorias-labels" }}
 {{ auditorias_values|json_script:"auditorias-values" }}
 
-<div class="row">
-<div class="col-xxl-3 col-md-6">
-    <div class="card card-height-100">
-        <div class="card-header align-items-center d-flex">
-            <h4 class="card-title mb-0 flex-grow-1">Distribución de No Conformidades por Clasificación</h4>
-        </div>
-        <div class="card-body pb-0">
-            <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
-        </div>
-    </div><!-- end card -->
- </div>
-</div>
-
 {{ clasificaciones_labels|json_script:"clasificaciones-labels" }}
 {{ clasificaciones_values|json_script:"clasificaciones-values" }}
-
-                    
-                    <div class="col-xxl-6">
-                        <div class="card card-height-100">
-                            <div class="card-header align-items-center d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">Balance Overview</h4>
-                                <div class="flex-shrink-0">
-                                    <div class="dropdown card-header-dropdown">
-                                        <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="fw-semibold text-uppercase fs-12">Sort by: </span><span class="text-muted">Current Year<i class="mdi mdi-chevron-down ms-1"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Today</a>
-                                            <a class="dropdown-item" href="#">Last Week</a>
-                                            <a class="dropdown-item" href="#">Last Month</a>
-                                            <a class="dropdown-item" href="#">Current Year</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div><!-- end card header -->
-                            <div class="card-body px-0">
-                                <ul class="list-inline main-chart text-center mb-0">
-                                    <li class="list-inline-item chart-border-left me-0 border-0">
-                                        <h4 class="text-primary">$584k <span class="text-muted d-inline-block fs-13 align-middle ms-2">Revenue</span></h4>
-                                    </li>
-                                    <li class="list-inline-item chart-border-left me-0">
-                                        <h4>$497k<span class="text-muted d-inline-block fs-13 align-middle ms-2">Expenses</span>
-                                        </h4>
-                                    </li>
-                                    <li class="list-inline-item chart-border-left me-0">
-                                        <h4><span data-plugin="counterup">3.6</span>%<span class="text-muted d-inline-block fs-13 align-middle ms-2">Profit Ratio</span></h4>
-                                    </li>
-                                </ul>
-
-                                <div id="revenue-expenses-charts" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
-                            </div>
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                </div><!-- end row -->
 
 
 
