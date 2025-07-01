@@ -84,35 +84,7 @@
             <p>No hay hallazgos disponibles.</p>
             {% endif %}
           </div>
-
-          <!-- Columna derecha -->
-          <div class="col-md-6">
-            <!-- Evaluación por el Auditado -->
-            <h4 class="mt-3">Evaluación por el Auditado</h4>
-            {% if audit.auditor_evaluation %}
-            <ul class="list-group mb-3">
-              {% for eval in audit.auditor_evaluation %}
-              <li class="list-group-item">
-                <strong>P{{ eval.orden }}:</strong> {{ eval.question }}<br>
-                <strong>Valoración:</strong> {{ eval.rate }}
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No hay evaluaciones.</p>
-            {% endif %}
-
-            <!-- Reporte de Auditoría -->
-            <h4>Reporte de Auditoría</h4>
-            {% if audit.report %}
-            <p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
-            <p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
-            <p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
-            {% else %}
-            <p>No hay reporte de auditoría.</p>
-            {% endif %}
-
-            <!-- Acciones Correctivas -->
+                    <!-- Acciones Correctivas -->
             <h4 class="mt-4">Acciones Correctivas</h4>
             {% if audit.corrective_actions %}
             <ul class="list-group mb-3">
@@ -145,6 +117,35 @@
             <p>No hay acciones correctivas registradas.</p>
             {% endif %}
           </div>
+
+          <!-- Columna derecha -->
+          <div class="col-md-6">
+            <!-- Evaluación por el Auditado -->
+            <h4 class="mt-3">Evaluación por el Auditado</h4>
+            {% if audit.auditor_evaluation %}
+            <ul class="list-group mb-3">
+              {% for eval in audit.auditor_evaluation %}
+              <li class="list-group-item">
+                <strong>P{{ eval.orden }}:</strong> {{ eval.question }}<br>
+                <strong>Valoración:</strong> {{ eval.rate }}
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No hay evaluaciones.</p>
+            {% endif %}
+
+            <!-- Reporte de Auditoría -->
+            <h4>Reporte de Auditoría</h4>
+            {% if audit.report %}
+            <p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
+            <p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
+            <p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
+            {% else %}
+            <p>No hay reporte de auditoría.</p>
+            {% endif %}
+
+
         </div>
       </div>
     </div>
