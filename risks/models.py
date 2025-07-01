@@ -134,12 +134,14 @@ class ContingencyPlan(models.Model):
         db_table = 'tb_risks_contingency_plan'
 
     def __str__(self):
-        actions = ", ".join([dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions[:3]])
+        selected_codes = self.get_contingency_actions_list()
+        actions = ", ".join([dict(self.ACTION_CHOICES).get(code, code) for code in selected_codes[:3]])
         return f"Contingency Plan: {actions}"
 
     def as_dict(self):
+        selected_codes = self.get_contingency_actions_list()
         return {
-            "contingency_actions": [dict(self.ACTION_CHOICES).get(code) for code in self.contingency_actions],
+            "contingency_actions": [dict(self.ACTION_CHOICES).get(code, code) for code in selected_codes],
             "responsible": [{
                 "id": position.id,
                 "name": position.name,
@@ -159,6 +161,7 @@ class ContingencyPlan(models.Model):
                 }
             } for position in self.communicate_to.all()],
         }
+
     def get_contingency_actions_display(self):
         selected_codes = self.get_contingency_actions_list()
         return [dict(self.ACTION_CHOICES).get(code, code) for code in selected_codes]
