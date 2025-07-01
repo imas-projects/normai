@@ -315,17 +315,8 @@
 <div class="col-xxl-12">
     <div class="card">
         <div class="card-header align-items-center d-flex">
-            <h4 class="card-title mb-0 flex-grow-1">Upcoming Activities (Next 30 days)</h4>
+            <h4 class="card-title mb-0 flex-grow-1">Proximas Actividades</h4>
             <div class="flex-shrink-0">
-                <div class="dropdown card-header-dropdown">
-                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="text-muted fs-18"><i class="mdi mdi-dots-vertical"></i></span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <a class="dropdown-item" href="#">Edit</a>
-                        <a class="dropdown-item" href="#">Remove</a>
-                    </div>
-                </div>
             </div>
         </div><!-- end card header -->
         <div class="card-body pt-0">
@@ -342,11 +333,8 @@
                             </div>
                         </div>
                         <div class="col">
-                            <h5 class="text-muted mt-0 mb-1 fs-12 fw-semibold">
-                                Date only
-                            </h5>
                             <a href="#" class="text-reset fs-14 mb-0">{{ activity.name }}</a><br>
-                            <small class="text-muted">Responsible: {{ activity.responsible }}</small>
+                            <small class="text-muted">Responsable: {{ activity.responsible }}</small>
                         </div>
                         <div class="col-sm-auto">
                             <span class="badge bg-primary">{{ activity.type }}</span>
