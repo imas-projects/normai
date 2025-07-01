@@ -15,9 +15,9 @@
             <div class="d-flex">
             <div class="d-flex justify-content-between align-items-center mt-5">
                 </div>
-                <h1 class="text-center flex-grow-1">Internal Audits</h1>  <!-- Título centrado -->
+                <h1 class="text-center flex-grow-1">Auditorias Internas</h1>  <!-- Título centrado -->
                 <div>
-                    <button class="btn btn-dark" type="button" id="openAddProcessRequirementModal">Add Process Requirement</button>  <!-- Botón a la derecha -->
+                    <button class="btn btn-dark" type="button" id="openAddProcessRequirementModal">Añadir Requisito del Proceso</button>  <!-- Botón a la derecha -->
                 </div>
             </div>
             {% endblock pagetitle %}
@@ -26,7 +26,7 @@
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
                     <a href="{% url 'audits:annual_audit_program' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-                        <h3 class="mb-0">Annual Program of Internal Audits</h3>
+                        <h3 class="mb-0">Programa Anual de Auditorias Internas</h3>
                     </a>
                     <!-- Dropdown a la derecha -->
                     <div class="dropdown">
@@ -34,8 +34,8 @@
                             Add
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Añadir Encabezado del Programa Anual</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Añadir Programa</a></li>
                         </ul>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
                     <a href="{% url 'audits:annual_audit_plan' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-                        <h3 class="mb-0">Annual Plan of Internal Audits</h3>
+                        <h3 class="mb-0">Plan Anual de Auditorias Internas</h3>
                     </a>
                     <!-- Dropdown a la derecha -->
                     <div class="dropdown">
@@ -53,9 +53,9 @@
                             Add
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Add Annual Plan</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Add Annual Plan Auditor</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Add Annual Plan Audited</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Añadir Plan</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Añadir Auditado del Plan</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Añadir Auditor del Plan</a></li>
                         </ul>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
                     <a href="{% url 'audits:conduct_internal_audits' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-                        <h3 class="mb-0">Conduct Internal Audits</h3>
+                        <h3 class="mb-0">Realización de Auditorias Internas</h3>
                     </a>
 
                     <!-- Contenedor para los dropdowns -->
@@ -76,10 +76,10 @@
                                 Add
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                                <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Add Findings</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Add Audit Report</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Add Corrective Action</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Add Corrective Action Follow-up</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Añadir Hallazgos</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Añadir Reporte de Auditoria</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Añadir Acciones Correctivas</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Añadir Seguimiento de Acciones Correctivas</a></li>
                             </ul>
                         </div>
 
@@ -89,10 +89,10 @@
                                 Add Questions
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
-                                <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Add Audited Evaluation Question</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Add Lead Auditor Evaluation Question</a></li>
-                                <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Add Auditor Evaluation</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Añadir Lista de Verificación</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditado</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditor Lider</a></li>
+                                <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Añadir Evaluación del Auditor</a></li>
                             </ul>
                         </div>
                     </div>
@@ -108,7 +108,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addProcessRequirementModalLabel">Add Process Requirement</h5>
+                <h5 class="modal-title" id="addProcessRequirementModalLabel">Añadir Requisito del Proceso</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -125,7 +125,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Add Audit Program Header</h5>
+                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Añadir Encabezado del Programa Anual</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -143,7 +143,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Add Annual Program</h5>
+                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Añadir Programa</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -163,7 +163,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanModalLabel">Add Annual Plan</h5>
+                <h5 class="modal-title" id="addAnnualPlanModalLabel">Añadir Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -179,7 +179,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Add Annual Plan Auditor</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Añadir Audior del Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -195,7 +195,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Add Annual Plan Audited</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Añadir Auditado del Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -212,7 +212,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addFindingsModalLabel">Add Findings</h5>
+                <h5 class="modal-title" id="addFindingsModalLabel">Añadir Hallazgos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -230,7 +230,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditReportModalLabel">Add Audit Report</h5>
+                <h5 class="modal-title" id="addAuditReportModalLabel">Añadir Reporte de Auditoria</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -248,7 +248,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Add Checklist</h5>
+                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Añadir Lista de Verificación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -266,7 +266,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditedEvaluationQuestionModalLabel">Add Audited Evaluation Question</h5>
+                <h5 class="modal-title" id="addAuditedEvaluationQuestionModalLabel">Añadir Preguntas de la Evaluación del Auditado</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -284,7 +284,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addLeadAuditorEvaluationQuestionModalLabel">Add Lead Auditor Evaluation Question</h5>
+                <h5 class="modal-title" id="addLeadAuditorEvaluationQuestionModalLabel">Añadir Preguntas de la Evaluación del Auditor Lider</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -302,7 +302,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Add Auditor Evaluation</h5>
+                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Añadir Evaluación del Auditor</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -318,7 +318,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Add Corrective Action</h5>
+                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Añadir Acciones Correctivas</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -336,7 +336,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Add Corrective Action Follow-up</h5>
+                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Añadir Seguimiento de Acción Correctiva</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
