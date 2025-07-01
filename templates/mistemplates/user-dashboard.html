@@ -146,6 +146,31 @@
     {% endfor %}
 </div>
 
+<div class="card mt-4 card-height-100">
+    <div class="card-header align-items-center d-flex">
+        <h5 class="card-title mb-0 flex-grow-1">Hallazgos por Proceso</h5>
+        <div class="flex-shrink-0">
+        </div>
+    </div><!-- end card header -->
+
+    <div class="card-body">
+        {% for process in processes_with_findings %}
+            <div class="d-flex gap-2 align-items-center mb-2">
+                <div class="avatar-xs flex-shrink-0">
+                    <div class="avatar-title bg-info-subtle text-info rounded-2 fs-17">
+                        <i class="ri-folder-3-line"></i> 
+                    </div>
+                </div>
+                <h6 class="mb-0 fs-14 flex-grow-1">{{ process.name }}</h6>
+                <h6 class="flex-shrink-0 mb-0">{{ process.total_findings }} hallazgos</h6>
+            </div>
+        {% empty %}
+            <p>No hay procesos con hallazgos.</p>
+        {% endfor %}
+    </div>
+</div>
+
+
                                 </div>
                             </div>
 
