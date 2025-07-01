@@ -105,7 +105,7 @@ def wellcome_view(request):
         total = next((f['total'] for f in findings_dist if f['classification'] == key), 0)
         clasificaciones_values.append(total)
 
-
+    areas = Area.objects.all()
 
     # === Contexto final ===
     contexto = {
@@ -128,6 +128,8 @@ def wellcome_view(request):
 
         'clasificaciones_labels': clasificaciones_labels,
         'clasificaciones_values': clasificaciones_values,
+
+        'areas': areas,
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
