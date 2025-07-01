@@ -11,14 +11,14 @@
             {% block pagetitle %}
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center mt-5">
-                    <h1 class="text-center flex-grow-1">Annual Program of Internal Audits</h1>
+                    <h1 class="text-center flex-grow-1">Programa Anual de Auditorias Internas</h1>
                     <div class="dropdown">
                         <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
                             Add
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Add Audit Program Header</a></li>
-                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Add Annual Program</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Añadir Encabezado del Programa Anual</a></li>
+                            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Añadir Programa</a></li>
                         </ul>
                     </div>
                 </div>
@@ -32,10 +32,10 @@
                             <table class="table table-bordered mt-3">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Objective</th>
-                                        <th>Scope</th>
-                                        <th>Audit Criteria</th>
-                                        <th>Security Standards</th>
+                                        <th>Objetivos</th>
+                                        <th>Alcance</th>
+                                        <th>Criterios de Auditorias</th>
+                                        <th>Estandares de Seguridad</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -48,7 +48,7 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="4" class="text-center">No audit programs available.</td>
+                                        <td colspan="4" class="text-center">No hay programas disponibles.</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -56,7 +56,7 @@
                         </div>
 
                         <div>
-                            <h3 class="text-center">Annual Program</h3>
+                            <h3 class="text-center">Programa Anual</h3>
                             <div class="row">
                                 {% for year, months in annual_programs_by_year.items %}
                                     <div class="col-12">
@@ -70,26 +70,19 @@
                                                 <ul class="list-group list-group-flush">
                                                     {% for item in programs %}
                                                     <li class="list-group-item">
-                                                        <strong>Process:</strong> {{ item.program.process.name }}<br>
-                                                        <strong>Users:</strong>
-                                                        {% if item.users %}
-                                                            {% for user in item.users %}
-                                                                {{ user.get_full_name }}{% if not forloop.last %}, {% endif %}
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <em>No users assigned</em>
-                                                        {% endif %}<br>
-                                                        <strong>Requirements:</strong>
+                                                        <strong>Proceso:</strong> {{ item.program.process.name }}<br>
+                                                        <strong>Requisitos:</strong>
                                                         {% if item.requirements %}
-                                                            {% for req in item.requirements %}
-                                                                {{ req.name }}{% if not forloop.last %}, {% endif %}
-                                                            {% endfor %}
+{% for req in item.requirements %}
+    {{ req }}{% if not forloop.last %}, {% endif %}
+{% endfor %}
+
                                                         {% else %}
-                                                            <em>No requirements</em>
+                                                            <em>No hay requisitos</em>
                                                         {% endif %}
                                                     </li>
                                                     {% empty %}
-                                                    <li class="list-group-item text-muted">No data available.</li>
+                                                    <li class="list-group-item text-muted">No hay datos disponibles.</li>
                                                     {% endfor %}
                                                 </ul>
                                             </div>
@@ -129,7 +122,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Add Audit Program Header</h5>
+                        <h5 class="modal-title" id="addAuditProgramHeaderModalLabel">Añadir Encabezado del Programa Anual</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -147,7 +140,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Add Annual Program</h5>
+                        <h5 class="modal-title" id="addAnnualProgramModalLabel">Añadir Programa</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
