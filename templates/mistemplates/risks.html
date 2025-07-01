@@ -11,14 +11,14 @@
                             {% endblock pagetitle %}
                             <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mt-5">
-        <h1 class="text-center flex-grow-1">Risk Matrix</h1>
+        <h1 class="text-center flex-grow-1">Matriz de Riesgos</h1>
      <div class="dropdown">
         <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
             Add
         </button>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li><a class="dropdown-item" href="#" id="openAddRiskIdentificationModal">Add Risk</a></li>
-            <li><a class="dropdown-item" href="#" id="openAddStepsModal">Add Steps</a></li>
+            <li><a class="dropdown-item" href="#" id="openAddRiskIdentificationModal">Añadir Riesgo</a></li>
+            <li><a class="dropdown-item" href="#" id="openAddStepsModal">Añadir Pasos</a></li>
         </ul>
     </div>
     </div>
@@ -31,7 +31,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark"> <!-- Modal en blanco -->
             <div class="modal-header">
-                <h5 class="modal-title" id="addRiskIdentificationModalLabel">Add Risk Identification</h5>
+                <h5 class="modal-title" id="addRiskIdentificationModalLabel">Añadir Identificación del riesgo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -40,7 +40,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark"> <!-- Modal en blanco -->
             <div class="modal-header">
-                <h5 class="modal-title" id="addStepsModalLabel">Add Steps</h5>
+                <h5 class="modal-title" id="addStepsModalLabel">Añadir Pasos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -61,7 +61,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingRiskEvaluation">
                             <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRiskEvaluation" aria-expanded="false" aria-controls="collapseRiskEvaluation">
-                                Risk Evaluation
+                                Evaluación del Riesgo
                             </button>
                         </h2>
                         <div id="collapseRiskEvaluation" class="accordion-collapse collapse" aria-labelledby="headingRiskEvaluation" data-bs-parent="#riskAccordion">
@@ -75,7 +75,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingRiskTreatment">
                             <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRiskTreatment" aria-expanded="false" aria-controls="collapseRiskTreatment">
-                                Risk Treatment
+                                Tratamiento del Riesgo
                             </button>
                         </h2>
                         <div id="collapseRiskTreatment" class="accordion-collapse collapse" aria-labelledby="headingRiskTreatment" data-bs-parent="#riskAccordion">
@@ -89,7 +89,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingContingencyPlan">
                             <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContingencyPlan" aria-expanded="false" aria-controls="collapseContingencyPlan">
-                                Contingency Plan
+                                Plan de Contingencia
                             </button>
                         </h2>
                         <div id="collapseContingencyPlan" class="accordion-collapse collapse" aria-labelledby="headingContingencyPlan" data-bs-parent="#riskAccordion">
@@ -103,7 +103,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingReevaluation">
                             <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReevaluation" aria-expanded="false" aria-controls="collapseReevaluation">
-                                Reevaluation
+                                Revaluación
                             </button>
                         </h2>
                         <div id="collapseReevaluation" class="accordion-collapse collapse" aria-labelledby="headingReevaluation" data-bs-parent="#riskAccordion">
@@ -116,7 +116,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -136,7 +136,7 @@
                         {{ area.name }} - {{ process.name }}
                     </button>
                     <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
-                        <i class="ri-file-download-line"></i> Download PDF
+                        <i class="ri-file-download-line"></i> Descargar PDF
                     </a>
                 </h2>
 
@@ -151,16 +151,16 @@
                                         <table class="table table-bordered" style="border-color: #6c757d;">
                                             <tbody>
                                                 <tr>
-                                                    <th style="font-size: 18px; width: 30%;">Risk Name:</th>
+                                                    <th style="font-size: 18px; width: 30%;">Riesgo:</th>
                                                     <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th style="font-size: 18px;">Process:</th>
-                                                    <td style="font-size: 18px;">{{ risk.process.name }}</td>
+                                                    <th style="font-size: 18px;">Consecuencias:</th>
+                                                    <td style="font-size: 18px;">{{ risk.consequences }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <th style="font-size: 18px;">Consequences:</th>
-                                                    <td style="font-size: 18px;">{{ risk.consequences }}</td>
+                                                    <th style="font-size: 18px;">Fuente:</th>
+                                                    <td style="font-size: 18px;">{{ risk.source }}</td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -169,19 +169,19 @@
                                         <div class="d-flex flex-column gap-2">
                                             <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
                                                 data-bs-target="#modalRiskEvaluation{{ risk.id }}">
-                                                Risk Evaluation
+                                                Evaluación del Riesgo
                                             </button>
                                             <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
                                                 data-bs-target="#modalRiskTreatment{{ risk.id }}">
-                                                Risk Treatment
+                                                Tratamiento del Riesgo
                                             </button>
                                             <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
                                                 data-bs-target="#modalContingencyPlan{{ risk.id }}">
-                                                Contingency Plan
+                                                Plan de Contingencia
                                             </button>
                                             <button class="btn btn-dark w-100" data-bs-toggle="modal"
                                                 data-bs-target="#modalReevaluation{{ risk.id }}">
-                                                Reevaluation
+                                                Revaluación
                                             </button>
                                         </div>
                                     </div>
@@ -196,27 +196,27 @@
         <ul class="dropdown-menu" aria-labelledby="dropdownEditButton{{ risk.id }}">
             <li>
                 <a class="dropdown-item openEditRiskIdentificationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Edit Risk Identification
+                    Editar Identificación
                 </a>
             </li>
             <li>
                 <a class="dropdown-item openEditRiskEvaluationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Edit Risk Evaluation
+                    Editar Evaluación
                 </a>
             </li>
             <li>
                 <a class="dropdown-item openEditRiskTreatmentModal" href="#" data-risk-id="{{ risk.id }}">
-                    Edit Risk Treatment
+                    Editar Tratamiento
                 </a>
             </li>
             <li>
                 <a class="dropdown-item openEditContingencyPlanModal" href="#" data-risk-id="{{ risk.id }}">
-                    Edit Contingency Plan
+                    Editar Plan de Contingencia
                 </a>
             </li>
             <li>
                 <a class="dropdown-item openEditReevaluationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Edit Reevaluation
+                    Editar Revaluación
                 </a>
             </li>
         </ul>
@@ -236,7 +236,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-                <h5 class="modal-title" id="editRiskIdentificationModalLabel{{ risk.id }}">Edit Risk Identification</h5>
+                <h5 class="modal-title" id="editRiskIdentificationModalLabel{{ risk.id }}">Editar Identificación del Riesgo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -245,7 +245,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -256,7 +256,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-                <h5 class="modal-title" id="editRiskEvaluationModalLabel{{ risk.id }}">Edit Risk Evaluation</h5>
+                <h5 class="modal-title" id="editRiskEvaluationModalLabel{{ risk.id }}">Editar Evaluación del Riesgo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -265,7 +265,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -276,7 +276,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-                <h5 class="modal-title" id="editRiskTreatmentModalLabel{{ risk.id }}">Edit Risk Treatment</h5>
+                <h5 class="modal-title" id="editRiskTreatmentModalLabel{{ risk.id }}">Editar Tratamiento del Riesgo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -285,7 +285,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -296,7 +296,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-                <h5 class="modal-title" id="editContingencyPlanModalLabel{{ risk.id }}">Edit Contingency Plan</h5>
+                <h5 class="modal-title" id="editContingencyPlanModalLabel{{ risk.id }}">Editar Plan de Contingencia</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -305,7 +305,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -316,7 +316,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-                <h5 class="modal-title" id="editReevaluationModalLabel{{ risk.id }}">Edit Reevaluation</h5>
+                <h5 class="modal-title" id="editReevaluationModalLabel{{ risk.id }}">Editar Revaluación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -325,7 +325,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -339,19 +339,19 @@
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalRiskEvaluationLabel{{ risk.id }}">Risk Evaluation - {{ risk.identified_risk }}</h5>
+                <h5 class="modal-title" id="modalRiskEvaluationLabel{{ risk.id }}">Evaluación - {{ risk.identified_risk }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <table class="table table-bordered table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>Severity</th>
-                            <th>Current Preventive Controls</th>
-                            <th>Occurrence</th>
-                            <th>Current Detection Controls</th>
-                            <th>Detection</th>
-                            <th>Risk Level</th>
+                            <th>Severidad</th>
+                            <th>Controles Actuales de Prevención</th>
+                            <th>Ocurrencia</th>
+                            <th>Controles Actuales de Detección</th>
+                            <th>Detección</th>
+                            <th>Nivel de Riesgo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -364,7 +364,7 @@
                                         <td>{{ evaluation.occurrence }}</td>
                                         <td>{{ evaluation.current_detection_controls }}</td>
                                         <td>{{ evaluation.detection }}</td>
-                                        <td>{{ evaluation.risk_level.level }}</td>
+                                        <td>{{ evaluation.get_risk_level_display }}</td>
                                     </tr>
                                 {% endif %}
                             {% endfor %}
@@ -377,7 +377,7 @@
                                     {% if not evaluations|dictsort:"id"|yesno:"1,0"|default_if_none:"0" %}
                                         {% comment %} If there were no matches for the current risk {% endcomment %}
                                         <tr>
-                                            <td colspan="6" class="text-center">No evaluations available</td>
+                                            <td colspan="6" class="text-center">No hay evaluaciones disponibles</td>
                                         </tr>
                                     {% endif %}
                                 {% endif %}
@@ -396,16 +396,16 @@
                         <div class="modal-dialog modal-xl modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="modalRiskTreatmentLabel{{ risk.id }}">Risk Treatment - {{ risk.identified_risk }}</h5>
+                                    <h5 class="modal-title" id="modalRiskTreatmentLabel{{ risk.id }}">Tratamiento - {{ risk.identified_risk }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <table class="table table-bordered table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th>Treatment Action</th>
-                                                <th>Responsible</th>
-                                                <th>Target Date</th>
+                                                <th>Accion del Tratamiento</th>
+                                                <th>Responsable</th>
+                                                <th>Fecha Objetivo</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -419,7 +419,7 @@
                                                 {% endif %}
                                             {% empty %}
                                                 <tr>
-                                                    <td colspan="3" class="text-center">No treatments available</td>
+                                                    <td colspan="3" class="text-center">No hay tratamientos disponibles</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -434,30 +434,30 @@
                         <div class="modal-dialog modal-xl modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="modalContingencyPlanLabel{{ risk.id }}">Contingency Plan - {{ risk.identified_risk }}</h5>
+                                    <h5 class="modal-title" id="modalContingencyPlanLabel{{ risk.id }}">Plan de Contingencia - {{ risk.identified_risk }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <table class="table table-bordered table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th>Contingency Action</th>
-                                                <th>Responsible</th>
-                                                <th>Communicate to</th>
+                                                <th>Acciones de Contingencia</th>
+                                                <th>Responsable</th>
+                                                <th>Comunicar a</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {% for plan in contingency_plans %}
                                                 {% if plan.risk.id == risk.id %}
                                                     <tr>
-                                                        <td>{{ plan.contingency_actions.all|join:", " }}</td>
+                                                        <td>{{ plan.get_contingency_actions_display|join:", " }}</td>
                                                         <td>{{ plan.responsible.all|join:", " }}</td>
                                                         <td>{{ plan.communicate_to.all|join:", " }}</td>
                                                     </tr>
                                                 {% endif %}
                                             {% empty %}
                                                 <tr>
-                                                    <td colspan="3" class="text-center">No contingency plans available</td>
+                                                    <td colspan="3" class="text-center">No hay planes de contingencia disponibles</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
@@ -472,17 +472,17 @@
                         <div class="modal-dialog modal-xl modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="modalReevaluationLabel{{ risk.id }}">Reevaluation - {{ risk.identified_risk }}</h5>
+                                    <h5 class="modal-title" id="modalReevaluationLabel{{ risk.id }}">Revaluación - {{ risk.identified_risk }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <table class="table table-bordered table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th>Severity</th>
-                                                <th>Occurrence</th>
-                                                <th>Detection</th>
-                                                <th>Risk Level</th>
+                                                <th>Severidad</th>
+                                                <th>Ocurrencia</th>
+                                                <th>Detección</th>
+                                                <th>Nivel de Riesgo</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -492,12 +492,12 @@
                                                         <td>{{ reevaluation.severity }}</td>
                                                         <td>{{ reevaluation.occurrence }}</td>
                                                         <td>{{ reevaluation.detection }}</td>
-                                                        <td>{{ reevaluation.risk_level.level }}</td>
+                                                        <td>{{ reevaluation.get_risk_level_display }}</td>
                                                     </tr>
                                                 {% endif %}
                                             {% empty %}
                                                 <tr>
-                                                    <td colspan="4" class="text-center">No reevaluations available</td>
+                                                    <td colspan="4" class="text-center">No hay revaluaciones disponibles</td>
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
