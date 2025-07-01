@@ -9,6 +9,7 @@ from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
 from company.models import Area
+from processes.models import Process
 
 # Create your views here.
 
@@ -108,6 +109,15 @@ def wellcome_view(request):
 
     areas = Area.objects.all()
 
+    processes_with_findings = (
+        Process.objects
+        .annotate(
+            total_findings=Count('processrequirement__finding')
+        )
+        .order_by('-total_findings')  
+    )
+
+
     # === Contexto final ===
     contexto = {
         'realizadas': realizadas,
@@ -131,6 +141,8 @@ def wellcome_view(request):
         'clasificaciones_values': clasificaciones_values,
 
         'areas': areas,
+
+        'processes_with_findings': processes_with_findings,
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
