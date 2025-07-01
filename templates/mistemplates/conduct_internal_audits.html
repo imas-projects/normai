@@ -44,9 +44,10 @@
   <div class="col-lg-12">
     {% for audit in audit_data %}
     <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-dark text-white text-center">
-        <h3 class="mb-0">Auditoría: {{ audit.process }}</h3>
-      </div>
+<div class="card-header bg-dark text-center" style="color: white;">
+  <h3 class="mb-0">Auditoría: {{ audit.process }}</h3>
+</div>
+
       <div class="card-body fs-5">
         <div class="row">
           <!-- Columna izquierda -->
@@ -126,7 +127,8 @@
             <ul class="list-group mb-3">
               {% for eval in audit.auditor_evaluation %}
               <li class="list-group-item">
-                <strong>P{{ eval.orden }}:</strong> {{ eval.question }}<br>
+                <strong>P{{ eval.orden }}:</strong> {{ eval.question.question_text }}<br>
+                <em><strong>Requerimiento:</strong> {{ eval.question.requirement }}</em><br>
                 <strong>Valoración:</strong> {{ eval.rate }}
               </li>
               {% endfor %}
