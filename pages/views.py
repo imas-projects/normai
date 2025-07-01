@@ -8,6 +8,7 @@ from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
+from company.models import Area
 
 # Create your views here.
 
