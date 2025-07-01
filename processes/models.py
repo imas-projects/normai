@@ -165,3 +165,31 @@ class ProductMeasurementRecord(models.Model):
     def __str__(self):
         status = "OK" if self.result_ok else "Not OK"
         return f"{self.measurement_name} ({self.product_reference}) - {self.product_measurement} [{status}]"
+
+
+class ProcessPerformanceIndicators(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    process = models.ForeignKey('Process', models.DO_NOTHING)
+    performanceindicator = models.ForeignKey('PerformanceIndicator', models.DO_NOTHING)
+    min_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    max_acceptable_value = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    min_max = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'tb_process_performance_indicators'
+        unique_together = (('process', 'performanceindicator'),)
+
+class ProcessPerformanceMeasurements(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    date = models.DateField()
+    measured_value = models.DecimalField(max_digits=10, decimal_places=3)
+    target_value = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    unit = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, null=True)
+    performance_indicator = models.ForeignKey('PerformanceIndicator', models.DO_NOTHING)
+    process = models.ForeignKey('Process', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'tb_process_performance_measurements'

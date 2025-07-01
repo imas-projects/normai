@@ -2,12 +2,21 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from decimal import Decimal
+from datetime import date, timedelta
+from django.utils import timezone
+from django.db.models import Count, Avg
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
-from django.db.models import Count
-from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
+from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
+from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
+from company.models import Area
+from risks.models import RiskTreatment
+from communications.models import CommunicationTable
+
+
 
 # Create your views here.
 
@@ -60,6 +69,62 @@ def wellcome_view(request):
         (total_auditorias_con_nc / realizadas) * 100 if realizadas > 0 else 0
     )
 
+    # === Indicador 4: Procesos con Indicadores en Alerta ===
+    areas_empresa = Area.objects.all()
+    total_procesos = Process.objects.count()
+    hoy = date.today()
+    ultimo_mes = hoy - timedelta(days=30)
+    ultimo_dosmes = hoy - timedelta(days=60)
+
+    recientes_process_perform_measure = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
+    alerta = []
+
+    for ppm in recientes_process_perform_measure:
+        
+
+        indicador = ProcessPerformanceIndicators.objects.get(
+            process=ppm.process,
+            performanceindicator=ppm.performance_indicator
+        )
+        
+        min_val = indicador.min_acceptable_value
+        max_val = indicador.max_acceptable_value
+
+        if ((min_val is not None and ppm.measured_value < min_val) or (max_val is not None and ppm.measured_value > max_val)):
+            alerta.append(ppm)
+
+    procesos_en_alerta = len(alerta)
+    tasa_procesos_alerta = (procesos_en_alerta / total_procesos) * 100 if realizadas > 0 else 0
+       
+
+    # === Indicador 5: Índice de Mejora Continua ===
+    ultimo_mes = hoy - timedelta(days=30)
+    ultimo_dosmeses = hoy - timedelta(days=60)
+    actuales = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes).values('performance_indicator').annotate(avg_actual=Avg('measured_value'))
+    anteriores = ProcessPerformanceMeasurements.objects.filter(date__range=(ultimo_dosmeses, ultimo_mes)).values('performance_indicator').annotate(avg_anterior=Avg('measured_value'))
+
+    anteriores_dict = {a['performance_indicator']: a['avg_anterior'] for a in anteriores}
+
+    suma_mejoras = Decimal('0.0')
+    kpis_comparados = 0
+
+    for actual in actuales:
+        pid = actual['performance_indicator']
+        valor_actual = actual['avg_actual']
+        valor_anterior = anteriores_dict.get(pid)
+
+        if valor_anterior and valor_anterior != 0:
+            mejora = ((valor_actual - valor_anterior) / valor_anterior) * 100
+            suma_mejoras += mejora
+            kpis_comparados += 1
+
+    # Cálculo del índice de mejora continua
+    if kpis_comparados > 0:
+        indice_mejora_continua = suma_mejoras / kpis_comparados
+    else:
+        indice_mejora_continua = None
+
+
     # === Gráfico: Tendencia de Auditorías Realizadas por Mes ===
     auditorias_por_mes_qs = (
         AnnualPlan.objects.filter(
@@ -100,11 +165,89 @@ def wellcome_view(request):
     clasificaciones_labels = []
     clasificaciones_values = []
 
-    for key, label in clasificaciones_map.items():
+    for key, label in reversed(list(clasificaciones_map.items())):
         clasificaciones_labels.append(label)
-        # Buscar el total correspondiente o 0 si no existe
         total = next((f['total'] for f in findings_dist if f['classification'] == key), 0)
         clasificaciones_values.append(total)
+
+    areas = Area.objects.all()
+
+    processes_with_findings = Process.objects.annotate(
+        total_findings=Count('processrequirement__findings')
+    ).order_by('-total_findings')
+
+    current_date = timezone.now().date()
+    end_date = current_date + timedelta(days=30)
+
+    risk_treatments = RiskTreatment.objects.filter(target_date__range=(current_date, end_date))
+    processes = Process.objects.filter(review_date__range=(current_date, end_date))
+    communications = CommunicationTable.objects.filter(review_date__range=(current_date, end_date))
+    corrective_actions = CorrectiveAction.objects.filter(due_date__range=(current_date, end_date))
+    annual_plans = AnnualPlan.objects.filter(audit_opening_date__range=(current_date, end_date))
+
+    activities = []
+
+    for rt in risk_treatments:
+        activities.append({
+            "date": rt.target_date, 
+            "name": f"Risk Treatment: {rt.treatment_action[:40]}",
+            "type": "Risk",
+            "responsible": ", ".join([pos.name for pos in rt.responsible.all()]),
+        })
+
+    for p in processes:
+        activities.append({
+            "date": p.review_date, 
+            "name": f"Process Review: {p.name}",
+            "type": "Process",
+            "responsible": p.responsible.name if p.responsible else "",
+        })
+
+    for c in communications:
+        activities.append({
+            "date": c.review_date, 
+            "name": f"Communication Review: {c.code}",
+            "type": "Communication",
+            "responsible": c.reviewed_by.name if c.reviewed_by else "",
+        })
+
+    for ca in corrective_actions:
+        user = ca.responsible_user
+        positions = user.user_position.all()
+        positions_names = ", ".join([pos.position.name for pos in positions])
+        responsible = positions_names if positions_names else user.username
+
+        activities.append({
+            "date": ca.due_date,
+            "name": f"Corrective Action: {ca.corrective_action[:40]}",
+            "type": "Audit",
+            "responsible": responsible,
+        })
+
+
+    for ap in annual_plans:
+        audited_qs = ap.audited.all()
+        audited_positions = []
+        for audited in audited_qs:
+            user = audited.user
+            positions = user.user_position.all()
+            positions_names = ", ".join([pos.position.name for pos in positions])
+            audited_positions.append(positions_names if positions_names else user.username)
+
+        responsible_text = ", ".join(auditors_positions)
+
+        activities.append({
+            "date": ap.audit_opening_date,
+            "name": f"Annual Audit Plan: {ap.annual_program}",
+            "type": "Audit Plan",
+            "responsible": responsible_text,
+        })
+
+
+    activities.sort(key=lambda x: x['date'])
+
+
+
 
 
     # === Contexto final ===
@@ -123,11 +266,25 @@ def wellcome_view(request):
         'sin_nc': auditorias_sin_nc,
         'tasa_nc': round(tasa_nc, 2),
 
+        'procesos_en_alerta': procesos_en_alerta,
+        'total_procesos': total_procesos,
+        'tasa_procesos_alerta':tasa_procesos_alerta,
+
+        'indice_mejora_continua':indice_mejora_continua,
+        'areas_empresa':areas_empresa,
+
+
         'auditorias_labels': auditorias_labels,
         'auditorias_values': auditorias_values,
 
         'clasificaciones_labels': clasificaciones_labels,
         'clasificaciones_values': clasificaciones_values,
+
+        'areas': areas,
+
+        'processes_with_findings': processes_with_findings,
+
+        "activities": activities,
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
