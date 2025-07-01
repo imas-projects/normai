@@ -18,9 +18,9 @@
                         Add
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Add Annual Plan</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Add Annual Plan Auditor</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Add Annual Plan Audited</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Añadir Plan</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Añadir Auditado del Plan</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Añadir Auditor del Plan</a></li>
                     </ul>
                 </div>
             </div>
@@ -29,14 +29,14 @@
             <div class="container mt-4">
                 <div class="row">
                     <div class="col-md-6 mt-5">
-                        <h3 class="text-center">Audit Program</h3>
+                        <h3 class="text-center">Programa de Auditorias</h3>
                         <div class="table-responsive">
                             <table class="table table-bordered mt-3">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Process</th>
-                                        <th>Year</th>
-                                        <th>Month</th>
+                                        <th>Proceso</th>
+                                        <th>Año</th>
+                                        <th>Mes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -48,46 +48,47 @@
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="4" class="text-center">No audit programs available.</td>
+                                        <td colspan="4" class="text-center">No hay programas disponibles.</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+<div id="timeline-chart"></div>
                     </div>
 
                     <div class="col-md-6 mt-5">
-                        <h3 class="text-center">Audit Meetings</h3>
+                        <h3 class="text-center">Reuniones de Auditorias</h3>
                         <div class="row">
                             {% for plan in audit_data %}
                             <div class="col-md-12">
                                 <div class="card mb-3">
                                     <div class="card-body">
-                                        <h5 class="card-title text-primary">Opening Meeting</h5>
-                                        <p><strong>Location:</strong> {{ plan.audit_opening_location }}</p>
-                                        <p><strong>Date & Time:</strong> {{ plan.audit_opening_date }}</p>
+                                        <h5 class="card-title text-primary">Reunion de Apertura</h5>
+                                        <p><strong>Localizacion:</strong> {{ plan.audit_opening_location }}</p>
+                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_opening_date }} {{ plan.audit_opening_time }}</p>
 
                                         <h5 class="card-title text-danger">Closing Meeting</h5>
-                                        <p><strong>Location:</strong> {{ plan.audit_closing_location }}</p>
-                                        <p><strong>Date & Time:</strong> {{ plan.audit_closing_date }}</p>
+                                        <p><strong>Localizacion:</strong> {{ plan.audit_closing_location }}</p>
+                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_closing_date }} {{ plan.audit_closing_time }}</p>
                                     </div>
                                 </div>
                             </div>
                             {% empty %}
-                            <p class="text-center">No audit plans available.</p>
+                            <p class="text-center">no hay planes disponibles.</p>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
 
 <div class="mt-5">
-    <h3 class="text-center">Audit Team & Audited People</h3>
+    <h3 class="text-center">Equipo Auditor y Auditados</h3>
     <div class="table-responsive">
         <table class="table table-bordered mt-3">
             <thead class="table-dark">
                 <tr>
-                    <th>Auditor</th>
-                    <th>Audited Person</th>
+                    <th>Auditores</th>
+                    <th>Auditados</th>
                 </tr>
             </thead>
             <tbody>
@@ -100,7 +101,7 @@
                     {% endfor %}
                 {% empty %}
                     <tr>
-                        <td colspan="2" class="text-center">No audit team or audited people available.</td>
+                        <td colspan="2" class="text-center">No hay auditores ni auditados disponibles</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -114,7 +115,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanModalLabel">Add Annual Plan</h5>
+                <h5 class="modal-title" id="addAnnualPlanModalLabel">Añadir Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -130,7 +131,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Add Annual Plan Auditor</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditorModalLabel">Añadir Auditor del Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -146,7 +147,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Add Annual Plan Audited</h5>
+                <h5 class="modal-title" id="addAnnualPlanAuditedModalLabel">Añadir Auditado del Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -300,5 +301,37 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
 });
 
 </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var options = {
+            chart: {
+                height: 350,
+                type: 'rangeBar'
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '50%',
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+            },
+            series: [{
+                data: {{ timeline_data|safe }}
+            }],
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy HH:mm'
+                }
+            }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#timeline-chart"), options);
+        chart.render();
+    });
+</script>
+
 
 {% endblock extra_js %}
