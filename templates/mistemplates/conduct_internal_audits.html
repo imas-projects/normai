@@ -16,14 +16,14 @@
                         Add
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-                        <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Add Findings</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Add Audit Report</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Add Corrective Action</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Add Corrective Action Follow-up</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Añadir Hallazgos</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Añadir reporte de Auditoria</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Añadir Accion Correctiva</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Añadir Seguimiento de Acciones Correctivas</a></li>
                     </ul>
                 </div>
                 <!-- Título centrado -->
-                <h1 class="text-center flex-grow-1">Conduct Internal Audits</h1>
+                <h1 class="text-center flex-grow-1">Realizacion de Auditorias Internas</h1>
 
                 <!-- Dropdown a la derecha -->
                 <div class="dropdown">
@@ -31,10 +31,10 @@
                         Add Questions
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Add Checklist</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Add Audited Evaluation Question</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Add Lead Auditor Evaluation Question</a></li>
-                        <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Add Auditor Evaluation</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Añadir Lista de Verificación</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditado</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditor Lider</a></li>
+                        <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Añadir Evaluación del Auditor</a></li>
                     </ul>
                 </div>
             </div>
@@ -46,22 +46,22 @@
     {% for audit in audit_data %}
     <div class="card mb-4 shadow-sm">
       <div class="card-header bg-dark text-white text-center">
-        <h3 class="mb-0 text-white">Audit: {{ audit.process }}</h3>
+        <h3 class="mb-0 text-white">Auditoria: {{ audit.process }}</h3>
       </div>
       <div class="card-body fs-5">
         <div class="row">
           <!-- Columna izquierda: Checklist y Findings -->
           <div class="col-md-6">
             <!-- Checklist -->
-            <h4 class="mt-3">Checklist</h4>
+            <h4 class="mt-3">Lista de Verificación</h4>
             {% if audit.checklist %}
             <ul class="list-group mb-3">
               {% for item in audit.checklist %}
               <li class="list-group-item">
                 <strong>Q{{ item.orden }}:</strong> {{ item.question }}<br>
-                <strong>Compliance:</strong> {{ item.compliance|yesno:"Yes,No" }}<br>
+                <strong>Cumplimiento:</strong> {{ item.compliance|yesno:"Yes,No" }}<br>
                 {% if item.evidence %}
-                <strong>Evidence:</strong> {{ item.evidence }}
+                <strong>Evidencia:</strong> {{ item.evidence }}
                 {% endif %}
               </li>
               {% endfor %}
@@ -71,31 +71,62 @@
             {% endif %}
 
             <!-- Findings -->
-            <h4>Findings</h4>
+            <h4>Hallazgos</h4>
             {% if audit.findings %}
             <ul class="list-group mb-3">
               {% for f in audit.findings %}
               <li class="list-group-item">
-                <strong>Classification:</strong> {{ f.classification }}<br>
+                <strong>Clasificación:</strong> {{ f.classification }}<br>
                 {{ f.text }}
               </li>
               {% endfor %}
             </ul>
             {% else %}
-            <p>No findings recorded.</p>
+            <p>No hay hallazgos disponibles</p>
             {% endif %}
           </div>
+
+            <!-- Dentro del div.card-body, bajo Hallazgos -->
+<h4>Acciones Correctivas</h4>
+{% if audit.corrective_actions %}
+<ul class="list-group mb-3">
+  {% for ca in audit.corrective_actions %}
+  <li class="list-group-item">
+    <strong>Acción:</strong> {{ ca.corrective_action }}<br>
+    <strong>Responsable:</strong> {{ ca.responsible_user.username }}<br>
+    <strong>Fecha Límite:</strong> {{ ca.due_date }}
+
+    {% if ca.followups %}
+    <div class="mt-2">
+      <strong>Seguimientos:</strong>
+      <ul class="list-group">
+        {% for f in ca.followups %}
+        <li class="list-group-item">
+          <strong>Fecha:</strong> {{ f.followup_date }}<br>
+          <strong>Estado:</strong> {{ f.status }}<br>
+          {% if f.comments %}<strong>Comentarios:</strong> {{ f.comments }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No hay acciones correctivas registradas</p>
+{% endif %}
 
           <!-- Columna derecha: Evaluaciones y Reporte -->
           <div class="col-md-6">
             <!-- Evaluation by Audited -->
-            <h4 class="mt-3">Evaluation by Audited</h4>
+            <h4 class="mt-3">Evaluación por el Auditado</h4>
             {% if audit.auditor_evaluation %}
             <ul class="list-group mb-3">
               {% for eval in audit.auditor_evaluation %}
               <li class="list-group-item">
-                <strong>Q{{ eval.orden }}:</strong> {{ eval.question }}<br>
-                <strong>Rating:</strong> {{ eval.rate }}
+                <strong>P{{ eval.orden }}:</strong> {{ eval.question }}<br>
+                <strong>Valoración:</strong> {{ eval.rate }}
               </li>
               {% endfor %}
             </ul>
@@ -103,35 +134,22 @@
             <p>No evaluations by audited.</p>
             {% endif %}
 
-            <!-- Evaluation by Lead Auditor -->
-            <h4>Evaluation by Lead Auditor</h4>
-            {% if audit.lead_auditor_evaluation %}
-            <ul class="list-group mb-3">
-              {% for eval in audit.lead_auditor_evaluation %}
-              <li class="list-group-item">
-                <strong>Q:</strong> {{ eval.question }}<br>
-                <strong>Rating:</strong> {{ eval.rate }}
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No evaluations by lead auditor.</p>
-            {% endif %}
-
             <!-- Audit Report -->
-            <h4>Audit Report</h4>
-            {% if audit.report %}
-            <p><strong>Summary:</strong> {{ audit.report.summary }}</p>
-            <p><strong>Strengths:</strong> {{ audit.report.strengths }}</p>
-            {% else %}
-            <p>No audit report submitted.</p>
-            {% endif %}
+<h4>Reporte de Auditoría</h4>
+{% if audit.report %}
+<p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
+<p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
+<p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
+{% else %}
+<p>No hay reporte de auditoría registrado.</p>
+{% endif %}
+
           </div>
         </div>
       </div>
     </div>
     {% empty %}
-    <p class="text-center fs-4">No audits available</p>
+    <p class="text-center fs-4">No hay auditorias disponibles</p>
     {% endfor %}
   </div>
 </div>
@@ -142,7 +160,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addFindingsModalLabel">Add Findings</h5>
+                <h5 class="modal-title" id="addFindingsModalLabel">Añadir Hallazgos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -160,7 +178,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditReportModalLabel">Add Audit Report</h5>
+                <h5 class="modal-title" id="addAuditReportModalLabel">Añadir Reporte de Auditoria</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -178,7 +196,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Add Checklist</h5>
+                <h5 class="modal-title" id="addChecklistQuestionModalLabel">Añadir Lista de Verificación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -196,7 +214,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditedEvaluationQuestionModalLabel">Add Audited Evaluation Question</h5>
+                <h5 class="modal-title" id="addAuditedEvaluationQuestionModalLabel">Añadir Preguntas de la Evaluación del Auditado</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -214,7 +232,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addLeadAuditorEvaluationQuestionModalLabel">Add Lead Auditor Evaluation Question</h5>
+                <h5 class="modal-title" id="addLeadAuditorEvaluationQuestionModalLabel">Añadir Preguntas de la Evaluación del Auditor Lider</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -227,72 +245,13 @@
     </div>
 </div>
 
-<!-- Modal Evaluation by Audited -->
-<div class="modal fade" id="auditedEvaluationModal" tabindex="-1" aria-labelledby="auditedEvaluationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="auditedEvaluationModalLabel">Evaluation by Audited</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="auditedEvaluationForm">
-                    <div id="auditedEvaluationFields">
-                        <!-- Aquí se cargarán dinámicamente las preguntas -->
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Evaluation by Lead Auditor -->
-<div class="modal fade" id="leadAuditorEvaluationModal" tabindex="-1" aria-labelledby="leadAuditorEvaluationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="leadAuditorEvaluationModalLabel">Evaluation by Lead Auditor</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="leadAuditorEvaluationForm">
-                    <div id="leadAuditorEvaluationFields">
-                        <!-- Aquí se cargarán dinámicamente las preguntas -->
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Audit Report -->
-<div class="modal fade" id="auditReportModal" tabindex="-1" aria-labelledby="auditReportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="auditReportModalLabel">Audit Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h5>Findings</h5>
-                <ul id="findingsList" class="list-group mb-3"></ul>
-
-                <h5>Audit Report</h5>
-                <p><strong>Summary:</strong> <span id="auditReportSummary"></span></p>
-                <p><strong>Strengths:</strong> <span id="auditReportStrengths"></span></p>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modal -->
 <div class="modal fade" id="addAuditorEvaluationModal" tabindex="-1" aria-labelledby="addAuditorEvaluationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Add Auditor Evaluation</h5>
+                <h5 class="modal-title" id="addAuditorEvaluationModalLabel">Añadir Evaluación del Auditor</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -308,7 +267,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Add Corrective Action</h5>
+                <h5 class="modal-title" id="addCorrectiveActionModalLabel">Añadir Accion Correctiva</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -326,7 +285,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Add Corrective Action Follow-up</h5>
+                <h5 class="modal-title" id="addCorrectiveActionFollowupModalLabel">Añadir Seguimiento de Accion Correctiva</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
