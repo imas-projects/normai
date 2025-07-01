@@ -444,12 +444,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
+<!-- Gráfico de auditorías -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    var auditoriasLabels = JSON.parse(document.getElementById('auditorias-labels').textContent);
-    var auditoriasValues = JSON.parse(document.getElementById('auditorias-values').textContent);
+    const auditoriasLabels = JSON.parse(document.getElementById('auditorias-labels').textContent);
+    const auditoriasValues = JSON.parse(document.getElementById('auditorias-values').textContent);
 
-    var options = {
+    const options = {
         chart: {
             type: 'bar',
             height: 300,
@@ -471,30 +472,21 @@ document.addEventListener("DOMContentLoaded", function () {
         grid: { borderColor: '#f1f1f1' }
     };
 
-    const containers = ['#audit_trend_chart', '#audit_trend_chart_mini'];
-
-    containers.forEach(id => {
-        const el = document.querySelector(id);
-        if (el) {
-            const chart = new ApexCharts(el, options);
-            chart.render();
-        } else {
-            console.warn(`No se encontró el contenedor: ${id}`);
-        }
-    });
+    const el = document.querySelector('#audit_trend_chart');
+    if (el) {
+        const chart = new ApexCharts(el, options);
+        chart.render();
+    }
 });
-
 </script>
 
+<!-- Gráfico de clasificación de NC -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    var labels = JSON.parse(document.getElementById('clasificaciones-labels').textContent);
-    var values = JSON.parse(document.getElementById('clasificaciones-values').textContent);
+    const labels = JSON.parse(document.getElementById('clasificaciones-labels').textContent);
+    const values = JSON.parse(document.getElementById('clasificaciones-values').textContent);
 
-    console.log('Labels:', labels);
-    console.log('Values:', values);
-
-    var options = {
+    const options = {
         chart: {
             type: 'pie',
             height: 350,
@@ -518,20 +510,18 @@ document.addEventListener("DOMContentLoaded", function () {
         }]
     };
 
-    var chart = new ApexCharts(document.querySelector("#nc_distribution_chart"), options);
+    const chart = new ApexCharts(document.querySelector("#nc_distribution_chart"), options);
     chart.render();
 });
-
 </script>
 
-
-
+<!-- Gráfico de alertas por proceso -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    var processLabels = JSON.parse(document.getElementById('process-labels').textContent);
-    var processValues = JSON.parse(document.getElementById('process-values').textContent);
+    const processLabels = JSON.parse(document.getElementById('process-labels').textContent);
+    const processValues = JSON.parse(document.getElementById('process-values').textContent);
 
-    var options = {
+    const options = {
         chart: {
             type: 'bar',
             height: 300,
@@ -553,21 +543,15 @@ document.addEventListener("DOMContentLoaded", function () {
         grid: { borderColor: '#f1f1f1' }
     };
 
-    const containers = ['#process_alert_chart', '#process_alert_chart_mini'];
-
-    containers.forEach(id => {
-        const el = document.querySelector(id);
-        if (el) {
-            const chart = new ApexCharts(el, options);
-            chart.render();
-        } else {
-            console.warn(`No se encontró el contenedor: ${id}`);
-        }
-    });
+    const el = document.querySelector('#process_alert_chart_mini');
+    if (el) {
+        const chart = new ApexCharts(el, options);
+        chart.render();
+    }
 });
-
 </script>
 
+<!-- Gráfico de tendencias KPI -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const monthLabels = JSON.parse(document.getElementById('kpis-labels').textContent);
@@ -626,13 +610,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (container) {
         const chart = new ApexCharts(container, options);
         chart.render();
-    } else {
-        console.warn("No se encontró el contenedor #kpi_trend_chart");
     }
 });
 </script>
-
 {% endblock extra_js %}
+
 
 
 </body>
