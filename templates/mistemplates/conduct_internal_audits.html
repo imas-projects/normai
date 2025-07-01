@@ -76,6 +76,9 @@
             <ul class="list-group mb-3">
               {% for f in audit.findings %}
               <li class="list-group-item">
+                <strong>Detalle:</strong> {{ f.finding_text }}<br>
+                {{ f.text }}
+                <strong>Requisito:</strong> {{ f.requirement }}<br>
                 <strong>Clasificación:</strong> {{ f.classification_text }}<br>
                 {% if f.requirement %}
                 <strong>Requisito:</strong> {{ f.requirement }}<br>
