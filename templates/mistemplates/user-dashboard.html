@@ -756,7 +756,7 @@
                 <h4 class="card-title mb-0 flex-grow-1">Tendencia de Auditorías Realizadas por Mes</h4>
             </div>
             <div class="card-body pb-0">
-                <div id="audit_trend_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+                <div id="audit_trend_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
             </div>
         </div>
     </div>
@@ -864,17 +864,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var auditoriasLabels = JSON.parse(document.getElementById('auditorias-labels').textContent);
     var auditoriasValues = JSON.parse(document.getElementById('auditorias-values').textContent);
 
-    console.log('Labels:', auditoriasLabels);
-    console.log('Values:', auditoriasValues);
-
-    var chartContainer = document.querySelector("#audit_trend_chart");
-    console.log('Chart container:', chartContainer);
-
-    if (!chartContainer) {
-        console.error('No se encontró el contenedor para el gráfico.');
-        return;
-    }
-
     var options = {
         chart: {
             type: 'bar',
@@ -897,9 +886,19 @@ document.addEventListener("DOMContentLoaded", function () {
         grid: { borderColor: '#f1f1f1' }
     };
 
-    var chart = new ApexCharts(chartContainer, options);
-    chart.render();
+    const containers = ['#audit_trend_chart', '#audit_trend_chart_mini'];
+
+    containers.forEach(id => {
+        const el = document.querySelector(id);
+        if (el) {
+            const chart = new ApexCharts(el, options);
+            chart.render();
+        } else {
+            console.warn(`No se encontró el contenedor: ${id}`);
+        }
+    });
 });
+
 </script>
 
 <script>
