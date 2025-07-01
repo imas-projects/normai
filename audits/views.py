@@ -179,8 +179,6 @@ def conduct_internal_audits(request):
         "checklists__question__requirement",
         "auditor_evaluations__question__requirement",
         "findings",
-        "auditreport__corrective_actions__responsible_user",
-        "auditreport__corrective_actions__followups",
     )
 
     data = []
@@ -189,18 +187,22 @@ def conduct_internal_audits(request):
         checklist = [item.as_dict() for item in plan.checklists.all()]
         auditor_evaluation = [eval.as_dict() for eval in plan.auditor_evaluations.all()]
 
-        report = getattr(plan, 'auditreport', None)
+        # Buscar reporte directamente (1:1)
+        report = AuditReport.objects.filter(audit_plan=plan).first()
         report_data = report.as_dict() if report else None
 
+        # Hallazgos relacionados
         findings_data = [finding.as_dict() for finding in plan.findings.all()]
 
+        # Acciones correctivas y seguimiento
         corrective_actions = []
         if report:
-            for action in report.corrective_actions.all():
+            for action in report.corrective_actions.select_related("responsible_user").prefetch_related("followups").all():
                 action_dict = action.as_dict()
                 action_dict["followups"] = [f.as_dict() for f in action.followups.all()]
                 corrective_actions.append(action_dict)
 
+        # Ensamblar entrada
         entry = {
             "plan_id": plan.id,
             "process": plan.annual_program.process.name,
