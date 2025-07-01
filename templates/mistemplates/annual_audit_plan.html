@@ -307,15 +307,17 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
     document.addEventListener('DOMContentLoaded', function () {
         var options = {
             chart: {
-                height: 350,
+                height: {{ timeline_data|length|add:"1" }} * 60,
                 type: 'rangeBar'
             },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    barHeight: '50%',
+                    barHeight: '80%',
+                    distributed: true
                 }
             },
+            colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0'],
             xaxis: {
                 type: 'datetime',
             },
@@ -333,6 +335,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
         chart.render();
     });
 </script>
+
 
 
 {% endblock extra_js %}
