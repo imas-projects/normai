@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
-from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAuditor 
+from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
 from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
 from company.models import Area
 from risks.models import RiskTreatment
@@ -212,22 +212,35 @@ def wellcome_view(request):
         })
 
     for ca in corrective_actions:
+        user = ca.responsible_user
+        positions = user.user_position.all()
+        positions_names = ", ".join([pos.position.name for pos in positions])
+        responsible = positions_names if positions_names else user.username
+
         activities.append({
-            "date": ca.due_date, 
+            "date": ca.due_date,
             "name": f"Corrective Action: {ca.corrective_action[:40]}",
             "type": "Audit",
-            "responsible": ca.responsible_user.username,
+            "responsible": responsible,
         })
 
+
     for ap in annual_plans:
-        auditors_qs = ap.auditors.all() 
-        auditors_names = ", ".join([auditor.user.get_full_name() or auditor.user.username for auditor in auditors_qs])
+        audited_qs = ap.audited.all()
+        audited_positions = []
+        for audited in audited_qs:
+            user = audited.user
+            positions = user.user_position.all()
+            positions_names = ", ".join([pos.position.name for pos in positions])
+            audited_positions.append(positions_names if positions_names else user.username)
+
+        responsible_text = ", ".join(auditors_positions)
 
         activities.append({
             "date": ap.audit_opening_date,
             "name": f"Annual Audit Plan: {ap.annual_program}",
             "type": "Audit Plan",
-            "responsible": auditors_names,
+            "responsible": responsible_text,
         })
 
 
