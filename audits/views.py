@@ -176,39 +176,30 @@ def conduct_internal_audits(request):
     ).prefetch_related(
         "auditors__user",
         "audited_users__user",
-        "checklists__question",
-        "auditor_evaluations__question"
+        "checklists__question__requirement",
+        "auditor_evaluations__question__requirement",
+        "findings",
+        "auditreport__corrective_actions__responsible_user",
+        "auditreport__corrective_actions__followups",
     )
 
     data = []
 
     for plan in plans:
-        checklist_items = plan.checklists.select_related("question").all()
+        checklist = [item.as_dict() for item in plan.checklists.all()]
+        auditor_evaluation = [eval.as_dict() for eval in plan.auditor_evaluations.all()]
 
-        checklist = [{
-            "orden": item.orden,
-            "question": item.question.question_text,
-            "requirement": item.question.requirement,
-            "compliance": item.compliance,
-            "evidence": item.evidence,
-        } for item in checklist_items]
-
-        auditor_evals = plan.auditor_evaluations.select_related("question").all()
-        auditor_evaluation = [{
-            "orden": eval.orden,
-            "question": eval.question.question_text,
-            "rate": eval.rate
-        } for eval in auditor_evals]
-
-        report = AuditReport.objects.filter(audit_plan=plan).first()
+        report = getattr(plan, 'auditreport', None)
         report_data = report.as_dict() if report else None
-        findings_data = []
 
-        lead_eval_queryset = LeadAuditorEvaluationQuestion.objects.filter(type='AUDITOR_LIDER')
+        findings_data = [finding.as_dict() for finding in plan.findings.all()]
 
-        lead_auditor_evaluation = [{
-            "question": eval.question_text,
-        } for eval in lead_eval_queryset]
+        corrective_actions = []
+        if report:
+            for action in report.corrective_actions.all():
+                action_dict = action.as_dict()
+                action_dict["followups"] = [f.as_dict() for f in action.followups.all()]
+                corrective_actions.append(action_dict)
 
         entry = {
             "plan_id": plan.id,
@@ -218,9 +209,9 @@ def conduct_internal_audits(request):
             "audited_users": [au.user.get_full_name() for au in plan.audited_users.all()],
             "checklist": checklist,
             "auditor_evaluation": auditor_evaluation,
-            "lead_auditor_evaluation": lead_auditor_evaluation,
             "report": report_data,
             "findings": findings_data,
+            "corrective_actions": corrective_actions,
         }
 
         data.append(entry)
