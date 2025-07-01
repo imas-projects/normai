@@ -36,9 +36,9 @@ class RiskEvaluation(models.Model):
     OCCURRENCE_CHOICES = [(i, str(i)) for i in range(11)]
     DETECTION_CHOICES = [(i, str(i)) for i in range(11)]
     RISK_LEVEL_CHOICES = [
-        ('High', 'High'),
-        ('Moderate', 'Moderate'),
-        ('Low', 'Low')
+        ('High', 'Alto'),
+        ('Moderate', 'Moderado'),
+        ('Low', 'Bajo')
     ]
 
     severity = models.IntegerField(choices=SEVERITY_CHOICES)
@@ -188,9 +188,9 @@ class ContingencyPlanCommunicateTo(models.Model):
 # Tabla de reevaluación
 class Reevaluation(models.Model):
     RISK_LEVEL_CHOICES = [
-        ('High', 'High'),
-        ('Moderate', 'Moderate'),
-        ('Low', 'Low')
+        ('High', 'Alto'),
+        ('Moderate', 'Moderado'),
+        ('Low', 'Bajo')
     ]
 
     risk = models.ForeignKey('RiskIdentification', on_delete=models.CASCADE, related_name='reevaluations')
