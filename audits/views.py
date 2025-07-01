@@ -171,6 +171,13 @@ def annual_audit_plan(request):
 # === CONDUCT INTERNAL AUDITS ===
 
 def conduct_internal_audits(request):
+    # Mapa para mostrar la clasificación legible en hallazgos
+    classification_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+
     plans = AnnualPlan.objects.select_related(
         "annual_program__process"
     ).prefetch_related(
@@ -184,21 +191,37 @@ def conduct_internal_audits(request):
     data = []
 
     for plan in plans:
-        checklist = [item.as_dict() for item in plan.checklists.all()]
+        # Checklist con etiqueta "P" en vez de "Q"
+        checklist = []
+        for item in plan.checklists.all():
+            item_dict = item.as_dict()
+            item_dict["orden_label"] = f"P{item.orden}"  # etiqueta personalizada
+            checklist.append(item_dict)
+
+        # Evaluación del auditado (sin cursiva se hace en template, aquí solo pasamos datos)
         auditor_evaluation = [eval.as_dict() for eval in plan.auditor_evaluations.all()]
 
-        # Buscar reporte directamente (1:1)
+        # Reporte (1:1)
         report = AuditReport.objects.filter(audit_plan=plan).first()
         report_data = report.as_dict() if report else None
 
-        # Hallazgos relacionados
-        findings_data = [finding.as_dict() for finding in plan.findings.all()]
+        # Hallazgos con requisito y clasificación legible
+        findings_data = []
+        for finding in plan.findings.all():
+            f_dict = finding.as_dict()
+            # Mapear clasificación a texto legible
+            f_dict["classification_text"] = classification_map.get(f_dict["classification"], f_dict["classification"])
+            findings_data.append(f_dict)
 
-        # Acciones correctivas y seguimiento
+        # Acciones correctivas y seguimiento, responsable como nombre completo
         corrective_actions = []
         if report:
             for action in report.corrective_actions.select_related("responsible_user").prefetch_related("followups").all():
                 action_dict = action.as_dict()
+                # Cambiar responsable a nombre completo
+                responsible_user = action.responsible_user
+                action_dict["responsible_user"]["full_name"] = responsible_user.get_full_name()
+                # Seguimientos
                 action_dict["followups"] = [f.as_dict() for f in action.followups.all()]
                 corrective_actions.append(action_dict)
 
