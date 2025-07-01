@@ -450,7 +450,7 @@
                                             {% for plan in contingency_plans %}
                                                 {% if plan.risk.id == risk.id %}
                                                     <tr>
-                                                        <td>{{ plan.get_contingency_actions_display|join:", " }}</td>
+                                                        <td>{{ plan.contingency_actions_display|join:", " }}</td>
                                                         <td>{{ plan.responsible.all|join:", " }}</td>
                                                         <td>{{ plan.communicate_to.all|join:", " }}</td>
                                                     </tr>
