@@ -100,11 +100,11 @@ def wellcome_view(request):
     clasificaciones_labels = []
     clasificaciones_values = []
 
-    for key, label in clasificaciones_map.items():
+    for key, label in reversed(list(clasificaciones_map.items())):
         clasificaciones_labels.append(label)
-        # Buscar el total correspondiente o 0 si no existe
         total = next((f['total'] for f in findings_dist if f['classification'] == key), 0)
         clasificaciones_values.append(total)
+
 
 
     # === Contexto final ===
