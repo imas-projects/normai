@@ -109,13 +109,10 @@ def wellcome_view(request):
 
     areas = Area.objects.all()
 
-    processes_with_findings = (
-        Process.objects
-        .annotate(
-            total_findings=Count('processrequirement__finding')
-        )
-        .order_by('-total_findings')  
-    )
+    processes_with_findings = Process.objects.annotate(
+        total_findings=Count('processrequirement__findings_set')
+    ).order_by('-total_findings')
+
 
 
     # === Contexto final ===
