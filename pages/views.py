@@ -10,7 +10,7 @@ from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
-from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings 
+from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAuditor 
 from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
 from company.models import Area
 from risks.models import RiskTreatment
