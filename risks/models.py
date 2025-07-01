@@ -100,7 +100,6 @@ class RiskTreatment(models.Model):
         }
 
 
-
 # Tabla de planes de contingencia
 class ContingencyPlan(models.Model):
     ACTION_CHOICES = [
@@ -160,6 +159,9 @@ class ContingencyPlan(models.Model):
                 }
             } for position in self.communicate_to.all()],
         }
+    def get_contingency_actions_display(self):
+        return [dict(self.ACTION_CHOICES).get(code, code) for code in self.contingency_actions]
+
 
 
 class ContingencyPlanResponsible(models.Model):
