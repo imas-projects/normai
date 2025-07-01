@@ -162,7 +162,8 @@ class ContingencyPlan(models.Model):
             } for position in self.communicate_to.all()],
         }
 
-    def get_contingency_actions_display(self):
+    @property
+    def contingency_actions_display(self):
         selected_codes = self.get_contingency_actions_list()
         return [dict(self.ACTION_CHOICES).get(code, code) for code in selected_codes]
 
