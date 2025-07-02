@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Checklist</h2>
   <form method="post" action="{% url 'audits:add_checklist' %}">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.audit_plan.label_tag }}
+      <label>Plan:</label>
       {{ form.audit_plan }}
       {% if form.audit_plan.errors %}
         <div class="text-danger small">{{ form.audit_plan.errors }}</div>
@@ -13,7 +12,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.question.label_tag }}
+      <label>Pregunta:</label>
       {{ form.question }}
       {% if form.question.errors %}
         <div class="text-danger small">{{ form.question.errors }}</div>
@@ -21,23 +20,26 @@
     </div>
 
     <div class="mb-3">
-      {{ form.orden.label_tag }}
+      <label>Orden:</label>
       {{ form.orden }}
       {% if form.orden.errors %}
         <div class="text-danger small">{{ form.orden.errors }}</div>
       {% endif %}
     </div>
 
-    <div class="form-check mb-3">
-      {{ form.compliance }}
-      {{ form.compliance.label_tag }}
-      {% if form.compliance.errors %}
-        <div class="text-danger small">{{ form.compliance.errors }}</div>
-      {% endif %}
-    </div>
+<div class="form-check mb-3">
+  <label for="{{ form.compliance.id_for_label }}" class="form-check-label">
+    Cumplimiento:
+  </label>
+  {{ form.compliance }}
+  {% if form.compliance.errors %}
+    <div class="text-danger small">{{ form.compliance.errors }}</div>
+  {% endif %}
+</div>
+
 
     <div class="mb-3">
-      {{ form.evidence.label_tag }}
+      <label>Evidencia:</label>
       {{ form.evidence }}
       {% if form.evidence.errors %}
         <div class="text-danger small">{{ form.evidence.errors }}</div>
