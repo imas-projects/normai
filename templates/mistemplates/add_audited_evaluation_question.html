@@ -1,13 +1,12 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Pregunta de Evaluación Auditada</h2>
 
   <form method="post" action="{% url 'audits:add_audited_evaluation_question' %}" id="auditedEvaluationForm">
     {% csrf_token %}
 
     <!-- Campo para seleccionar el requisito -->
     <div class="mb-3">
-      {{ form.requirement.label_tag }}
+      <label>Requisito:</label>
       {{ form.requirement }}
       {% if form.requirement.errors %}
         <div class="text-danger small">{{ form.requirement.errors }}</div>
@@ -16,7 +15,6 @@
 
     <!-- Campo para introducir el nombre del proceso -->
     <div class="mb-3">
-      {{ form.process_name.label_tag }}
       {{ form.process_name }}
       {% if form.process_name.errors %}
         <div class="text-danger small">{{ form.process_name.errors }}</div>
@@ -33,7 +31,7 @@
 
     <!-- Campo de texto de la pregunta -->
     <div class="mb-3">
-      {{ form.question_text.label_tag }}
+      <label>Pregunta:</label>
       {{ form.question_text }}
       {% if form.question_text.errors %}
         <div class="text-danger small">{{ form.question_text.errors }}</div>
