@@ -44,7 +44,12 @@ class RiskEvaluationForm(forms.ModelForm):
 class RiskTreatmentForm(forms.ModelForm):
     responsible = forms.ModelMultipleChoiceField(
         queryset=Position.objects.all(),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'data-choices': '',
+            'data-choices-removeItem': '',
+            'multiple': True,
+        }),
         label="Responsible Position"
     )
 
@@ -62,27 +67,42 @@ class RiskTreatmentForm(forms.ModelForm):
 class ContingencyPlanForm(forms.ModelForm):
     contingency_actions = forms.MultipleChoiceField(
         choices=ContingencyPlan.ACTION_CHOICES,
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'data-choices': '',
+            'data-choices-removeItem': '',
+            'multiple': True,
+        }),
         label="Contingency Actions"
     )
 
     responsible = forms.ModelMultipleChoiceField(
         queryset=Position.objects.all(),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'data-choices': '',
+            'data-choices-removeItem': '',
+            'multiple': True,
+        }),
         label="Responsible Position(s)",
         required=False
     )
 
     communicate_to = forms.ModelMultipleChoiceField(
         queryset=Position.objects.all(),
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-select',
+            'data-choices': '',
+            'data-choices-removeItem': '',
+            'multiple': True,
+        }),
         label="Communicate To Position(s)",
         required=False
     )
 
     class Meta:
         model = ContingencyPlan
-        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']  
+        fields = ['risk', 'contingency_actions', 'responsible', 'communicate_to']
         widgets = {
             'risk': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -107,7 +127,6 @@ class ContingencyPlanForm(forms.ModelForm):
                 ContingencyPlanCommunicateTo.objects.create(contingencyplan=instance, position=position)
 
         return instance
-
 
 class ReevaluationForm(forms.ModelForm):
     class Meta:
