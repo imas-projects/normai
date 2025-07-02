@@ -1,12 +1,11 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Encabezado del Programa de Auditoría</h2>
   <form method="post" action="{% url 'audits:add_audit_program_header' %}" id="add-audit-program-header-form">
     {% csrf_token %}
 
     <!-- Campo de año -->
     <div class="mb-3">
-      {{ form.year.label_tag }}
+      <label>Año:</label>
       {{ form.year }}
       {% if form.year.errors %}
         <div class="text-danger small">{{ form.year.errors }}</div>
@@ -23,7 +22,7 @@
 
     <!-- Campo objetivo -->
     <div class="mb-3">
-      {{ form.objective.label_tag }}
+      <label>Objetivos:</label>
       {{ form.objective }}
       {% if form.objective.errors %}
         <div class="text-danger small">{{ form.objective.errors }}</div>
@@ -32,7 +31,7 @@
 
     <!-- Campo alcance -->
     <div class="mb-3">
-      {{ form.scope.label_tag }}
+      <label>Alcance:</label>
       {{ form.scope }}
       {% if form.scope.errors %}
         <div class="text-danger small">{{ form.scope.errors }}</div>
@@ -41,7 +40,7 @@
 
     <!-- Campo criterios -->
     <div class="mb-3">
-      {{ form.audit_criteria.label_tag }}
+     <label>Criterios de Auditoria:</label>
       {{ form.audit_criteria }}
       {% if form.audit_criteria.errors %}
         <div class="text-danger small">{{ form.audit_criteria.errors }}</div>
@@ -50,7 +49,7 @@
 
     <!-- Campo normas de seguridad -->
     <div class="mb-3">
-      {{ form.security_standards.label_tag }}
+      <label>Estandares de Seguridad:</label>
       {{ form.security_standards }}
       {% if form.security_standards.errors %}
         <div class="text-danger small">{{ form.security_standards.errors }}</div>
