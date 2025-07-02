@@ -1,12 +1,11 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Evaluación del Auditor</h2>
   <form method="post" action="{% url 'audits:add_auditor_evaluation' %}" id="auditorEvaluationForm">
     {% csrf_token %}
 
     <!-- AUDIT -->
     <div class="mb-3">
-      {{ form.audit_plan.label_tag }}
+      <label>Plan:</label>
       {{ form.audit_plan }}
       {% if form.audit_plan.errors %}
         <div class="text-danger small">{{ form.audit_plan.errors }}</div>
@@ -16,7 +15,7 @@
 
     <!-- QUESTION -->
     <div class="mb-3">
-      {{ form.question.label_tag }}
+      <label>Pregunta:</label>
       {{ form.question }}
       {% if form.question.errors %}
         <div class="text-danger small">{{ form.question.errors }}</div>
@@ -25,7 +24,7 @@
 
     <!-- ORDEN -->
     <div class="mb-3">
-      {{ form.orden.label_tag }}
+      <label>Orden en Lista de Verificación:</label>
       {{ form.orden }}
       {% if form.orden.errors %}
         <div class="text-danger small">{{ form.orden.errors }}</div>
@@ -34,7 +33,7 @@
 
     <!-- RATE -->
     <div class="mb-3">
-      {{ form.rate.label_tag }}
+      <label>Valoración:</label>
       <div class="input-group">
         {{ form.rate }}
         <button type="button" id="btnSuggestRateIA" class="btn btn-outline-info ms-2">Sugerir con IA</button>
