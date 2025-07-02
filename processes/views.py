@@ -10,12 +10,13 @@ from django.http import JsonResponse
 import json
 import datetime
 
+@login_required
 def list_processes(request):
     processes = Process.objects.all()
 
     return render(request, 'mistemplates/processes.html', {'processes': processes})
 
-
+@login_required
 def create_process(request):
     if request.method == 'POST':
         form = ProcessForm(request.POST)
@@ -29,7 +30,7 @@ def create_process(request):
         form = ProcessForm()
     return render(request, 'mistemplates/create_process.html', {'form': form})
 
-
+@login_required
 def load_form_options():
     responsible_options = list(Position.objects.all().values('id', 'name'))
     internal_suppliers_options = list(Area.objects.all().values('id', 'name'))
@@ -55,6 +56,7 @@ def load_form_options():
         'measurements_options' : measurements_options,
     }
 
+@login_required
 def get_process(request, id):
     try:
         current_process = Process.objects.get(id=id)
@@ -104,6 +106,7 @@ def get_process(request, id):
     except Process.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Row not found.'})
 
+@login_required
 def update_process(request):
     if request.method == 'POST':
             data = json.loads(request.body)
@@ -155,6 +158,7 @@ def update_process(request):
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 
+@login_required
 def edit_process(request, process_id):
     process = get_object_or_404(Process, id=process_id)
     if request.method == 'POST':
@@ -170,6 +174,7 @@ def edit_process(request, process_id):
     return render(request, 'mistemplates/edit_process.html', {'form': form, 'process': process})
 
 from risks.models import RiskIdentification
+@login_required
 def add_risk_processes(request):
     processes = Process.objects.all()
 
@@ -194,7 +199,7 @@ def add_risk_processes(request):
 
     return render(request, 'mistemplates/processes.html', {'processes': processes})
 
-
+@login_required
 def save_process_summarize_ia(request):
 
     if request.method == "POST":
@@ -211,6 +216,7 @@ def save_process_summarize_ia(request):
 
     return redirect('processes:list_processes')
 
+@login_required
 def kpis_processes(request):
     processes = Process.objects.all()
 

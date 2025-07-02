@@ -48,8 +48,6 @@ def all_messages(request):
     return render(request, "mistemplates/communication-tables.html", context)
     
 
-
-
 # Esta función recoge las informacion de las tablas relacionadas con los mensajes.
 # Se usa para cargar los campos de un mensaje o las opciones seleccionables de los formularios de editar/añadir mensaje.
 # Evita tener que repetir estas mismas líneas en las otras dos funciones.
@@ -96,6 +94,7 @@ def get_message(request, id):
 
 # Aplicación de las modificaciones hechas en un mensaje
 @csrf_protect
+@login_required
 def update_message(request):
     if request.method == 'POST':
         try:
@@ -139,6 +138,7 @@ def update_message(request):
 
 # Eliminación de mensaje de la tabla
 @csrf_protect
+@login_required
 def delete_message(request, id):
     if request.method == 'POST':
         try:
@@ -180,6 +180,7 @@ def load_addtableform_options_asJson(request):
         return JsonResponse({'success': False, 'error': 'Error'})
 
 @csrf_protect
+@login_required
 def create_message(request):
     if request.method == 'POST':
         try:
@@ -341,7 +342,8 @@ def communication_table_review(request):
 
     return render(request,"mistemplates/communication-tables-review.html", context)
 
-
+@csrf_protect
+@login_required
 def save_table_summarize_ia(request):
 
     if request.method == "POST":

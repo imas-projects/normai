@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
@@ -38,13 +39,15 @@ from processes.models import Process
 from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields, suggest_corrective_actions
 
 # === BASIC VIEWS ===
-
+@csrf_protect
+@login_required
 def audits_home(request):
     return render(request, 'mistemplates/audits.html')
 
 
 # === ANNUAL AUDIT PROGRAM ===
-
+@csrf_protect
+@login_required
 def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
 
@@ -115,7 +118,8 @@ def annual_audit_program(request):
 from itertools import zip_longest
 
 from datetime import datetime as dt
-
+@csrf_protect
+@login_required
 def annual_audit_plan(request):
     plans = AnnualPlan.objects.select_related(
         "annual_program__program_header",
@@ -169,7 +173,8 @@ def annual_audit_plan(request):
 
 
 # === CONDUCT INTERNAL AUDITS ===
-
+@csrf_protect
+@login_required
 def conduct_internal_audits(request):
     # Mapa para mostrar la clasificación legible en hallazgos
     classification_map = {
@@ -245,7 +250,8 @@ def conduct_internal_audits(request):
 
 
 # === ADD VIEWS ===
-
+@csrf_protect
+@login_required
 def _add_form_view(request, form_class, redirect_url, template_name, use_cleaned_user=False):
     if request.method == "POST":
         form = form_class(request.POST)
@@ -265,6 +271,7 @@ def add_audit_program_header(request):
 
 @require_GET
 @csrf_exempt 
+@login_required
 def suggest_audit_program_fields(request):
     try:
         year = int(request.GET.get("year", 0))
@@ -277,10 +284,11 @@ def suggest_audit_program_fields(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
+@login_required
 def add_annual_program(request):
     return _add_form_view(request, AnnualProgramForm, 'audits:annual_audit_program', 'mistemplates/add_annual_program.html')
 
+@login_required
 def suggest_annual_program_processes_view(request):
     program_header_id = request.GET.get('program_header_id')
     if not program_header_id:
@@ -295,6 +303,7 @@ def suggest_annual_program_processes_view(request):
 
 @require_POST
 @csrf_protect  # Usa CSRF con protección real
+@login_required
 def save_selected_annual_program_process(request):
     try:
         program_header_id = request.POST.get("program_header_id")
@@ -324,13 +333,15 @@ def save_selected_annual_program_process(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
+@login_required
 def add_annual_plan(request):
     return _add_form_view(request, AnnualPlanForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan.html')
-    
+
+@login_required    
 def add_annual_plan_auditor(request):
     return _add_form_view(request, AnnualPlanAuditorForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_auditor.html')
 
+@login_required
 def suggest_auditor_view(request):
     annual_plan_id = request.GET.get("annual_plan_id")
 
@@ -353,6 +364,7 @@ def suggest_auditor_view(request):
 
 @require_POST
 @csrf_exempt
+@login_required
 def save_selected_auditor(request):
     try:
         annual_plan_id = request.POST.get("annual_plan_id")
@@ -377,11 +389,11 @@ def save_selected_auditor(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-
+@login_required
 def add_annual_plan_audited(request):
     return _add_form_view(request, AnnualPlanAuditedForm, 'audits:annual_audit_plan', 'mistemplates/add_annual_plan_audited.html')
     
-
+@login_required
 def add_checklist(request):
     if request.method == "POST":
         form = ChecklistForm(request.POST)
@@ -392,7 +404,7 @@ def add_checklist(request):
             return JsonResponse({"status": "error", "errors": form.errors}, status=400)
     return render(request, "mistemplates/add_checklist.html", {"form": ChecklistForm()})
     
-
+@login_required
 def add_findings(request):
     ia_error = None
 
@@ -436,7 +448,7 @@ def add_findings(request):
 
     return render(request, "mistemplates/add_findings.html", {"form": form})
 
-
+@login_required
 def classify_finding_view(request):
     finding_text = request.GET.get("finding_text")
     requirement_id = request.GET.get("requirement_id")
@@ -475,10 +487,11 @@ def classify_finding_view(request):
 
     return JsonResponse({"classification": classification})
 
-
+@login_required
 def add_audit_report(request):
     return _add_form_view(request, AuditReportForm, 'audits:conduct_internal_audits', 'mistemplates/add_audit_report.html')
 
+@login_required
 def suggest_audit_report_view(request):
     audit_plan_id = request.GET.get("audit_plan_id")
 
@@ -500,13 +513,15 @@ def suggest_audit_report_view(request):
         traceback.print_exc()
         return JsonResponse({"error": f"Error al generar el informe: {str(e)}"}, status=500)
 
-
+@login_required
 def add_process_requirement(request):
     return _add_form_view(request, ProcessRequirementForm, 'audits:annual_audit_program', 'mistemplates/add_process_requirement.html')
 
+@login_required
 def add_audited_evaluation_question(request):
     return _add_form_view(request, AuditedEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_audited_evaluation_question.html')
 
+@login_required
 def suggest_audit_questions_view(request):
     requirement_id = request.GET.get('requirement_id')
 
@@ -528,7 +543,8 @@ def suggest_audit_questions_view(request):
     return JsonResponse({"questions": questions})
 
 @require_POST
-@csrf_exempt  
+@csrf_exempt 
+@login_required 
 def save_selected_audit_question(request):
     try:
         requirement_id = request.POST.get("requirement_id")
@@ -548,10 +564,11 @@ def save_selected_audit_question(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
+@login_required
 def add_auditor_evaluation(request):
     return _add_form_view(request, AuditorEvaluationForm, 'audits:conduct_internal_audits', 'mistemplates/add_auditor_evaluation.html')
 
+@login_required
 def suggest_compliance_rate_view(request):
     audit_id = request.GET.get("audit_id")
     question_id = request.GET.get("question_id")
@@ -575,11 +592,11 @@ def suggest_compliance_rate_view(request):
         return JsonResponse({"error": f"Error interno: {str(e)}"}, status=500)
 
 
-
+@login_required
 def add_lead_auditor_evaluation_question(request):
     return _add_form_view(request, LeadAuditorEvaluationQuestionForm, 'audits:conduct_internal_audits', 'mistemplates/add_lead_auditor_evaluation_question.html')
 
-
+@login_required
 def add_corrective_action(request):
     return _add_form_view(
         request,
@@ -588,6 +605,7 @@ def add_corrective_action(request):
         'mistemplates/add_corrective_action.html'
     )
 
+@login_required
 def suggest_corrective_action_view(request):
     audit_report_id = request.GET.get("audit_report_id")
 
@@ -605,7 +623,7 @@ def suggest_corrective_action_view(request):
         traceback.print_exc()
         return JsonResponse({"error": f"Error al generar las acciones correctivas: {str(e)}"}, status=500)
 
-
+@login_required
 def add_corrective_action_followup(request):
     return _add_form_view(
         request,

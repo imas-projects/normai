@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from .models import RiskIdentification, RiskEvaluation, RiskTreatment, ContingencyPlan, Reevaluation
 from .forms import RiskIdentificationForm, RiskEvaluationForm, RiskTreatmentForm, ContingencyPlanForm, ReevaluationForm
 from django.http import JsonResponse
@@ -23,6 +24,7 @@ from processes.models import Process
 
 from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions, suggest_reevaluation_rating_ranges, suggest_reevaluation_risk_level
 
+@login_required
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
@@ -47,7 +49,7 @@ def create_risk(request):
         'reevaluations': reevaluations,
     })
 
-
+@login_required
 def add_risk_identification(request):
     if request.method == 'POST':
         form = RiskIdentificationForm(request.POST)
@@ -62,7 +64,8 @@ def add_risk_identification(request):
     })
 
 @require_POST
-@csrf_exempt  
+@csrf_exempt
+@login_required  
 def save_selected_risk_identification(request):
     try:
         area_id = request.POST.get("area_id")
@@ -89,7 +92,7 @@ def save_selected_risk_identification(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
+@login_required
 def get_suggestions(request):
     area_id = request.GET.get('area')
     process_id = request.GET.get('process')
@@ -110,7 +113,7 @@ def get_suggestions(request):
 
     return JsonResponse(suggestions, safe=False)
 
-
+@login_required
 def add_risk_evaluation(request):
     suggestion_data = None
     risk_id = request.GET.get("risk_id")
@@ -143,7 +146,7 @@ def add_risk_evaluation(request):
 
 
 
-
+@login_required
 def get_controls_suggestions(request):
     risk_id = request.GET.get('risk_id')
 
@@ -164,6 +167,7 @@ def get_controls_suggestions(request):
         return JsonResponse({'error': f'Error al generar sugerencias de controles: {str(e)}'}, status=500)
 
 @csrf_exempt
+@login_required
 def get_ranges_suggestions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Método no permitido'}, status=405)
@@ -194,6 +198,7 @@ def get_ranges_suggestions(request):
     except Exception as e:
         return JsonResponse({'error': f'Error al generar sugerencias de rangos: {str(e)}'}, status=500)
 
+@login_required
 def get_level_suggestions(request):
     risk_id = request.GET.get('risk_id')
 
@@ -230,7 +235,7 @@ def get_level_suggestions(request):
     except Exception as e:
         return JsonResponse({'error': f'Error al generar sugerencias de nivel de riesgo: {str(e)}'}, status=500)
 
-
+@login_required
 def add_risk_treatment(request):
     if request.method == 'POST':
         form = RiskTreatmentForm(request.POST)
@@ -254,6 +259,7 @@ def add_risk_treatment(request):
 
     return render(request, 'mistemplates/add_risk_treatment.html', {'form': form})
 
+@login_required
 def get_treatment_suggestions(request):
     """
     Endpoint para obtener sugerencias de acciones correctivas de tratamiento para un riesgo específico.
@@ -280,7 +286,7 @@ def get_treatment_suggestions(request):
 
     return JsonResponse(suggestions, safe=False)
 
-
+@login_required
 def add_contingency_plan(request):
     if request.method == 'POST':
         form = ContingencyPlanForm(request.POST)
@@ -321,7 +327,7 @@ def get_contingency_suggestions(request):
 
     return JsonResponse(suggestions, safe=False)
 
-
+@login_required
 def add_reevaluation(request):
     suggestion_data = None
     risk_id = request.GET.get("risk_id")
@@ -353,6 +359,7 @@ def add_reevaluation(request):
     )
 
 @csrf_exempt
+@login_required
 def get_reevaluation_ranges_suggestions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Método no permitido'}, status=405)
@@ -378,7 +385,7 @@ def get_reevaluation_ranges_suggestions(request):
     except Exception as e:
         return JsonResponse({'error': f'Error al generar sugerencias de rangos: {str(e)}'}, status=500)
         
-
+@login_required
 def get_reevaluation_level_suggestions(request):
     risk_id = request.GET.get('risk_id')
 
@@ -409,7 +416,7 @@ def get_reevaluation_level_suggestions(request):
         return JsonResponse({'error': f'Error al generar sugerencias de nivel de riesgo: {str(e)}'}, status=500)
 
 
-
+@login_required
 def edit_risk_identification(request, risk_id):
     risk = get_object_or_404(RiskIdentification, id=risk_id)
     
@@ -423,6 +430,7 @@ def edit_risk_identification(request, risk_id):
 
     return render(request, 'mistemplates/edit_risk_identification.html', {'form': form, 'risk': risk})
 
+@login_required
 def edit_risk_evaluation(request, risk_id):
     evaluation = get_object_or_404(RiskEvaluation, id=risk_id)
 
@@ -438,6 +446,7 @@ def edit_risk_evaluation(request, risk_id):
 
     return render(request, 'mistemplates/edit_risk_evaluation.html', {'form': form, 'evaluation': evaluation})
 
+@login_required
 def edit_risk_treatment(request, risk_id):
     treatment = get_object_or_404(RiskTreatment, id=risk_id)
 
@@ -453,6 +462,7 @@ def edit_risk_treatment(request, risk_id):
 
     return render(request, 'mistemplates/edit_risk_treatment.html', {'form': form, 'treatment': treatment})
 
+@login_required
 def edit_contingency_plan(request, risk_id):
     plan = get_object_or_404(ContingencyPlan, id=risk_id)
 
@@ -468,6 +478,7 @@ def edit_contingency_plan(request, risk_id):
 
     return render(request, 'mistemplates/edit_contingency_plan.html', {'form': form, 'plan': plan})
 
+@login_required
 def edit_reevaluation(request, risk_id):
     reevaluation = get_object_or_404(Reevaluation, id=risk_id)
 
@@ -491,6 +502,7 @@ from io import BytesIO
 from datetime import date
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+
 
 def generate_risks_pdf(request, area_name): 
     area = get_object_or_404(Area, name=area_name)  
