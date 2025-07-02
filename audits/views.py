@@ -142,19 +142,26 @@ def annual_audit_plan(request):
         audited_users = [audited.user.get_full_name() for audited in plan.audited_users.all()]
         paired_list = list(zip_longest(auditors, audited_users, fillvalue=None))
 
-        # Combinar fecha + hora para datetime
         open_dt = dt.combine(plan.audit_opening_date, plan.audit_opening_time)
         close_dt = dt.combine(plan.audit_closing_date, plan.audit_closing_time)
 
-        # Convertir a milisegundos para ApexCharts
         open_ts = int(open_dt.timestamp() * 1000)
         close_ts = int(close_dt.timestamp() * 1000)
+
+        if plan.annual_program and plan.annual_program.program_header and plan.annual_program.month:
+            month_name = format_date(
+                dt(plan.annual_program.program_header.year, plan.annual_program.month, 1), 
+                'MMMM', 
+                locale='es'
+            ).capitalize()
+        else:
+            month_name = None
 
         audit_data.append({
             "plan_id": plan.id,
             "process": plan.annual_program.process.name if plan.annual_program and plan.annual_program.process else None,
             "year": plan.annual_program.program_header.year if plan.annual_program and plan.annual_program.program_header else None,
-            "month": plan.annual_program.month if plan.annual_program else None,
+            "month": month_name,
             "audit_opening_date": plan.audit_opening_date,
             "audit_closing_date": plan.audit_closing_date,
             "audit_opening_time": plan.audit_opening_time,
