@@ -17,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 import traceback
 from django.views.decorators.csrf import csrf_protect
 import locale
+from babel.dates import format_date
 
 from .forms import (
     AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm,
@@ -50,17 +51,7 @@ def audits_home(request):
 @csrf_protect
 @login_required
 def annual_audit_program(request):
-    try:
-        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')  
-    except locale.Error:
-        try:
-            locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')  
-        except locale.Error:
-            pass  
-
-    
     audit_headers = AuditProgramHeader.objects.all()
-
     today = datetime.today()
     
     # Mes anterior al actual
@@ -100,7 +91,10 @@ def annual_audit_program(request):
     all_users = User.objects.all()
 
     for y, m in combined_months:
-        month_name = datetime(y, m, 1).strftime('%B').capitalize()
+        # Usar Babel para obtener el nombre del mes en español
+        month_name = format_date(datetime(y, m, 1), "MMMM", locale='es')
+        month_name = month_name.capitalize()
+        
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
 
@@ -120,6 +114,7 @@ def annual_audit_program(request):
         'annual_programs_by_year': annual_programs_by_year,
         'users': all_users,
     })
+
 
 
 
