@@ -481,138 +481,175 @@ def edit_reevaluation(request, risk_id):
 
     return render(request, 'mistemplates/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
 
+from io import BytesIO
+from datetime import date
+from django.shortcuts import get_object_or_404
+from django.http import FileResponse
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Frame, KeepTogether, ListFlowable, ListItem
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib import colors
+from reportlab.pdfgen.canvas import Canvas
+
 def generate_risks_pdf(request, area_name): 
     area = get_object_or_404(Area, name=area_name)  
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     elements = []
     styles = getSampleStyleSheet()
-    bold_style = ParagraphStyle(name='Bold', fontName='Helvetica-Bold', fontSize=12)
-    normal_style = styles["BodyText"]
 
-    elements.append(Paragraph(f"Risk Report - {area.name}", styles["Title"]))  
+    # Estilos personalizados
+    title_style = ParagraphStyle(name='Title', fontName='Helvetica-Bold', fontSize=22, alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor("#003366"))
+    heading_style = ParagraphStyle(name='Heading', fontName='Helvetica-Bold', fontSize=14, textColor=colors.HexColor("#003366"), spaceBefore=15, spaceAfter=10)
+    subheading_style = ParagraphStyle(name='SubHeading', fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#004C99"), spaceBefore=10, spaceAfter=6)
+    normal_style = styles["BodyText"]
+    normal_style.spaceAfter = 6
+    normal_style.leading = 14
+
+    risk_title_style = ParagraphStyle(name='RiskTitle', fontName='Helvetica-Bold', fontSize=14, textColor=colors.HexColor("#990000"), spaceAfter=8)
+
+    # Encabezado general
+    elements.append(Paragraph(f"Reporte de Identificación y Gestión de Riesgos - Área: {area.name}", title_style))
+    elements.append(Paragraph(f"Fecha de generación: {date.today().strftime('%d/%m/%Y')}", normal_style))
     elements.append(Spacer(1, 12))
 
-    risks = RiskIdentification.objects.filter(area=area) 
+    risks = RiskIdentification.objects.filter(area=area)
 
     if not risks.exists():
-        elements.append(Paragraph("No risks found for this area.", normal_style))  
+        elements.append(Paragraph("No se encontraron riesgos asociados a esta área.", normal_style))
     else:
-        for idx, risk in enumerate(risks, start=1):  
-            try:
-                risk_name = str(risk.identified_risk).replace('<', '&lt;').replace('>', '&gt;')
-                elements.append(Paragraph(f"Risk #{idx}: {risk_name}", bold_style))
-                elements.append(Paragraph(f"Process: {risk.process}", normal_style))  # <-- Cambio aquí
-                elements.append(Paragraph(f"Consequences: {risk.consequences}", normal_style))
-                elements.append(Spacer(1, 12))  
+        for idx, risk in enumerate(risks, start=1):
+            risk_header = f"Riesgo #{idx}: {risk.identified_risk}"
+            elements.append(Paragraph(risk_header, risk_title_style))
+            elements.append(Paragraph(f"<b>Proceso:</b> {risk.process.name}", normal_style))
+            elements.append(Paragraph(f"<b>Consecuencias:</b>", subheading_style))
+            elements.append(Paragraph(risk.consequences, normal_style))
+            if risk.source:
+                elements.append(Paragraph(f"<b>Fuente:</b> {risk.source}", normal_style))
 
-                evaluations = RiskEvaluation.objects.filter(risk=risk)
-                if evaluations.exists():
-                    elements.append(Paragraph("Risk Evaluations:", styles["Heading4"]))
-                    eval_data = [["Severity", "Preventive Controls", "Occurrence", "Detection Controls", "Detection", "Risk Level"]]
-                    for eval in evaluations:
-                        eval_data.append([
-                            eval.severity,
-                            "\n".join(eval.current_preventive_controls.split(", ")),  
-                            eval.occurrence,
-                            "\n".join(eval.current_detection_controls.split(", ")),  
-                            eval.detection,
-                            eval.risk_level.level
-                        ])
-                    eval_table = Table(eval_data, colWidths=[80, 100, 80, 100, 80, 80], repeatRows=1)
-                    eval_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  
-                    ]))
-                    elements.append(eval_table)
-                    elements.append(Spacer(1, 10))  
+            # Evaluaciones
+            evaluations = RiskEvaluation.objects.filter(risk=risk)
+            if evaluations.exists():
+                elements.append(Paragraph("Evaluaciones de Riesgo", heading_style))
 
-                treatments = RiskTreatment.objects.filter(risk=risk)
-                if treatments.exists():
-                    elements.append(Paragraph("Risk Treatments:", styles["Heading4"]))
-                    treat_data = [["Treatment Action", "Responsible", "Target Date", "Actual Date"]]
-                    for treat in treatments:
-                        treat_data.append([
-                            treat.treatment_action,
-                            "\n".join(role.name for role in treat.responsible.all()),  
-                            treat.target_date.strftime('%Y-%m-%d') if treat.target_date else '',
-                            treat.actual_date.strftime('%Y-%m-%d') if treat.actual_date else '',
-                        ])
-                    treat_table = Table(treat_data, colWidths=[180, 100, 80, 80], repeatRows=1)
-                    treat_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),
-                    ]))
-                    elements.append(treat_table)
-                    elements.append(Spacer(1, 10))
-                    
-                contingency_plans = ContingencyPlan.objects.filter(risk=risk)
-                if contingency_plans.exists():
-                    elements.append(Paragraph("Contingency Plans:", styles["Heading4"]))
-                    contingency_data = [["Contingency Actions", "Responsible", "Communicate To"]]
-                    for plan in contingency_plans:
-                        contingency_data.append([
-                            "\n".join(plan.contingency_actions.values_list('name', flat=True)),  
-                            "\n".join(plan.responsible.values_list('name', flat=True)),  
-                            "\n".join(plan.communicate_to.values_list('name', flat=True)),  
-                        ])
-                    contingency_table = Table(contingency_data, colWidths=[180, 100, 100], repeatRows=1)
-                    contingency_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  
-                    ]))
-                    elements.append(contingency_table)
-                    elements.append(Spacer(1, 10))  
+                data = [["Severidad", "Controles Preventivos", "Ocurrencia", "Controles de Detección", "Detección", "Nivel de Riesgo"]]
+                for ev in evaluations:
+                    # Colorear nivel de riesgo
+                    risk_level_color = {
+                        'High': colors.HexColor("#d9534f"),  # rojo
+                        'Moderate': colors.HexColor("#f0ad4e"),  # naranja
+                        'Low': colors.HexColor("#5cb85c")  # verde
+                    }.get(ev.risk_level, colors.black)
 
-                reevaluations = Reevaluation.objects.filter(risk=risk)
-                if reevaluations.exists():
-                    elements.append(Paragraph("Reevaluations:", styles["Heading4"]))
-                    reevaluation_data = [["Severity", "Occurrence", "Detection", "Risk Level"]]
-                    for reeval in reevaluations:
-                        reevaluation_data.append([
-                            reeval.severity, reeval.occurrence, reeval.detection, reeval.risk_level.level,
-                        ])
-                    reevaluation_table = Table(reevaluation_data, colWidths=[80, 60, 60, 80], repeatRows=1)
-                    reevaluation_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                        ('WORDWRAP', (0, 0), (-1, -1), True),  
-                    ]))
-                    elements.append(reevaluation_table)
-                    elements.append(Spacer(1, 12))  
+                    data.append([
+                        str(ev.severity),
+                        ev.current_preventive_controls or "-",
+                        str(ev.occurrence),
+                        ev.current_detection_controls or "-",
+                        str(ev.detection),
+                        Paragraph(f'<font color="{risk_level_color}"><b>{ev.risk_level}</b></font>', normal_style)
+                    ])
 
-                elements.append(PageBreak())  
+                table = Table(data, colWidths=[50, 120, 50, 120, 50, 70])
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cce6ff")),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor("#003366")),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#003366")),
+                    ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ]))
+                elements.append(table)
+                elements.append(Spacer(1, 12))
 
-            except Exception as e:
-                elements.append(Paragraph(f"Error processing risk: {e}", normal_style))
-    
-    def add_footer(canvas, doc):
+            # Tratamientos
+            treatments = RiskTreatment.objects.filter(risk=risk)
+            if treatments.exists():
+                elements.append(Paragraph("Tratamientos de Riesgo", heading_style))
+                for treat in treatments:
+                    elements.append(Paragraph(f"Acción: {treat.treatment_action}", normal_style))
+                    responsible_names = ", ".join([pos.name for pos in treat.responsible.all()])
+                    elements.append(Paragraph(f"Responsables: {responsible_names}", normal_style))
+                    elements.append(Paragraph(f"Fecha Objetivo: {treat.target_date.strftime('%d/%m/%Y') if treat.target_date else '-'}", normal_style))
+                    elements.append(Paragraph(f"Fecha Real: {treat.actual_date.strftime('%d/%m/%Y') if treat.actual_date else '-'}", normal_style))
+                    elements.append(Spacer(1, 6))
+
+            # Planes de contingencia
+            contingency_plans = ContingencyPlan.objects.filter(risk=risk)
+            if contingency_plans.exists():
+                elements.append(Paragraph("Planes de Contingencia", heading_style))
+                for plan in contingency_plans:
+                    # Mostrar acciones en lista
+                    contingency_actions_display = plan.contingency_actions_display
+                    elements.append(Paragraph("Acciones:", subheading_style))
+                    actions_list = ListFlowable(
+                        [ListItem(Paragraph(action, normal_style)) for action in contingency_actions_display],
+                        bulletType='bullet',
+                        leftIndent=15
+                    )
+                    elements.append(actions_list)
+
+                    responsible_list = [pos.name for pos in plan.responsible.all()]
+                    communicate_list = [pos.name for pos in plan.communicate_to.all()]
+
+                    elements.append(Paragraph(f"Responsables: {', '.join(responsible_list) if responsible_list else '-'}", normal_style))
+                    elements.append(Paragraph(f"Comunicar a: {', '.join(communicate_list) if communicate_list else '-'}", normal_style))
+                    elements.append(Spacer(1, 12))
+
+            # Reevaluaciones
+            reevaluations = Reevaluation.objects.filter(risk=risk)
+            if reevaluations.exists():
+                elements.append(Paragraph("Reevaluaciones", heading_style))
+
+                reevaluation_data = [["Severidad", "Ocurrencia", "Detección", "Nivel de Riesgo"]]
+                for reeval in reevaluations:
+                    risk_level_color = {
+                        'High': colors.HexColor("#d9534f"),
+                        'Moderate': colors.HexColor("#f0ad4e"),
+                        'Low': colors.HexColor("#5cb85c")
+                    }.get(reeval.risk_level, colors.black)
+
+                    reevaluation_data.append([
+                        str(reeval.severity),
+                        str(reeval.occurrence),
+                        str(reeval.detection),
+                        Paragraph(f'<font color="{risk_level_color}"><b>{reeval.risk_level}</b></font>', normal_style)
+                    ])
+
+                reevaluation_table = Table(reevaluation_data, colWidths=[60, 60, 60, 80])
+                reevaluation_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cce6ff")),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor("#003366")),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#003366")),
+                    ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ]))
+                elements.append(reevaluation_table)
+                elements.append(Spacer(1, 18))
+
+            # Separador de riesgos
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph("-" * 110, normal_style))
+            elements.append(Spacer(1, 18))
+
+            # Salto de página cada 2 riesgos para mejor lectura
+            if idx % 2 == 0:
+                elements.append(PageBreak())
+
+    # Pie de página con fecha y número de página
+    def add_footer(canvas: Canvas, doc):
         canvas.saveState()
-        footer_text = f"Generated on {date.today()} | Page {doc.page}"
-        canvas.setFont("Helvetica", 10)
-        width = doc.width
-        canvas.drawString(10, 10, footer_text)
+        footer_text = f"Generado el {date.today().strftime('%d/%m/%Y')} | Página {doc.page}"
+        canvas.setFont("Helvetica-Oblique", 9)
+        canvas.setFillColor(colors.grey)
+        canvas.drawRightString(doc.pagesize[0] - 40, 20, footer_text)
         canvas.restoreState()
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
-    return FileResponse(buffer, as_attachment=True, filename=f"risks_{area.name}.pdf")
+    return FileResponse(buffer, as_attachment=True, filename=f"reporte_riesgos_{area.name}.pdf")
+
