@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Acción Correctiva</h2>
   <form method="post" action="{% url 'audits:add_corrective_action' %}">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.audit_report.label_tag }}
+      <label>Reporte de Auditoria:</label>
       {{ form.audit_report }}
       {% if form.audit_report.errors %}
         <div class="text-danger small">{{ form.audit_report.errors }}</div>
@@ -21,7 +20,7 @@
     <div id="correctiveActionSuggestionsContainer" class="mt-4" style="display: none;"></div>
     
     <div class="mb-3">
-      {{ form.corrective_action.label_tag }}
+      <label>Acción Correctiva:</label>
       {{ form.corrective_action }}
       {% if form.corrective_action.errors %}
         <div class="text-danger small">{{ form.corrective_action.errors }}</div>
@@ -29,7 +28,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.due_date.label_tag }}
+      <label>Fecha de Vencimiento:</label>
       {{ form.due_date }}
       {% if form.due_date.errors %}
         <div class="text-danger small">{{ form.due_date.errors }}</div>
@@ -37,7 +36,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.responsible_user.label_tag }}
+      <label>Responsable:</label>
       {{ form.responsible_user }}
       {% if form.responsible_user.errors %}
         <div class="text-danger small">{{ form.responsible_user.errors }}</div>
