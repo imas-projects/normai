@@ -481,16 +481,16 @@ def edit_reevaluation(request, risk_id):
 
     return render(request, 'mistemplates/edit_reevaluation.html', {'form': form, 'reevaluation': reevaluation})
 
-from io import BytesIO
-from datetime import date
-from django.shortcuts import get_object_or_404
-from django.http import FileResponse
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Frame, KeepTogether, ListFlowable, ListItem
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle, ListFlowable, ListItem, PageBreak
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib import colors
 from reportlab.pdfgen.canvas import Canvas
+from io import BytesIO
+from datetime import date
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
 
 def generate_risks_pdf(request, area_name): 
     area = get_object_or_404(Area, name=area_name)  
@@ -500,14 +500,43 @@ def generate_risks_pdf(request, area_name):
     styles = getSampleStyleSheet()
 
     # Estilos personalizados
-    title_style = ParagraphStyle(name='Title', fontName='Helvetica-Bold', fontSize=22, alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor("#003366"))
-    heading_style = ParagraphStyle(name='Heading', fontName='Helvetica-Bold', fontSize=14, textColor=colors.HexColor("#003366"), spaceBefore=15, spaceAfter=10)
-    subheading_style = ParagraphStyle(name='SubHeading', fontName='Helvetica-Bold', fontSize=12, textColor=colors.HexColor("#004C99"), spaceBefore=10, spaceAfter=6)
+    title_style = ParagraphStyle(
+        name='Title', 
+        fontName='Helvetica-Bold', 
+        fontSize=22, 
+        alignment=TA_CENTER, 
+        spaceAfter=20, 
+        leading=28,  # aumento interlineado para que no colapse
+        textColor=colors.HexColor("#003366")
+    )
+    heading_style = ParagraphStyle(
+        name='Heading', 
+        fontName='Helvetica-Bold', 
+        fontSize=14, 
+        textColor=colors.HexColor("#003366"), 
+        spaceBefore=15, 
+        spaceAfter=10
+    )
+    subheading_style = ParagraphStyle(
+        name='SubHeading', 
+        fontName='Helvetica-Bold', 
+        fontSize=12, 
+        textColor=colors.HexColor("#004C99"), 
+        spaceBefore=10, 
+        spaceAfter=6
+    )
     normal_style = styles["BodyText"]
     normal_style.spaceAfter = 6
-    normal_style.leading = 14
+    normal_style.leading = 14  # interlineado suficiente
 
-    risk_title_style = ParagraphStyle(name='RiskTitle', fontName='Helvetica-Bold', fontSize=14, textColor=colors.HexColor("#990000"), spaceAfter=8)
+    risk_title_style = ParagraphStyle(
+        name='RiskTitle', 
+        fontName='Helvetica-Bold', 
+        fontSize=14, 
+        textColor=colors.HexColor("#990000"), 
+        spaceAfter=8,
+        leading=18  # interlineado para que título no colapse
+    )
 
     # Encabezado general
     elements.append(Paragraph(f"Reporte de Identificación y Gestión de Riesgos - Área: {area.name}", title_style))
@@ -535,23 +564,30 @@ def generate_risks_pdf(request, area_name):
 
                 data = [["Severidad", "Controles Preventivos", "Ocurrencia", "Controles de Detección", "Detección", "Nivel de Riesgo"]]
                 for ev in evaluations:
-                    # Colorear nivel de riesgo
                     risk_level_color = {
                         'High': colors.HexColor("#d9534f"),  # rojo
                         'Moderate': colors.HexColor("#f0ad4e"),  # naranja
                         'Low': colors.HexColor("#5cb85c")  # verde
                     }.get(ev.risk_level, colors.black)
 
+                    # Usar Paragraph para textos largos, para que hagan wrap
+                    preventive_controls = Paragraph(ev.current_preventive_controls or "-", normal_style)
+                    detection_controls = Paragraph(ev.current_detection_controls or "-", normal_style)
+                    risk_level_paragraph = Paragraph(f'<font color="{risk_level_color}"><b>{ev.risk_level}</b></font>', normal_style)
+
                     data.append([
                         str(ev.severity),
-                        ev.current_preventive_controls or "-",
+                        preventive_controls,
                         str(ev.occurrence),
-                        ev.current_detection_controls or "-",
+                        detection_controls,
                         str(ev.detection),
-                        Paragraph(f'<font color="{risk_level_color}"><b>{ev.risk_level}</b></font>', normal_style)
+                        risk_level_paragraph
                     ])
 
-                table = Table(data, colWidths=[50, 120, 50, 120, 50, 70])
+                # Ajuste columnas: dar más ancho a columnas con texto largo
+                col_widths = [50, 150, 50, 150, 50, 70]
+
+                table = Table(data, colWidths=col_widths)
                 table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cce6ff")),
                     ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor("#003366")),
@@ -581,7 +617,6 @@ def generate_risks_pdf(request, area_name):
             if contingency_plans.exists():
                 elements.append(Paragraph("Planes de Contingencia", heading_style))
                 for plan in contingency_plans:
-                    # Mostrar acciones en lista
                     contingency_actions_display = plan.contingency_actions_display
                     elements.append(Paragraph("Acciones:", subheading_style))
                     actions_list = ListFlowable(
@@ -631,13 +666,13 @@ def generate_risks_pdf(request, area_name):
                 elements.append(reevaluation_table)
                 elements.append(Spacer(1, 18))
 
-            # Separador de riesgos
+            # Separador de riesgos (línea)
             elements.append(Spacer(1, 12))
             elements.append(Paragraph("-" * 110, normal_style))
             elements.append(Spacer(1, 18))
 
-            # Salto de página cada 2 riesgos para mejor lectura
-            if idx % 2 == 0:
+            # Salto de página: un riesgo por página
+            if idx != len(risks):  # No poner PageBreak al final del último riesgo
                 elements.append(PageBreak())
 
     # Pie de página con fecha y número de página
@@ -652,4 +687,3 @@ def generate_risks_pdf(request, area_name):
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"reporte_riesgos_{area.name}.pdf")
-
