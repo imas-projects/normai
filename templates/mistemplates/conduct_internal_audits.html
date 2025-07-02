@@ -76,14 +76,10 @@
             <ul class="list-group mb-3">
               {% for f in audit.findings %}
               <li class="list-group-item">
-                <strong>Detalle:</strong> {{ f.finding_text }}<br>
+                <strong>Hallazgo:</strong> {{ f.finding_text }}<br>
                 {{ f.text }}
                 <strong>Requisito:</strong> {{ f.requirement }}<br>
                 <strong>Clasificación:</strong> {{ f.classification_text }}<br>
-                {% if f.requirement %}
-                <strong>Requisito:</strong> {{ f.requirement }}<br>
-                {% endif %}
-                {{ f.text }}
               </li>
               {% endfor %}
             </ul>
@@ -133,7 +129,7 @@
             <ul class="list-group mb-3">
               {% for eval in audit.auditor_evaluation %}
               <li class="list-group-item">
-                <strong>{{ eval.orden_label|default:"P" }}:</strong> {{ eval.question.question_text }}<br>
+                <strong>P{{ eval.orden }}:</strong> {{ eval.question }}<br>
                 <strong>Requerimiento:</strong> {{ eval.question.requirement }}<br>
                 <strong>Valoración:</strong> {{ eval.rate }}
               </li>
