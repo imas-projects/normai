@@ -6,7 +6,7 @@
 
     <!-- Programa Anual -->
     <div class="mb-3">
-      {{ form.annual_program.label_tag }}
+      <label>Programa:</label>
       {{ form.annual_program }}
       {% if form.annual_program.errors %}
         <div class="text-danger small">{{ form.annual_program.errors }}</div>
@@ -15,7 +15,7 @@
 
     <!-- Apertura -->
     <div class="mb-3">
-      {{ form.audit_opening_date.label_tag }}
+      <label>Fecha de la Reunión de Apertura:</label>
       {{ form.audit_opening_date }}
       {% if form.audit_opening_date.errors %}
         <div class="text-danger small">{{ form.audit_opening_date.errors }}</div>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.audit_opening_time.label_tag }}
+      <label>Hora de la Reunión de Apertura:</label>
       {{ form.audit_opening_time }}
       {% if form.audit_opening_time.errors %}
         <div class="text-danger small">{{ form.audit_opening_time.errors }}</div>
@@ -31,7 +31,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.audit_opening_location.label_tag }}
+      <label>Localización de la Reunión de Apertura:</label>
       {{ form.audit_opening_location }}
       {% if form.audit_opening_location.errors %}
         <div class="text-danger small">{{ form.audit_opening_location.errors }}</div>
@@ -40,7 +40,7 @@
 
     <!-- Cierre -->
     <div class="mb-3">
-      {{ form.audit_closing_date.label_tag }}
+      <label>Fecha de la Reunión de Cierre:</label>
       {{ form.audit_closing_date }}
       {% if form.audit_closing_date.errors %}
         <div class="text-danger small">{{ form.audit_closing_date.errors }}</div>
@@ -48,7 +48,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.audit_closing_time.label_tag }}
+      <label>Hora de la Reunión de Cierre:</label>
       {{ form.audit_closing_time }}
       {% if form.audit_closing_time.errors %}
         <div class="text-danger small">{{ form.audit_closing_time.errors }}</div>
@@ -56,7 +56,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.audit_closing_location.label_tag }}
+      <label>Localización de la Reunión de Cierre:</label>
       {{ form.audit_closing_location }}
       {% if form.audit_closing_location.errors %}
         <div class="text-danger small">{{ form.audit_closing_location.errors }}</div>
