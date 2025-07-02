@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Hallazgo</h2>
   <form method="post" action="{% url 'audits:add_findings' %}" id="findingsForm">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.audit_plan.label_tag }}
+      <label>Plan:</label>
       {{ form.audit_plan }}
       {% if form.audit_plan.errors %}
         <div class="text-danger small">{{ form.audit_plan.errors }}</div>
@@ -13,7 +12,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.requirement.label_tag }}
+      <label>Requisito:</label>
       {{ form.requirement }}
       {% if form.requirement.errors %}
         <div class="text-danger small">{{ form.requirement.errors }}</div>
@@ -21,7 +20,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.finding_text.label_tag }}
+      <label>Hallazgo:</label>
       {{ form.finding_text }}
       {% if form.finding_text.errors %}
         <div class="text-danger small">{{ form.finding_text.errors }}</div>
@@ -34,7 +33,7 @@
     </div>
     
     <div class="mb-3">
-      {{ form.classification.label_tag }}
+      <label>Clasificación:</label>
       {{ form.classification }}
       {% if form.classification.errors %}
         <div class="text-danger small">{{ form.classification.errors }}</div>
