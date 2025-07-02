@@ -3,25 +3,25 @@
     <form method="post" id="edit-risk-treatment-form" action="{% url 'risks:edit-risk-treatment' treatment.id %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.risk.label_tag }}
+            <label>Riesgo:</label>
             {{ form.risk }}
         </div>
         <div class="mb-3">
-            {{ form.treatment_action.label_tag }}
+            <label>Accion del Tratamiento:</label>
             {{ form.treatment_action }}
         </div>
         <div class="mb-3">
-            {{ form.responsible.label_tag }}
+            <label>Responsable:</label>
             {{ form.responsible }}
         </div>
         <div class="mb-3">
-            {{ form.target_date.label_tag }}
+            <label>Fecha Objetivo:</label>
             {{ form.target_date }}
         </div>
         <div class="mb-3">
-            {{ form.actual_date.label_tag }}
+            <label>Fecha Actual:</label>
             {{ form.actual_date }}
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
