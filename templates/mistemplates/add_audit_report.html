@@ -1,14 +1,13 @@
 {% load static %}
 
 <div class="container mt-4">
-  <h2>Agregar Informe de Auditoría</h2>
 
   <form method="post" action="{% url 'audits:add_audit_report' %}" id="add-audit-report-form">
     {% csrf_token %}
 
     <!-- Selección del Plan de Auditoría -->
     <div class="mb-3">
-      {{ form.audit_plan.label_tag }}
+      <label>Plan:</label>
       {{ form.audit_plan }}
       {% if form.audit_plan.errors %}
         <div class="text-danger small">{{ form.audit_plan.errors }}</div>
@@ -27,7 +26,7 @@
 
     <!-- Campo de resumen -->
     <div class="mb-3">
-      {{ form.summary.label_tag }}
+      <label>Resumen:</label>
       {{ form.summary }}
       {% if form.summary.errors %}
         <div class="text-danger small">{{ form.summary.errors }}</div>
@@ -36,7 +35,7 @@
 
     <!-- Campo de recomendaciones -->
     <div class="mb-3">
-      {{ form.recommendations.label_tag }}
+      <label>Recomendaciones:</label>
       {{ form.recommendations }}
       {% if form.recommendations.errors %}
         <div class="text-danger small">{{ form.recommendations.errors }}</div>
@@ -45,7 +44,7 @@
 
     <!-- Campo de conclusiones -->
     <div class="mb-3">
-      {{ form.conclusions.label_tag }}
+      <label>Conclusiones:</label>
       {{ form.conclusions }}
       {% if form.conclusions.errors %}
         <div class="text-danger small">{{ form.conclusions.errors }}</div>
