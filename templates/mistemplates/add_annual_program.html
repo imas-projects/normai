@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Programa Anual</h2>
   <form method="post" action="{% url 'audits:add_annual_program' %}" id="annualProgramForm">
     {% csrf_token %}
     
     <div class="mb-3">
-      {{ form.program_header.label_tag }}
+      <label>Encabezado del Programa Anual:</label>
       {{ form.program_header }}
       {% if form.program_header.errors %}
         <div class="text-danger small">{{ form.program_header.errors }}</div>
@@ -21,7 +20,7 @@
     <div id="iaSuggestions" class="mt-4"></div>
 
     <div class="mb-3">
-      {{ form.process.label_tag }}
+      <label>Proceso:</label>
       {{ form.process }}
       {% if form.process.errors %}
         <div class="text-danger small">{{ form.process.errors }}</div>
@@ -29,7 +28,7 @@
     </div>
     
     <div class="mb-3">
-      {{ form.month.label_tag }}
+      <label>Mes:</label>
       {{ form.month }}
       {% if form.month.errors %}
         <div class="text-danger small">{{ form.month.errors }}</div>

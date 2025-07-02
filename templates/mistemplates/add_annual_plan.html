@@ -1,6 +1,5 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Plan Anual de Auditoría</h2>
   <form method="post" action="{% url 'audits:add_annual_plan' %}" id="addAnnualPlanForm">
     {% csrf_token %}
 
