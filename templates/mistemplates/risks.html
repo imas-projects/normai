@@ -538,6 +538,7 @@ function setupAddRiskIdentificationModal() {
             .then(response => response.text())
             .then(html => {
                 document.getElementById("riskIdentificationContent").innerHTML = html;
+                initChoicesJS();
                 const modal = new bootstrap.Modal(document.getElementById("addRiskIdentificationModal"));
                 modal.show();
 
@@ -569,6 +570,7 @@ function setupAddStepsModal() {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(step.target).innerHTML = html;
+                    initChoicesJS();
                     attachFormSubmit(`#${step.target} form`);
                     if (step.target === "riskEvaluationContent") {
                         attachEvaluationSuggestions();
@@ -1362,6 +1364,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskIdentificationContent${riskId}`).innerHTML = html;
+                    initChoicesJS();
                     new bootstrap.Modal(document.getElementById(`editRiskIdentificationModal${riskId}`)).show();
                 });
         });
@@ -1375,6 +1378,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskEvaluationContent${riskId}`).innerHTML = html;
+                    initChoicesJS();
                     new bootstrap.Modal(document.getElementById(`editRiskEvaluationModal${riskId}`)).show();
                 });
         });
@@ -1388,6 +1392,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editRiskTreatmentContent${riskId}`).innerHTML = html;
+                    initChoicesJS();
                     new bootstrap.Modal(document.getElementById(`editRiskTreatmentModal${riskId}`)).show();
                 });
         });
@@ -1401,6 +1406,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editContingencyPlanContent${riskId}`).innerHTML = html;
+                    initChoicesJS();
                     new bootstrap.Modal(document.getElementById(`editContingencyPlanModal${riskId}`)).show();
                 });
         });
@@ -1414,6 +1420,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById(`editReevaluationContent${riskId}`).innerHTML = html;
+                    initChoicesJS();
                     new bootstrap.Modal(document.getElementById(`editReevaluationModal${riskId}`)).show();
                 });
         });
@@ -1423,4 +1430,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 </script>
+
+<script>
+  function initChoicesJS() {
+    document.querySelectorAll('[data-choices]').forEach(function (el) {
+      if (!el.classList.contains('choices-initialized')) {
+        new Choices(el, {
+          removeItemButton: true,
+          placeholder: true,
+          searchEnabled: true
+        });
+        el.classList.add('choices-initialized');
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initChoicesJS();
+  });
+</script>
+
 {% endblock extra_js %}
