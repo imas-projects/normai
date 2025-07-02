@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Seguimiento de Acción Correctiva</h2>
   <form method="post" action="{% url 'audits:add_corrective_action_followup' %}">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.corrective_action.label_tag }}
+      <label>Acción Correctiva:</label>
       {{ form.corrective_action }}
       {% if form.corrective_action.errors %}
         <div class="text-danger small">{{ form.corrective_action.errors }}</div>
@@ -13,7 +12,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.followup_date.label_tag }}
+      <label>Fecha de Seguimiento:</label>
       {{ form.followup_date }}
       {% if form.followup_date.errors %}
         <div class="text-danger small">{{ form.followup_date.errors }}</div>
@@ -21,7 +20,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.status.label_tag }}
+      <label>Estado:</label>
       {{ form.status }}
       {% if form.status.errors %}
         <div class="text-danger small">{{ form.status.errors }}</div>
@@ -29,7 +28,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.comments.label_tag }}
+      <label>Comentarios:</label>
       {{ form.comments }}
       {% if form.comments.errors %}
         <div class="text-danger small">{{ form.comments.errors }}</div>
