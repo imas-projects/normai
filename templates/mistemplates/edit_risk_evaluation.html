@@ -3,33 +3,33 @@
     <form method="post" id="edit-risk-evaluation-form" action="{% url 'risks:edit-risk-evaluation' evaluation.id %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.risk.label_tag }}
+            <label>Riesgo:</label>
             {{ form.risk }}
         </div>
         <div class="mb-3">
-            {{ form.severity.label_tag }}
-            {{ form.severity }}
-        </div>
-        <div class="mb-3">
-            {{ form.current_preventive_controls.label_tag }}
+            <label>Controles Actuales de Prevención:</label>
             {{ form.current_preventive_controls }}
         </div>
         <div class="mb-3">
-            {{ form.occurrence.label_tag }}
-            {{ form.occurrence }}
-        </div>
-        <div class="mb-3">
-            {{ form.current_detection_controls.label_tag }}
+            <label>Controles Actuales de Detección:</label>
             {{ form.current_detection_controls }}
         </div>
         <div class="mb-3">
-            {{ form.detection.label_tag }}
+            <label>Severidad:</label>
+            {{ form.severity }}
+        </div>
+        <div class="mb-3">
+            <label>Ocurrencia:</label>
+            {{ form.occurrence }}
+        </div>
+        <div class="mb-3">
+            <label>Deteccion:</label>
             {{ form.detection }}
         </div>
         <div class="mb-3">
-            {{ form.risk_level.label_tag }}
+            <label>Nivel de Riesgo:</label>
             {{ form.risk_level }}
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
