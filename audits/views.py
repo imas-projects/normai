@@ -233,6 +233,7 @@ def conduct_internal_audits(request):
             "auditors": [aud.user.get_full_name() for aud in plan.auditors.all()],
             "audited_users": [au.user.get_full_name() for au in plan.audited_users.all()],
             "checklist": checklist,
+            "question": self.question.question_text,
             "auditor_evaluation": auditor_evaluation,
             "report": report_data,
             "findings": findings_data,
