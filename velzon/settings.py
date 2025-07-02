@@ -263,7 +263,7 @@ ACCOUNT_FORMS = {
 SOCIALACCOUNT_QUERY_EMAIL = True
 
 
-SITE_ID = 1 #Estaba puesto en 2
+SITE_ID = 1 
 
 
 # Provider Configurations
