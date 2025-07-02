@@ -6,7 +6,7 @@
 
     <!-- Plan Anual -->
     <div class="mb-3">
-      {{ form.annual_plan.label_tag }}
+      <label>Plan:</label>
       {{ form.annual_plan }}
       {% if form.annual_plan.errors %}
         <div class="text-danger small">{{ form.annual_plan.errors }}</div>
@@ -25,7 +25,7 @@
 
     <!-- Selector de usuario (auditor) -->
     <div class="mb-3">
-      {{ form.user.label_tag }}
+      <label>Auditor:</label>
       {{ form.user }}
       {% if form.user.errors %}
         <div class="text-danger small">{{ form.user.errors }}</div>
