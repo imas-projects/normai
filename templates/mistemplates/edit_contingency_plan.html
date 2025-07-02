@@ -3,21 +3,21 @@
     <form method="post" id="edit-contingency-plan-form" action="{% url 'risks:edit-contingency-plan' plan.id %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.risk.label_tag }}
+            <label>Riesgo:</label>
             {{ form.risk }}
         </div>
         <div class="mb-3">
-            {{ form.contingency_actions.label_tag }}
+            <label>Acciones de Contingencia:</label>
             {{ form.contingency_actions }}
         </div>
         <div class="mb-3">
-            {{ form.responsible.label_tag }}
+            <label>Responsable:</label>
             {{ form.responsible }}
         </div>
         <div class="mb-3">
-            {{ form.communicate_to.label_tag }}
+            <label>Comunicar a:</label>
             {{ form.communicate_to }}
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
