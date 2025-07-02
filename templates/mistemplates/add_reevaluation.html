@@ -4,7 +4,7 @@
         {% csrf_token %}
 
         <div class="mb-3">
-            {{ form.risk.label_tag }}
+            <label>Riesgo:</label>
             {{ form.risk }}
         </div>
 
@@ -17,17 +17,17 @@
             </button>
 
             <div class="mb-3">
-                {{ form.severity.label_tag }}
+                <label>Severidad:</label>
                 {{ form.severity }}
             </div>
 
             <div class="mb-3">
-                {{ form.occurrence.label_tag }}
+                <label>Ocurrencia:</label>
                 {{ form.occurrence }}
             </div>
 
             <div class="mb-3">
-                {{ form.detection.label_tag }}
+                <label>Detección:</label>
                 {{ form.detection }}
             </div>
         </fieldset>
@@ -43,7 +43,7 @@
             <div id="reevaluated-risk-level-suggestion" style="font-weight: bold; font-size: 1.2em; margin-top: 0.5rem;"></div>
             
             <div class="mb-3">
-                {{ form.risk_level.label_tag }}
+                <label>Nivel de Riesgo:</label>
                 {{ form.risk_level }}
             </div>
 
