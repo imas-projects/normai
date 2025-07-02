@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 import traceback
 from django.views.decorators.csrf import csrf_protect
+import locale
 
 from .forms import (
     AuditProgramHeaderForm, AnnualProgramForm, AnnualPlanForm,
@@ -49,6 +50,15 @@ def audits_home(request):
 @csrf_protect
 @login_required
 def annual_audit_program(request):
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')  
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')  
+        except locale.Error:
+            pass  
+
+    
     audit_headers = AuditProgramHeader.objects.all()
 
     today = datetime.today()
@@ -90,7 +100,7 @@ def annual_audit_program(request):
     all_users = User.objects.all()
 
     for y, m in combined_months:
-        month_name = datetime(y, m, 1).strftime('%B')
+        month_name = datetime(y, m, 1).strftime('%B').capitalize()
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
 
