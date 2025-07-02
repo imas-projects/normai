@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Pregunta de Evaluación del Auditor Principal</h2>
   <form method="post" action="{% url 'audits:add_lead_auditor_evaluation_question' %}">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.question_text.label_tag }}
+      <label>Pregunta:</label>
       {{ form.question_text }}
       {% if form.question_text.errors %}
         <div class="text-danger small">{{ form.question_text.errors }}</div>
@@ -13,7 +12,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.type.label_tag }}
+      <label>Tipo:</label>
       {{ form.type }}
       {% if form.type.errors %}
         <div class="text-danger small">{{ form.type.errors }}</div>
