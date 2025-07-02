@@ -1,11 +1,10 @@
 {% load static %}
 <div class="container mt-4">
-  <h2>Agregar Requisito de Proceso</h2>
   <form method="post" action="{% url 'audits:add_process_requirement' %}">
     {% csrf_token %}
 
     <div class="mb-3">
-      {{ form.process.label_tag }}
+      <label>Proceso:</label>
       {{ form.process }}
       {% if form.process.errors %}
         <div class="text-danger small">{{ form.process.errors }}</div>
@@ -13,7 +12,7 @@
     </div>
 
     <div class="mb-3">
-      {{ form.requirement.label_tag }}
+      <label>Requisito:</label>
       {{ form.requirement }}
       {% if form.requirement.errors %}
         <div class="text-danger small">{{ form.requirement.errors }}</div>
