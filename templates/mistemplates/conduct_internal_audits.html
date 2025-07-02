@@ -58,7 +58,7 @@
             <ul class="list-group mb-3">
               {% for item in audit.checklist %}
               <li class="list-group-item">
-                <strong>{{ item.orden_label }}:</strong> {{ item.question }}<br>
+                <strong>P{{ item.orden }}:</strong> {{ item.question_text }}<br>
                 <strong>Cumplimiento:</strong> {{ item.compliance|yesno:"Sí,No" }}<br>
                 {% if item.evidence %}
                 <strong>Evidencia:</strong> {{ item.evidence }}
