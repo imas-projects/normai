@@ -3,25 +3,25 @@
     <form method="post" id="edit-reevaluation-form" action="{% url 'risks:edit-reevaluation' reevaluation.id %}">
         {% csrf_token %}
         <div class="mb-3">
-            {{ form.risk.label_tag }}
+            <label>Riesgo:</label>
             {{ form.risk }}
         </div>
         <div class="mb-3">
-            {{ form.severity.label_tag }}
+            <label>Severidad:</label>
             {{ form.severity }}
         </div>
         <div class="mb-3">
-            {{ form.occurrence.label_tag }}
+            <label>Ocurrencia:</label>
             {{ form.occurrence }}
         </div>
         <div class="mb-3">
-            {{ form.detection.label_tag }}
+            <label>Detección:</label>
             {{ form.detection }}
         </div>
         <div class="mb-3">
-            {{ form.risk_level.label_tag }}
+            <label>Nivel de Riesgo:</label>
             {{ form.risk_level }}
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
     </form>
 </div>
