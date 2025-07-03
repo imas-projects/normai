@@ -26,7 +26,7 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 
 @login_required
 def create_risk(request):
-    all_risks = RiskIdentification.objects.select_related('area', 'process').all()
+    all_risks = RiskIdentification.objects.select_related('area', 'process').exclude(area__isnull=True).exclude(process__isnull=True)
 
     # Crear dict plano: {area_id: {'area': area_obj, 'processes': {process_id: {'process': process_obj, 'risks': [...]}}}}
     grouped_risks = {}
