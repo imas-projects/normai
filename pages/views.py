@@ -11,6 +11,7 @@ from django.db.models import Count, Avg
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404
 from collections import defaultdict
 from django.db.models import Prefetch
 from django.db.models.functions import TruncMonth
