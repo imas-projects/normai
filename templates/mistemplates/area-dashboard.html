@@ -147,6 +147,7 @@ const backgroundGridPlugin = {
 
         ctx.save();
 
+        // Tamaño de cada celda en pixeles
         const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
         const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
 
@@ -157,16 +158,17 @@ const backgroundGridPlugin = {
 
                 const color = riskColor(cell.risk_level || "White");
 
-                // Coordenadas centrales
+                // Coordenadas centrales del punto
                 const xCenter = scales.x.getPixelForValue(occ);
                 const yCenter = scales.y.getPixelForValue(sev);
 
+                // Cuadrado centrado en el punto
                 let x = xCenter - cellWidth / 2;
                 let y = yCenter - cellHeight / 2;
                 let w = cellWidth;
                 let h = cellHeight;
 
-                // Recortar límites del área visible
+                // Recortar para que no se pinte fuera del área visible (chartArea)
                 if (x < chartArea.left) {
                     w -= (chartArea.left - x);
                     x = chartArea.left;
@@ -188,6 +190,7 @@ const backgroundGridPlugin = {
                 }
             }
         }
+
         ctx.restore();
     }
 };
@@ -203,8 +206,8 @@ function buildChart(data) {
                     x: occ,
                     y: sev,
                     r: count > 0 ? count * 8 + 6 : 0,
-                    backgroundColor: 'rgba(0,0,0,0)',   // sin relleno
-                    borderColor: 'rgba(85,85,85,0.8)', // borde gris visible
+                    backgroundColor: 'rgba(0,0,0,0)',   // SIN relleno, totalmente transparente
+                    borderColor: 'rgba(85,85,85,0.8)', // borde visible (gris oscuro)
                     borderWidth: 2,
                     count: count,
                     risk: point?.risk_level || ""
