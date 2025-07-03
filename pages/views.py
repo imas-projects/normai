@@ -263,7 +263,7 @@ def wellcome_view(request):
 
     activities.sort(key=lambda x: x['date'])
 
-    paginator = Paginator(activities, 6)
+    paginator = Paginator(activities, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
