@@ -179,17 +179,19 @@ def wellcome_view(request):
         total_findings=Count('processrequirement__findings')
     ).order_by('-total_findings')
 
-    risk_treatments = RiskTreatment.objects.all()
-    processes = Process.objects.all()
-    communications = CommunicationTable.objects.all()
-    corrective_actions = CorrectiveAction.objects.all()
-    annual_plans = AnnualPlan.objects.all()
+    current_date = timezone.now().date()
+
+    risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date)
+    processes = Process.objects.filter(review_date__gte=current_date)
+    communications = CommunicationTable.objects.filter(review_date__gte=current_date)
+    corrective_actions = CorrectiveAction.objects.filter(due_date__gte=current_date)
+    annual_plans = AnnualPlan.objects.filter(audit_opening_date__gte=current_date)
 
     activities = []
 
     for rt in risk_treatments:
         activities.append({
-            "date": rt.target_date, 
+            "date": rt.target_date,
             "name": f"Risk Treatment: {rt.treatment_action[:40]}",
             "type": "Risk",
             "responsible": ", ".join([pos.name for pos in rt.responsible.all()]),
@@ -197,7 +199,7 @@ def wellcome_view(request):
 
     for p in processes:
         activities.append({
-            "date": p.review_date, 
+            "date": p.review_date,
             "name": f"Process Review: {p.name}",
             "type": "Process",
             "responsible": p.responsible.name if p.responsible else "",
@@ -205,7 +207,7 @@ def wellcome_view(request):
 
     for c in communications:
         activities.append({
-            "date": c.review_date, 
+            "date": c.review_date,
             "name": f"Communication Review: {c.code}",
             "type": "Communication",
             "responsible": c.reviewed_by.name if c.reviewed_by else "",
@@ -242,10 +244,8 @@ def wellcome_view(request):
             "responsible": responsible_text,
         })
 
-    # Ordenar por fecha
     activities.sort(key=lambda x: x['date'])
 
-    # Paginación: 6 elementos por página
     paginator = Paginator(activities, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
