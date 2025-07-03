@@ -29,23 +29,25 @@ def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').exclude(area__isnull=True).exclude(process__isnull=True)
 
     # Crear dict plano: {area_id: {'area': area_obj, 'processes': {process_id: {'process': process_obj, 'risks': [...]}}}}
-    grouped_risks = {}
+    grouped_risks = []
 
-    for risk in all_risks:
-        area = risk.area
-        process = risk.process
+    for area in Area.objects.all():
+        area_data = {
+            'area': area,
+            'processes': []
+        }
 
-        if area.id not in grouped_risks:
-            grouped_risks[area.id] = {
-                'area': area,
-                'processes': {}
-            }
+        for process in area.process_set.all():
+            risks = RiskIdentification.objects.filter(area=area, process=process)
+            if risks.exists():
+                area_data['processes'].append({
+                    'process': process,
+                    'risks': risks
+                })
 
-        if process.id not in grouped_risks[area.id]['processes']:
-            grouped_risks[area.id]['processes'][process.id] = {
-                'process': process,
-                'risks': []
-            }
+        if area_data['processes']:
+            grouped_risks.append(area_data)
+
 
         grouped_risks[area.id]['processes'][process.id]['risks'].append(risk)
 
