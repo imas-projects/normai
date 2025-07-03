@@ -141,10 +141,14 @@ document.addEventListener('click', function (e) {
     const backgroundGridPlugin = {
         id: 'backgroundGrid',
         beforeDatasetsDraw(chart) {
-            const { ctx, scales } = chart;
+            const { ctx, scales, chartArea } = chart;
             const background = isEvaluation ? evalBackground : reevalBackground;
 
             ctx.save();
+
+            const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+            const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+
             for (let sev = 0; sev <= 10; sev++) {
                 for (let occ = 0; occ <= 10; occ++) {
                     const cell = background.find(c => c.severity === sev && c.occurrence === occ);
@@ -153,13 +157,38 @@ document.addEventListener('click', function (e) {
                     const color = riskColor(cell.risk_level);
                     if (!color) continue;
 
-                    const x = scales.x.getPixelForValue(occ) - (scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0)) / 2;
-                    const y = scales.y.getPixelForValue(sev) - (scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0)) / 2;
-                    const width = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
-                    const height = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+                    // Coordenadas centrales del punto (occ, sev)
+                    const xCenter = scales.x.getPixelForValue(occ);
+                    const yCenter = scales.y.getPixelForValue(sev);
 
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, y, width, height);
+                    // Ajustar la esquina superior izquierda del cuadrado (centrado)
+                    let x = xCenter - cellWidth / 2;
+                    let y = yCenter - cellHeight / 2;
+                    let w = cellWidth;
+                    let h = cellHeight;
+
+                    // Recortar límites para que no salga fuera del área del gráfico
+                    // chartArea = {left, top, right, bottom}
+                    if (x < chartArea.left) {
+                        w -= (chartArea.left - x);
+                        x = chartArea.left;
+                    }
+                    if (y < chartArea.top) {
+                        h -= (chartArea.top - y);
+                        y = chartArea.top;
+                    }
+                    if (x + w > chartArea.right) {
+                        w = chartArea.right - x;
+                    }
+                    if (y + h > chartArea.bottom) {
+                        h = chartArea.bottom - y;
+                    }
+
+                    // Solo dibujar si queda algo visible
+                    if (w > 0 && h > 0) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, w, h);
+                    }
                 }
             }
             ctx.restore();
@@ -172,14 +201,14 @@ document.addEventListener('click', function (e) {
                 const point = data.find(d => d.severity === sev && d.occurrence === occ);
                 const count = point?.count || 0;
                 return {
-                    label: Sev ${sev} - Occ ${occ},
+                    label: `Sev ${sev} - Occ ${occ}`,
                     data: [{
                         x: occ,
                         y: sev,
                         r: count > 0 ? count * 8 + 6 : 0, // Solo mostrar círculos si count > 0
-                        backgroundColor: 'transparent',   // Sin relleno (opaco)
-                        borderColor: '#555',              // Borde gris visible
-                        borderWidth: 1,
+                        backgroundColor: 'rgba(0,0,0,0)',   // Relleno transparente total
+                        borderColor: 'rgba(85,85,85,0.8)', // Borde gris oscuro con opacidad
+                        borderWidth: 2,                    // Borde más grueso para mejor visibilidad
                         count: count,
                         risk: point?.risk_level || ""
                     }]
@@ -199,7 +228,7 @@ document.addEventListener('click', function (e) {
                         callbacks: {
                             label(ctx) {
                                 const d = ctx.raw;
-                                return Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk || "N/A"};
+                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk || "N/A"}`;
                             }
                         }
                     },
@@ -231,6 +260,7 @@ document.addEventListener('click', function (e) {
         });
     });
 </script>
+
 
 
 
