@@ -538,7 +538,8 @@ def area_detail_view(request, area_id):
         "area": area,
         "matrix_data": matrix_data,
         "mode": mode,
-        "area": area,
+        "occurrences": occurrences,
+        "severities": severities,
         "page_obj": page_obj,
     }
     return render(request, "mistemplates/area-dashboard.html", contexto)
