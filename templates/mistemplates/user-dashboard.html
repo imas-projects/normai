@@ -318,75 +318,18 @@
     <div class="card">
         <div class="card-header align-items-center d-flex">
             <h4 class="card-title mb-0 flex-grow-1">Próximas Actividades</h4>
+
+            <!-- Filtro por Área -->
+            <select id="areaFilter" class="form-select w-auto ms-3">
+                <option value="">Todas las Áreas</option>
+                {% for area in areas %}
+                    <option value="{{ area.id }}">{{ area.name }}</option>
+                {% endfor %}
+            </select>
         </div>
 
-        <div class="card-body pt-0">
-            <ul class="list-group list-group-flush border-dashed">
-                {% for activity in page_obj %}
-                <li class="list-group-item ps-0">
-                    <div class="row align-items-center g-3">
-                        <div class="col-auto">
-                            <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3">
-                                <div class="text-center">
-                                    <h5 class="mb-0">{{ activity.date|date:"d" }}</h5>
-                                    <div class="text-muted">{{ activity.date|date:"D" }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <a href="#" class="text-reset fs-14 mb-0">{{ activity.name }}</a><br>
-                            <small class="text-muted">Responsable: {{ activity.responsible }}</small>
-                        </div>
-                        <div class="col-sm-auto">
-                            <span class="badge bg-primary">{{ activity.type }}</span>
-                        </div>
-                    </div>
-                </li>
-                {% empty %}
-                <li class="list-group-item ps-0">
-                    <p class="text-muted text-center">No hay actividades registradas.</p>
-                </li>
-                {% endfor %}
-            </ul>
-
-            <!-- Paginación -->
-            <div class="mt-3">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">&laquo;</span>
-                        </li>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                            {% else %}
-                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">&raquo;</span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
+        <div class="card-body pt-0" id="activity-list">
+            {% include 'partials/_activity_list.html' %}
         </div>
     </div>
 </div>
@@ -654,6 +597,40 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
+
+<script>
+    document.getElementById("areaFilter").addEventListener("change", function () {
+        const areaId = this.value;
+        fetch(`?area_id=${areaId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById("activity-list").innerHTML = html;
+        });
+    });
+
+    // Paginación AJAX
+    document.addEventListener("click", function (e) {
+        if (e.target.matches(".page-link")) {
+            e.preventDefault();
+            const url = e.target.getAttribute("href");
+            const areaId = document.getElementById("areaFilter").value;
+            fetch(`${url}&area_id=${areaId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("activity-list").innerHTML = html;
+            });
+        }
+    });
+</script>
+
 {% endblock extra_js %}
 
 
