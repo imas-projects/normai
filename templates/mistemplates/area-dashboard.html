@@ -163,59 +163,62 @@ document.addEventListener('click', function (e) {
         }
     };
 
-    function buildChart(data) {
-        const dataset = [...Array(11).keys()].flatMap(sev =>
-            [...Array(11).keys()].map(occ => {
-                const point = data.find(d => d.severity === sev && d.occurrence === occ);
-                const count = point?.count || 0;
-                return {
-                    label: `Sev ${sev} - Occ ${occ}`,
-                    data: [{
-                        x: occ,
-                        y: sev,
-                        r: count > 0 ? count * 8 + 6 : 4,   // más pequeño si es 0
-                        backgroundColor: 'rgba(0,0,0,0)',  // transparente
-                        borderColor: '#555',
-                        borderWidth: 2,
-                        count: count,
-                        risk: point?.risk_level || "Bajo"
-                    }]
-                };
-            })
-        );
+function buildChart(data) {
+    const neutralColor = 'rgba(128, 128, 128, 0.6)'; // gris neutro semitransparente
 
-        if (heatmapChart) heatmapChart.destroy();
+    const dataset = [...Array(11).keys()].flatMap(sev =>
+        [...Array(11).keys()].map(occ => {
+            const point = data.find(d => d.severity === sev && d.occurrence === occ);
+            const count = point?.count || 0;
+            return {
+                label: `Sev ${sev} - Occ ${occ}`,
+                data: [{
+                    x: occ,
+                    y: sev,
+                    r: count > 0 ? count * 8 + 6 : 4,  // radio, más grande si count > 0
+                    backgroundColor: neutralColor,     // color neutro fijo para todos los círculos
+                    borderColor: '#555',
+                    borderWidth: 2,
+                    count: count,
+                    risk: point?.risk_level || "Bajo"
+                }]
+            };
+        })
+    );
 
-        heatmapChart = new Chart(ctx, {
-            type: 'bubble',
-            data: { datasets: dataset },
-            options: {
-                responsive: true,
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label(ctx) {
-                                const d = ctx.raw;
-                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
-                            }
+    if (heatmapChart) heatmapChart.destroy();
+
+    heatmapChart = new Chart(ctx, {
+        type: 'bubble',
+        data: { datasets: dataset },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label(ctx) {
+                            const d = ctx.raw;
+                            return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
                         }
-                    },
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        title: { display: true, text: 'Probabilidad (Occurrence)' },
-                        min: 0, max: 10, ticks: { stepSize: 1 }
-                    },
-                    y: {
-                        title: { display: true, text: 'Severidad' },
-                        min: 0, max: 10, ticks: { stepSize: 1 }
                     }
-                }
+                },
+                legend: { display: false }
             },
-            plugins: [backgroundGridPlugin]
-        });
-    }
+            scales: {
+                x: {
+                    title: { display: true, text: 'Probabilidad (Occurrence)' },
+                    min: 0, max: 10, ticks: { stepSize: 1 }
+                },
+                y: {
+                    title: { display: true, text: 'Severidad' },
+                    min: 0, max: 10, ticks: { stepSize: 1 }
+                }
+            }
+        },
+        plugins: [backgroundGridPlugin]
+    });
+}
+
 
     document.addEventListener("DOMContentLoaded", () => {
         buildChart(evalData);
