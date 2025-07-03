@@ -32,10 +32,19 @@
 
 <style>
   .fixed-title {
-    min-height: 3rem; /* altura fija para los títulos */
+    min-height: 3rem;
   }
+
   .fixed-value {
-    min-height: 3.5rem; /* altura fija para valores y porcentaje */
+    min-height: 3.5rem;
+  }
+
+  .icon-small {
+    font-size: 2.25rem;
+  }
+
+  .number-small {
+    font-size: 1.5rem; /* equivalente a Bootstrap fs-4 aprox */
   }
 </style>
 
@@ -49,13 +58,13 @@
     </div>
     <div class="d-flex align-items-center fixed-value">
       <div class="flex-shrink-0">
-        <i class="bi bi-folder-fill" style="font-size: 3rem; color:#0d6efd;"></i>
+        <i class="bi bi-folder-fill icon-small" style="color:#0d6efd;"></i>
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="fs-1 fw-semibold mb-0">
+        <p class="number-small fw-semibold mb-0">
           {{ realizadas }} / {{ planificadas }}
         </p>
-        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+        <small class="number-small fw-semibold text-muted mb-0 ms-3">
           ({{ porcentaje }}%)
         </small>
       </div>
@@ -73,13 +82,13 @@
     </div>
     <div class="d-flex align-items-center fixed-value">
       <div class="flex-shrink-0">
-        <i class="bi bi-card-checklist" style="font-size: 3rem; color:#198754;"></i>
+        <i class="bi bi-card-checklist icon-small" style="color:#198754;"></i>
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="fs-1 fw-semibold mb-0">
+        <p class="number-small fw-semibold mb-0">
           {{ acciones_abiertas }} / {{ acciones_totales }}
         </p>
-        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+        <small class="number-small fw-semibold text-muted mb-0 ms-3">
           ({{ acciones_porcentaje }}%)
         </small>
       </div>
@@ -97,13 +106,13 @@
     </div>
     <div class="d-flex align-items-center fixed-value">
       <div class="flex-shrink-0">
-        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem; color:#fd7e14;"></i>
+        <i class="bi bi-exclamation-triangle-fill icon-small" style="color:#fd7e14;"></i>
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="fs-1 fw-semibold mb-0">
+        <p class="number-small fw-semibold mb-0">
           {{ auditorias_con_nc }} / {{ realizadas }}
         </p>
-        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+        <small class="number-small fw-semibold text-muted mb-0 ms-3">
           ({{ tasa_nc }}%)
         </small>
       </div>
@@ -121,13 +130,13 @@
     </div>
     <div class="d-flex align-items-center fixed-value">
       <div class="flex-shrink-0">
-        <i class="bi bi-bell-fill" style="font-size: 3rem; color:#dc3545;"></i>
+        <i class="bi bi-bell-fill icon-small" style="color:#dc3545;"></i>
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="fs-1 fw-semibold mb-0">
+        <p class="number-small fw-semibold mb-0">
           {{ procesos_en_alerta }} / {{ total_procesos }}
         </p>
-        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+        <small class="number-small fw-semibold text-muted mb-0 ms-3">
           ({{ tasa_procesos_alerta }}%)
         </small>
       </div>
@@ -145,10 +154,10 @@
     </div>
     <div class="d-flex align-items-center fixed-value">
       <div class="flex-shrink-0">
-        <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color:#0d6efd;"></i>
+        <i class="bi bi-graph-up-arrow icon-small" style="color:#0d6efd;"></i>
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="fs-1 fw-semibold mb-0">
+        <p class="number-small fw-semibold mb-0">
           {{ indice_mejora_continua }}
         </p>
       </div>
