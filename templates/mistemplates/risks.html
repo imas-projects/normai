@@ -146,95 +146,60 @@
               aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
               data-bs-parent="#accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
               <div class="accordion-body">
-                        {% for risk in risks %}
-                        <div class="card mb-3" style="background-color: #e9ecef; color: black;">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <table class="table table-bordered" style="border-color: #6c757d;">
-                                            <tbody>
-                                                <tr>
-                                                    <th style="font-size: 18px; width: 30%;">Riesgo:</th>
-                                                    <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th style="font-size: 18px;">Consecuencias:</th>
-                                                    <td style="font-size: 18px;">{{ risk.consequences }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th style="font-size: 18px;">Fuente:</th>
-                                                    <td style="font-size: 18px;">{{ risk.source }}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="col-md-4 text-center">
-                                        <div class="d-flex flex-column gap-2">
-                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                                data-bs-target="#modalRiskEvaluation{{ risk.id }}">
-                                                Evaluación del Riesgo
-                                            </button>
-                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                                data-bs-target="#modalRiskTreatment{{ risk.id }}">
-                                                Tratamiento del Riesgo
-                                            </button>
-                                            <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
-                                                data-bs-target="#modalContingencyPlan{{ risk.id }}">
-                                                Plan de Contingencia
-                                            </button>
-                                            <button class="btn btn-dark w-100" data-bs-toggle="modal"
-                                                data-bs-target="#modalReevaluation{{ risk.id }}">
-                                                Revaluación
-                                            </button>
-                                        </div>
-                                    </div>
+{% for risk in risks %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row align-items-start">
 
+            <!-- Información del Riesgo -->
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Riesgo:</strong> <small>{{ risk.identified_risk }}</small></p>
+                <p class="mb-1"><strong>Consecuencias:</strong> <small>{{ risk.consequences }}</small></p>
+                <p class="mb-1"><strong>Fuente:</strong> <small>{{ risk.source }}</small></p>
+            </div>
 
+            <!-- Botones de Acción -->
+            <div class="col-md-4 text-center">
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalRiskEvaluation{{ risk.id }}">
+                        Evaluación
+                    </button>
+                    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalRiskTreatment{{ risk.id }}">
+                        Tratamiento
+                    </button>
+                    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalContingencyPlan{{ risk.id }}">
+                        Contingencia
+                    </button>
+                    <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#modalReevaluation{{ risk.id }}">
+                        Revaluación
+                    </button>
+                </div>
+            </div>
 
+            <!-- Dropdown Edit + Delete -->
+            <div class="col-md-2 d-flex flex-column align-items-end align-self-start">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm" type="button" id="dropdownEditButton{{ risk.id }}"
+                        data-bs-toggle="dropdown" aria-expanded="false" title="Editar">
+                        <i class="ri-pencil-line"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownEditButton{{ risk.id }}">
+                        <li><a class="dropdown-item openEditRiskIdentificationModal" href="#" data-risk-id="{{ risk.id }}">Editar Identificación</a></li>
+                        <li><a class="dropdown-item openEditRiskEvaluationModal" href="#" data-risk-id="{{ risk.id }}">Editar Evaluación</a></li>
+                        <li><a class="dropdown-item openEditRiskTreatmentModal" href="#" data-risk-id="{{ risk.id }}">Editar Tratamiento</a></li>
+                        <li><a class="dropdown-item openEditContingencyPlanModal" href="#" data-risk-id="{{ risk.id }}">Editar Contingencia</a></li>
+                        <li><a class="dropdown-item openEditReevaluationModal" href="#" data-risk-id="{{ risk.id }}">Editar Revaluación</a></li>
+                    </ul>
+                </div>
+                <button class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#deleteModal{{ risk.id }}" title="Eliminar">
+                    <i class="ri-delete-back-2-fill"></i>
+                </button>
+            </div>
 
-<!-- Botones de Edición y Eliminación -->
-<div class="col-md-2 d-flex flex-column align-items-end align-self-start">
-    <div class="dropdown">
-        <button class="btn btn-dark dropdown-toggle" type="button" id="dropdownEditButton{{ risk.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-            Edit
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="dropdownEditButton{{ risk.id }}">
-            <li>
-                <a class="dropdown-item openEditRiskIdentificationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Editar Identificación
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item openEditRiskEvaluationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Editar Evaluación
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item openEditRiskTreatmentModal" href="#" data-risk-id="{{ risk.id }}">
-                    Editar Tratamiento
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item openEditContingencyPlanModal" href="#" data-risk-id="{{ risk.id }}">
-                    Editar Plan de Contingencia
-                </a>
-            </li>
-            <li>
-                <a class="dropdown-item openEditReevaluationModal" href="#" data-risk-id="{{ risk.id }}">
-                    Editar Revaluación
-                </a>
-            </li>
-        </ul>
+        </div>
     </div>
-    <button class="btn btn-danger mt-2" data-bs-toggle="modal" data-bs-target="#deleteModal{{ risk.id }}">
-        <i class="ri-delete-back-2-fill"></i>
-    </button>
 </div>
 
-
-                    </div>
-                                </div>
-                  </div>
                 
 
 
