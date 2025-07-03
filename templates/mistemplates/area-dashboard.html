@@ -66,10 +66,7 @@
 </div> <!-- main-content -->
 
 
-<script>
-  const eval_background = {{ eval_background|safe }};
-  const reeval_background = {{ reeval_background|safe }};
-</script>
+
 
 
     <!-- Bootstrap JS -->
@@ -128,69 +125,80 @@ document.addEventListener('click', function (e) {
 
 
 <script>
+  const risk_eval_data = {{ risk_eval_data|safe }};
+  const risk_reeval_data = {{ risk_reeval_data|safe }};
+</script>
+
+
+<script>
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('risk-heatmap');
   const ctx = canvas.getContext('2d');
 
-  // Dimensiones
-  const gridSize = 11;  // severity y occurrence van de 0 a 10
-  const cellSize = 40;  // tamaño de cada celda en px, ajustable
+  const gridSize = 11;
+  const cellSize = 45;
+  canvas.width = gridSize * cellSize;
+  canvas.height = gridSize * cellSize;
 
-  canvas.width = cellSize * gridSize;
-  canvas.height = cellSize * gridSize;
+  // Colores tipo "Heatmap Color Range" basado en count
+  const colorRanges = [
+    { min: 0, max: 5, fill: "#00A100", text: "#FFFFFF" },   // verde claro
+    { min: 6, max: 10, fill: "#128FD9", text: "#FFFFFF" },  // azul
+    { min: 11, max: 20, fill: "#FFB200", text: "#000000" }, // naranja
+    { min: 21, max: Infinity, fill: "#FF2E00", text: "#FFFFFF" } // rojo
+  ];
 
-  // Colores para cada nivel de riesgo
-  const colors = {
-    "High": "#e74c3c",
-    "Moderate": "#f39c12",
-    "Low": "#27ae60",
-    "White": "#ecf0f1"
-  };
+  // Función para obtener el color según count
+  function getColorByCount(count) {
+    for (let range of colorRanges) {
+      if (count >= range.min && count <= range.max) {
+        return range;
+      }
+    }
+    // Por defecto, sin color
+    return { fill: "#ecf0f1", text: "#000000" };
+  }
 
-  // Datos que vienen del backend (los defines en tu template antes de este script)
-  // Ejemplo de acceso:
-  // const evalBackground = {{ eval_background|safe }};
-  // const reevalBackground = {{ reeval_background|safe }};
+  // Datos iniciales (eval_background y reeval_background son variables globales en template)
+  let currentData = risk_eval_data;
 
-  // Aquí asumo que tienes las variables JS globales eval_background y reeval_background definidas
-  let currentData = eval_background;  // por defecto mostrar evaluación
-
-  const drawHeatmap = (data) => {
-    // Limpiar canvas
+  function drawHeatmap(data) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar celdas
-    for(let item of data){
+    // Dibujar celdas con color y número
+    for (let item of data) {
       const x = item.occurrence * cellSize;
-      // Invierto el eje Y para que severidad 0 esté abajo y 10 arriba, si quieres al revés quita esta línea
       const y = (gridSize - 1 - item.severity) * cellSize;
 
-      ctx.fillStyle = colors[item.risk_level] || colors.White;
+      const colors = getColorByCount(item.count);
+
+      // Fondo de celda
+      ctx.fillStyle = colors.fill;
       ctx.fillRect(x, y, cellSize, cellSize);
 
-      // Bordes de celda
+      // Borde
       ctx.strokeStyle = "#bdc3c7";
       ctx.strokeRect(x, y, cellSize, cellSize);
 
-      // Si count > 0, poner el número centrado y en color visible
-      if(item.count > 0){
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 14px Arial";
+      // Número centrado (solo si count > 0)
+      if (item.count > 0) {
+        ctx.fillStyle = colors.text;
+        ctx.font = "bold 16px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(item.count, x + cellSize / 2, y + cellSize / 2);
       }
     }
 
-    // Dibujar etiquetas ejes
+    // Ejes
     ctx.fillStyle = "#000";
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
     // Eje X: occurrence
-    for(let i=0; i<gridSize; i++){
-      ctx.fillText(i, i*cellSize + cellSize/2, canvas.height - 10);
+    for (let i = 0; i < gridSize; i++) {
+      ctx.fillText(i, i * cellSize + cellSize / 2, canvas.height - 10);
     }
     ctx.fillText("Occurrence", canvas.width / 2, canvas.height - 30);
 
@@ -201,26 +209,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.fillText("Severity", 0, 0);
     ctx.restore();
 
-    for(let i=0; i<gridSize; i++){
-      ctx.fillText(i, 10, (gridSize - 1 - i)*cellSize + cellSize/2);
+    // Números eje Y
+    for (let i = 0; i < gridSize; i++) {
+      ctx.fillText(i, 10, (gridSize - 1 - i) * cellSize + cellSize / 2);
     }
-  };
+  }
 
   drawHeatmap(currentData);
 
-  // Botón para cambiar entre evaluación y re-evaluación
   document.getElementById('toggle-risk-chart').addEventListener('click', () => {
-    if(currentData === eval_background){
-      currentData = reeval_background;
+    if (currentData === risk_eval_data) {
+      currentData = risk_reeval_data;
       document.getElementById('toggle-risk-chart').textContent = "Cambiar a Evaluación";
     } else {
-      currentData = eval_background;
+      currentData = risk_eval_data;
       document.getElementById('toggle-risk-chart').textContent = "Cambiar a Re-evaluación";
     }
     drawHeatmap(currentData);
   });
 });
-
 </script>
 
 
