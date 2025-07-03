@@ -30,18 +30,17 @@
 
             <div class="row">
                 <div class="col-xxl-8">
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h4 class="card-title mb-0">Matriz de Riesgos (Evaluación vs Re-evaluación)</h4>
-                            <button class="btn btn-sm btn-outline-primary" id="toggle-risk-chart">Cambiar a Re-evaluación</button>
-                        </div>
-                        <div class="card-body">
-                            <div id="risk-heatmap" style="height: 450px;"></div>
-                            <div class="text-muted small mt-2">
-                                El <strong>tamaño</strong> del círculo representa la cantidad de riesgos. El <strong>color</strong> representa el nivel de riesgo (Alto, Moderado, Bajo).
-                            </div>
-                        </div>
-                    </div>
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="card-title mb-0">Matriz de Riesgos (Evaluación vs Re-evaluación)</h4>
+        <button class="btn btn-sm btn-outline-primary" id="toggle-risk-chart">Cambiar a Re-evaluación</button>
+    </div>
+    <div class="card-body">
+        <canvas id="risk-heatmap"></canvas>
+        </div>
+    </div>
+</div>
+
                 </div>
 
                 <!-- Próximas Actividades a la derecha -->
@@ -121,73 +120,117 @@ document.addEventListener('click', function (e) {
 
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const riskEvalData = {{ risk_eval_data|safe }};
-    const riskReevalData = {{ risk_reeval_data|safe }};
+    const evalData = {{ risk_eval_data|safe }};
+    const reevalData = {{ risk_reeval_data|safe }};
+    const evalBackground = {{ eval_background|safe }};
+    const reevalBackground = {{ reeval_background|safe }};
+    let isEvaluation = true;
 
-    console.log("riskEvalData", riskEvalData);  // <-- para debug
+    const ctx = document.getElementById("risk-heatmap").getContext("2d");
+    let heatmapChart;
 
-    const colorMap = {
-        "High": "#f44336",
-        "Moderate": "#ff9800",
-        "Low": "#4caf50",
+    function riskColor(level) {
+        return {
+            'High': 'rgba(255, 99, 132, 0.7)',
+            'Moderate': 'rgba(255, 206, 86, 0.7)',
+            'Low': 'rgba(75, 192, 192, 0.7)',
+        }[level] || 'rgba(220,220,220,0.2)';
+    }
+
+    const backgroundGridPlugin = {
+        id: 'backgroundGrid',
+        beforeDatasetsDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const background = isEvaluation ? evalBackground : reevalBackground;
+
+            ctx.save();
+            for (let sev = 0; sev <= 10; sev++) {
+                for (let occ = 0; occ <= 10; occ++) {
+                    const cell = background.find(c => c.severity === sev && c.occurrence === occ);
+                    const color = riskColor(cell?.risk_level || "Low");
+
+                    const x = scales.x.getPixelForValue(occ) - (scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0)) / 2;
+                    const y = scales.y.getPixelForValue(sev) - (scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0)) / 2;
+                    const width = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+                    const height = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, width, height);
+                }
+            }
+            ctx.restore();
+        }
     };
 
-    const levels = ["Low", "Moderate", "High"];
+function buildChart(data) {
+    const neutralColor = 'rgba(128, 128, 128, 0.6)'; // gris neutro semitransparente
 
-    const series = levels.map(level => {
-        const data = [];
-        for (let sev = 0; sev <= 10; sev++) {
-            for (let occ = 0; occ <= 10; occ++) {
-                const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
-                data.push(cell && cell.risk_level === level ? 1 : 0);
-            }
-        }
-        return { name: level, data: data };
-    });
+    const dataset = [...Array(11).keys()].flatMap(sev =>
+        [...Array(11).keys()].map(occ => {
+            const point = data.find(d => d.severity === sev && d.occurrence === occ);
+            const count = point?.count || 0;
+            return {
+                label: Sev ${sev} - Occ ${occ},
+                data: [{
+                    x: occ,
+                    y: sev,
+                    r: count > 0 ? count * 8 + 6 : 4,  // radio, más grande si count > 0
+                    backgroundColor: neutralColor,     // color neutro fijo para todos los círculos
+                    borderColor: '#555',
+                    borderWidth: 2,
+                    count: count,
+                    risk: point?.risk_level || "Bajo"
+                }]
+            };
+        })
+    );
 
-    const seriesTransformed = series.map(serie => {
-        let idx = 0;
-        const dataPoints = [];
-        for (let sev = 0; sev <= 10; sev++) {
-            for (let occ = 0; occ <= 10; occ++) {
-                dataPoints.push({ x: occ.toString(), y: serie.data[idx] });
-                idx++;
-            }
-        }
-        return { name: serie.name, data: dataPoints };
-    });
+    if (heatmapChart) heatmapChart.destroy();
 
-    var options = {
-        chart: {
-            height: 450,
-            type: 'heatmap',
-            toolbar: { show: false }
-        },
-        plotOptions: {
-            heatmap: {
-                colorScale: {
-                    ranges: [
-                        { from: 1, to: 1, color: '#4caf50', name: 'Low' },
-                        { from: 1, to: 1, color: '#ff9800', name: 'Moderate' },
-                        { from: 1, to: 1, color: '#f44336', name: 'High' },
-                    ]
+    heatmapChart = new Chart(ctx, {
+        type: 'bubble',
+        data: { datasets: dataset },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label(ctx) {
+                            const d = ctx.raw;
+                            return Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk};
+                        }
+                    }
+                },
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Probabilidad (Occurrence)' },
+                    min: 0, max: 10, ticks: { stepSize: 1 }
+                },
+                y: {
+                    title: { display: true, text: 'Severidad' },
+                    min: 0, max: 10, ticks: { stepSize: 1 }
                 }
             }
         },
-        dataLabels: { enabled: false },
-        xaxis: {
-            categories: [...Array(11).keys()].map(i => i.toString()),
-            title: { text: 'Occurrence' }
-        },
-        yaxis: { title: { text: 'Severity' } },
-        series: seriesTransformed
-    };
+        plugins: [backgroundGridPlugin]
+    });
+}
 
-    var chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
-    chart.render();
-});
+
+    document.addEventListener("DOMContentLoaded", () => {
+        buildChart(evalData);
+        document.getElementById("toggle-risk-chart").addEventListener("click", () => {
+            isEvaluation = !isEvaluation;
+            buildChart(isEvaluation ? evalData : reevalData);
+            document.getElementById("toggle-risk-chart").textContent = isEvaluation
+                ? "Cambiar a Re-evaluación"
+                : "Cambiar a Evaluación";
+        });
+    });
 </script>
+
 
 
 {% endblock extra_js %}
