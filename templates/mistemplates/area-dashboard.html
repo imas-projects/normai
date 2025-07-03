@@ -115,25 +115,72 @@ document.addEventListener('click', function (e) {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const evaluationData = JSON.parse('{{ evaluation_points|escapejs }}');
+    const reevaluationData = JSON.parse('{{ reevaluation_points|escapejs }}');
+
+    const series = [
+        {
+            name: 'Evaluaciones',
+            data: evaluationData.map(p => ({
+                x: p.x,
+                y: p.y,
+                fillColor: p.color,
+                customTooltip: p.tooltip,
+            })),
+        },
+        {
+            name: 'Reevaluaciones',
+            data: reevaluationData.map(p => ({
+                x: p.x,
+                y: p.y,
+                fillColor: p.color,
+                customTooltip: p.tooltip,
+            })),
+        }
+    ];
+
     const options = {
         chart: {
             type: 'scatter',
             height: 400,
+            zoom: {
+                enabled: true,
+                type: 'xy'
+            },
         },
-        series: [{
-            name: 'Test',
-            data: [
-                { x: 1, y: 2 },
-                { x: 2, y: 3 },
-                { x: 3, y: 4 }
-            ]
-        }],
-        xaxis: { min: 0, max: 10 },
-        yaxis: { min: 0, max: 10 },
+        colors: ['#28a745', '#fd7e14', '#dc3545'],
+        series: series,
+        xaxis: {
+            title: { text: 'Ocurrencia' },
+            min: 0,
+            max: 10,
+            tickAmount: 10,
+        },
+        yaxis: {
+            title: { text: 'Severidad' },
+            min: 0,
+            max: 10,
+            tickAmount: 10,
+        },
+        tooltip: {
+            custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                const point = w.config.series[seriesIndex].data[dataPointIndex];
+                return `<div style="padding:5px; color:#fff; background:${point.fillColor}; border-radius:4px;">
+                    ${point.customTooltip}
+                </div>`;
+            }
+        },
+        markers: {
+            size: 8,
+            hover: { size: 12 },
+        },
+        legend: { position: 'top' },
     };
+
     const chart = new ApexCharts(document.querySelector("#risk_scatter_chart"), options);
     chart.render();
 });
+
 
 </script>
 {% endblock extra_js %}
