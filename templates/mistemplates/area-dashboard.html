@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}Area Dashboard{% endblock title %}
 {% block extra_css %}
-<body>
+
     <!-- jsvectormap css -->
     <link href="{% static 'libs/jsvectormap/dist/jsvectormap.min.css'%}" rel="stylesheet" type="text/css" />
 
@@ -29,20 +29,20 @@
             </div>
 
             <div class="row">
-                <!-- Espacio para contenido izquierdo y central (vacío por ahora) -->
                 <div class="col-xxl-8">
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title mb-0">Matriz de Riesgos (Evaluación vs Re-evaluación)</h4>
-        <button class="btn btn-sm btn-outline-primary" id="toggle-risk-chart">Cambiar a Re-evaluación</button>
-    </div>
-    <div class="card-body">
-        <div id="risk-heatmap"></div>
-        <div class="text-muted small mt-2">
-            El <strong>tamaño</strong> del círculo representa la cantidad de riesgos. El <strong>color</strong> representa el nivel de riesgo (Alto, Moderado, Bajo).
-        </div>
-    </div>
-</div>
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">Matriz de Riesgos (Evaluación vs Re-evaluación)</h4>
+                            <button class="btn btn-sm btn-outline-primary" id="toggle-risk-chart">Cambiar a Re-evaluación</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="risk-heatmap" style="height: 450px;"></div>
+                            <div class="text-muted small mt-2">
+                                El <strong>tamaño</strong> del círculo representa la cantidad de riesgos. El <strong>color</strong> representa el nivel de riesgo (Alto, Moderado, Bajo).
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
 
                     <!-- Aquí puedes añadir más contenido más adelante -->
@@ -129,106 +129,70 @@ document.addEventListener("DOMContentLoaded", () => {
     const riskEvalData = {{ risk_eval_data|safe }};
     const riskReevalData = {{ risk_reeval_data|safe }};
 
-    // Crear series para ApexCharts (aquí sólo usamos riskEvalData, puedes agregar toggle para reeval)
-    const series = [];
+    console.log("riskEvalData", riskEvalData);  // <-- para debug
 
-    // Crear una matriz 11x11 con valores numéricos (usamos 1 para mostrar celda)
-    for (let sev = 0; sev <= 10; sev++) {
-        const dataRow = [];
-        for (let occ = 0; occ <= 10; occ++) {
-            const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
-            dataRow.push(cell ? 1 : 0);
-        }
-        series.push({
-            name: `Sev ${sev}`,
-            data: dataRow
-        });
-    }
-
-    // Mapeo de colores basado en risk_level
-const colorMap = {
-    "High": "#f44336",      // rojo intenso
-    "Moderate": "#ff9800",  // naranja
-    "Low": "#4caf50",       // verde
-};
-
-// Crear 3 series, una por cada nivel
-const levels = ["Low", "Moderate", "High"];
-
-const series = levels.map(level => {
-    const data = [];
-    for (let sev = 0; sev <= 10; sev++) {
-        for (let occ = 0; occ <= 10; occ++) {
-            const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
-            data.push(cell && cell.risk_level === level ? 1 : 0);
-        }
-    }
-    return {
-        name: level,
-        data: data
+    const colorMap = {
+        "High": "#f44336",
+        "Moderate": "#ff9800",
+        "Low": "#4caf50",
     };
-});
 
-// Apex heatmap necesita data en forma [ {x: occ, y: value} ] por punto para cada serie
-// Vamos a transformar los datos para que quede con x, y por celda:
-const seriesTransformed = series.map(serie => {
-    let idx = 0;
-    const dataPoints = [];
-    for (let sev = 0; sev <= 10; sev++) {
-        for (let occ = 0; occ <= 10; occ++) {
-            dataPoints.push({ x: occ.toString(), y: serie.data[idx] });
-            idx++;
-        }
-    }
-    return { name: serie.name, data: dataPoints };
-});
+    const levels = ["Low", "Moderate", "High"];
 
-var options = {
-    chart: {
-        height: 450,
-        type: 'heatmap',
-        toolbar: { show: false }
-    },
-    plotOptions: {
-        heatmap: {
-            colorScale: {
-                ranges: [
-                    { from: 1, to: 1, color: '#4caf50', name: 'Low' },
-                    { from: 1, to: 1, color: '#ff9800', name: 'Moderate' },
-                    { from: 1, to: 1, color: '#f44336', name: 'High' },
-                ]
+    const series = levels.map(level => {
+        const data = [];
+        for (let sev = 0; sev <= 10; sev++) {
+            for (let occ = 0; occ <= 10; occ++) {
+                const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
+                data.push(cell && cell.risk_level === level ? 1 : 0);
             }
         }
-    },
-    dataLabels: {
-        enabled: false,
-    },
-    xaxis: {
-        categories: [...Array(11).keys()].map(i => i.toString()),
-        title: { text: 'Occurrence' }
-    },
-    yaxis: {
-        title: { text: 'Severity' }
-    },
-    series: seriesTransformed
-};
+        return { name: level, data: data };
+    });
 
-var chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
-chart.render();
+    const seriesTransformed = series.map(serie => {
+        let idx = 0;
+        const dataPoints = [];
+        for (let sev = 0; sev <= 10; sev++) {
+            for (let occ = 0; occ <= 10; occ++) {
+                dataPoints.push({ x: occ.toString(), y: serie.data[idx] });
+                idx++;
+            }
+        }
+        return { name: serie.name, data: dataPoints };
+    });
 
+    var options = {
+        chart: {
+            height: 450,
+            type: 'heatmap',
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            heatmap: {
+                colorScale: {
+                    ranges: [
+                        { from: 1, to: 1, color: '#4caf50', name: 'Low' },
+                        { from: 1, to: 1, color: '#ff9800', name: 'Moderate' },
+                        { from: 1, to: 1, color: '#f44336', name: 'High' },
+                    ]
+                }
+            }
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: [...Array(11).keys()].map(i => i.toString()),
+            title: { text: 'Occurrence' }
+        },
+        yaxis: { title: { text: 'Severity' } },
+        series: seriesTransformed
+    };
+
+    var chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
+    chart.render();
 });
-
 </script>
-
-
-
-
-
-
 
 
 {% endblock extra_js %}
 
-
-</body>
-</html>
