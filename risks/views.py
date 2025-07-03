@@ -28,13 +28,11 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    # Agrupar por Área y Proceso
-    grouped_risks = {}
+    # Crear estructura: {area: {process: [riesgos]}}
+    risks_by_area = defaultdict(lambda: defaultdict(list))
+
     for risk in all_risks:
-        key = (risk.area, risk.process)
-        if key not in grouped_risks:
-            grouped_risks[key] = []
-        grouped_risks[key].append(risk)
+        risks_by_area[risk.area][risk.process].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -42,12 +40,13 @@ def create_risk(request):
     reevaluations = Reevaluation.objects.select_related('risk').all()
 
     return render(request, 'mistemplates/risks.html', {
-        'grouped_risks': grouped_risks,
+        'risks_by_area': risks_by_area,
         'evaluations': evaluations,
         'treatments': treatments,
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
+
 
 @login_required
 def add_risk_identification(request):
