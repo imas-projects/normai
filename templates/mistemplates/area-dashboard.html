@@ -135,7 +135,7 @@ function riskColor(level) {
         'High': 'rgba(255, 99, 132, 0.7)',
         'Moderate': 'rgba(255, 206, 86, 0.7)',
         'Low': 'rgba(75, 192, 192, 0.7)',
-        'White': 'rgba(255, 255, 255, 0)',  // transparente para celdas sin riesgo
+        'White': 'rgba(255, 255, 255, 0)',  // Transparente para celdas sin riesgo
     }[level] || 'rgba(255, 255, 255, 0)';
 }
 
@@ -156,6 +156,7 @@ const backgroundGridPlugin = {
                 if (!cell) continue;
 
                 const color = riskColor(cell.risk_level || "White");
+                if (color === 'rgba(255, 255, 255, 0)') continue; // No pintar fondo transparente
 
                 const xCenter = scales.x.getPixelForValue(occ);
                 const yCenter = scales.y.getPixelForValue(sev);
@@ -165,11 +166,21 @@ const backgroundGridPlugin = {
                 let w = cellWidth;
                 let h = cellHeight;
 
-                // Recortar para que no se salga del área visible (chartArea)
-                x = Math.max(x, chartArea.left);
-                y = Math.max(y, chartArea.top);
-                w = Math.min(w, chartArea.right - x);
-                h = Math.min(h, chartArea.bottom - y);
+                // Recortar para que el fondo no se salga del área visible
+                if (x < chartArea.left) {
+                    w -= (chartArea.left - x);
+                    x = chartArea.left;
+                }
+                if (y < chartArea.top) {
+                    h -= (chartArea.top - y);
+                    y = chartArea.top;
+                }
+                if (x + w > chartArea.right) {
+                    w = chartArea.right - x;
+                }
+                if (y + h > chartArea.bottom) {
+                    h = chartArea.bottom - y;
+                }
 
                 if (w > 0 && h > 0) {
                     ctx.fillStyle = color;
@@ -182,7 +193,6 @@ const backgroundGridPlugin = {
     }
 };
 
-
 function buildChart(data) {
     const dataset = [...Array(11).keys()].flatMap(sev =>
         [...Array(11).keys()].map(occ => {
@@ -194,8 +204,8 @@ function buildChart(data) {
                     x: occ,
                     y: sev,
                     r: count > 0 ? count * 8 + 6 : 0,
-                    backgroundColor: 'rgba(0,0,0,0)',   // SIN relleno, totalmente transparente
-                    borderColor: 'rgba(85,85,85,0.8)', // borde visible (gris oscuro)
+                    backgroundColor: 'rgba(0,0,0,0)',  // Sin relleno, transparente total
+                    borderColor: 'rgba(85,85,85,0.8)', // Borde gris oscuro visible
                     borderWidth: 2,
                     count: count,
                     risk: point?.risk_level || ""
