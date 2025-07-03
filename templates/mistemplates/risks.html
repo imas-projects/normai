@@ -232,10 +232,17 @@
 </div>
 
 
-                            </div>
-                        </div>
                     </div>
-                </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
 
 
 <!-- Modal para Editar Risk Identification -->
@@ -513,14 +520,6 @@
                             </div>
                         </div>
                     </div>
-                    {% endfor %}  <!-- Cierre del for de risks -->
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endwith %}
-    {% endfor %}
-</div>
 
 {% block footer %}
 {% include "partials/footer.html" %}
