@@ -147,7 +147,6 @@ const backgroundGridPlugin = {
 
         ctx.save();
 
-        // Tamaño de cada celda en pixeles
         const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
         const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
 
@@ -158,31 +157,19 @@ const backgroundGridPlugin = {
 
                 const color = riskColor(cell.risk_level || "White");
 
-                // Coordenadas centrales del punto
                 const xCenter = scales.x.getPixelForValue(occ);
                 const yCenter = scales.y.getPixelForValue(sev);
 
-                // Cuadrado centrado en el punto
                 let x = xCenter - cellWidth / 2;
                 let y = yCenter - cellHeight / 2;
                 let w = cellWidth;
                 let h = cellHeight;
 
-                // Recortar para que no se pinte fuera del área visible (chartArea)
-                if (x < chartArea.left) {
-                    w -= (chartArea.left - x);
-                    x = chartArea.left;
-                }
-                if (y < chartArea.top) {
-                    h -= (chartArea.top - y);
-                    y = chartArea.top;
-                }
-                if (x + w > chartArea.right) {
-                    w = chartArea.right - x;
-                }
-                if (y + h > chartArea.bottom) {
-                    h = chartArea.bottom - y;
-                }
+                // Recortar para que no se salga del área visible (chartArea)
+                x = Math.max(x, chartArea.left);
+                y = Math.max(y, chartArea.top);
+                w = Math.min(w, chartArea.right - x);
+                h = Math.min(h, chartArea.bottom - y);
 
                 if (w > 0 && h > 0) {
                     ctx.fillStyle = color;
@@ -194,6 +181,7 @@ const backgroundGridPlugin = {
         ctx.restore();
     }
 };
+
 
 function buildChart(data) {
     const dataset = [...Array(11).keys()].flatMap(sev =>
