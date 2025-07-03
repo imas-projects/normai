@@ -130,122 +130,92 @@ document.addEventListener('click', function (e) {
     const ctx = document.getElementById("risk-heatmap").getContext("2d");
     let heatmapChart;
 
-function riskColor(level) {
-    return {
-        'High': 'rgba(255, 99, 132, 0.7)',
-        'Moderate': 'rgba(255, 206, 86, 0.7)',
-        'Low': 'rgba(75, 192, 192, 0.7)',
-        'White': 'rgba(255, 255, 255, 0)',  // Transparente para celdas sin riesgo
-    }[level] || 'rgba(255, 255, 255, 0)';
-}
-
-const backgroundGridPlugin = {
-    id: 'backgroundGrid',
-    beforeDatasetsDraw(chart) {
-        const { ctx, scales, chartArea } = chart;
-        const background = isEvaluation ? evalBackground : reevalBackground;
-
-        ctx.save();
-
-        const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
-        const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
-
-        for (let sev = 0; sev <= 10; sev++) {
-            for (let occ = 0; occ <= 10; occ++) {
-                const cell = background.find(c => c.severity === sev && c.occurrence === occ);
-                if (!cell) continue;
-
-                const color = riskColor(cell.risk_level || "White");
-                if (color === 'rgba(255, 255, 255, 0)') continue; // No pintar fondo transparente
-
-                const xCenter = scales.x.getPixelForValue(occ);
-                const yCenter = scales.y.getPixelForValue(sev);
-
-                let x = xCenter - cellWidth / 2;
-                let y = yCenter - cellHeight / 2;
-                let w = cellWidth;
-                let h = cellHeight;
-
-                // Recortar para que el fondo no se salga del área visible
-                if (x < chartArea.left) {
-                    w -= (chartArea.left - x);
-                    x = chartArea.left;
-                }
-                if (y < chartArea.top) {
-                    h -= (chartArea.top - y);
-                    y = chartArea.top;
-                }
-                if (x + w > chartArea.right) {
-                    w = chartArea.right - x;
-                }
-                if (y + h > chartArea.bottom) {
-                    h = chartArea.bottom - y;
-                }
-
-                if (w > 0 && h > 0) {
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, y, w, h);
-                }
-            }
-        }
-
-        ctx.restore();
+    function riskColor(level) {
+        return {
+            'High': 'rgba(255, 99, 132, 0.7)',
+            'Moderate': 'rgba(255, 206, 86, 0.7)',
+            'Low': 'rgba(75, 192, 192, 0.7)',
+        }[level] || 'rgba(220,220,220,0.2)';
     }
-};
 
-function buildChart(data) {
-    const dataset = [...Array(11).keys()].flatMap(sev =>
-        [...Array(11).keys()].map(occ => {
-            const point = data.find(d => d.severity === sev && d.occurrence === occ);
-            const count = point?.count || 0;
-            return {
-                label: `Sev ${sev} - Occ ${occ}`,
-                data: [{
-                    x: occ,
-                    y: sev,
-                    r: count > 0 ? count * 8 + 6 : 0,
-                    backgroundColor: 'transparent',   // transparente total, sin relleno
-                    borderColor: 'rgba(85,85,85,0.8)', // borde visible
-                    borderWidth: 2,
-                    count: count,
-                    risk: point?.risk_level || ""
-                }]
-            };
-        })
-    );
+    const backgroundGridPlugin = {
+        id: 'backgroundGrid',
+        beforeDatasetsDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const background = isEvaluation ? evalBackground : reevalBackground;
 
-    if (heatmapChart) heatmapChart.destroy();
+            ctx.save();
+            for (let sev = 0; sev <= 10; sev++) {
+                for (let occ = 0; occ <= 10; occ++) {
+                    const cell = background.find(c => c.severity === sev && c.occurrence === occ);
+                    const color = riskColor(cell?.risk_level || "Low");
 
-    heatmapChart = new Chart(ctx, {
-        type: 'bubble',
-        data: { datasets: dataset },
-        options: {
-            responsive: true,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label(ctx) {
-                            const d = ctx.raw;
-                            return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk || "N/A"}`;
-                        }
-                    }
-                },
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    title: { display: true, text: 'Probabilidad (Occurrence)' },
-                    min: 0, max: 10, ticks: { stepSize: 1 }
-                },
-                y: {
-                    title: { display: true, text: 'Severidad' },
-                    min: 0, max: 10, ticks: { stepSize: 1 }
+                    const x = scales.x.getPixelForValue(occ) - (scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0)) / 2;
+                    const y = scales.y.getPixelForValue(sev) - (scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0)) / 2;
+                    const width = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+                    const height = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, width, height);
                 }
             }
-        },
-        plugins: [backgroundGridPlugin]
-    });
-}
+            ctx.restore();
+        }
+    };
+
+    function buildChart(data) {
+        const dataset = [...Array(11).keys()].flatMap(sev =>
+            [...Array(11).keys()].map(occ => {
+                const point = data.find(d => d.severity === sev && d.occurrence === occ);
+                const count = point?.count || 0;
+                return {
+                    label: `Sev ${sev} - Occ ${occ}`,
+                    data: [{
+                        x: occ,
+                        y: sev,
+                        r: count > 0 ? count * 4 + 4 : 2,  // más pequeño si es 0
+                        backgroundColor: 'rgba(255,255,255,0)',  // transparente
+                        borderColor: '#555',
+                        borderWidth: 1,
+                        count: count,
+                        risk: point?.risk_level || "Bajo"
+                    }]
+                };
+            })
+        );
+
+        if (heatmapChart) heatmapChart.destroy();
+
+        heatmapChart = new Chart(ctx, {
+            type: 'bubble',
+            data: { datasets: dataset },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label(ctx) {
+                                const d = ctx.raw;
+                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Probabilidad (Occurrence)' },
+                        min: 0, max: 10, ticks: { stepSize: 1 }
+                    },
+                    y: {
+                        title: { display: true, text: 'Severidad' },
+                        min: 0, max: 10, ticks: { stepSize: 1 }
+                    }
+                }
+            },
+            plugins: [backgroundGridPlugin]
+        });
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         buildChart(evalData);
