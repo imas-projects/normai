@@ -484,10 +484,48 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
+    # Obtenemos evaluaciones
+    evaluations = RiskEvaluation.objects.filter(risk__area=area)
+    reevaluations = Reevaluation.objects.filter(risk__area=area)
+
+    # Función para convertir risk_level a color
+    def risk_level_color(level):
+        mapping = {
+            'Low': '#28a745',       # Verde
+            'Moderate': '#fd7e14',  # Naranja
+            'High': '#dc3545'       # Rojo
+        }
+        return mapping.get(level, '#6c757d')  # Gris por defecto si no coincide
+
+    # Armamos lista de puntos para evaluaciones
+    evaluation_points = []
+    for ev in evaluations:
+        evaluation_points.append({
+            'x': ev.occurrence,
+            'y': ev.severity,
+            'risk_level': ev.risk_level,
+            'color': risk_level_color(ev.risk_level),
+            'tooltip': f"Evaluación: {ev.risk_level} (Sev: {ev.severity}, Occ: {ev.occurrence})"
+        })
+
+    # Puntos para reevaluaciones
+    reevaluation_points = []
+    for rev in reevaluations:
+        reevaluation_points.append({
+            'x': rev.occurrence,
+            'y': rev.severity,
+            'risk_level': rev.risk_level,
+            'color': risk_level_color(rev.risk_level),
+            'tooltip': f"Reevaluación: {rev.risk_level} (Sev: {rev.severity}, Occ: {rev.occurrence})"
+        })
+
+
     # === Contexto final ===
     contexto = {
         "area": area,
         "page_obj": page_obj,
+        'evaluation_points': evaluation_points,
+        'reevaluation_points': reevaluation_points,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
