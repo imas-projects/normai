@@ -15,20 +15,23 @@
                                 <i class="bx bx-home"></i> <span data-key="t-dashboards">Inicio</span>
                             </a>
                         </li>
-<li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle menu-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+<li class="nav-item">
+    <a class="nav-link menu-link" href="#sidebarAreas" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAreas">
         <i class="bx bx-border-all"></i> <span data-key="t-areas">Áreas</span>
     </a>
-Cantidad de áreas: {{ all_areas|length }}
-
-<ul>
-    {% for area in all_areas %}
-        <li>{{ area.name }}</li>
-    {% empty %}
-        <li>No hay áreas disponibles</li>
-    {% endfor %}
-</ul>
-
+    <div class="collapse menu-dropdown" id="sidebarAreas">
+        <ul class="nav nav-sm flex-column">
+            {% for area in all_areas %}
+            <li class="nav-item">
+                <a href="{% url 'pages:area_detail' area.id %}" class="nav-link">{{ area.name }}</a>
+            </li>
+            {% empty %}
+            <li class="nav-item">
+                <span class="nav-link disabled">No hay áreas disponibles</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
 </li>
 
                         <li class="nav-item">
