@@ -481,60 +481,9 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    def compute_heatmap(evaluations):
-        heatmap = defaultdict(lambda: defaultdict(int))  # severity -> occurrence -> count
-        levels = defaultdict(lambda: defaultdict(str))   # severity -> occurrence -> risk level
-
-        priority = {"High": 3, "Moderate": 2, "Low": 1}
-
-        for ev in evaluations:
-            sev = ev.severity
-            occ = ev.occurrence
-            heatmap[sev][occ] += 1
-
-            current_level = levels[sev][occ]
-            if priority.get(ev.risk_level, 0) > priority.get(current_level, 0):
-                levels[sev][occ] = ev.risk_level
-
-        data = []
-        background = []
-
-        for sev in range(11):
-            for occ in range(11):
-                count = heatmap[sev][occ]
-                if count > 0:
-                    level = levels[sev][occ] or "Low"
-                else:
-                    level = "White"
-
-
-                data.append({
-                    "severity": sev,
-                    "occurrence": occ,
-                    "count": count,
-                    "risk_level": level,
-                })
-                background.append({
-                    "severity": sev,
-                    "occurrence": occ,
-                    "risk_level": level,
-                })
-
-        return data, background
-
-    risk_evals = RiskEvaluation.objects.filter(risk__area=area).select_related('risk')
-    re_evals = Reevaluation.objects.filter(risk__area=area).select_related('risk')
-
-    risk_eval_data, eval_background = compute_heatmap(risk_evals)
-    risk_reeval_data, reeval_background = compute_heatmap(re_evals)
-
     contexto = {
         "area": area,
         "page_obj": page_obj,
-        "risk_eval_data": risk_eval_data,
-        "risk_reeval_data": risk_reeval_data,
-        "eval_background": eval_background,
-        "reeval_background": reeval_background,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
