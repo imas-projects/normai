@@ -481,9 +481,30 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
+    risks = area.risks.select_related('process').prefetch_related('evaluations', 'reevaluations')
+
+    evaluation_matrix = {}
+    reevaluation_matrix = {}
+    
+    for risk in risks:
+        last_eval = risk.evaluations.order_by('-id').first()
+        last_reeval = risk.reevaluations.order_by('-id').first()
+
+        if last_eval:
+            key = (last_eval.severity, last_eval.occurrence)
+            evaluation_matrix[key] = last_eval.risk_level
+
+        if last_reeval:
+            key = (last_reeval.severity, last_reeval.occurrence)
+            reevaluation_matrix[key] = last_reeval.risk_level
+
+
     contexto = {
         "area": area,
         "page_obj": page_obj,
+        "evaluation_matrix": evaluation_matrix,
+        "reevaluation_matrix": reevaluation_matrix,
+
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
