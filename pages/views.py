@@ -20,7 +20,7 @@ from django.db.models.functions import TruncMonth
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
 from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
 from company.models import Area, Position, UserPosition
-from risks.models import RiskTreatment, RiskEvaluation, Reevaluation
+from risks.models import RiskTreatment, RiskEvaluation, Reevaluation, RiskIdentification
 from communications.models import CommunicationTable
 
 
