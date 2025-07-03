@@ -503,12 +503,13 @@ def area_detail_view(request, area_id):
             for occ in range(11):
                 count = heatmap[sev][occ]
                 level = levels[sev][occ] or None
-                data.append({
-                    "severity": sev,
-                    "occurrence": occ,
-                    "count": count,
-                    "risk_level": level,
-                })
+                if count > 0:
+                    data.append({
+                        "severity": sev,
+                        "occurrence": occ,
+                        "count": count,
+                        "risk_level": level,
+                    })
                 background.append({
                     "severity": sev,
                     "occurrence": occ,
