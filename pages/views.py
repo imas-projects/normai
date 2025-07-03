@@ -483,32 +483,32 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    # === Construcción de matrices de riesgo ===
+    # Matriz de Evaluaciones
+    evaluations_matrix = {}
+    reevaluations_matrix = {}
 
-    def build_matrix(queryset):
-        matrix = [[0 for _ in range(11)] for _ in range(11)]
-        niveles = {'Low': 1, 'Moderate': 2, 'High': 3}
-        for item in queryset:
-            sev = item['severity']
-            occ = item['occurrence']
-            nivel = niveles.get(item['risk_level'], 1)
+    # Obtenemos todos los riesgos asociados a esta área
+    risks = RiskIdentification.objects.filter(area=area).prefetch_related('evaluations', 'reevaluations')
 
-            if 0 <= sev <= 10 and 0 <= occ <= 10:
-                matrix[sev][occ] = max(matrix[sev][occ], nivel)
-        return matrix
+    for risk in risks:
+        for eval in risk.evaluations.all():
+            key = (eval.severity, eval.occurrence)
+            evaluations_matrix[key] = eval.risk_level
 
+        for ree in risk.reevaluations.all():
+            key = (ree.severity, ree.occurrence)
+            reevaluations_matrix[key] = ree.risk_level
 
-    evaluations = RiskEvaluation.objects.filter(risk__area=area).values('severity', 'occurrence', 'risk_level')
-    reevaluations = Reevaluation.objects.filter(risk__area=area).values('severity', 'occurrence', 'risk_level')
-
-    eval_matrix = build_matrix(evaluations)
-    reeval_matrix = build_matrix(reevaluations)
 
     # === Contexto final ===
     contexto = {
         "area": area,
-        "eval_matrix": json.dumps(eval_matrix, cls=DjangoJSONEncoder),
-        "reeval_matrix": json.dumps(reeval_matrix, cls=DjangoJSONEncoder),
+        "evaluations_matrix": json.dumps({
+            f"{sev}-{occ}": level for (sev, occ), level in evaluations_matrix.items()
+        }),
+        "reevaluations_matrix": json.dumps({
+            f"{sev}-{occ}": level for (sev, occ), level in reevaluations_matrix.items()
+        }),
         "page_obj": page_obj,
     }
 
