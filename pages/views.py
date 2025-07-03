@@ -5,6 +5,7 @@ from collections import OrderedDict
 from django.db.models.functions import TruncMonth
 import json
 from django.shortcuts import render
+from django.utils.safestring import mark_safe
 from decimal import Decimal
 from datetime import date, timedelta
 from django.utils import timezone
