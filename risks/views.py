@@ -28,19 +28,20 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    # Estructura {area: {process: [riesgos]}}
-    risks_by_area = defaultdict(lambda: defaultdict(list))
+    grouped_risks = {}
     for risk in all_risks:
-        risks_by_area[risk.area][risk.process].append(risk)
+        key = (risk.area, risk.process)
+        if key not in grouped_risks:
+            grouped_risks[key] = []
+        grouped_risks[key].append(risk)
 
-    # otras consultas
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
     reevaluations = Reevaluation.objects.select_related('risk').all()
 
     return render(request, 'mistemplates/risks.html', {
-        'risks_by_area': risks_by_area,
+        'grouped_risks': grouped_risks,
         'evaluations': evaluations,
         'treatments': treatments,
         'contingency_plans': contingency_plans,
