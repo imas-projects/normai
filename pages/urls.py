@@ -53,7 +53,7 @@ urlpatterns = [
     #path("",view=pages_normai_landing,name="pages_normai_landing"),
     path("", views.wellcome_view, name='wellcome_view'),
     path('user-dashboard/', views.wellcome_view, name='wellcome_view'),
-    path('area-dashboard/', views.area_view, name='area_view'),
+    path('area/<int:area_id>/', views.area_detail_view, name='area_detail'),
 
 
 
