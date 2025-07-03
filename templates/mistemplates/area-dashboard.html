@@ -30,15 +30,6 @@
 
             <div class="row justify-content-center">
 <div class="row">
-<head>
-    <meta charset="UTF-8" />
-    <title>Gráfico de Riesgos - Área {{ area.name }}</title>
-    <script src="{% static 'libs/apexcharts/dist/apexcharts.min.js' %}"></script>
-</head>
-<body>
-    <h1>Gráfico de Riesgos - Área: {{ area.name }}</h1>
-
-    <div id="chart"></div>
 
 
 <div class="col-md-8">
@@ -72,6 +63,7 @@
 {% endblock content %}
 {% block extra_js %}
 <!-- apexcharts -->
+<script src="{% static 'libs/apexcharts/dist/apexcharts.min.js' %}"></script>
 
 <!-- Dashboard init -->
 <script  src="{% static 'js/pages/dashboard-crm.init.js'%}"></script>
@@ -112,119 +104,5 @@ document.addEventListener('click', function (e) {
     }
 });
 </script>
-
-    <script>
-        // Datos pasados desde Django a JS
-        const evalData = {{ eval_data|safe }};
-        const reevalData = {{ reeval_data|safe }};
-
-        // Concatenar ambos datasets (puedes graficar juntos o separados)
-        const combinedData = evalData.concat(reevalData);
-
-        // ApexCharts espera series así para scatter:
-        // series: [{ name: 'Evaluación', data: [{x: , y: , fillColor: }]}]
-        // Vamos a agrupar por tipo para que aparezcan en leyenda separados
-
-        function groupByType(data) {
-            const groups = {};
-            data.forEach(item => {
-                if (!groups[item.type]) {
-                    groups[item.type] = [];
-                }
-                groups[item.type].push({
-                    x: item.x,
-                    y: item.y,
-                    fillColor: item.color,
-                    // Agregar tooltip con color + tipo
-                    customData: item.type + " - Nivel: " + item.color.charAt(0).toUpperCase() + item.color.slice(1)
-                });
-            });
-            return groups;
-        }
-
-        const groupedData = groupByType(combinedData);
-
-        // Construimos series para ApexCharts
-        const series = Object.keys(groupedData).map(type => ({
-            name: type,
-            data: groupedData[type].map(point => ({
-                x: point.x,
-                y: point.y,
-                fillColor: point.fillColor,
-                customData: point.customData
-            }))
-        }));
-
-        const options = {
-            chart: {
-                height: 450,
-                type: 'scatter',
-                zoom: {enabled: true},
-            },
-            title: {
-                text: 'Severidad vs Ocurrencia por Nivel de Riesgo (Área: {{ area.name }})',
-                align: 'center'
-            },
-            xaxis: {
-                title: {text: 'Ocurrencia'},
-                min: 0,
-                max: 10,
-                tickAmount: 10,
-            },
-            yaxis: {
-                title: {text: 'Severidad'},
-                min: 0,
-                max: 10,
-                tickAmount: 10,
-            },
-            legend: {
-                position: 'top',
-                horizontalAlign: 'center',
-            },
-            tooltip: {
-                custom: function({series, seriesIndex, dataPointIndex, w}) {
-                    const point = w.config.series[seriesIndex].data[dataPointIndex];
-                    return (
-                        `<div style="padding:5px;">
-                            <strong>${w.config.series[seriesIndex].name}</strong><br/>
-                            Ocurrencia: ${point.x}<br/>
-                            Severidad: ${point.y}<br/>
-                            Nivel de Riesgo: <span style="color:${point.fillColor};font-weight:bold;">${point.customData.split(' - ')[1]}</span>
-                        </div>`
-                    );
-                }
-            },
-            markers: {
-                size: 8,
-                shape: "circle",
-                // Usamos función para asignar color en cada punto:
-                colors: undefined, // Esto se controla en plotOptions
-                strokeColors: '#fff',
-                strokeWidth: 1,
-            },
-            plotOptions: {
-                scatter: {
-                    markers: {
-                        colors: series.map(s => s.data.map(p => p.fillColor)).flat()
-                    }
-                }
-            },
-            colors: ['green', 'orange', 'red'], // Esto no afecta porque color lo damos por punto
-            markers: {
-                size: 8,
-                shape: 'circle',
-            },
-            // Para asignar color por punto tenemos que usar la propiedad `fillColor` a nivel punto.
-            // ApexCharts permite usar "fillColor" directamente en cada punto.
-        };
-
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        chart.render();
-    </script>
-
-
-
-
-
 {% endblock extra_js %}
 
