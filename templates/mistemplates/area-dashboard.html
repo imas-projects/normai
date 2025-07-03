@@ -139,70 +139,158 @@ document.addEventListener('DOMContentLoaded', () => {
   canvas.width = cellSize * gridSize;
   canvas.height = cellSize * gridSize;
 
-  // Colores para cada nivel de riesgo
+  // Colores para cada nivel de riesgo, ordenados por prioridad para elegir color dominante
+  const riskLevelsPriority = ["High", "Moderate", "Low", "White"];
   const colors = {
     "High": "#e74c3c",
     "Moderate": "#f39c12",
     "Low": "#27ae60",
-    "White": "#ecf0f1"
+    "White": "#ffffff00"  // transparente
   };
 
-  // Datos que vienen del backend (los defines en tu template antes de este script)
-  // Ejemplo de acceso:
-  // const evalBackground = {{ eval_background|safe }};
-  // const reevalBackground = {{ reeval_background|safe }};
+  // Mapea nivel de riesgo a valor para comparación
+  const riskLevelValue = {
+    "High": 3,
+    "Moderate": 2,
+    "Low": 1,
+    "White": 0
+  };
 
-  // Aquí asumo que tienes las variables JS globales eval_background y reeval_background definidas
   let currentData = eval_background;  // por defecto mostrar evaluación
 
+  // Función para agrupar datos con mismo severity+occurrence
+  const groupData = (data) => {
+    const grouped = {};
+
+    data.forEach(item => {
+      const key = item.severity + "-" + item.occurrence;
+      if(!grouped[key]){
+        grouped[key] = {
+          severity: item.severity,
+          occurrence: item.occurrence,
+          count: item.count,
+          risk_level: item.risk_level
+        };
+      } else {
+        // Sumar counts
+        grouped[key].count += item.count;
+
+        // Elegir nivel de riesgo mayor (prioridad)
+        if(riskLevelValue[item.risk_level] > riskLevelValue[grouped[key].risk_level]){
+          grouped[key].risk_level = item.risk_level;
+        }
+      }
+    });
+
+    // Convertir a array
+    return Object.values(grouped);
+  };
+
   const drawHeatmap = (data) => {
-    // Limpiar canvas
+    // Fondo transparente
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar celdas
-    for(let item of data){
-      const x = item.occurrence * cellSize;
-      // Invierto el eje Y para que severidad 0 esté abajo y 10 arriba, si quieres al revés quita esta línea
-      const y = (gridSize - 1 - item.severity) * cellSize;
+    // Dibujo fondo blanco con transparencia (opcional, puedes dejar solo clearRect para totalmente transparente)
+    // ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    // ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = colors[item.risk_level] || colors.White;
-      ctx.fillRect(x, y, cellSize, cellSize);
+    // Agrupar datos por celda
+    const groupedData = groupData(data);
 
-      // Bordes de celda
-      ctx.strokeStyle = "#bdc3c7";
-      ctx.strokeRect(x, y, cellSize, cellSize);
+    // Dibujar grid y celdas con círculos
+    // Primero las líneas del grid
+    ctx.strokeStyle = "#ddd";
+    ctx.lineWidth = 1;
+    for(let i=0; i<=gridSize; i++){
+      // líneas verticales
+      ctx.beginPath();
+      ctx.moveTo(i * cellSize, 0);
+      ctx.lineTo(i * cellSize, canvas.height);
+      ctx.stroke();
 
-      // Si count > 0, poner el número centrado y en color visible
-      if(item.count > 0){
+      // líneas horizontales
+      ctx.beginPath();
+      ctx.moveTo(0, i * cellSize);
+      ctx.lineTo(canvas.width, i * cellSize);
+      ctx.stroke();
+    }
+
+    // Determinar tamaño máximo de círculo
+    const maxRadius = cellSize / 2 * 0.8; // 80% de la mitad celda
+
+    // Encontrar max count para normalizar tamaños
+    const maxCount = groupedData.reduce((max, item) => Math.max(max, item.count), 1);
+
+    // Dibujar círculos
+    groupedData.forEach(item => {
+      const x = item.occurrence * cellSize + cellSize / 2;
+      const y = (gridSize - 1 - item.severity) * cellSize + cellSize / 2;
+
+      // Radio proporcional a count
+      const radius = (item.count / maxCount) * maxRadius;
+
+      // Color según nivel de riesgo
+      const color = colors[item.risk_level] || colors.White;
+
+      if(radius > 0){
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#555";
+        ctx.stroke();
+
+        // Texto con count centrado en círculo
         ctx.fillStyle = "#000";
         ctx.font = "bold 14px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(item.count, x + cellSize / 2, y + cellSize / 2);
+        ctx.fillText(item.count, x, y);
       }
-    }
+    });
 
     // Dibujar etiquetas ejes
+
+    // Ejes líneas más gruesas y en negro
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+
+    // Línea eje X
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height);
+    ctx.lineTo(canvas.width, canvas.height);
+    ctx.stroke();
+
+    // Línea eje Y
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, canvas.height);
+    ctx.stroke();
+
+    // Etiquetas eje X (Occurrence)
     ctx.fillStyle = "#000";
-    ctx.font = "14px Arial";
+    ctx.font = "bold 14px Arial";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    ctx.textBaseline = "top";
 
-    // Eje X: occurrence
     for(let i=0; i<gridSize; i++){
-      ctx.fillText(i, i*cellSize + cellSize/2, canvas.height - 10);
+      ctx.fillText(i, i * cellSize + cellSize / 2, canvas.height + 5);
     }
-    ctx.fillText("Occurrence", canvas.width / 2, canvas.height - 30);
 
-    // Eje Y: severity (rotado)
+    ctx.fillText("Occurrence", canvas.width / 2, canvas.height + 30);
+
+    // Etiquetas eje Y (Severity) rotado
     ctx.save();
-    ctx.translate(10, canvas.height / 2);
+    ctx.translate(15, canvas.height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText("Severity", 0, 0);
     ctx.restore();
 
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
     for(let i=0; i<gridSize; i++){
-      ctx.fillText(i, 10, (gridSize - 1 - i)*cellSize + cellSize/2);
+      ctx.fillText(i, 10, (gridSize - 1 - i) * cellSize + cellSize / 2);
     }
   };
 
@@ -220,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     drawHeatmap(currentData);
   });
 });
+
 </script>
 
 
