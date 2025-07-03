@@ -140,7 +140,7 @@
             </div>
         </div>
         <div class="flex-grow-1">
-            <a href="#" class="text-reset fs-14 mb-0 d-block">{{ area.name }}</a>
+            <a href="{% url 'pages:area_detail' area.id %}" class="text-reset fs-14 mb-0 d-block">{{ area.name }}</a>
             <small class="text-muted">Usuarios: {{ area.users.count }}</small>
         </div>
     </div>
