@@ -28,10 +28,14 @@
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-xxl-8">
-
-                </div>
+<div class="row">
+    <!-- Gráfico centrado -->
+    <div class="col-xxl-8 d-flex justify-content-center align-items-center">
+        <div style="width: 600px; height: 600px;">
+            <canvas id="riskHeatmap"></canvas>
+            <button id="toggleHeatmap" class="btn btn-primary mt-3">Mostrar Reevaluación</button>
+        </div>
+    </div>
 
                 <!-- Próximas Actividades a la derecha -->
                 <div class="col-xxl-4">
@@ -108,6 +112,158 @@ document.addEventListener('click', function (e) {
 });
 </script>
 
+<script>
+    // Recibir matrices desde Django, convertir a objetos JS
+    const evaluationMatrix = JSON.parse('{{ evaluation_matrix|safe|escapejs }}');
+    const reevaluationMatrix = JSON.parse('{{ reevaluation_matrix|safe|escapejs }}');
+
+    // Definir colores según ISO 9001:2015 (simplificado)
+    // Alto = rojo, Moderado = naranja, Bajo = verde
+    function getColor(riskLevel) {
+        switch(riskLevel) {
+            case 'High': return 'rgba(255, 0, 0, 0.7)';      // rojo
+            case 'Moderate': return 'rgba(255, 165, 0, 0.7)'; // naranja
+            case 'Low': return 'rgba(0, 128, 0, 0.7)';        // verde
+            default: return 'rgba(211,211,211, 0.4)';         // gris claro para vacío
+        }
+    }
+
+    // Crear datos para heatmap: matriz 11x11 (0-10 severidad y ocurrencia)
+    function createHeatmapData(matrix) {
+        const data = [];
+        for (let occ = 10; occ >= 0; occ--) {  // Y: ocurrencia (10 arriba)
+            for (let sev = 0; sev <= 10; sev++) {  // X: severidad (0 a 10)
+                const key = sev + ',' + occ;
+                const riskLevel = matrix[[sev, occ]] || matrix[[sev.toString(), occ.toString()]];
+                data.push({
+                    x: sev,
+                    y: occ,
+                    v: riskLevel ? 1 : 0, // valor numérico solo para color, no usado
+                    riskLevel: riskLevel || null
+                });
+            }
+        }
+        return data;
+    }
+
+    // Crear dataset para Chart.js matrix chart usando plugin matrix.js (recomendado)
+    // Como no está nativo, haremos heatmap tipo scatter con colores
+
+    const ctx = document.getElementById('riskHeatmap').getContext('2d');
+
+    // Datos iniciales evaluation
+    let currentMatrix = evaluationMatrix;
+
+    // Generar datasets para chart a partir del objeto matrix
+    function generateDataset(matrix) {
+        const points = [];
+        for (let y = 0; y <= 10; y++) {
+            for (let x = 0; x <= 10; x++) {
+                const key = [x, y];
+                const riskLevel = matrix[key] || matrix[[x.toString(), y.toString()]];
+                points.push({
+                    x: x,
+                    y: y,
+                    backgroundColor: getColor(riskLevel),
+                    radius: 20,
+                    riskLevel: riskLevel || 'No definido'
+                });
+            }
+        }
+        return points;
+    }
+
+    // Chart.js scatter con círculos coloreados simulando matriz
+    const heatmapChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Matriz de Riesgos',
+                data: generateDataset(currentMatrix),
+                pointRadius: 20,
+                pointHoverRadius: 25,
+                // Los colores los damos en cada punto
+                backgroundColor: function(context) {
+                    return context.raw.backgroundColor;
+                },
+                borderWidth: 1,
+                borderColor: '#555',
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: 0,
+                    max: 10,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(val) {
+                            return val.toString();
+                        },
+                        font: {size: 14}
+                    },
+                    title: {
+                        display: true,
+                        text: 'Severidad',
+                        font: {size: 16, weight: 'bold'}
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    min: 0,
+                    max: 10,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(val) {
+                            return val.toString();
+                        },
+                        font: {size: 14}
+                    },
+                    title: {
+                        display: true,
+                        text: 'Probabilidad de Ocurrencia',
+                        font: {size: 16, weight: 'bold'}
+                    },
+                    reverse: true  // que 10 esté arriba
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const x = context.parsed.x;
+                            const y = context.parsed.y;
+                            const riskLevel = context.raw.riskLevel || 'No definido';
+                            return `Severidad: ${x}, Ocurrencia: ${y}, Nivel: ${riskLevel}`;
+                        }
+                    }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+    });
+
+    // Toggle botón
+    const btnToggle = document.getElementById('toggleHeatmap');
+    btnToggle.addEventListener('click', () => {
+        if (btnToggle.innerText.includes('Reevaluación')) {
+            currentMatrix = reevaluationMatrix;
+            btnToggle.innerText = 'Mostrar Evaluación';
+        } else {
+            currentMatrix = evaluationMatrix;
+            btnToggle.innerText = 'Mostrar Reevaluación';
+        }
+        // Actualizar datos del chart
+        heatmapChart.data.datasets[0].data = generateDataset(currentMatrix);
+        heatmapChart.update();
+    });
+</script>
 
 
 
