@@ -38,8 +38,12 @@
     </div>
     <div class="card-body">
         <canvas id="risk-heatmap"></canvas>
+        <div class="text-muted small mt-2">
+            El <strong>tamaño</strong> del círculo representa la cantidad de riesgos. El <strong>color</strong> representa el nivel de riesgo (Alto, Moderado, Bajo).
+        </div>
     </div>
 </div>
+
 
                     <!-- Aquí puedes añadir más contenido más adelante -->
                 </div>
@@ -129,36 +133,58 @@ document.addEventListener('click', function (e) {
             'High': 'rgba(255, 99, 132, 0.7)',
             'Moderate': 'rgba(255, 206, 86, 0.7)',
             'Low': 'rgba(75, 192, 192, 0.7)',
-        }[level] || 'rgba(201, 203, 207, 0.5)';
+        }[level] || 'rgba(220,220,220,0.3)';  // Gris claro por defecto
     }
 
+    const backgroundGridPlugin = {
+        id: 'backgroundGrid',
+        beforeDraw(chart) {
+            const { ctx, chartArea } = chart;
+            ctx.save();
+            ctx.strokeStyle = '#eee';
+            for (let i = 0; i <= 10; i++) {
+                const x = chart.scales.x.getPixelForValue(i);
+                const y = chart.scales.y.getPixelForValue(i);
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, y);
+                ctx.lineTo(chartArea.right, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, chartArea.top);
+                ctx.lineTo(x, chartArea.bottom);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    };
+
     function buildChart(data) {
-        const dataset = {
-            labels: [...Array(11).keys()],
-            datasets: [...Array(11).keys()].map((sev) => ({
-                label: `Severidad ${sev}`,
-                data: [...Array(11).keys()].map((occ) => {
-                    const point = data.find(d => d.severity === sev && d.occurrence === occ);
-                    return {
+        const dataset = [...Array(11).keys()].flatMap((sev) => {
+            return [...Array(11).keys()].map((occ) => {
+                const point = data.find(d => d.severity === sev && d.occurrence === occ);
+                const count = point?.count || 0;
+                return {
+                    label: `Sev ${sev} - Occ ${occ}`,
+                    data: [{
                         x: occ,
                         y: sev,
-                        r: (point?.count || 0) * 3 + 3,
-                        backgroundColor: riskColor(point?.risk_level || 'Low'),
-                        borderColor: '#000',
+                        r: count * 6 + 6,  // Aumentado
+                        backgroundColor: point ? riskColor(point.risk_level) : 'rgba(220,220,220,0.3)',
+                        borderColor: '#888',
                         borderWidth: 1,
-                        count: point?.count || 0,
-                        risk: point?.risk_level || "Low"
-                    };
-                })
-            }))
-        };
+                        count: count,
+                        risk: point?.risk_level || "Bajo"
+                    }]
+                };
+            });
+        });
 
         if (heatmapChart) heatmapChart.destroy();
 
         heatmapChart = new Chart(ctx, {
             type: 'bubble',
             data: {
-                datasets: dataset.datasets.flat(),
+                datasets: dataset
             },
             options: {
                 responsive: true,
@@ -167,11 +193,11 @@ document.addEventListener('click', function (e) {
                         callbacks: {
                             label: function (ctx) {
                                 const d = ctx.raw;
-                                return `Sev: ${d.y}, Occ: ${d.x}, Count: ${d.count}, Nivel: ${d.risk}`;
+                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
                             }
                         }
                     },
-                    legend: { display: false },
+                    legend: { display: false }
                 },
                 scales: {
                     x: {
@@ -183,7 +209,8 @@ document.addEventListener('click', function (e) {
                         min: 0, max: 10, ticks: { stepSize: 1 }
                     }
                 }
-            }
+            },
+            plugins: [backgroundGridPlugin]
         });
     }
 
@@ -198,6 +225,7 @@ document.addEventListener('click', function (e) {
         });
     });
 </script>
+
 
 {% endblock extra_js %}
 
