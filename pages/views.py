@@ -201,7 +201,7 @@ def wellcome_view(request):
                     "type": "Riesgo",
                     "responsible": pos.name,
                     "area": area.name if area else "Sin área",
-                    "url": "risks/",
+                    "url": "/risks/",
                 })
 
     for p in processes:
@@ -213,7 +213,7 @@ def wellcome_view(request):
                 "type": "Proceso",
                 "responsible": p.responsible.name if p.responsible else "",
                 "area": area.name if area else "Sin área",
-                "url": "processes/",
+                "url": "/processes/",
             })
 
     for c in communications:
@@ -225,7 +225,7 @@ def wellcome_view(request):
                 "type": "Comunicación",
                 "responsible": c.reviewed_by.name if c.reviewed_by else "",
                 "area": area.name if area else "Sin área",
-                "url": "communications/",
+                "url": "/communications/",
             })
 
     for ca in corrective_actions:
@@ -241,7 +241,7 @@ def wellcome_view(request):
                     "type": "Auditoria",
                     "responsible": pos.name,
                     "area": area.name if area else "Sin área",
-                    "url": "audits/conduct-internal-audits/",
+                    "url": "/audits/conduct-internal-audits/",
                 })
 
     for ap in annual_plans:
@@ -257,7 +257,7 @@ def wellcome_view(request):
                         "type": "Auditoria",
                         "responsible": pos.name,
                         "area": area.name if area else "Sin área",
-                        "url": "audits/annual-audit-plan/",
+                        "url": "/audits/annual-audit-plan/",
                     })
 
     activities.sort(key=lambda x: x['date'])
