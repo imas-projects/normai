@@ -138,63 +138,62 @@ document.addEventListener('click', function (e) {
         }[level];
     }
 
-const backgroundGridPlugin = {
-    id: 'backgroundGrid',
-    beforeDatasetsDraw(chart) {
-        const { ctx, scales, chartArea, width, height } = chart;
-        const background = isEvaluation ? evalBackground : reevalBackground;
+    const backgroundGridPlugin = {
+        id: 'backgroundGrid',
+        beforeDatasetsDraw(chart) {
+            const { ctx, scales, chartArea } = chart;
+            const background = isEvaluation ? evalBackground : reevalBackground;
 
-        ctx.save();
+            ctx.save();
 
-        const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
-        const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+            const cellWidth = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+            const cellHeight = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
 
-        for (let sev = 0; sev <= 10; sev++) {
-            for (let occ = 0; occ <= 10; occ++) {
-                const cell = background.find(c => c.severity === sev && c.occurrence === occ);
-                if (!cell?.risk_level) continue; // No pintar celdas sin nivel de riesgo
+            for (let sev = 0; sev <= 10; sev++) {
+                for (let occ = 0; occ <= 10; occ++) {
+                    const cell = background.find(c => c.severity === sev && c.occurrence === occ);
+                    if (!cell?.risk_level) continue; // No pintar celdas sin nivel de riesgo
 
-                const color = riskColor(cell.risk_level);
-                if (!color) continue;
+                    const color = riskColor(cell.risk_level);
+                    if (!color) continue;
 
-                // Coordenadas centrales del punto (occ, sev)
-                const xCenter = scales.x.getPixelForValue(occ);
-                const yCenter = scales.y.getPixelForValue(sev);
+                    // Coordenadas centrales del punto (occ, sev)
+                    const xCenter = scales.x.getPixelForValue(occ);
+                    const yCenter = scales.y.getPixelForValue(sev);
 
-                // Ajustar la esquina superior izquierda del cuadrado (centrado)
-                let x = xCenter - cellWidth / 2;
-                let y = yCenter - cellHeight / 2;
-                let w = cellWidth;
-                let h = cellHeight;
+                    // Ajustar la esquina superior izquierda del cuadrado (centrado)
+                    let x = xCenter - cellWidth / 2;
+                    let y = yCenter - cellHeight / 2;
+                    let w = cellWidth;
+                    let h = cellHeight;
 
-                // Recortar límites para que no salga fuera del área del gráfico
-                // chartArea = {left, top, right, bottom}
-                if (x < chartArea.left) {
-                    w -= (chartArea.left - x);
-                    x = chartArea.left;
-                }
-                if (y < chartArea.top) {
-                    h -= (chartArea.top - y);
-                    y = chartArea.top;
-                }
-                if (x + w > chartArea.right) {
-                    w = chartArea.right - x;
-                }
-                if (y + h > chartArea.bottom) {
-                    h = chartArea.bottom - y;
-                }
+                    // Recortar límites para que no salga fuera del área del gráfico
+                    // chartArea = {left, top, right, bottom}
+                    if (x < chartArea.left) {
+                        w -= (chartArea.left - x);
+                        x = chartArea.left;
+                    }
+                    if (y < chartArea.top) {
+                        h -= (chartArea.top - y);
+                        y = chartArea.top;
+                    }
+                    if (x + w > chartArea.right) {
+                        w = chartArea.right - x;
+                    }
+                    if (y + h > chartArea.bottom) {
+                        h = chartArea.bottom - y;
+                    }
 
-                // Solo dibujar si queda algo visible
-                if (w > 0 && h > 0) {
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, y, w, h);
+                    // Solo dibujar si queda algo visible
+                    if (w > 0 && h > 0) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(x, y, w, h);
+                    }
                 }
             }
+            ctx.restore();
         }
-        ctx.restore();
-    }
-};
-
+    };
 
     function buildChart(data) {
         const dataset = [...Array(11).keys()].flatMap(sev =>
@@ -207,9 +206,9 @@ const backgroundGridPlugin = {
                         x: occ,
                         y: sev,
                         r: count > 0 ? count * 8 + 6 : 0, // Solo mostrar círculos si count > 0
-                        backgroundColor: 'transparent',   // Sin relleno (opaco)
-                        borderColor: '#555',              // Borde gris visible
-                        borderWidth: 1,
+                        backgroundColor: 'rgba(0,0,0,0)',   // Relleno transparente total
+                        borderColor: 'rgba(85,85,85,0.8)', // Borde gris oscuro con opacidad
+                        borderWidth: 2,                    // Borde más grueso para mejor visibilidad
                         count: count,
                         risk: point?.risk_level || ""
                     }]
