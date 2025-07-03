@@ -66,11 +66,6 @@
 </div> <!-- main-content -->
 
 
-
-{{ risk_eval_data|json_script:"risk-eval-data" }}
-{{ risk_reeval_data|json_script:"risk-reeval-data" }}
-
-
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   
@@ -106,6 +101,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+
 <script>
 document.addEventListener('click', function (e) {
     if (e.target.closest('.pagination a')) {
@@ -127,53 +125,99 @@ document.addEventListener('click', function (e) {
 
 
 <script>
-const riskEvalData = JSON.parse(document.getElementById('risk-eval-data').textContent);
-const riskReevalData = JSON.parse(document.getElementById('risk-reeval-data').textContent);
+document.addEventListener("DOMContentLoaded", () => {
+    const riskEvalData = {{ risk_eval_data|safe }};
+    const riskReevalData = {{ risk_reeval_data|safe }};
 
-function prepareSeries(data) {
-  const series = [];
-  for (let sev = 0; sev <= 10; sev++) {
-    let dataPoints = data
-      .filter(d => d.severity === sev)
-      .map(d => ({ x: d.occurrence.toString(), y: d.count }));
-    series.push({ name: `Severidad ${sev}`, data: dataPoints });
-  }
-  return series;
-}
+    // Crear series para ApexCharts (aquí sólo usamos riskEvalData, puedes agregar toggle para reeval)
+    const series = [];
 
-const evalSeries = prepareSeries(riskEvalData);
-const reevalSeries = prepareSeries(riskReevalData);
+    // Crear una matriz 11x11 con valores numéricos (usamos 1 para mostrar celda)
+    for (let sev = 0; sev <= 10; sev++) {
+        const dataRow = [];
+        for (let occ = 0; occ <= 10; occ++) {
+            const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
+            dataRow.push(cell ? 1 : 0);
+        }
+        series.push({
+            name: `Sev ${sev}`,
+            data: dataRow
+        });
+    }
 
-const options = {
-  chart: { type: 'heatmap', height: 350 },
-  dataLabels: { enabled: true, style: { colors: ['#000'] } },
-  colorScale: {
-    ranges: [
-      { from: 0, to: 1, color: '#00E396', name: 'Bajo' },
-      { from: 2, to: 4, color: '#FEB019', name: 'Medio' },
-      { from: 5, to: 10, color: '#FF4560', name: 'Alto' }
-    ]
-  },
-  series: evalSeries,
-  xaxis: { title: { text: 'Ocurrencia' } },
-  yaxis: { title: { text: 'Severidad' } },
-  title: { text: 'Matriz de Riesgos: Evaluación vs Re-evaluación' }
+    // Mapeo de colores basado en risk_level
+const colorMap = {
+    "High": "#f44336",      // rojo intenso
+    "Moderate": "#ff9800",  // naranja
+    "Low": "#4caf50",       // verde
 };
 
-const chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
+// Crear 3 series, una por cada nivel
+const levels = ["Low", "Moderate", "High"];
+
+const series = levels.map(level => {
+    const data = [];
+    for (let sev = 0; sev <= 10; sev++) {
+        for (let occ = 0; occ <= 10; occ++) {
+            const cell = riskEvalData.find(d => d.severity === sev && d.occurrence === occ);
+            data.push(cell && cell.risk_level === level ? 1 : 0);
+        }
+    }
+    return {
+        name: level,
+        data: data
+    };
+});
+
+// Apex heatmap necesita data en forma [ {x: occ, y: value} ] por punto para cada serie
+// Vamos a transformar los datos para que quede con x, y por celda:
+const seriesTransformed = series.map(serie => {
+    let idx = 0;
+    const dataPoints = [];
+    for (let sev = 0; sev <= 10; sev++) {
+        for (let occ = 0; occ <= 10; occ++) {
+            dataPoints.push({ x: occ.toString(), y: serie.data[idx] });
+            idx++;
+        }
+    }
+    return { name: serie.name, data: dataPoints };
+});
+
+var options = {
+    chart: {
+        height: 450,
+        type: 'heatmap',
+        toolbar: { show: false }
+    },
+    plotOptions: {
+        heatmap: {
+            colorScale: {
+                ranges: [
+                    { from: 1, to: 1, color: '#4caf50', name: 'Low' },
+                    { from: 1, to: 1, color: '#ff9800', name: 'Moderate' },
+                    { from: 1, to: 1, color: '#f44336', name: 'High' },
+                ]
+            }
+        }
+    },
+    dataLabels: {
+        enabled: false,
+    },
+    xaxis: {
+        categories: [...Array(11).keys()].map(i => i.toString()),
+        title: { text: 'Occurrence' }
+    },
+    yaxis: {
+        title: { text: 'Severity' }
+    },
+    series: seriesTransformed
+};
+
+var chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
 chart.render();
 
-let showingEval = true;
-document.querySelector('#toggle-risk-chart').addEventListener('click', function() {
-  if (showingEval) {
-    chart.updateSeries(reevalSeries);
-    this.textContent = "Cambiar a Evaluación";
-  } else {
-    chart.updateSeries(evalSeries);
-    this.textContent = "Cambiar a Re-evaluación";
-  }
-  showingEval = !showingEval;
 });
+
 </script>
 
 
