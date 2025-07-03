@@ -28,9 +28,26 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    grouped_risks = defaultdict(lambda: defaultdict(list))
+    # Crear dict plano: {area_id: {'area': area_obj, 'processes': {process_id: {'process': process_obj, 'risks': [...]}}}}
+    grouped_risks = {}
+
     for risk in all_risks:
-        grouped_risks[risk.area][risk.process].append(risk)
+        area = risk.area
+        process = risk.process
+
+        if area.id not in grouped_risks:
+            grouped_risks[area.id] = {
+                'area': area,
+                'processes': {}
+            }
+
+        if process.id not in grouped_risks[area.id]['processes']:
+            grouped_risks[area.id]['processes'][process.id] = {
+                'process': process,
+                'risks': []
+            }
+
+        grouped_risks[area.id]['processes'][process.id]['risks'].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -44,6 +61,7 @@ def create_risk(request):
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
+
 
 
 @login_required
