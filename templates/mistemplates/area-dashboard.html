@@ -30,21 +30,16 @@
 
             <div class="row justify-content-center">
 <div class="row">
-    <!-- Columna 1 vacía -->
-    <div class="col-md-4"></div>
 
     <!-- Columna 2: Matriz de Riesgos -->
-    <div class="col-md-4 text-center">
+    <div class="col-md-8">
         <h3>Matriz de Riesgos - {{ area.name }}</h3>
 
         <!-- Toggle de modo -->
-        <div class="form-check form-switch d-inline-block mb-3">
-            <input class="form-check-input" type="checkbox" id="modeToggle">
-            <label class="form-check-label small" for="modeToggle">Reevaluación</label>
-        </div>
+<button id="toggleButton" class="btn btn-primary mb-3">Mostrar Revaluaciones</button>
 
         <!-- Contenedor del gráfico -->
-        <div id="riskHeatmap" style="height: 400px;"></div>
+        <div id="riskChart"></div>
     </div>
 
     <!-- Columna 3: Actividades -->
@@ -118,57 +113,92 @@ document.addEventListener('click', function (e) {
 </script>
 
 <script>
-  const evalData = {{ eval_matrix|safe }};
-  const reevalData = {{ reeval_matrix|safe }};
-  const xLabels = [...Array(11).keys()];
-  const yLabels = [...Array(11).keys()].reverse();
+  const evaluations = {{ evaluations_matrix|safe }};
+  const reevaluations = {{ reevaluations_matrix|safe }};
 
-  function toSeries(matrix) {
-    const data = [];
-    for (let y = 0; y < matrix.length; y++) {
-      for (let x = 0; x < matrix[y].length; x++) {
-        data.push({ x: x, y: yLabels[y], value: matrix[y][x] });
+  const levels = {
+    "Low": { color: "#28a745", label: "Bajo" },
+    "Moderate": { color: "#fd7e14", label: "Moderado" },
+    "High": { color: "#dc3545", label: "Alto" }
+  };
+
+  let showingReevaluations = false;
+
+  const buildData = (dataMatrix) => {
+    const seriesData = [];
+    for (let s = 0; s <= 10; s++) {
+      for (let o = 0; o <= 10; o++) {
+        const key = `${s}-${o}`;
+        const level = dataMatrix[key];
+        if (level) {
+          seriesData.push({
+            x: o,
+            y: s,
+            fillColor: levels[level].color,
+            name: levels[level].label
+          });
+        }
       }
     }
-    return data;
-  }
+    return seriesData;
+  };
 
   const options = {
     chart: {
-      height: 400,
       type: 'heatmap',
-      toolbar: { show: false }
+      height: 500
     },
-    dataLabels: { enabled: false },
-    colors: ['#2ecc71', '#e67e22', '#e74c3c'],
+    title: {
+      text: 'Matriz de Riesgo (Evaluación)',
+      align: 'center'
+    },
     xaxis: {
-      type: 'category',
-      categories: xLabels,
-      title: { text: 'Ocurrencia' }
+      title: { text: 'Ocurrencia' },
+      tickAmount: 10,
+      min: 0,
+      max: 10
     },
     yaxis: {
-      categories: yLabels,
-      title: { text: 'Severidad' }
+      title: { text: 'Severidad' },
+      reversed: true,
+      tickAmount: 10,
+      min: 0,
+      max: 10
     },
-    series: [{
-      name: 'Riesgo',
-      data: toSeries(evalData)
-    }],
+    plotOptions: {
+      heatmap: {
+        colorScale: {
+          ranges: []
+        }
+      }
+    },
     tooltip: {
       custom: function({ series, seriesIndex, dataPointIndex, w }) {
-        const val = w.config.series[seriesIndex].data[dataPointIndex].value;
-        const niveles = ["", "Bajo", "Moderado", "Alto"];
-        return `<div class="p-2">Riesgo: <strong>${niveles[val]}</strong></div>`;
+        const data = w.config.series[seriesIndex].data[dataPointIndex];
+        return `<div><strong>${data.name}</strong><br>Severidad: ${data.y}<br>Ocurrencia: ${data.x}</div>`;
       }
-    }
+    },
+    series: [{
+      name: 'Riesgos',
+      data: buildData(evaluations)
+    }]
   };
 
-  const chart = new ApexCharts(document.querySelector("#riskHeatmap"), options);
+  const chart = new ApexCharts(document.querySelector("#riskChart"), options);
   chart.render();
 
-  document.getElementById('modeToggle').addEventListener('change', function() {
-    const data = this.checked ? toSeries(reevalData) : toSeries(evalData);
-    chart.updateSeries([{ name: 'Riesgo', data: data }]);
+  document.getElementById("toggleButton").addEventListener("click", () => {
+    showingReevaluations = !showingReevaluations;
+    const data = showingReevaluations ? reevaluations : evaluations;
+    const title = showingReevaluations ? 'Matriz de Riesgo (Reevaluación)' : 'Matriz de Riesgo (Evaluación)';
+    const buttonText = showingReevaluations ? 'Mostrar Evaluaciones' : 'Mostrar Revaluaciones';
+
+    chart.updateOptions({
+      title: { text: title },
+      series: [{ name: 'Riesgos', data: buildData(data) }]
+    });
+
+    document.getElementById("toggleButton").textContent = buttonText;
   });
 </script>
 
