@@ -125,42 +125,49 @@
 
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
-{% for area, processes in risks_by_area.items %}
-  <h3>{{ area.name }}</h3>
+    {% for area, processes in grouped_risks|groupby:"0" %}
+      <h3>{{ area.name }}</h3>
+      {% for process, risks in processes|groupby:"1" %}
+        <div class="accordion mb-3" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#collapse{{ area.name|slugify }}-{{ process.name|slugify }}" 
+                aria-expanded="false" 
+                aria-controls="collapse{{ area.name|slugify }}-{{ process.name|slugify }}">
+                {{ process.name }}
+              </button>
 
-  {% for process, risks in processes.items %}
-    <div class="accordion" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                  data-bs-target="#collapse{{ area.name|slugify }}-{{ process.name|slugify }}" 
-                  aria-expanded="false" aria-controls="collapse{{ area.name|slugify }}-{{ process.name|slugify }}">
-            {{ area.name }} - {{ process.name }}
-          </button>
-          <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
-            <i class="ri-file-download-line"></i> Descargar PDF
-          </a>
-        </h2>
-
-        <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse" 
-             aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
-             data-bs-parent="#accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
-          <div class="accordion-body">
-            {% for risk in risks %}
-
-              <div class="card mb-3" style="background-color: #e9ecef; color: black;">
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <table class="table table-bordered" style="border-color: #6c757d;">
-                        <tbody>
-                          <tr><th style="font-size: 18px; width: 30%;">Riesgo:</th><td style="font-size: 18px;">{{ risk.identified_risk }}</td></tr>
-                          <tr><th style="font-size: 18px;">Consecuencias:</th><td style="font-size: 18px;">{{ risk.consequences }}</td></tr>
-                          <tr><th style="font-size: 18px;">Fuente:</th><td style="font-size: 18px;">{{ risk.source }}</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-
+                    <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
+                        <i class="ri-file-download-line"></i> Descargar PDF
+                    </a>
+                </h2>
+            <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse" 
+              aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
+              data-bs-parent="#accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
+              <div class="accordion-body">
+                        {% for risk in risks %}
+                        <div class="card mb-3" style="background-color: #e9ecef; color: black;">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-bordered" style="border-color: #6c757d;">
+                                            <tbody>
+                                                <tr>
+                                                    <th style="font-size: 18px; width: 30%;">Riesgo:</th>
+                                                    <td style="font-size: 18px;">{{ risk.identified_risk }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th style="font-size: 18px;">Consecuencias:</th>
+                                                    <td style="font-size: 18px;">{{ risk.consequences }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th style="font-size: 18px;">Fuente:</th>
+                                                    <td style="font-size: 18px;">{{ risk.source }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     <div class="col-md-4 text-center">
                                         <div class="d-flex flex-column gap-2">
                                             <button class="btn btn-dark w-100 mb-2" data-bs-toggle="modal"
@@ -181,6 +188,7 @@
                                             </button>
                                         </div>
                                     </div>
+
 
 
 <!-- Botones de Edición y Eliminación -->
