@@ -398,8 +398,12 @@ def wellcome_view(request):
     return render(request, "mistemplates/user-dashboard.html", contexto)
 
 @login_required
-def area_view(request):
-    return render(request,"mistemplates/area-dashboard.html")
+def area_detail_view(request, area_id):
+    area = get_object_or_404(Area, id=area_id)
+    contexto = {
+        "area": area,
+    }
+    return render(request, "mistemplates/area-dashboard.html", contexto)
 
 
 class PagesView(TemplateView):
