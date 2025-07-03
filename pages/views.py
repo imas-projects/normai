@@ -399,10 +399,99 @@ def wellcome_view(request):
     return render(request, "mistemplates/user-dashboard.html", contexto)
 
 @login_required
+@login_required
 def area_detail_view(request, area_id):
     area = get_object_or_404(Area, id=area_id)
+    current_date = timezone.now().date()
+
+    # === Actividades ===
+    activities = []
+
+    # Tratamientos de riesgo
+    risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date).prefetch_related('responsible__area')
+    for rt in risk_treatments:
+        for pos in rt.responsible.all():
+            if pos.area and pos.area.id == area.id:
+                activities.append({
+                    "date": rt.target_date,
+                    "name": f"Tratamiento del Riesgo: {rt.treatment_action}",
+                    "type": "Riesgo",
+                    "responsible": pos.name,
+                    "area": pos.area.name,
+                    "url": "/risks/",
+                })
+
+    # Revisiones de procesos
+    processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
+    for p in processes:
+        if p.responsible and p.responsible.area and p.responsible.area.id == area.id:
+            activities.append({
+                "date": p.review_date,
+                "name": f"Revisión del Proceso: {p.name}",
+                "type": "Proceso",
+                "responsible": p.responsible.name,
+                "area": p.responsible.area.name,
+                "url": "/processes/",
+            })
+
+    # Comunicaciones
+    communications = CommunicationTable.objects.filter(review_date__gte=current_date).select_related('emiter__area')
+    for c in communications:
+        if c.emiter and c.emiter.area and c.emiter.area.id == area.id:
+            activities.append({
+                "date": c.review_date,
+                "name": f"Revisión de Comunicación: {c.code}",
+                "type": "Comunicación",
+                "responsible": c.reviewed_by.name if c.reviewed_by else "",
+                "area": c.emiter.area.name,
+                "url": "/communications/",
+            })
+
+    # Acciones correctivas
+    corrective_actions = CorrectiveAction.objects.filter(due_date__gte=current_date).select_related('responsible_user')
+    for ca in corrective_actions:
+        for up in ca.responsible_user.user_position.all():
+            pos = up.position
+            if pos and pos.area and pos.area.id == area.id:
+                activities.append({
+                    "date": ca.due_date,
+                    "name": f"Acción Correctiva: {ca.corrective_action}",
+                    "type": "Auditoría",
+                    "responsible": pos.name,
+                    "area": pos.area.name,
+                    "url": "/audits/conduct-internal-audits/",
+                })
+
+    # Planes de auditoría
+    annual_plans = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related('audited_users__user__user_position__position__area')
+    for ap in annual_plans:
+        for audited in ap.audited.all():
+            for up in audited.user.user_position.all():
+                pos = up.position
+                if pos and pos.area and pos.area.id == area.id:
+                    activities.append({
+                        "date": ap.audit_opening_date,
+                        "name": f"Plan de Auditoría: {ap.annual_program}",
+                        "type": "Auditoría",
+                        "responsible": pos.name,
+                        "area": pos.area.name,
+                        "url": "/audits/annual-audit-plan/",
+                    })
+
+    # Ordenar por fecha
+    activities.sort(key=lambda x: x['date'])
+
+    # Paginación
+    paginator = Paginator(activities, 4)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+
     contexto = {
         "area": area,
+        "page_obj": page_obj,
     }
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
