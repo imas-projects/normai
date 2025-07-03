@@ -33,13 +33,9 @@
 
     <!-- Columna 2: Matriz de Riesgos -->
     <div class="col-md-8">
-        <h3>Matriz de Riesgos - {{ area.name }}</h3>
-
-        <!-- Toggle de modo -->
-<button id="toggleButton" class="btn btn-primary mb-3">Mostrar Revaluaciones</button>
-
-        <!-- Contenedor del gráfico -->
-        <div id="riskChart"></div>
+<h5 class="mb-3">Matriz de Riesgos - {{ area.name }}</h5>
+<button id="toggleButton" class="btn btn-outline-primary mb-3">Mostrar Revaluaciones</button>
+<div id="riskChart"></div>
     </div>
 
     <!-- Columna 3: Actividades -->
@@ -112,6 +108,7 @@ document.addEventListener('click', function (e) {
 });
 </script>
 
+
 <script>
   const evaluations = {{ evaluations_matrix|safe }};
   const reevaluations = {{ reevaluations_matrix|safe }};
@@ -136,7 +133,7 @@ document.addEventListener('click', function (e) {
         data[s].data.push({
           x: o,
           y: s,
-          fillColor: level ? levels[level].color : "#e9ecef", // gris para vacío
+          fillColor: level ? levels[level].color : "#e9ecef",
           name: level ? levels[level].label : "Sin dato"
         });
       }
