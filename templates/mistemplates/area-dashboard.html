@@ -122,26 +122,30 @@ document.addEventListener('click', function (e) {
     "High": { color: "#dc3545", label: "Alto" }
   };
 
-  let showingReevaluations = false;
+  const buildHeatmapData = (matrixData) => {
+    const data = Array.from({ length: 11 }, (_, sev) => ({
+      name: `Severidad ${sev}`,
+      data: []
+    }));
 
-  const buildData = (dataMatrix) => {
-    const seriesData = [];
     for (let s = 0; s <= 10; s++) {
       for (let o = 0; o <= 10; o++) {
         const key = `${s}-${o}`;
-        const level = dataMatrix[key];
-        if (level) {
-          seriesData.push({
-            x: o,
-            y: s,
-            fillColor: levels[level].color,
-            name: levels[level].label
-          });
-        }
+        const level = matrixData[key];
+
+        data[s].data.push({
+          x: o,
+          y: s,
+          fillColor: level ? levels[level].color : "#e9ecef", // gris para vacío
+          name: level ? levels[level].label : "Sin dato"
+        });
       }
     }
-    return seriesData;
+
+    return data;
   };
+
+  let showingReevaluations = false;
 
   const options = {
     chart: {
@@ -154,34 +158,32 @@ document.addEventListener('click', function (e) {
     },
     xaxis: {
       title: { text: 'Ocurrencia' },
-      tickAmount: 10,
+      tickAmount: 11,
       min: 0,
       max: 10
     },
     yaxis: {
       title: { text: 'Severidad' },
-      reversed: true,
-      tickAmount: 10,
+      tickAmount: 11,
       min: 0,
-      max: 10
+      max: 10,
+      reversed: true
+    },
+    tooltip: {
+      custom: function({ series, seriesIndex, dataPointIndex, w }) {
+        const point = w.config.series[seriesIndex].data[dataPointIndex];
+        return `<div><strong>${point.name}</strong><br>Severidad: ${point.y}<br>Ocurrencia: ${point.x}</div>`;
+      }
     },
     plotOptions: {
       heatmap: {
+        distributed: true,
         colorScale: {
           ranges: []
         }
       }
     },
-    tooltip: {
-      custom: function({ series, seriesIndex, dataPointIndex, w }) {
-        const data = w.config.series[seriesIndex].data[dataPointIndex];
-        return `<div><strong>${data.name}</strong><br>Severidad: ${data.y}<br>Ocurrencia: ${data.x}</div>`;
-      }
-    },
-    series: [{
-      name: 'Riesgos',
-      data: buildData(evaluations)
-    }]
+    series: buildHeatmapData(evaluations)
   };
 
   const chart = new ApexCharts(document.querySelector("#riskChart"), options);
@@ -195,7 +197,7 @@ document.addEventListener('click', function (e) {
 
     chart.updateOptions({
       title: { text: title },
-      series: [{ name: 'Riesgos', data: buildData(data) }]
+      series: buildHeatmapData(data)
     });
 
     document.getElementById("toggleButton").textContent = buttonText;
