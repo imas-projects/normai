@@ -164,7 +164,7 @@ document.addEventListener('click', function (e) {
     };
 
 function buildChart(data) {
-    const neutralColor = 'rgba(128, 128, 128, 0.6)'; // gris neutro semitransparente
+    const neutralColor = 'rgba(255, 255, 255, 0.8)'; // blanco semitransparente
 
     const dataset = [...Array(11).keys()].flatMap(sev =>
         [...Array(11).keys()].map(occ => {
@@ -176,8 +176,8 @@ function buildChart(data) {
                     x: occ,
                     y: sev,
                     r: count > 0 ? count * 8 + 6 : 4,  // radio, más grande si count > 0
-                    backgroundColor: neutralColor,     // color neutro fijo para todos los círculos
-                    borderColor: '#555',
+                    backgroundColor: neutralColor,     // todos blancos
+                    borderColor: 'rgba(200, 200, 200, 0.9)',  // borde gris claro
                     borderWidth: 2,
                     count: count,
                     risk: point?.risk_level || "Bajo"
@@ -218,7 +218,6 @@ function buildChart(data) {
         plugins: [backgroundGridPlugin]
     });
 }
-
 
     document.addEventListener("DOMContentLoaded", () => {
         buildChart(evalData);
