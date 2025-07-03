@@ -262,7 +262,8 @@ def wellcome_view(request):
     page_obj = paginator.get_page(page_number)
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return render(request, "partials/_activity_list.html", {"page_obj": page_obj})
+        return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+
 
 
 
