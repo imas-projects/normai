@@ -484,27 +484,26 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
+    # === Evaluaciones y Revaluaciones ===
     evaluations_matrix = {}
     reevaluations_matrix = {}
 
-    risks = RiskIdentification.objects.filter(area=area).prefetch_related('evaluations', 'reevaluations')
+    risk_ids = area.risks.values_list('id', flat=True)
 
-    for risk in risks:
-        for eval in risk.evaluations.all():
-            key = f"{eval.severity}-{eval.occurrence}"
-            evaluations_matrix[key] = eval.risk_level
+    for eval in RiskEvaluation.objects.filter(risk_id__in=risk_ids):
+        key = f"{eval.severity}-{eval.occurrence}"
+        evaluations_matrix[key] = eval.risk_level
 
-        for ree in risk.reevaluations.all():
-            key = f"{ree.severity}-{ree.occurrence}"
-            reevaluations_matrix[key] = ree.risk_level
-
-
+    for ree in Reevaluation.objects.filter(risk_id__in=risk_ids):
+        key = f"{ree.severity}-{ree.occurrence}"
+        reevaluations_matrix[key] = ree.risk_level
+    
     # === Contexto final ===
     contexto = {
         "area": area,
-        "evaluations_matrix": mark_safe(json.dumps(evaluations_matrix)),
-        "reevaluations_matrix": mark_safe(json.dumps(reevaluations_matrix)),
         "page_obj": page_obj,
+        "evaluations_matrix": evaluations_matrix,
+        "reevaluations_matrix": reevaluations_matrix,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
