@@ -132,158 +132,95 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('risk-heatmap');
   const ctx = canvas.getContext('2d');
 
-  // Configuración
-  const gridSize = 11; // Severity y occurrence van de 0 a 10
-  const cellSize = 45; // Tamaño de celda ajustado para mejor espacio
+  // Dimensiones
+  const gridSize = 11;  // severity y occurrence van de 0 a 10
+  const cellSize = 40;  // tamaño de cada celda en px, ajustable
+
   canvas.width = cellSize * gridSize;
   canvas.height = cellSize * gridSize;
 
-  // Colores para cada nivel de riesgo (transparente para White)
+  // Colores para cada nivel de riesgo
   const colors = {
     "High": "#e74c3c",
     "Moderate": "#f39c12",
     "Low": "#27ae60",
-    "White": "rgba(0,0,0,0)" // transparente
+    "White": "#ecf0f1"
   };
 
-  // Prioridad para seleccionar el color dominante por celda
-  const riskPriority = { "High": 3, "Moderate": 2, "Low": 1, "White": 0 };
+  // Datos que vienen del backend (los defines en tu template antes de este script)
+  // Ejemplo de acceso:
+  // const evalBackground = {{ eval_background|safe }};
+  // const reevalBackground = {{ reeval_background|safe }};
 
-  let currentData = eval_background; // Datos iniciales (evaluación)
+  // Aquí asumo que tienes las variables JS globales eval_background y reeval_background definidas
+  let currentData = eval_background;  // por defecto mostrar evaluación
 
-  // Función para agrupar datos con misma celda (severity + occurrence)
-  function agruparDatos(data) {
-    const mapa = {};
-    data.forEach(({ severity, occurrence, count, risk_level }) => {
-      const key = `${severity}-${occurrence}`;
-      if (!mapa[key]) {
-        mapa[key] = { severity, occurrence, count, risk_level };
-      } else {
-        mapa[key].count += count;
-        // Elegir el riesgo mayor según prioridad
-        if (riskPriority[risk_level] > riskPriority[mapa[key].risk_level]) {
-          mapa[key].risk_level = risk_level;
-        }
-      }
-    });
-    return Object.values(mapa);
-  }
-
-  // Dibujar heatmap
-  function dibujarMapa(data) {
+  const drawHeatmap = (data) => {
+    // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar fondo transparente (no lo pintamos para mantener transparencia)
+    // Dibujar celdas
+    for(let item of data){
+      const x = item.occurrence * cellSize;
+      // Invierto el eje Y para que severidad 0 esté abajo y 10 arriba, si quieres al revés quita esta línea
+      const y = (gridSize - 1 - item.severity) * cellSize;
 
-    // Dibujar líneas de grid
-    ctx.strokeStyle = "#ccc";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= gridSize; i++) {
-      // Líneas verticales
-      ctx.beginPath();
-      ctx.moveTo(i * cellSize, 0);
-      ctx.lineTo(i * cellSize, canvas.height);
-      ctx.stroke();
+      ctx.fillStyle = colors[item.risk_level] || colors.White;
+      ctx.fillRect(x, y, cellSize, cellSize);
 
-      // Líneas horizontales
-      ctx.beginPath();
-      ctx.moveTo(0, i * cellSize);
-      ctx.lineTo(canvas.width, i * cellSize);
-      ctx.stroke();
+      // Bordes de celda
+      ctx.strokeStyle = "#bdc3c7";
+      ctx.strokeRect(x, y, cellSize, cellSize);
+
+      // Si count > 0, poner el número centrado y en color visible
+      if(item.count > 0){
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(item.count, x + cellSize / 2, y + cellSize / 2);
+      }
     }
 
-    // Agrupar datos para sumar count y elegir color dominante
-    const agrupados = agruparDatos(data);
-
-    // Tamaño máximo para el radio de círculos (80% de la mitad de celda)
-    const maxRadius = (cellSize / 2) * 0.8;
-
-    // Encontrar el máximo count para normalizar tamaños
-    const maxCount = agrupados.reduce((max, d) => Math.max(max, d.count), 1);
-
-    // Dibujar círculos proporcionales a count
-    agrupados.forEach(({ severity, occurrence, count, risk_level }) => {
-      const x = occurrence * cellSize + cellSize / 2;
-      const y = (gridSize - 1 - severity) * cellSize + cellSize / 2;
-
-      const radius = Math.max(5, (count / maxCount) * maxRadius); // mínimo radio 5 para visibilidad
-
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = colors[risk_level] || colors.White;
-      ctx.fill();
-
-      // Contorno negro para mejor visibilidad
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = "#222";
-      ctx.stroke();
-
-      // Texto count dentro del círculo
-      ctx.fillStyle = "#000";
-      ctx.font = "bold 14px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(count, x, y);
-    });
-
-    // Dibujar ejes con líneas más gruesas y etiquetas
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#000";
-
-    // Eje X
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height);
-    ctx.lineTo(canvas.width, canvas.height);
-    ctx.stroke();
-
-    // Eje Y
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, canvas.height);
-    ctx.stroke();
-
-    // Etiquetas eje X (Occurrence)
+    // Dibujar etiquetas ejes
     ctx.fillStyle = "#000";
-    ctx.font = "bold 14px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    for (let i = 0; i < gridSize; i++) {
-      ctx.fillText(i, i * cellSize + cellSize / 2, canvas.height + 5);
-    }
-    ctx.fillText("Occurrence", canvas.width / 2, canvas.height + 30);
-
-    // Etiquetas eje Y (Severity) rotado
-    ctx.save();
-    ctx.translate(15, canvas.height / 2);
-    ctx.rotate(-Math.PI / 2);
+    ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+
+    // Eje X: occurrence
+    for(let i=0; i<gridSize; i++){
+      ctx.fillText(i, i*cellSize + cellSize/2, canvas.height - 10);
+    }
+    ctx.fillText("Occurrence", canvas.width / 2, canvas.height - 30);
+
+    // Eje Y: severity (rotado)
+    ctx.save();
+    ctx.translate(10, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
     ctx.fillText("Severity", 0, 0);
     ctx.restore();
 
-    // Números eje Y
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (let i = 0; i < gridSize; i++) {
-      ctx.fillText(i, 10, (gridSize - 1 - i) * cellSize + cellSize / 2);
+    for(let i=0; i<gridSize; i++){
+      ctx.fillText(i, 10, (gridSize - 1 - i)*cellSize + cellSize/2);
     }
-  }
+  };
 
-  // Inicializar
-  dibujarMapa(currentData);
+  drawHeatmap(currentData);
 
   // Botón para cambiar entre evaluación y re-evaluación
   document.getElementById('toggle-risk-chart').addEventListener('click', () => {
-    if (currentData === eval_background) {
+    if(currentData === eval_background){
       currentData = reeval_background;
       document.getElementById('toggle-risk-chart').textContent = "Cambiar a Evaluación";
     } else {
       currentData = eval_background;
       document.getElementById('toggle-risk-chart').textContent = "Cambiar a Re-evaluación";
     }
-    dibujarMapa(currentData);
+    drawHeatmap(currentData);
   });
 });
+
 </script>
 
 
