@@ -482,8 +482,62 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    # --- Contexto ---
+    mode = request.GET.get('mode', 'evaluation')  # 'evaluation' o 'reevaluation'
+
+    # Diccionario: {(severity, occurrence): risk_level}
+    risk_matrix = defaultdict(lambda: 'Low')  # default nivel bajo
+
+    if mode == 'evaluation':
+        # Tomamos las evaluaciones actuales (RiskEvaluation)
+        evaluations = RiskEvaluation.objects.filter(
+            risk__area=area
+        ).values('severity', 'occurrence', 'risk_level')
+
+        for ev in evaluations:
+            key = (ev['severity'], ev['occurrence'])
+            # Para manejar múltiples riesgos en el mismo punto, tomamos el máximo nivel de riesgo:
+            current_level = risk_matrix[key]
+            # Nivel en orden: Low < Moderate < High
+            niveles = {'Low': 1, 'Moderate': 2, 'High': 3}
+            if niveles[ev['risk_level']] > niveles[current_level]:
+                risk_matrix[key] = ev['risk_level']
+
+    else:
+        # Tomamos las reevaluaciones
+        reevaluations = Reevaluation.objects.filter(
+            risk__area=area
+        ).values('severity', 'occurrence', 'risk_level')
+
+        for rev in reevaluations:
+            key = (rev['severity'], rev['occurrence'])
+            current_level = risk_matrix[key]
+            niveles = {'Low': 1, 'Moderate': 2, 'High': 3}
+            if niveles[rev['risk_level']] > niveles[current_level]:
+                risk_matrix[key] = rev['risk_level']
+
+    # Construir la matriz para la tabla (severidad eje Y, ocurrencia eje X)
+    severities = list(range(11))
+    occurrences = list(range(11))
+
+    # Pasar matriz con claves (sev, occ) al contexto
+    matrix_data = []
+    for sev in reversed(severities):  # invertido para que gravedad alta arriba
+        row = []
+        for occ in occurrences:
+            nivel = risk_matrix.get((sev, occ), 'Low')
+            row.append({
+                "severity": sev,
+                "occurrence": occ,
+                "risk_level": nivel,
+            })
+        matrix_data.append(row)
+
+    # === CONTEXTO Y RENDER ===
+
     contexto = {
+        "area": area,
+        "matrix_data": matrix_data,
+        "mode": mode,
         "area": area,
         "page_obj": page_obj,
     }
