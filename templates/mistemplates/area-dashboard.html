@@ -28,33 +28,30 @@
                 </div>
             </div>
 
-            <div class="row justify-content-center">
-<div class="row">
-<div class="card card-height-100">
-    <div class="card-header d-flex align-items-center">
-        <h4 class="card-title mb-0 flex-grow-1">Gráfico de Severidad vs Ocurrencia - Área: {{ area.name }}</h4>
-    </div>
-    <div class="card-body pb-0">
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card card-height-100">
+      <div class="card-header d-flex align-items-center">
+        <h4 class="card-title mb-0 flex-grow-1">Gráfico ... - Área: {{ area.name }}</h4>
+      </div>
+      <div class="card-body pb-0">
         <div id="risk_scatter_chart" style="min-height: 400px;"></div>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="col-md-8">
-</div>
-
-
-    <!-- Columna 3: Actividades -->
-    <div class="col-md-4 mt-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Próximas Actividades</h5>
-            </div>
-            <div class="card-body" id="activity-list">
-                {% include 'mistemplates/_activity_list.html' %}
-            </div>
-        </div>
+  <div class="col-md-4 mt-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Próximas Actividades</h5>
+      </div>
+      <div class="card-body" id="activity-list">
+        {% include 'mistemplates/_activity_list.html' %}
+      </div>
     </div>
+  </div>
 </div>
+
 
 
 
