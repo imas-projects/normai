@@ -15,11 +15,17 @@
                                 <i class="bx bx-home"></i> <span data-key="t-dashboards">Inicio</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="{% url 'pages:area_view' %}" role="button">
-                                <i class="bx bx-border-all"></i> <span data-key="t-dashboards">Area</span>
-                            </a>
-                        </li> 
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle menu-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bx bx-border-all"></i> <span data-key="t-areas">Áreas</span>
+    </a>
+    <ul class="dropdown-menu">
+        {% for area in all_areas %}
+        <li><a class="dropdown-item" href="{% url 'pages:area_detail' area.id %}">{{ area.name }}</a></li>
+        {% endfor %}
+    </ul>
+</li>
+
                         <li class="nav-item">
                             <a class="nav-link menu-link" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
