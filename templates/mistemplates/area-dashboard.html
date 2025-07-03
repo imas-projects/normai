@@ -29,64 +29,37 @@
             </div>
 
             <div class="row justify-content-center">
-
 <div class="row">
-<h2>Matriz de Riesgos - Área: {{ area.name }}</h2>
+    <!-- Columna 1 vacía -->
+    <div class="col-md-4"></div>
 
-<button id="toggleModeBtn">
-    {% if mode == 'evaluation' %}
-        Mostrar Reevaluación
-    {% else %}
-        Mostrar Evaluación
-    {% endif %}
-</button>
+    <!-- Columna 2: Matriz de Riesgos -->
+    <div class="col-md-4 text-center">
+        <h3>Matriz de Riesgos - {{ area.name }}</h3>
 
-<table border="1" style="border-collapse: collapse; text-align: center;">
-  <thead>
-    <tr>
-      <th>Severidad \ Ocurrencia</th>
-      {% for occ in occurrences %}
-        <th>{{ occ }}</th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in matrix_data %}
-      <tr>
-        <td><strong>{{ row.0.severity }}</strong></td>
-        {% for cell in row %}
-          {% if cell.risk_level == "Low" %}
-            <td style="background-color: #2ecc71; color: white;">Bajo</td>
-          {% elif cell.risk_level == "Moderate" %}
-            <td style="background-color: #e67e22; color: white;">Moderado</td>
-          {% else %}
-            <td style="background-color: #e74c3c; color: white;">Alto</td>
-          {% endif %}
-        {% endfor %}
-      </tr>
-    {% endfor %}
-  </tbody>
-</table>
+        <!-- Toggle de modo -->
+        <div class="form-check form-switch d-inline-block mb-3">
+            <input class="form-check-input" type="checkbox" id="modeToggle">
+            <label class="form-check-label small" for="modeToggle">Reevaluación</label>
+        </div>
 
-</div>
+        <!-- Contenedor del gráfico -->
+        <div id="riskHeatmap" style="height: 400px;"></div>
+    </div>
 
-
-                <!-- Próximas Actividades a la derecha (centrado abajo) -->
-                <div class="col-xxl-6 col-xl-8 col-lg-10 mt-4">
-                    <div class="card">
-                        <div class="card-header align-items-center d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">Próximas Actividades</h4>
-                        </div>
-                        <div class="card-body pt-0" id="activity-list">
-                            {% include 'mistemplates/_activity_list.html' %}
-                        </div>
-                    </div>
-                </div>
-
+    <!-- Columna 3: Actividades -->
+    <div class="col-md-4 mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Próximas Actividades</h5>
+            </div>
+            <div class="card-body" id="activity-list">
+                {% include 'mistemplates/_activity_list.html' %}
             </div>
         </div>
     </div>
 </div>
+
 
 
     <!-- Bootstrap JS -->
@@ -145,14 +118,60 @@ document.addEventListener('click', function (e) {
 </script>
 
 <script>
-document.getElementById('toggleModeBtn').addEventListener('click', function() {
-    const currentMode = "{{ mode }}";
-    const newMode = currentMode === "evaluation" ? "reevaluation" : "evaluation";
-    const url = new URL(window.location.href);
-    url.searchParams.set('mode', newMode);
-    window.location.href = url.toString();
-});
+  const evalData = {{ eval_matrix|safe }};
+  const reevalData = {{ reeval_matrix|safe }};
+  const xLabels = [...Array(11).keys()];
+  const yLabels = [...Array(11).keys()].reverse();
+
+  function toSeries(matrix) {
+    const data = [];
+    for (let y = 0; y < matrix.length; y++) {
+      for (let x = 0; x < matrix[y].length; x++) {
+        data.push({ x: x, y: yLabels[y], value: matrix[y][x] });
+      }
+    }
+    return data;
+  }
+
+  const options = {
+    chart: {
+      height: 400,
+      type: 'heatmap',
+      toolbar: { show: false }
+    },
+    dataLabels: { enabled: false },
+    colors: ['#2ecc71', '#e67e22', '#e74c3c'],
+    xaxis: {
+      type: 'category',
+      categories: xLabels,
+      title: { text: 'Ocurrencia' }
+    },
+    yaxis: {
+      categories: yLabels,
+      title: { text: 'Severidad' }
+    },
+    series: [{
+      name: 'Riesgo',
+      data: toSeries(evalData)
+    }],
+    tooltip: {
+      custom: function({ series, seriesIndex, dataPointIndex, w }) {
+        const val = w.config.series[seriesIndex].data[dataPointIndex].value;
+        const niveles = ["", "Bajo", "Moderado", "Alto"];
+        return `<div class="p-2">Riesgo: <strong>${niveles[val]}</strong></div>`;
+      }
+    }
+  };
+
+  const chart = new ApexCharts(document.querySelector("#riskHeatmap"), options);
+  chart.render();
+
+  document.getElementById('modeToggle').addEventListener('change', function() {
+    const data = this.checked ? toSeries(reevalData) : toSeries(evalData);
+    chart.updateSeries([{ name: 'Riesgo', data: data }]);
+  });
 </script>
+
 
 
 
