@@ -28,17 +28,25 @@
                 </div>
             </div>
 
-<div class="row">
-    <!-- Gráfico centrado -->
-    <div class="col-xxl-8 d-flex justify-content-center align-items-center">
-        <div style="width: 600px; height: 600px;">
-            <canvas id="riskHeatmap"></canvas>
-            <button id="toggleHeatmap" class="btn btn-primary mt-3">Mostrar Reevaluación</button>
-        </div>
-    </div>
+            <div class="row justify-content-center">
+                <!-- Mapa de calor centrado -->
+                <div class="col-xxl-6 col-xl-8 col-lg-10">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">Matriz de Riesgos por Área</h4>
+                            <label class="form-check-label" for="toggleEvaluation" style="cursor:pointer;">
+                                Mostrar Reevaluación
+                            </label>
+                            <input type="checkbox" id="toggleEvaluation" class="form-check-input ms-2" />
+                        </div>
+                        <div class="card-body">
+                            <div id="heatmap-chart"></div>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- Próximas Actividades a la derecha -->
-                <div class="col-xxl-4">
+                <!-- Próximas Actividades a la derecha (centrado abajo) -->
+                <div class="col-xxl-6 col-xl-8 col-lg-10 mt-4">
                     <div class="card">
                         <div class="card-header align-items-center d-flex">
                             <h4 class="card-title mb-0 flex-grow-1">Próximas Actividades</h4>
@@ -48,11 +56,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-        </div> <!-- container-fluid -->
-    </div> <!-- page-content -->
-</div> <!-- main-content -->
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
     <!-- Bootstrap JS -->
@@ -88,9 +97,8 @@
 <!-- Dashboard init -->
 <script src="{% static 'js/pages/dashboard-blog.init.js'%}"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 
 
 <script>
@@ -113,155 +121,138 @@ document.addEventListener('click', function (e) {
 </script>
 
 <script>
-    // Recibir matrices desde Django, convertir a objetos JS
-    const evaluationMatrix = JSON.parse('{{ evaluation_matrix|safe|escapejs }}');
-    const reevaluationMatrix = JSON.parse('{{ reevaluation_matrix|safe|escapejs }}');
+    // Datos enviados desde Django al template
+    const evaluationData = {{ heatmap_evaluation|safe }};
+    const reevaluationData = {{ heatmap_reevaluation|safe }};
 
-    // Definir colores según ISO 9001:2015 (simplificado)
-    // Alto = rojo, Moderado = naranja, Bajo = verde
-    function getColor(riskLevel) {
-        switch(riskLevel) {
-            case 'High': return 'rgba(255, 0, 0, 0.7)';      // rojo
-            case 'Moderate': return 'rgba(255, 165, 0, 0.7)'; // naranja
-            case 'Low': return 'rgba(0, 128, 0, 0.7)';        // verde
-            default: return 'rgba(211,211,211, 0.4)';         // gris claro para vacío
+    // Mapeo de colores según nivel de riesgo
+    const riskColorMap = {
+        "High": "#FF0000",     // Rojo
+        "Moderate": "#FFA500", // Naranja
+        "Low": "#008000"       // Verde
+    };
+
+    // Preparar la data para ApexCharts heatmap
+    function prepareSeries(data) {
+        // ApexCharts heatmap requiere series con "name" y "data" con array de valores para Y
+        // Nosotros tenemos x=severity (0-10), y=occurrence (0-10), y nivel de riesgo por cada punto.
+        // Vamos a construir series con name = severidad, y data = array 11 de objetos {x: ocurrencia, y: valor numérico}
+
+        // Inicializar un mapa: key=severity, value = array 11 con objetos para occurrences
+        const seriesMap = {};
+        for(let i=0; i<=10; i++) {
+            seriesMap[i] = new Array(11).fill(null).map((_, idx) => ({
+                x: idx,
+                y: 0,
+                fillColor: "#FFFFFF"
+            }));
         }
+
+        data.forEach(point => {
+            const sev = point.x;
+            const occ = point.y;
+            const level = point.risk_level;
+            seriesMap[sev][occ] = {
+                x: occ,
+                y: 1,  // solo para mostrar color, valor y no importa
+                fillColor: riskColorMap[level]
+            };
+        });
+
+        // Convertir a array para Apex
+        const series = [];
+        for(let sev=0; sev<=10; sev++) {
+            series.push({
+                name: `Severidad ${sev}`,
+                data: seriesMap[sev]
+            });
+        }
+        return series;
     }
 
-    // Crear datos para heatmap: matriz 11x11 (0-10 severidad y ocurrencia)
-    function createHeatmapData(matrix) {
-        const data = [];
-        for (let occ = 10; occ >= 0; occ--) {  // Y: ocurrencia (10 arriba)
-            for (let sev = 0; sev <= 10; sev++) {  // X: severidad (0 a 10)
-                const key = sev + ',' + occ;
-                const riskLevel = matrix[[sev, occ]] || matrix[[sev.toString(), occ.toString()]];
-                data.push({
-                    x: sev,
-                    y: occ,
-                    v: riskLevel ? 1 : 0, // valor numérico solo para color, no usado
-                    riskLevel: riskLevel || null
-                });
-            }
-        }
-        return data;
-    }
-
-    // Crear dataset para Chart.js matrix chart usando plugin matrix.js (recomendado)
-    // Como no está nativo, haremos heatmap tipo scatter con colores
-
-    const ctx = document.getElementById('riskHeatmap').getContext('2d');
-
-    // Datos iniciales evaluation
-    let currentMatrix = evaluationMatrix;
-
-    // Generar datasets para chart a partir del objeto matrix
-    function generateDataset(matrix) {
-        const points = [];
-        for (let y = 0; y <= 10; y++) {
-            for (let x = 0; x <= 10; x++) {
-                const key = [x, y];
-                const riskLevel = matrix[key] || matrix[[x.toString(), y.toString()]];
-                points.push({
-                    x: x,
-                    y: y,
-                    backgroundColor: getColor(riskLevel),
-                    radius: 20,
-                    riskLevel: riskLevel || 'No definido'
-                });
-            }
-        }
-        return points;
-    }
-
-    // Chart.js scatter con círculos coloreados simulando matriz
-    const heatmapChart = new Chart(ctx, {
-        type: 'scatter',
-        data: {
-            datasets: [{
-                label: 'Matriz de Riesgos',
-                data: generateDataset(currentMatrix),
-                pointRadius: 20,
-                pointHoverRadius: 25,
-                // Los colores los damos en cada punto
-                backgroundColor: function(context) {
-                    return context.raw.backgroundColor;
-                },
-                borderWidth: 1,
-                borderColor: '#555',
-            }]
+    // Configuración base del heatmap
+    const options = {
+        chart: {
+            height: 450,
+            type: 'heatmap',
+            toolbar: { show: false },
+            animations: { enabled: false },
         },
-        options: {
-            scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom',
-                    min: 0,
-                    max: 10,
-                    ticks: {
-                        stepSize: 1,
-                        callback: function(val) {
-                            return val.toString();
-                        },
-                        font: {size: 14}
-                    },
-                    title: {
-                        display: true,
-                        text: 'Severidad',
-                        font: {size: 16, weight: 'bold'}
-                    }
-                },
-                y: {
-                    type: 'linear',
-                    min: 0,
-                    max: 10,
-                    ticks: {
-                        stepSize: 1,
-                        callback: function(val) {
-                            return val.toString();
-                        },
-                        font: {size: 14}
-                    },
-                    title: {
-                        display: true,
-                        text: 'Probabilidad de Ocurrencia',
-                        font: {size: 16, weight: 'bold'}
-                    },
-                    reverse: true  // que 10 esté arriba
+        plotOptions: {
+            heatmap: {
+                shadeIntensity: 0,
+                radius: 0,
+                useFillColorAsStroke: true,
+                colorScale: {
+                    ranges: [] // no usamos colorScale porque manejamos fillColor en cada punto
                 }
+            }
+        },
+        dataLabels: {
+            enabled: false
+        },
+        xaxis: {
+            title: { text: 'Severidad' },
+            categories: [...Array(11).keys()] // 0 a 10
+        },
+        yaxis: {
+            title: { text: 'Probabilidad de ocurrencia' },
+            reversed: true,
+            min: 0,
+            max: 10
+        },
+        legend: {
+            show: true,
+            position: 'bottom',
+            labels: {
+                colors: ['#FF0000', '#FFA500', '#008000'],
+                useSeriesColors: false
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const x = context.parsed.x;
-                            const y = context.parsed.y;
-                            const riskLevel = context.raw.riskLevel || 'No definido';
-                            return `Severidad: ${x}, Ocurrencia: ${y}, Nivel: ${riskLevel}`;
-                        }
-                    }
-                },
-                legend: {
-                    display: false
+            markers: {
+                width: 12,
+                height: 12,
+                radius: 12,
+                customHTML: function() {
+                    return '<div style="display:flex; gap:6px; align-items:center;">' +
+                        '<span style="background:#FF0000;width:12px;height:12px;border-radius:50%;display:inline-block;"></span><span>Alto</span>' +
+                        '<span style="background:#FFA500;width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:10px;"></span><span>Moderado</span>' +
+                        '<span style="background:#008000;width:12px;height:12px;border-radius:50%;display:inline-block;margin-left:10px;"></span><span>Bajo</span>' +
+                        '</div>';
                 }
-            },
-            responsive: true,
-            maintainAspectRatio: false,
+            }
+        },
+        tooltip: {
+            custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                const sev = w.globals.seriesNames[seriesIndex].replace("Severidad ", "");
+                const occ = w.globals.labels[dataPointIndex];
+                const point = w.config.series[seriesIndex].data[dataPointIndex];
+                if(point.fillColor === "#FFFFFF") {
+                    return `<div>No hay riesgo</div>`;
+                }
+                // Buscamos el nivel según el color
+                let level = Object.keys(riskColorMap).find(key => riskColorMap[key] === point.fillColor);
+                return `<div>
+                    <strong>Severidad:</strong> ${sev}<br>
+                    <strong>Ocurrencia:</strong> ${occ}<br>
+                    <strong>Nivel de riesgo:</strong> ${level}
+                </div>`;
+            }
         }
-    });
+    };
 
-    // Toggle botón
-    const btnToggle = document.getElementById('toggleHeatmap');
-    btnToggle.addEventListener('click', () => {
-        if (btnToggle.innerText.includes('Reevaluación')) {
-            currentMatrix = reevaluationMatrix;
-            btnToggle.innerText = 'Mostrar Evaluación';
+    const chart = new ApexCharts(document.querySelector("#heatmap-chart"), options);
+
+    // Render inicial con evaluation
+    chart.render();
+    chart.updateSeries(prepareSeries(evaluationData));
+
+    // Toggle para cambiar entre evaluation y reevaluation
+    document.querySelector("#toggleEvaluation").addEventListener('change', (e) => {
+        if (e.target.checked) {
+            chart.updateSeries(prepareSeries(reevaluationData));
         } else {
-            currentMatrix = evaluationMatrix;
-            btnToggle.innerText = 'Mostrar Reevaluación';
+            chart.updateSeries(prepareSeries(evaluationData));
         }
-        // Actualizar datos del chart
-        heatmapChart.data.datasets[0].data = generateDataset(currentMatrix);
-        heatmapChart.update();
     });
 </script>
 
