@@ -204,8 +204,8 @@ function buildChart(data) {
                     x: occ,
                     y: sev,
                     r: count > 0 ? count * 8 + 6 : 0,
-                    backgroundColor: 'rgba(0,0,0,0)',  // Sin relleno, transparente total
-                    borderColor: 'rgba(85,85,85,0.8)', // Borde gris oscuro visible
+                    backgroundColor: 'transparent',   // transparente total, sin relleno
+                    borderColor: 'rgba(85,85,85,0.8)', // borde visible
                     borderWidth: 2,
                     count: count,
                     risk: point?.risk_level || ""
