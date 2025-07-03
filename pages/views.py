@@ -403,10 +403,9 @@ def area_detail_view(request, area_id):
     area = get_object_or_404(Area, id=area_id)
     current_date = timezone.now().date()
 
-    # === Actividades ===
     activities = []
 
-    # Tratamientos de riesgo
+    # === Recopilar actividades ===
     risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date).prefetch_related('responsible__area')
     for rt in risk_treatments:
         for pos in rt.responsible.all():
@@ -420,7 +419,6 @@ def area_detail_view(request, area_id):
                     "url": "/risks/",
                 })
 
-    # Revisiones de procesos
     processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
     for p in processes:
         if p.responsible and p.responsible.area and p.responsible.area.id == area.id:
@@ -433,7 +431,6 @@ def area_detail_view(request, area_id):
                 "url": "/processes/",
             })
 
-    # Comunicaciones
     communications = CommunicationTable.objects.filter(review_date__gte=current_date).select_related('emiter__area')
     for c in communications:
         if c.emiter and c.emiter.area and c.emiter.area.id == area.id:
@@ -446,7 +443,6 @@ def area_detail_view(request, area_id):
                 "url": "/communications/",
             })
 
-    # Acciones correctivas
     corrective_actions = CorrectiveAction.objects.filter(due_date__gte=current_date).select_related('responsible_user')
     for ca in corrective_actions:
         for up in ca.responsible_user.user_position.all():
@@ -461,7 +457,6 @@ def area_detail_view(request, area_id):
                     "url": "/audits/conduct-internal-audits/",
                 })
 
-    # Planes de auditoría
     annual_plans = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related('audited_users__user__user_position__position__area')
     for ap in annual_plans:
         for audited in ap.audited.all():
@@ -477,10 +472,8 @@ def area_detail_view(request, area_id):
                         "url": "/audits/annual-audit-plan/",
                     })
 
-    # Ordenar por fecha
     activities.sort(key=lambda x: x['date'])
 
-    # Paginación
     paginator = Paginator(activities, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -488,49 +481,55 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    # === Heatmap Data ===
     def compute_heatmap(evaluations):
         heatmap = defaultdict(lambda: defaultdict(int))  # severity -> occurrence -> count
-        colors = defaultdict(lambda: defaultdict(str))   # severity -> occurrence -> risk level
+        levels = defaultdict(lambda: defaultdict(str))   # severity -> occurrence -> risk level
+
+        priority = {"High": 3, "Moderate": 2, "Low": 1}
 
         for ev in evaluations:
             sev = ev.severity
             occ = ev.occurrence
             heatmap[sev][occ] += 1
 
-            # Si hay varios riesgos en una celda, se prioriza por nivel de riesgo (High > Moderate > Low)
-            prev_level = colors[sev][occ]
-            new_level = ev.risk_level
+            current_level = levels[sev][occ]
+            if priority.get(ev.risk_level, 0) > priority.get(current_level, 0):
+                levels[sev][occ] = ev.risk_level
 
-            priority = {"High": 3, "Moderate": 2, "Low": 1}
-            if priority.get(new_level, 0) > priority.get(prev_level, 0):
-                colors[sev][occ] = new_level
-
-        # Convert to list of dicts for JS
         data = []
+        background = []
+
         for sev in range(11):
             for occ in range(11):
                 count = heatmap[sev][occ]
-                level = colors[sev][occ] or "Low"
+                level = levels[sev][occ] or "Low"
                 data.append({
                     "severity": sev,
                     "occurrence": occ,
                     "count": count,
                     "risk_level": level,
                 })
-        return data
+                background.append({
+                    "severity": sev,
+                    "occurrence": occ,
+                    "risk_level": level,
+                })
+
+        return data, background
 
     risk_evals = RiskEvaluation.objects.filter(risk__area=area).select_related('risk')
     re_evals = Reevaluation.objects.filter(risk__area=area).select_related('risk')
 
-    risk_eval_data = compute_heatmap(risk_evals)
-    risk_reeval_data = compute_heatmap(re_evals)
+    risk_eval_data, eval_background = compute_heatmap(risk_evals)
+    risk_reeval_data, reeval_background = compute_heatmap(re_evals)
 
     contexto = {
         "area": area,
         "page_obj": page_obj,
         "risk_eval_data": risk_eval_data,
         "risk_reeval_data": risk_reeval_data,
+        "eval_background": eval_background,
+        "reeval_background": reeval_background,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
