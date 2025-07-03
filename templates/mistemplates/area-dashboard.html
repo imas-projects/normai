@@ -32,11 +32,12 @@
 <div class="row">
 
     <!-- Columna 2: Matriz de Riesgos -->
-    <div class="col-md-8">
-<h5 class="mb-3">Matriz de Riesgos - {{ area.name }}</h5>
-<button id="toggleButton" class="btn btn-outline-primary mb-3">Mostrar Revaluaciones</button>
-<div id="riskChart"></div>
-    </div>
+<div class="col-md-8">
+    <h5 class="mb-3">Matriz de Riesgos - {{ area.name }}</h5>
+    <button id="toggleButton" class="btn btn-outline-primary mb-3">Mostrar Reevaluaciones</button>
+    <div id="riskChart"></div>
+</div>
+
 
     <!-- Columna 3: Actividades -->
     <div class="col-md-4 mt-4">
@@ -110,96 +111,97 @@ document.addEventListener('click', function (e) {
 
 
 <script>
-  const evaluations = {{ evaluations_matrix|safe }};
-  const reevaluations = {{ reevaluations_matrix|safe }};
+    const evaluations = {{ evaluations_matrix|safe }};
+    const reevaluations = {{ reevaluations_matrix|safe }};
 
-  const levels = {
-    "Low": { color: "#28a745", label: "Bajo" },
-    "Moderate": { color: "#fd7e14", label: "Moderado" },
-    "High": { color: "#dc3545", label: "Alto" }
-  };
+    const levels = {
+        "Low": { color: "#28a745", label: "Bajo" },
+        "Moderate": { color: "#ffc107", label: "Moderado" },
+        "High": { color: "#dc3545", label: "Alto" }
+    };
 
-  const buildHeatmapData = (matrixData) => {
-    const data = Array.from({ length: 11 }, (_, sev) => ({
-      name: `Severidad ${sev}`,
-      data: []
-    }));
+    function generateHeatmapData(data) {
+        const heatmap = Array.from({ length: 11 }, (_, sev) => ({
+            name: `Severidad ${sev}`,
+            data: Array.from({ length: 11 }, (_, occ) => ({
+                x: occ,
+                y: 0,
+                fillColor: "#e9ecef",
+                name: "Sin dato"
+            }))
+        }));
 
-    for (let s = 0; s <= 10; s++) {
-      for (let o = 0; o <= 10; o++) {
-        const key = `${s}-${o}`;
-        const level = matrixData[key];
+        data.forEach(entry => {
+            const s = entry.severity;
+            const o = entry.occurrence;
+            const level = entry.risk_level;
 
-        data[s].data.push({
-          x: o,
-          y: s,
-          fillColor: level ? levels[level].color : "#e9ecef",
-          name: level ? levels[level].label : "Sin dato"
+            if (s >= 0 && s <= 10 && o >= 0 && o <= 10 && levels[level]) {
+                heatmap[s].data[o] = {
+                    x: o,
+                    y: 1,
+                    fillColor: levels[level].color,
+                    name: levels[level].label
+                };
+            }
         });
-      }
+
+        return heatmap;
     }
 
-    return data;
-  };
+    const chartOptions = {
+        chart: {
+            type: 'heatmap',
+            height: 500,
+        },
+        title: {
+            text: 'Matriz de Riesgos (Evaluación)',
+            align: 'center'
+        },
+        xaxis: {
+            title: { text: 'Ocurrencia' },
+            categories: [...Array(11).keys()]
+        },
+        dataLabels: {
+            enabled: false
+        },
+        tooltip: {
+            custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                const point = w.config.series[seriesIndex].data[dataPointIndex];
+                return `<div>
+                    <strong>${point.name}</strong><br>
+                    Severidad: ${seriesIndex}<br>
+                    Ocurrencia: ${point.x}
+                </div>`;
+            }
+        },
+        plotOptions: {
+            heatmap: {
+                enableShades: false,
+                colorScale: {
+                    ranges: []
+                }
+            }
+        },
+        series: generateHeatmapData(evaluations)
+    };
 
-  let showingReevaluations = false;
+    const chart = new ApexCharts(document.querySelector("#riskChart"), chartOptions);
+    chart.render();
 
-  const options = {
-    chart: {
-      type: 'heatmap',
-      height: 500
-    },
-    title: {
-      text: 'Matriz de Riesgo (Evaluación)',
-      align: 'center'
-    },
-    xaxis: {
-      title: { text: 'Ocurrencia' },
-      tickAmount: 11,
-      min: 0,
-      max: 10
-    },
-    yaxis: {
-      title: { text: 'Severidad' },
-      tickAmount: 11,
-      min: 0,
-      max: 10,
-      reversed: true
-    },
-    tooltip: {
-      custom: function({ series, seriesIndex, dataPointIndex, w }) {
-        const point = w.config.series[seriesIndex].data[dataPointIndex];
-        return `<div><strong>${point.name}</strong><br>Severidad: ${point.y}<br>Ocurrencia: ${point.x}</div>`;
-      }
-    },
-    plotOptions: {
-      heatmap: {
-        distributed: true,
-        colorScale: {
-          ranges: []
-        }
-      }
-    },
-    series: buildHeatmapData(evaluations)
-  };
-
-  const chart = new ApexCharts(document.querySelector("#riskChart"), options);
-  chart.render();
-
-  document.getElementById("toggleButton").addEventListener("click", () => {
-    showingReevaluations = !showingReevaluations;
-    const data = showingReevaluations ? reevaluations : evaluations;
-    const title = showingReevaluations ? 'Matriz de Riesgo (Reevaluación)' : 'Matriz de Riesgo (Evaluación)';
-    const buttonText = showingReevaluations ? 'Mostrar Evaluaciones' : 'Mostrar Revaluaciones';
-
-    chart.updateOptions({
-      title: { text: title },
-      series: buildHeatmapData(data)
+    let showingReevaluations = false;
+    document.getElementById("toggleButton").addEventListener("click", function () {
+        showingReevaluations = !showingReevaluations;
+        chart.updateOptions({
+            title: {
+                text: showingReevaluations ? 'Matriz de Riesgos (Reevaluación)' : 'Matriz de Riesgos (Evaluación)'
+            },
+            series: generateHeatmapData(showingReevaluations ? reevaluations : evaluations)
+        });
+        this.textContent = showingReevaluations ? "Mostrar Evaluaciones" : "Mostrar Reevaluaciones";
     });
-
-    document.getElementById("toggleButton").textContent = buttonText;
-  });
 </script>
+
 
 
 
