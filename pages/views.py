@@ -486,16 +486,17 @@ def area_detail_view(request, area_id):
     # === Construcción de matrices de riesgo ===
 
     def build_matrix(queryset):
-        # Matriz 11x11, valor numérico basado en nivel de riesgo
         matrix = [[0 for _ in range(11)] for _ in range(11)]
         niveles = {'Low': 1, 'Moderate': 2, 'High': 3}
         for item in queryset:
             sev = item['severity']
             occ = item['occurrence']
             nivel = niveles.get(item['risk_level'], 1)
-            # Invertimos eje Y para visual correcto
-            matrix[10 - sev][occ] = max(matrix[10 - sev][occ], nivel)
+
+            if 0 <= sev <= 10 and 0 <= occ <= 10:
+                matrix[sev][occ] = max(matrix[sev][occ], nivel)
         return matrix
+
 
     evaluations = RiskEvaluation.objects.filter(risk__area=area).values('severity', 'occurrence', 'risk_level')
     reevaluations = Reevaluation.objects.filter(risk__area=area).values('severity', 'occurrence', 'risk_level')
