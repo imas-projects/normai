@@ -138,9 +138,12 @@
                             {{ process.name }}
                         </button>
 
-                        <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
-                            <i class="ri-file-download-line"></i> Descargar PDF
-                        </a>
+{% if area.name %}
+    <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
+        <i class="ri-file-download-line"></i> Descargar PDF
+    </a>
+{% endif %}
+
                     </h2>
                     <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse" 
                          aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
