@@ -138,12 +138,11 @@
                 <div class="avatar-title bg-primary-subtle text-primary rounded-2 fs-17">
                     <i class="ri-building-line"></i>  <!-- icono genérico para área -->
                 </div>
-            </div>
-            <h6 class="mb-0 fs-14 flex-grow-1 text-reset">{{ area.name }}</h6>
+<div class="flex-grow-1">
+    <a href="#" class="text-reset fs-14 mb-0 d-block">{{ area.name }}</a>
+    <small class="text-muted">Usuarios: {{ area.users.count }}</small>
+</div>
 
-            <!-- Aquí podrías mostrar algún dato extra si tienes, ejemplo: -->
-            <small class="text-muted flex-shrink-0">{{ area.users.count }} usuarios</small>
-        </div>
     {% empty %}
         <p>No hay áreas registradas.</p>
     {% endfor %}
@@ -163,11 +162,11 @@
                     <div class="avatar-title bg-info-subtle text-info rounded-2 fs-17">
                         <i class="ri-folder-3-line"></i> 
                     </div>
-                </div>
-                <a href="#" class="text-reset fs-14 mb-0 d-block">{{ process.name }}</a>
-                <small class="text-muted">Hallazgos: {{ process.total_findings }}</small>
+<div class="flex-grow-1">
+    <a href="#" class="text-reset fs-14 mb-0 d-block">{{ process.name }}</a>
+    <small class="text-muted">Hallazgos: {{ process.total_findings }}</small>
+</div>
 
-            </div>
         {% empty %}
             <p>No hay procesos con hallazgos.</p>
         {% endfor %}
