@@ -28,12 +28,12 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    # Crear estructura: {area: {process: [riesgos]}}
+    # Estructura {area: {process: [riesgos]}}
     risks_by_area = defaultdict(lambda: defaultdict(list))
-
     for risk in all_risks:
         risks_by_area[risk.area][risk.process].append(risk)
 
+    # otras consultas
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
