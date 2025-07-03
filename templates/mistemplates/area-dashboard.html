@@ -1,5 +1,4 @@
 {% extends "mistemplates/mi_base.html" %}
-{% load json_script %}
 {% load static %}
 {% block title %}Area Dashboard{% endblock title %}
 {% block extra_css %}
@@ -125,8 +124,9 @@ document.addEventListener('click', function (e) {
 
 <script>
     // Datos enviados desde Django al template
-    const evaluationData = JSON.parse(document.getElementById('evaluation-data').textContent);
-    const reevaluationData = JSON.parse(document.getElementById('reevaluation-data').textContent);
+    const evaluationData = JSON.parse('{{ heatmap_evaluation_json|escapejs }}');
+    const reevaluationData = JSON.parse('{{ heatmap_reevaluation_json|escapejs }}');
+
 
 
     // Mapeo de colores según nivel de riesgo
