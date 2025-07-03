@@ -12,10 +12,11 @@ from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from django.core.paginator import Paginator
 from collections import defaultdict
+from django.db.models import Prefetch
 from django.db.models.functions import TruncMonth
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
 from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
-from company.models import Area
+from company.models import Area, Position, UserPosition
 from risks.models import RiskTreatment
 from communications.models import CommunicationTable
 
@@ -181,74 +182,87 @@ def wellcome_view(request):
 
     current_date = timezone.now().date()
 
-    risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date)
-    processes = Process.objects.filter(review_date__gte=current_date)
-    communications = CommunicationTable.objects.filter(review_date__gte=current_date)
-    corrective_actions = CorrectiveAction.objects.filter(due_date__gte=current_date)
-    annual_plans = AnnualPlan.objects.filter(audit_opening_date__gte=current_date)
+    risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date).prefetch_related('responsible__area')
+    processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
+    communications = CommunicationTable.objects.filter(review_date__gte=current_date).select_related('emiter__area')
+    corrective_actions = CorrectiveAction.objects.filter(due_date__gte=current_date).select_related('responsible_user')
+    annual_plans = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related('audited_users__user__user_position__position__area')
 
     activities = []
 
     for rt in risk_treatments:
-        activities.append({
-            "date": rt.target_date,
-            "name": f"Risk Treatment: {rt.treatment_action[:40]}",
-            "type": "Risk",
-            "responsible": ", ".join([pos.name for pos in rt.responsible.all()]),
-        })
+        for pos in rt.responsible.all():
+            area = pos.area
+            if not area_id or (area and area.id == int(area_id)):
+                activities.append({
+                    "date": rt.target_date,
+                    "name": f"Risk Treatment: {rt.treatment_action[:40]}",
+                    "type": "Risk",
+                    "responsible": pos.name,
+                    "area": area.name if area else "Sin área",
+                })
 
     for p in processes:
-        activities.append({
-            "date": p.review_date,
-            "name": f"Process Review: {p.name}",
-            "type": "Process",
-            "responsible": p.responsible.name if p.responsible else "",
-        })
+        area = p.responsible.area if p.responsible else None
+        if not area_id or (area and area.id == int(area_id)):
+            activities.append({
+                "date": p.review_date,
+                "name": f"Process Review: {p.name}",
+                "type": "Process",
+                "responsible": p.responsible.name if p.responsible else "",
+                "area": area.name if area else "Sin área",
+            })
 
     for c in communications:
-        activities.append({
-            "date": c.review_date,
-            "name": f"Communication Review: {c.code}",
-            "type": "Communication",
-            "responsible": c.reviewed_by.name if c.reviewed_by else "",
-        })
+        area = c.emiter.area if c.emiter else None
+        if not area_id or (area and area.id == int(area_id)):
+            activities.append({
+                "date": c.review_date,
+                "name": f"Communication Review: {c.code}",
+                "type": "Communication",
+                "responsible": c.reviewed_by.name if c.reviewed_by else "",
+                "area": area.name if area else "Sin área",
+            })
 
     for ca in corrective_actions:
         user = ca.responsible_user
         positions = user.user_position.all()
-        positions_names = ", ".join([pos.position.name for pos in positions])
-        responsible = positions_names if positions_names else user.username
-
-        activities.append({
-            "date": ca.due_date,
-            "name": f"Corrective Action: {ca.corrective_action[:40]}",
-            "type": "Audit",
-            "responsible": responsible,
-        })
+        for up in positions:
+            pos = up.position
+            area = pos.area if pos else None
+            if not area_id or (area and area.id == int(area_id)):
+                activities.append({
+                    "date": ca.due_date,
+                    "name": f"Corrective Action: {ca.corrective_action[:40]}",
+                    "type": "Audit",
+                    "responsible": pos.name,
+                    "area": area.name if area else "Sin área",
+                })
 
     for ap in annual_plans:
-        audited_qs = ap.audited.all()
-        audited_positions = []
-        for audited in audited_qs:
+        for audited in ap.audited.all():
             user = audited.user
-            positions = user.user_position.all()
-            positions_names = ", ".join([pos.position.name for pos in positions])
-            audited_positions.append(positions_names if positions_names else user.username)
-
-        responsible_text = ", ".join(audited_positions)
-
-        activities.append({
-            "date": ap.audit_opening_date,
-            "name": f"Annual Audit Plan: {ap.annual_program}",
-            "type": "Audit Plan",
-            "responsible": responsible_text,
-        })
+            for up in user.user_position.all():
+                pos = up.position
+                area = pos.area if pos else None
+                if not area_id or (area and area.id == int(area_id)):
+                    activities.append({
+                        "date": ap.audit_opening_date,
+                        "name": f"Annual Audit Plan: {ap.annual_program}",
+                        "type": "Audit Plan",
+                        "responsible": pos.name,
+                        "area": area.name if area else "Sin área",
+                    })
 
     activities.sort(key=lambda x: x['date'])
 
     paginator = Paginator(activities, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "partials/_activity_list.html", {"page_obj": page_obj})
+
 
 
     # === Gráfico: Número de Alertas Por Proceso ===
