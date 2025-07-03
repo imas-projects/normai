@@ -37,7 +37,7 @@
         <button class="btn btn-sm btn-outline-primary" id="toggle-risk-chart">Cambiar a Re-evaluación</button>
     </div>
     <div class="card-body">
-        <canvas id="risk-heatmap"></canvas>
+        <div id="risk-heatmap"></div>
         <div class="text-muted small mt-2">
             El <strong>tamaño</strong> del círculo representa la cantidad de riesgos. El <strong>color</strong> representa el nivel de riesgo (Alto, Moderado, Bajo).
         </div>
@@ -67,6 +67,8 @@
 
 
 
+{{ risk_eval_data|json_script:"risk-eval-data" }}
+{{ risk_reeval_data|json_script:"risk-reeval-data" }}
 
 
     <!-- Bootstrap JS -->
@@ -125,36 +127,26 @@ document.addEventListener('click', function (e) {
 
 
 <script>
-  const risk_eval_data = {{ risk_eval_data|safe }};
-  const risk_reeval_data = {{ risk_reeval_data|safe }};
-</script>
+const riskEvalData = JSON.parse(document.getElementById('risk-eval-data').textContent);
+const riskReevalData = JSON.parse(document.getElementById('risk-reeval-data').textContent);
 
-
-<script>
-const riskEvalData = {{ risk_eval_data|safe }};  // Pasar el JSON desde Django al template
-
-// Construir series para apexcharts
-const series = [];
-for(let sev = 0; sev <= 10; sev++) {
-  let data = riskEvalData.filter(d => d.severity === sev).map(d => ({
-    x: d.occurrence.toString(),
-    y: d.count
-  }));
-  series.push({ name: `Severity ${sev}`, data });
+function prepareSeries(data) {
+  const series = [];
+  for (let sev = 0; sev <= 10; sev++) {
+    let dataPoints = data
+      .filter(d => d.severity === sev)
+      .map(d => ({ x: d.occurrence.toString(), y: d.count }));
+    series.push({ name: `Severidad ${sev}`, data: dataPoints });
+  }
+  return series;
 }
 
+const evalSeries = prepareSeries(riskEvalData);
+const reevalSeries = prepareSeries(riskReevalData);
+
 const options = {
-  chart: {
-    type: 'heatmap',
-    height: 350
-  },
-  dataLabels: {
-    enabled: true,
-    style: {
-      colors: ['#000']
-    }
-  },
-  colors: ['#008FFB'],  // Esto será sobrescrito por colorScale
+  chart: { type: 'heatmap', height: 350 },
+  dataLabels: { enabled: true, style: { colors: ['#000'] } },
   colorScale: {
     ranges: [
       { from: 0, to: 1, color: '#00E396', name: 'Bajo' },
@@ -162,21 +154,26 @@ const options = {
       { from: 5, to: 10, color: '#FF4560', name: 'Alto' }
     ]
   },
-  series: series,
-  xaxis: {
-    title: { text: 'Occurrence' }
-  },
-  yaxis: {
-    title: { text: 'Severity' }
-  },
-  title: {
-    text: 'Heatmap con números y color range'
-  }
+  series: evalSeries,
+  xaxis: { title: { text: 'Ocurrencia' } },
+  yaxis: { title: { text: 'Severidad' } },
+  title: { text: 'Matriz de Riesgos: Evaluación vs Re-evaluación' }
 };
 
 const chart = new ApexCharts(document.querySelector("#risk-heatmap"), options);
 chart.render();
 
+let showingEval = true;
+document.querySelector('#toggle-risk-chart').addEventListener('click', function() {
+  if (showingEval) {
+    chart.updateSeries(reevalSeries);
+    this.textContent = "Cambiar a Evaluación";
+  } else {
+    chart.updateSeries(evalSeries);
+    this.textContent = "Cambiar a Re-evaluación";
+  }
+  showingEval = !showingEval;
+});
 </script>
 
 
