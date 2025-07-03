@@ -181,6 +181,7 @@ def wellcome_view(request):
     ).order_by('-total_findings')
 
     current_date = timezone.now().date()
+    area_id = request.GET.get("area_id")
 
     risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date).prefetch_related('responsible__area')
     processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
