@@ -197,8 +197,8 @@ def wellcome_view(request):
             if not area_id or (area and area.id == int(area_id)):
                 activities.append({
                     "date": rt.target_date,
-                    "name": f"Risk Treatment: {rt.treatment_action[:40]}",
-                    "type": "Risk",
+                    "name": f"Tratamiento del Riesgo: {rt.treatment_action}",
+                    "type": "Riesgo",
                     "responsible": pos.name,
                     "area": area.name if area else "Sin área",
                 })
@@ -208,8 +208,8 @@ def wellcome_view(request):
         if not area_id or (area and area.id == int(area_id)):
             activities.append({
                 "date": p.review_date,
-                "name": f"Process Review: {p.name}",
-                "type": "Process",
+                "name": f"Revisión del Proceso: {p.name}",
+                "type": "Proceso",
                 "responsible": p.responsible.name if p.responsible else "",
                 "area": area.name if area else "Sin área",
             })
@@ -219,8 +219,8 @@ def wellcome_view(request):
         if not area_id or (area and area.id == int(area_id)):
             activities.append({
                 "date": c.review_date,
-                "name": f"Communication Review: {c.code}",
-                "type": "Communication",
+                "name": f"Revisión de Comunicación: {c.code}",
+                "type": "Comunicación",
                 "responsible": c.reviewed_by.name if c.reviewed_by else "",
                 "area": area.name if area else "Sin área",
             })
@@ -234,8 +234,8 @@ def wellcome_view(request):
             if not area_id or (area and area.id == int(area_id)):
                 activities.append({
                     "date": ca.due_date,
-                    "name": f"Corrective Action: {ca.corrective_action[:40]}",
-                    "type": "Audit",
+                    "name": f"Accion Correctiva: {ca.corrective_action}",
+                    "type": "Auditoria",
                     "responsible": pos.name,
                     "area": area.name if area else "Sin área",
                 })
@@ -249,8 +249,8 @@ def wellcome_view(request):
                 if not area_id or (area and area.id == int(area_id)):
                     activities.append({
                         "date": ap.audit_opening_date,
-                        "name": f"Annual Audit Plan: {ap.annual_program}",
-                        "type": "Audit Plan",
+                        "name": f"Plan de Auditoria: {ap.annual_program}",
+                        "type": "Auditoria",
                         "responsible": pos.name,
                         "area": area.name if area else "Sin área",
                     })
