@@ -148,7 +148,8 @@ document.addEventListener('click', function (e) {
             for (let sev = 0; sev <= 10; sev++) {
                 for (let occ = 0; occ <= 10; occ++) {
                     const cell = background.find(c => c.severity === sev && c.occurrence === occ);
-                    if (!cell?.risk_level) continue;
+                    if (!cell?.risk_level) continue; // No pintar celdas sin nivel de riesgo
+
                     const color = riskColor(cell.risk_level);
                     if (!color) continue;
 
@@ -175,9 +176,9 @@ document.addEventListener('click', function (e) {
                     data: [{
                         x: occ,
                         y: sev,
-                        r: count > 0 ? count * 8 + 6 : 0,
-                        backgroundColor: 'transparent',
-                        borderColor: '#555',
+                        r: count > 0 ? count * 8 + 6 : 0, // Solo mostrar círculos si count > 0
+                        backgroundColor: 'transparent',   // Sin relleno (opaco)
+                        borderColor: '#555',              // Borde gris visible
                         borderWidth: 1,
                         count: count,
                         risk: point?.risk_level || ""
@@ -230,6 +231,7 @@ document.addEventListener('click', function (e) {
         });
     });
 </script>
+
 
 
 
