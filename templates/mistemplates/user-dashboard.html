@@ -27,101 +27,103 @@
                             <div class="card-body p-0">
 <div class="row row-cols-xxl-5 row-cols-md-3 row-cols-1 g-0">
 
-    <!-- Card Template -->
+    <!-- Auditorías Realizadas / Planificadas -->
     <div class="col">
         <div class="py-4 px-3">
-            <h5 class="text-muted text-uppercase fs-13 d-flex justify-content-between align-items-center">
+            <h5 class="text-muted text-uppercase fs-13">
                 Auditorías Realizadas / Planificadas
-                <i class="ri-file-list-2-line text-primary fs-18"></i>
+                <i class="ri-file-list-2-line text-primary fs-18 float-end align-middle"></i>
             </h5>
-            <div class="d-flex align-items-start">
+            <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <i class="ri-clipboard-line display-6 text-muted"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <p class="fs-5 mb-0 fw-semibold text-wrap">
+                    <p class="fs-1 fw-semibold mb-0">
                         {{ realizadas }} / {{ planificadas }}
-                        <small class="text-muted">({{ porcentaje }}%)</small>
+                        <small class="text-muted fs-5">({{ porcentaje }}%)</small>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Repite el mismo patrón para el resto -->
-
+    <!-- Acciones Correctivas Abiertas / Cerradas -->
     <div class="col">
-        <div class="py-4 px-3">
-            <h5 class="text-muted text-uppercase fs-13 d-flex justify-content-between align-items-center">
+        <div class="mt-3 mt-md-0 py-4 px-3">
+            <h5 class="text-muted text-uppercase fs-13">
                 Acciones Correctivas Abiertas / Cerradas
-                <i class="ri-tools-line text-warning fs-18"></i>
+                <i class="ri-tools-line text-warning fs-18 float-end align-middle"></i>
             </h5>
-            <div class="d-flex align-items-start">
+            <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <i class="ri-checkbox-multiple-blank-line display-6 text-muted"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <p class="fs-5 mb-0 fw-semibold text-wrap">
+                    <p class="fs-1 fw-semibold mb-0">
                         {{ acciones_abiertas }} / {{ acciones_totales }}
-                        <small class="text-muted">({{ acciones_porcentaje }}%)</small>
+                        <small class="text-muted fs-5">({{ acciones_porcentaje }}%)</small>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Tasa de No Conformidades -->
     <div class="col">
-        <div class="py-4 px-3">
-            <h5 class="text-muted text-uppercase fs-13 d-flex justify-content-between align-items-center">
+        <div class="mt-3 mt-md-0 py-4 px-3">
+            <h5 class="text-muted text-uppercase fs-13">
                 Tasa de No Conformidades
-                <i class="ri-alert-line text-danger fs-18"></i>
+                <i class="ri-alert-line text-danger fs-18 float-end align-middle"></i>
             </h5>
-            <div class="d-flex align-items-start">
+            <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <i class="ri-error-warning-line display-6 text-muted"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <p class="fs-5 mb-0 fw-semibold text-wrap">
+                    <p class="fs-1 fw-semibold mb-0">
                         {{ auditorias_con_nc }} / {{ realizadas }}
-                        <small class="text-muted">({{ tasa_nc }}%)</small>
+                        <small class="text-muted fs-5">({{ tasa_nc }}%)</small>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Procesos en Alerta -->
     <div class="col">
-        <div class="py-4 px-3">
-            <h5 class="text-muted text-uppercase fs-13 d-flex justify-content-between align-items-center">
+        <div class="mt-3 mt-lg-0 py-4 px-3">
+            <h5 class="text-muted text-uppercase fs-13">
                 Procesos en Alerta
-                <i class="ri-arrow-up-circle-line text-success fs-18"></i>
+                <i class="ri-arrow-up-circle-line text-success fs-18 float-end align-middle"></i>
             </h5>
-            <div class="d-flex align-items-start">
+            <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
                     <i class="ri-error-warning-line display-6 text-muted"></i>
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <p class="fs-5 mb-0 fw-semibold text-wrap">
+                    <p class="fs-1 fw-semibold mb-0">
                         {{ procesos_en_alerta }} / {{ total_procesos }}
-                        <small class="text-muted">({{ tasa_procesos_alerta }}%)</small>
+                        <small class="text-muted fs-5">({{ tasa_procesos_alerta }}%)</small>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Índice de Mejora Continua -->
     <div class="col">
-        <div class="py-4 px-3">
-            <h5 class="text-muted text-uppercase fs-13 d-flex justify-content-between align-items-center">
+        <div class="mt-3 mt-lg-0 py-4 px-3">
+            <h5 class="text-muted text-uppercase fs-13">
                 Índice de Mejora Continua
-                <i class="ri-arrow-down-circle-line text-danger fs-18"></i>
+                <i class="ri-arrow-down-circle-line text-danger fs-18 float-end align-middle"></i>
             </h5>
-            <div class="d-flex align-items-start">
+            <div class="d-flex align-items-center">
                 <div class="flex-shrink-0">
-                    <i class="ri-bar-chart-line display-6 text-muted"></i>
+                    <!-- Podrías meter un ícono aquí si lo necesitas -->
                 </div>
                 <div class="flex-grow-1 ms-3">
-                    <p class="fs-5 mb-0 fw-semibold text-wrap">
+                    <p class="fs-1 fw-semibold mb-0">
                         {{ indice_mejora_continua }}
                     </p>
                 </div>
@@ -129,8 +131,12 @@
         </div>
     </div>
 
-</div>
-   
+</div><!-- end row -->
+</div><!-- end card body -->
+</div><!-- end card -->
+</div><!-- end col -->
+</div><!-- end row -->
+
 
                 <div class="row">
                             <div class="col-lg-3">
