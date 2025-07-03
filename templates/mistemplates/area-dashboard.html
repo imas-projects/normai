@@ -173,10 +173,10 @@ document.addEventListener('click', function (e) {
                     data: [{
                         x: occ,
                         y: sev,
-                        r: count > 0 ? count * 4 + 4 : 2,  // más pequeño si es 0
+                        r: count > 0 ? count * 8 + 6 : 4,   // más pequeño si es 0
                         backgroundColor: 'rgba(255,255,255,0)',  // transparente
                         borderColor: '#555',
-                        borderWidth: 1,
+                        borderWidth: 2,
                         count: count,
                         risk: point?.risk_level || "Bajo"
                     }]
