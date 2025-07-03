@@ -123,6 +123,8 @@ document.addEventListener('click', function (e) {
 <script>
     const evalData = {{ risk_eval_data|safe }};
     const reevalData = {{ risk_reeval_data|safe }};
+    const evalBackground = {{ eval_background|safe }};
+    const reevalBackground = {{ reeval_background|safe }};
     let isEvaluation = true;
 
     const ctx = document.getElementById("risk-heatmap").getContext("2d");
@@ -133,34 +135,37 @@ document.addEventListener('click', function (e) {
             'High': 'rgba(255, 99, 132, 0.7)',
             'Moderate': 'rgba(255, 206, 86, 0.7)',
             'Low': 'rgba(75, 192, 192, 0.7)',
-        }[level] || 'rgba(220,220,220,0.3)';  // Gris claro por defecto
+        }[level] || 'rgba(220,220,220,0.2)';
     }
 
     const backgroundGridPlugin = {
         id: 'backgroundGrid',
-        beforeDraw(chart) {
-            const { ctx, chartArea } = chart;
+        beforeDatasetsDraw(chart) {
+            const { ctx, chartArea, scales } = chart;
+            const background = isEvaluation ? evalBackground : reevalBackground;
+
             ctx.save();
-            ctx.strokeStyle = '#eee';
-            for (let i = 0; i <= 10; i++) {
-                const x = chart.scales.x.getPixelForValue(i);
-                const y = chart.scales.y.getPixelForValue(i);
-                ctx.beginPath();
-                ctx.moveTo(chartArea.left, y);
-                ctx.lineTo(chartArea.right, y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x, chartArea.top);
-                ctx.lineTo(x, chartArea.bottom);
-                ctx.stroke();
+            for (let sev = 0; sev <= 10; sev++) {
+                for (let occ = 0; occ <= 10; occ++) {
+                    const cell = background.find(c => c.severity === sev && c.occurrence === occ);
+                    const color = riskColor(cell?.risk_level || "Low");
+
+                    const x = scales.x.getPixelForValue(occ) - (scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0)) / 2;
+                    const y = scales.y.getPixelForValue(sev) - (scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0)) / 2;
+                    const width = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
+                    const height = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, width, height);
+                }
             }
             ctx.restore();
         }
     };
 
     function buildChart(data) {
-        const dataset = [...Array(11).keys()].flatMap((sev) => {
-            return [...Array(11).keys()].map((occ) => {
+        const dataset = [...Array(11).keys()].flatMap(sev =>
+            [...Array(11).keys()].map(occ => {
                 const point = data.find(d => d.severity === sev && d.occurrence === occ);
                 const count = point?.count || 0;
                 return {
@@ -168,30 +173,28 @@ document.addEventListener('click', function (e) {
                     data: [{
                         x: occ,
                         y: sev,
-                        r: count * 6 + 6,  // Aumentado
-                        backgroundColor: point ? riskColor(point.risk_level) : 'rgba(220,220,220,0.3)',
-                        borderColor: '#888',
+                        r: count > 0 ? count * 4 + 4 : 2,  // más pequeño si es 0
+                        backgroundColor: 'rgba(255,255,255,0)',  // transparente
+                        borderColor: '#555',
                         borderWidth: 1,
                         count: count,
                         risk: point?.risk_level || "Bajo"
                     }]
                 };
-            });
-        });
+            })
+        );
 
         if (heatmapChart) heatmapChart.destroy();
 
         heatmapChart = new Chart(ctx, {
             type: 'bubble',
-            data: {
-                datasets: dataset
-            },
+            data: { datasets: dataset },
             options: {
                 responsive: true,
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            label: function (ctx) {
+                            label(ctx) {
                                 const d = ctx.raw;
                                 return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
                             }
@@ -225,6 +228,7 @@ document.addEventListener('click', function (e) {
         });
     });
 </script>
+
 
 
 {% endblock extra_js %}
