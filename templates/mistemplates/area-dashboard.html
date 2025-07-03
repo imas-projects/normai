@@ -141,14 +141,14 @@ document.addEventListener('click', function (e) {
     const backgroundGridPlugin = {
         id: 'backgroundGrid',
         beforeDatasetsDraw(chart) {
-            const { ctx, chartArea, scales } = chart;
+            const { ctx, scales } = chart;
             const background = isEvaluation ? evalBackground : reevalBackground;
 
             ctx.save();
             for (let sev = 0; sev <= 10; sev++) {
                 for (let occ = 0; occ <= 10; occ++) {
                     const cell = background.find(c => c.severity === sev && c.occurrence === occ);
-                    if (!cell?.risk_level) continue;  // 🔥 NO dibujar si no hay nivel
+                    if (!cell?.risk_level) continue;
                     const color = riskColor(cell.risk_level);
                     if (!color) continue;
 
@@ -175,7 +175,7 @@ document.addEventListener('click', function (e) {
                     data: [{
                         x: occ,
                         y: sev,
-                        r: count > 0 ? count * 8 + 6 : 0,  // 🎯 más grandes y 0 si no hay
+                        r: count > 0 ? count * 8 + 6 : 0,
                         backgroundColor: 'transparent',
                         borderColor: '#555',
                         borderWidth: 1,
@@ -198,7 +198,7 @@ document.addEventListener('click', function (e) {
                         callbacks: {
                             label(ctx) {
                                 const d = ctx.raw;
-                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
+                                return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk || "N/A"}`;
                             }
                         }
                     },
@@ -230,6 +230,7 @@ document.addEventListener('click', function (e) {
         });
     });
 </script>
+
 
 
 
