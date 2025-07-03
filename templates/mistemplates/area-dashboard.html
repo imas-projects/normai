@@ -16,6 +16,10 @@
 {% endblock extra_css %}
 {% block content %}
 
+<h1>Área: {{ area.name }}</h1>
+
+{% if area.id == 1 %}
+
 <body>
     <div class="main-content">
         <div class="page-content">
@@ -1121,6 +1125,10 @@
             </div>
         </div>
     </div>
+
+{% else %}
+  <p>Contenido para las demás áreas</p>
+{% endif %}
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
