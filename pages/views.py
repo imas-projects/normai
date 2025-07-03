@@ -505,7 +505,7 @@ def area_detail_view(request, area_id):
                 if count > 0:
                     level = levels[sev][occ] or "Low"
                 else:
-                    level = None
+                    level = "White"
 
 
                 data.append({
