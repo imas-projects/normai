@@ -484,37 +484,10 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    # Obtener riesgos del área
-    risks = RiskIdentification.objects.filter(area=area)
-
-    # Crear matrices vacías
-    evaluations_matrix = []
-    reevaluations_matrix = []
-
-    # === Evaluaciones Iniciales ===
-    for risk in risks:
-        for eval in risk.evaluations.all():
-            evaluations_matrix.append({
-                "severity": eval.severity,
-                "occurrence": eval.occurrence,
-                "risk_level": eval.risk_level
-            })
-
-    # === Reevaluaciones ===
-    for risk in risks:
-        for ree in risk.reevaluations.all():
-            reevaluations_matrix.append({
-                "severity": ree.severity,
-                "occurrence": ree.occurrence,
-                "risk_level": ree.risk_level
-            })
-
     # === Contexto final ===
     contexto = {
         "area": area,
         "page_obj": page_obj,
-        "evaluations_matrix": evaluations_matrix,
-        "reevaluations_matrix": reevaluations_matrix,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
