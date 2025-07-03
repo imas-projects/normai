@@ -26,30 +26,15 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 
 @login_required
 def create_risk(request):
-    all_risks = RiskIdentification.objects.select_related('area', 'process').exclude(area__isnull=True).exclude(process__isnull=True)
+    all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    # Crear dict plano: {area_id: {'area': area_obj, 'processes': {process_id: {'process': process_obj, 'risks': [...]}}}}
-    grouped_risks = []
-
-    for area in Area.objects.all():
-        area_data = {
-            'area': area,
-            'processes': []
-        }
-
-        for process in area.process_set.all():
-            risks = RiskIdentification.objects.filter(area=area, process=process)
-            if risks.exists():
-                area_data['processes'].append({
-                    'process': process,
-                    'risks': risks
-                })
-
-        if area_data['processes']:
-            grouped_risks.append(area_data)
-
-
-        grouped_risks[area.id]['processes'][process.id]['risks'].append(risk)
+    # Agrupar por Área y Proceso
+    grouped_risks = {}
+    for risk in all_risks:
+        key = (risk.area, risk.process)
+        if key not in grouped_risks:
+            grouped_risks[key] = []
+        grouped_risks[key].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
