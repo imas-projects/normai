@@ -482,42 +482,10 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    risk_level_map = {"Low": 1, "Moderate": 2, "High": 3}
-
-    # Función auxiliar para preparar datos de heatmap
-    def get_heatmap_data(evals):
-        # Diccionario con claves (severity, occurrence) y valor risk_level (string)
-        data = {}
-        for e in evals:
-            key = (e.severity, e.occurrence)
-            # Si hay varios riesgos con igual clave, quedarse con el más alto nivel de riesgo:
-            current_level = data.get(key)
-            if current_level is None or risk_level_map[e.risk_level] > risk_level_map[current_level]:
-                data[key] = e.risk_level
-        # Convertir a lista de dicts para ApexCharts: {x: severity, y: occurrence, color: nivel}
-        result = []
-        for (sev, occ), level in data.items():
-            # Mapeamos nivel riesgo a color aquí en JS, acá mandamos sólo la clave
-            result.append({"x": sev, "y": occ, "risk_level": level})
-        return result
-
-    # Obtenemos todos los riesgos del area
-    risks_ids = area.risks.values_list('id', flat=True)
-
-    # Evaluaciones y reevaluaciones de esos riesgos
-    evaluations = RiskEvaluation.objects.filter(risk_id__in=risks_ids)
-    reevaluations = Reevaluation.objects.filter(risk_id__in=risks_ids)
-
-    heatmap_evaluation = get_heatmap_data(evaluations)
-    heatmap_reevaluation = get_heatmap_data(reevaluations)
-
     # --- Contexto ---
     contexto = {
         "area": area,
         "page_obj": page_obj,
-        "heatmap_evaluation_json": json.dumps(heatmap_evaluation),
-        "heatmap_reevaluation_json": json.dumps(heatmap_reevaluation),
-
     }
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
