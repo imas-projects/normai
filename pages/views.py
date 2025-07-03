@@ -502,7 +502,11 @@ def area_detail_view(request, area_id):
         for sev in range(11):
             for occ in range(11):
                 count = heatmap[sev][occ]
-                level = levels[sev][occ] or "Low"
+                if count > 0:
+                    level = levels[sev][occ] or "Low"
+                else:
+                    level = None
+
 
                 data.append({
                     "severity": sev,
