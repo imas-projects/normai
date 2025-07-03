@@ -514,8 +514,9 @@ def area_detail_view(request, area_id):
     contexto = {
         "area": area,
         "page_obj": page_obj,
-        "heatmap_evaluation": heatmap_evaluation,
-        "heatmap_reevaluation": heatmap_reevaluation,
+        "heatmap_evaluation_json": json.dumps(heatmap_evaluation),
+        "heatmap_reevaluation_json": json.dumps(heatmap_reevaluation),
+
     }
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
