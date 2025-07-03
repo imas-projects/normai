@@ -1,4 +1,5 @@
 {% extends "mistemplates/mi_base.html" %}
+{% load json_script %}
 {% load static %}
 {% block title %}Area Dashboard{% endblock title %}
 {% block extra_css %}
@@ -62,6 +63,8 @@
     </div>
 </div>
 
+{{ heatmap_evaluation|json_script:"evaluation-data" }}
+{{ heatmap_reevaluation|json_script:"reevaluation-data" }}
 
 
     <!-- Bootstrap JS -->
@@ -122,8 +125,9 @@ document.addEventListener('click', function (e) {
 
 <script>
     // Datos enviados desde Django al template
-    const evaluationData = {{ heatmap_evaluation|safe }};
-    const reevaluationData = {{ heatmap_reevaluation|safe }};
+    const evaluationData = JSON.parse(document.getElementById('evaluation-data').textContent);
+    const reevaluationData = JSON.parse(document.getElementById('reevaluation-data').textContent);
+
 
     // Mapeo de colores según nivel de riesgo
     const riskColorMap = {
