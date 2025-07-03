@@ -125,9 +125,9 @@
 
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
-    {% for area, processes in grouped_risks|groupby:"0" %}
+    {% for area, processes in risks_by_area.items %}
       <h3>{{ area.name }}</h3>
-      {% for process, risks in processes|groupby:"1" %}
+      {% for process, risks in processes.items %}
         <div class="accordion mb-3" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
           <div class="accordion-item">
             <h2 class="accordion-header" id="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
@@ -138,17 +138,19 @@
                 {{ process.name }}
               </button>
 
-                    <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
-                        <i class="ri-file-download-line"></i> Descargar PDF
-                    </a>
-                </h2>
+              <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
+                <i class="ri-file-download-line"></i> Descargar PDF
+              </a>
+            </h2>
             <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse" 
               aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
               data-bs-parent="#accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
               <div class="accordion-body">
-                        {% for risk in risks %}
-                        <div class="card mb-3" style="background-color: #e9ecef; color: black;">
-                            <div class="card-body">
+                {% for risk in risks %}
+                  <!-- Aquí va el contenido de cada riesgo (tu código actual) -->
+                  <div class="card mb-3" style="background-color: #e9ecef; color: black;">
+                    <div class="card-body">
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <table class="table table-bordered" style="border-color: #6c757d;">
