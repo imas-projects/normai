@@ -2,14 +2,12 @@
     {% for activity in page_obj %}
     <li class="list-group-item ps-0">
         <div class="row align-items-center g-3">
-            <div class="col-auto">
-                <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3">
-                    <div class="text-center">
-                        <h5 class="mb-0">{{ activity.date|date:"d" }}</h5>
-                        <div class="text-muted">{{ activity.date|date:"D" }}</div>
-                    </div>
+            <div class="col-auto d-flex flex-column align-items-center">
+                <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 text-center">
+                    <h5 class="mb-0">{{ activity.date|date:"d" }}</h5>
+                    <div class="text-muted">{{ activity.date|date:"D" }}</div>
                 </div>
-                <div class="text-muted">{{ activity.date|date:"M" }}</div>
+                <div class="text-muted mt-2 fw-bold fs-5 text-center">{{ activity.date|date:"M" }}</div>
             </div>
             <div class="col">
                 <a href="#" class="text-reset fs-14 mb-0">{{ activity.name }}</a><br>
