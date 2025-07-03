@@ -65,6 +65,13 @@
     </div> <!-- page-content -->
 </div> <!-- main-content -->
 
+
+<script>
+  const eval_background = {{ eval_background|safe }};
+  const reeval_background = {{ reeval_background|safe }};
+</script>
+
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   
@@ -121,114 +128,98 @@ document.addEventListener('click', function (e) {
 
 
 <script>
-    const evalData = {{ risk_eval_data|safe }};
-    const reevalData = {{ risk_reeval_data|safe }};
-    const evalBackground = {{ eval_background|safe }};
-    const reevalBackground = {{ reeval_background|safe }};
-    let isEvaluation = true;
+document.addEventListener('DOMContentLoaded', () => {
+  const canvas = document.getElementById('risk-heatmap');
+  const ctx = canvas.getContext('2d');
 
-    const ctx = document.getElementById("risk-heatmap").getContext("2d");
-    let heatmapChart;
+  // Dimensiones
+  const gridSize = 11;  // severity y occurrence van de 0 a 10
+  const cellSize = 40;  // tamaño de cada celda en px, ajustable
 
-    function riskColor(level) {
-        return {
-            'High': 'rgba(255, 99, 132, 0.7)',
-            'Moderate': 'rgba(255, 206, 86, 0.7)',
-            'Low': 'rgba(75, 192, 192, 0.7)',
-        }[level] || 'rgba(220,220,220,0.2)';
+  canvas.width = cellSize * gridSize;
+  canvas.height = cellSize * gridSize;
+
+  // Colores para cada nivel de riesgo
+  const colors = {
+    "High": "#e74c3c",
+    "Moderate": "#f39c12",
+    "Low": "#27ae60",
+    "White": "#ecf0f1"
+  };
+
+  // Datos que vienen del backend (los defines en tu template antes de este script)
+  // Ejemplo de acceso:
+  // const evalBackground = {{ eval_background|safe }};
+  // const reevalBackground = {{ reeval_background|safe }};
+
+  // Aquí asumo que tienes las variables JS globales eval_background y reeval_background definidas
+  let currentData = eval_background;  // por defecto mostrar evaluación
+
+  const drawHeatmap = (data) => {
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dibujar celdas
+    for(let item of data){
+      const x = item.occurrence * cellSize;
+      // Invierto el eje Y para que severidad 0 esté abajo y 10 arriba, si quieres al revés quita esta línea
+      const y = (gridSize - 1 - item.severity) * cellSize;
+
+      ctx.fillStyle = colors[item.risk_level] || colors.White;
+      ctx.fillRect(x, y, cellSize, cellSize);
+
+      // Bordes de celda
+      ctx.strokeStyle = "#bdc3c7";
+      ctx.strokeRect(x, y, cellSize, cellSize);
+
+      // Si count > 0, poner el número centrado y en color visible
+      if(item.count > 0){
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(item.count, x + cellSize / 2, y + cellSize / 2);
+      }
     }
 
-    const backgroundGridPlugin = {
-        id: 'backgroundGrid',
-        beforeDatasetsDraw(chart) {
-            const { ctx, chartArea, scales } = chart;
-            const background = isEvaluation ? evalBackground : reevalBackground;
+    // Dibujar etiquetas ejes
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-            ctx.save();
-            for (let sev = 0; sev <= 10; sev++) {
-                for (let occ = 0; occ <= 10; occ++) {
-                    const cell = background.find(c => c.severity === sev && c.occurrence === occ);
-                    const color = riskColor(cell?.risk_level || "Low");
+    // Eje X: occurrence
+    for(let i=0; i<gridSize; i++){
+      ctx.fillText(i, i*cellSize + cellSize/2, canvas.height - 10);
+    }
+    ctx.fillText("Occurrence", canvas.width / 2, canvas.height - 30);
 
-                    const x = scales.x.getPixelForValue(occ) - (scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0)) / 2;
-                    const y = scales.y.getPixelForValue(sev) - (scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0)) / 2;
-                    const width = scales.x.getPixelForValue(1) - scales.x.getPixelForValue(0);
-                    const height = scales.y.getPixelForValue(1) - scales.y.getPixelForValue(0);
+    // Eje Y: severity (rotado)
+    ctx.save();
+    ctx.translate(10, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Severity", 0, 0);
+    ctx.restore();
 
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, y, width, height);
-                }
-            }
-            ctx.restore();
-        }
-    };
+    for(let i=0; i<gridSize; i++){
+      ctx.fillText(i, 10, (gridSize - 1 - i)*cellSize + cellSize/2);
+    }
+  };
 
-function buildChart(data) {
-    const neutralColor = 'rgba(255, 255, 255, 0.8)'; // blanco semitransparente
+  drawHeatmap(currentData);
 
-    const dataset = [...Array(11).keys()].flatMap(sev =>
-        [...Array(11).keys()].map(occ => {
-            const point = data.find(d => d.severity === sev && d.occurrence === occ);
-            const count = point?.count || 0;
-            return {
-                label: `Sev ${sev} - Occ ${occ}`,
-                data: [{
-                    x: occ,
-                    y: sev,
-                    r: count > 0 ? count * 8 + 6 : 4,  // radio, más grande si count > 0
-                    backgroundColor: neutralColor,     // todos blancos
-                    borderColor: 'rgba(200, 200, 200, 0.9)',  // borde gris claro
-                    borderWidth: 2,
-                    count: count,
-                    risk: point?.risk_level || "Bajo"
-                }]
-            };
-        })
-    );
-
-    if (heatmapChart) heatmapChart.destroy();
-
-    heatmapChart = new Chart(ctx, {
-        type: 'bubble',
-        data: { datasets: dataset },
-        options: {
-            responsive: true,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label(ctx) {
-                            const d = ctx.raw;
-                            return `Sev: ${d.y}, Occ: ${d.x}, Cantidad: ${d.count}, Nivel: ${d.risk}`;
-                        }
-                    }
-                },
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    title: { display: true, text: 'Probabilidad (Occurrence)' },
-                    min: 0, max: 10, ticks: { stepSize: 1 }
-                },
-                y: {
-                    title: { display: true, text: 'Severidad' },
-                    min: 0, max: 10, ticks: { stepSize: 1 }
-                }
-            }
-        },
-        plugins: [backgroundGridPlugin]
-    });
-}
-
-    document.addEventListener("DOMContentLoaded", () => {
-        buildChart(evalData);
-        document.getElementById("toggle-risk-chart").addEventListener("click", () => {
-            isEvaluation = !isEvaluation;
-            buildChart(isEvaluation ? evalData : reevalData);
-            document.getElementById("toggle-risk-chart").textContent = isEvaluation
-                ? "Cambiar a Re-evaluación"
-                : "Cambiar a Evaluación";
-        });
-    });
+  // Botón para cambiar entre evaluación y re-evaluación
+  document.getElementById('toggle-risk-chart').addEventListener('click', () => {
+    if(currentData === eval_background){
+      currentData = reeval_background;
+      document.getElementById('toggle-risk-chart').textContent = "Cambiar a Evaluación";
+    } else {
+      currentData = eval_background;
+      document.getElementById('toggle-risk-chart').textContent = "Cambiar a Re-evaluación";
+    }
+    drawHeatmap(currentData);
+  });
+});
 </script>
 
 
