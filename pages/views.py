@@ -488,11 +488,53 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
+    # === Heatmap Data ===
+    def compute_heatmap(evaluations):
+        heatmap = defaultdict(lambda: defaultdict(int))  # severity -> occurrence -> count
+        colors = defaultdict(lambda: defaultdict(str))   # severity -> occurrence -> risk level
+
+        for ev in evaluations:
+            sev = ev.severity
+            occ = ev.occurrence
+            heatmap[sev][occ] += 1
+
+            # Si hay varios riesgos en una celda, se prioriza por nivel de riesgo (High > Moderate > Low)
+            prev_level = colors[sev][occ]
+            new_level = ev.risk_level
+
+            priority = {"High": 3, "Moderate": 2, "Low": 1}
+            if priority.get(new_level, 0) > priority.get(prev_level, 0):
+                colors[sev][occ] = new_level
+
+        # Convert to list of dicts for JS
+        data = []
+        for sev in range(11):
+            for occ in range(11):
+                count = heatmap[sev][occ]
+                level = colors[sev][occ] or "Low"
+                data.append({
+                    "severity": sev,
+                    "occurrence": occ,
+                    "count": count,
+                    "risk_level": level,
+                })
+        return data
+
+    risk_evals = RiskEvaluation.objects.filter(risk__area=area).select_related('risk')
+    re_evals = Reevaluation.objects.filter(risk__area=area).select_related('risk')
+
+    risk_eval_data = compute_heatmap(risk_evals)
+    risk_reeval_data = compute_heatmap(re_evals)
+
     contexto = {
         "area": area,
         "page_obj": page_obj,
+        "risk_eval_data": risk_eval_data,
+        "risk_reeval_data": risk_reeval_data,
     }
+
     return render(request, "mistemplates/area-dashboard.html", contexto)
+
 
 
 class PagesView(TemplateView):
