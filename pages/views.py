@@ -484,10 +484,44 @@ def area_detail_view(request, area_id):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
+    # Obtenemos evaluaciones y reevaluaciones para el área
+    evaluations = RiskEvaluation.objects.filter(risk__area=area)
+    reevaluations = Reevaluation.objects.filter(risk__area=area)
+    
+    # Función para mapear nivel de riesgo a color
+    risk_level_color = {
+        'Low': 'green',
+        'Moderate': 'orange',
+        'High': 'red',
+    }
+
+    # Preparar datos para evaluación
+    eval_data = []
+    for ev in evaluations:
+        eval_data.append({
+            'x': ev.occurrence,
+            'y': ev.severity,
+            'color': risk_level_color.get(ev.risk_level, 'gray'),
+            'type': 'Evaluación'
+        })
+
+    # Preparar datos para reevaluación
+    reeval_data = []
+    for reev in reevaluations:
+        reeval_data.append({
+            'x': reev.occurrence,
+            'y': reev.severity,
+            'color': risk_level_color.get(reev.risk_level, 'gray'),
+            'type': 'Reevaluación'
+        })
+
+
     # === Contexto final ===
     contexto = {
         "area": area,
         "page_obj": page_obj,
+        'eval_data': eval_data,
+        'reeval_data': reeval_data,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
