@@ -123,7 +123,8 @@
 </div>
 
 
-<div class="mt-3">
+<div class="d-flex">
+  <div class="w-50 ms-auto">
     {% for key, risks in grouped_risks.items %}
         {% with area=key.0 process=key.1 %}
         <div class="accordion" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
@@ -523,6 +524,8 @@
     {% endfor %}
   </div>
 </div>
+</div>
+
 {% block footer %}
 {% include "partials/footer.html" %}
 {% endblock footer %}
