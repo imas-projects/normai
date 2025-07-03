@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.db.models import Count, Avg
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
+from django.core.paginator import Paginator
 from collections import defaultdict
 from django.db.models.functions import TruncMonth
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
@@ -178,14 +179,11 @@ def wellcome_view(request):
         total_findings=Count('processrequirement__findings')
     ).order_by('-total_findings')
 
-    current_date = timezone.now().date()
-    end_date = current_date + timedelta(days=30)
-
-    risk_treatments = RiskTreatment.objects.filter(target_date__range=(current_date, end_date))
-    processes = Process.objects.filter(review_date__range=(current_date, end_date))
-    communications = CommunicationTable.objects.filter(review_date__range=(current_date, end_date))
-    corrective_actions = CorrectiveAction.objects.filter(due_date__range=(current_date, end_date))
-    annual_plans = AnnualPlan.objects.filter(audit_opening_date__range=(current_date, end_date))
+    risk_treatments = RiskTreatment.objects.all()
+    processes = Process.objects.all()
+    communications = CommunicationTable.objects.all()
+    corrective_actions = CorrectiveAction.objects.all()
+    annual_plans = AnnualPlan.objects.all()
 
     activities = []
 
@@ -226,7 +224,6 @@ def wellcome_view(request):
             "responsible": responsible,
         })
 
-
     for ap in annual_plans:
         audited_qs = ap.audited.all()
         audited_positions = []
@@ -236,7 +233,7 @@ def wellcome_view(request):
             positions_names = ", ".join([pos.position.name for pos in positions])
             audited_positions.append(positions_names if positions_names else user.username)
 
-        responsible_text = ", ".join(auditors_positions)
+        responsible_text = ", ".join(audited_positions)
 
         activities.append({
             "date": ap.audit_opening_date,
@@ -245,8 +242,13 @@ def wellcome_view(request):
             "responsible": responsible_text,
         })
 
-
+    # Ordenar por fecha
     activities.sort(key=lambda x: x['date'])
+
+    # Paginación: 6 elementos por página
+    paginator = Paginator(activities, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
 
     # === Gráfico: Número de Alertas Por Proceso ===
@@ -367,7 +369,7 @@ def wellcome_view(request):
 
         'processes_with_findings': processes_with_findings,
 
-        "activities": activities,
+        'page_obj': page_obj,
 
         "alertas_por_proceso": dict(alertas_por_proceso)
     }
