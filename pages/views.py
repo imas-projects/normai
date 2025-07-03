@@ -541,7 +541,6 @@ def area_detail_view(request, area_id):
 
 
 
-
 class PagesView(TemplateView):
     pass
 
