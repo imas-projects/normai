@@ -27,121 +27,130 @@
                             <div class="card-body p-0">
 <div class="row row-cols-xxl-5 row-cols-md-3 row-cols-1 g-0">
 
+<style>
+  .fixed-title {
+    min-height: 3rem; /* altura fija para los títulos */
+  }
+  .fixed-value {
+    min-height: 3.5rem; /* altura fija para valores y porcentaje */
+  }
+</style>
+
 <!-- Auditorías Realizadas / Planificadas -->
 <div class="col">
-    <div class="py-4 px-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <h5 class="text-muted text-uppercase fs-13 mb-3">
-                Auditorías Realizadas / Planificadas
-            </h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <i class="ri-clipboard-line display-6 text-muted"></i>
-            </div>
-            <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                <p class="fs-1 fw-semibold mb-0">
-                    {{ realizadas }} / {{ planificadas }}
-                </p>
-                <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
-                    ({{ porcentaje }}%)
-                </small>
-            </div>
-        </div>
+  <div class="py-4 px-3">
+    <div class="fixed-title d-flex justify-content-between align-items-start">
+      <h5 class="text-muted text-uppercase fs-13 mb-3">
+        Auditorías Realizadas / Planificadas
+      </h5>
     </div>
+    <div class="d-flex align-items-center fixed-value">
+      <div class="flex-shrink-0">
+        <i class="bi bi-folder-fill" style="font-size: 3rem; color:#0d6efd;"></i>
+      </div>
+      <div class="flex-grow-1 ms-3 d-flex align-items-center">
+        <p class="fs-1 fw-semibold mb-0">
+          {{ realizadas }} / {{ planificadas }}
+        </p>
+        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+          ({{ porcentaje }}%)
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Acciones Correctivas Abiertas / Cerradas -->
 <div class="col">
-    <div class="mt-3 mt-md-0 py-4 px-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <h5 class="text-muted text-uppercase fs-13 mb-3">
-                Acciones Correctivas Abiertas / Cerradas
-            </h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <i class="ri-checkbox-multiple-blank-line display-6 text-muted"></i>
-            </div>
-            <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                <p class="fs-1 fw-semibold mb-0">
-                    {{ acciones_abiertas }} / {{ acciones_totales }}
-                </p>
-                <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
-                    ({{ acciones_porcentaje }}%)
-                </small>
-            </div>
-        </div>
+  <div class="mt-3 mt-md-0 py-4 px-3">
+    <div class="fixed-title d-flex justify-content-between align-items-start">
+      <h5 class="text-muted text-uppercase fs-13 mb-3">
+        Acciones Correctivas Abiertas / Cerradas
+      </h5>
     </div>
+    <div class="d-flex align-items-center fixed-value">
+      <div class="flex-shrink-0">
+        <i class="bi bi-card-checklist" style="font-size: 3rem; color:#198754;"></i>
+      </div>
+      <div class="flex-grow-1 ms-3 d-flex align-items-center">
+        <p class="fs-1 fw-semibold mb-0">
+          {{ acciones_abiertas }} / {{ acciones_totales }}
+        </p>
+        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+          ({{ acciones_porcentaje }}%)
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Tasa de No Conformidades -->
 <div class="col">
-    <div class="mt-3 mt-md-0 py-4 px-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <h5 class="text-muted text-uppercase fs-13 mb-3">
-                Tasa de No Conformidades
-            </h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <i class="ri-error-warning-line display-6 text-muted"></i>
-            </div>
-            <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                <p class="fs-1 fw-semibold mb-0">
-                    {{ auditorias_con_nc }} / {{ realizadas }}
-                </p>
-                <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
-                    ({{ tasa_nc }}%)
-                </small>
-            </div>
-        </div>
+  <div class="mt-3 mt-md-0 py-4 px-3">
+    <div class="fixed-title d-flex justify-content-between align-items-start">
+      <h5 class="text-muted text-uppercase fs-13 mb-3">
+        Tasa de No Conformidades
+      </h5>
     </div>
+    <div class="d-flex align-items-center fixed-value">
+      <div class="flex-shrink-0">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem; color:#fd7e14;"></i>
+      </div>
+      <div class="flex-grow-1 ms-3 d-flex align-items-center">
+        <p class="fs-1 fw-semibold mb-0">
+          {{ auditorias_con_nc }} / {{ realizadas }}
+        </p>
+        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+          ({{ tasa_nc }}%)
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Procesos en Alerta -->
 <div class="col">
-    <div class="mt-3 mt-lg-0 py-4 px-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <h5 class="text-muted text-uppercase fs-13 mb-3">
-                Procesos en Alerta
-            </h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <i class="ri-error-warning-line display-6 text-muted"></i>
-            </div>
-            <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                <p class="fs-1 fw-semibold mb-0">
-                    {{ procesos_en_alerta }} / {{ total_procesos }}
-                </p>
-                <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
-                    ({{ tasa_procesos_alerta }}%)
-                </small>
-            </div>
-        </div>
+  <div class="mt-3 mt-lg-0 py-4 px-3">
+    <div class="fixed-title d-flex justify-content-between align-items-start">
+      <h5 class="text-muted text-uppercase fs-13 mb-3">
+        Procesos en Alerta
+      </h5>
     </div>
+    <div class="d-flex align-items-center fixed-value">
+      <div class="flex-shrink-0">
+        <i class="bi bi-bell-fill" style="font-size: 3rem; color:#dc3545;"></i>
+      </div>
+      <div class="flex-grow-1 ms-3 d-flex align-items-center">
+        <p class="fs-1 fw-semibold mb-0">
+          {{ procesos_en_alerta }} / {{ total_procesos }}
+        </p>
+        <small class="fs-1 fw-semibold text-muted mb-0 ms-3">
+          ({{ tasa_procesos_alerta }}%)
+        </small>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Índice de Mejora Continua -->
 <div class="col">
-    <div class="mt-3 mt-lg-0 py-4 px-3">
-        <div class="d-flex justify-content-between align-items-start">
-            <h5 class="text-muted text-uppercase fs-13 mb-3">
-                Índice de Mejora Continua
-            </h5>
-        </div>
-        <div class="d-flex align-items-center">
-            <div class="flex-shrink-0">
-                <!-- Puedes poner un icono aquí si quieres -->
-            </div>
-            <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                <p class="fs-1 fw-semibold mb-0">
-                    {{ indice_mejora_continua }}
-                </p>
-            </div>
-        </div>
+  <div class="mt-3 mt-lg-0 py-4 px-3">
+    <div class="fixed-title d-flex justify-content-between align-items-start">
+      <h5 class="text-muted text-uppercase fs-13 mb-3">
+        Índice de Mejora Continua
+      </h5>
     </div>
+    <div class="d-flex align-items-center fixed-value">
+      <div class="flex-shrink-0">
+        <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color:#0d6efd;"></i>
+      </div>
+      <div class="flex-grow-1 ms-3 d-flex align-items-center">
+        <p class="fs-1 fw-semibold mb-0">
+          {{ indice_mejora_continua }}
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 
 
