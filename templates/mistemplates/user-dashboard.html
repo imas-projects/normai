@@ -126,22 +126,23 @@
                             <div class="col-lg-3">
                                 <div class="card card-height-100">
 <div class="card-header align-items-center d-flex">
-    <h5 class="card-title mb-0 flex-grow-1">Áreas de la Compañía</h5>
+    <h4 class="card-title mb-0 flex-grow-1">Áreas de la Compañía</h4>
     <div class="flex-shrink-0">
     </div>
 </div><!-- end card header -->
 
 <div class="card-body">
     {% for area in areas %}
-        <div class="d-flex gap-2 align-items-center mb-2">
+        <div class="d-flex gap-3 align-items-center mb-2">
             <div class="avatar-xs flex-shrink-0">
                 <div class="avatar-title bg-primary-subtle text-primary rounded-2 fs-17">
                     <i class="ri-building-line"></i>  <!-- icono genérico para área -->
                 </div>
             </div>
-            <h6 class="mb-0 fs-14 flex-grow-1">{{ area.name }}</h6>
+            <h6 class="mb-0 fs-14 flex-grow-1 text-reset">{{ area.name }}</h6>
+
             <!-- Aquí podrías mostrar algún dato extra si tienes, ejemplo: -->
-            <h6 class="flex-shrink-0 mb-0">{{ area.users.count }} usuarios</h6>
+            <small class="text-muted flex-shrink-0">{{ area.users.count }} usuarios</small>
         </div>
     {% empty %}
         <p>No hay áreas registradas.</p>
@@ -150,21 +151,22 @@
 
 <div class="card mt-4 card-height-100">
     <div class="card-header align-items-center d-flex">
-        <h5 class="card-title mb-0 flex-grow-1">Hallazgos por Proceso</h5>
+        <h4 class="card-title mb-0 flex-grow-1">Hallazgos por Proceso</h4>
         <div class="flex-shrink-0">
         </div>
     </div><!-- end card header -->
 
     <div class="card-body">
         {% for process in processes_with_findings %}
-            <div class="d-flex gap-2 align-items-center mb-2">
+            <div class="d-flex gap-3 align-items-center mb-2">
                 <div class="avatar-xs flex-shrink-0">
                     <div class="avatar-title bg-info-subtle text-info rounded-2 fs-17">
                         <i class="ri-folder-3-line"></i> 
                     </div>
                 </div>
-                <h6 class="mb-0 fs-14 flex-grow-1">{{ process.name }}</h6>
-                <h6 class="flex-shrink-0 mb-0">{{ process.total_findings }} hallazgos</h6>
+                <a href="#" class="text-reset fs-14 mb-0 d-block">{{ process.name }}</a>
+                <small class="text-muted">Hallazgos: {{ process.total_findings }}</small>
+
             </div>
         {% empty %}
             <p>No hay procesos con hallazgos.</p>
