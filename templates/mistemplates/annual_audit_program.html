@@ -172,6 +172,29 @@
 {% endblock content %}
 
 {% block extra_js %}
+
+<!-- apexcharts -->
+<script src="{% static 'libs/apexcharts/dist/apexcharts.min.js'%}"></script>
+
+<!-- Dashboard init -->
+<script  src="{% static 'js/pages/dashboard-crm.init.js'%}"></script>
+
+<!-- Vector map-->
+<script src="{% static 'libs/jsvectormap/dist/jsvectormap.min.js'%}"></script>
+<script src="{% static 'libs/jsvectormap/dist/maps/world-merc.js'%}"></script>
+
+<!--Swiper slider js-->
+<script src="{% static 'libs/swiper/swiper-bundle.min.js'%}"></script>
+
+<!-- Dashboard init -->
+<script src="{% static 'js/pages/dashboard-ecommerce.init.js'%}"></script>
+
+<!-- gridjs js -->
+<script src="{% static 'libs/gridjs/dist/gridjs.umd.js' %}"></script>
+
+<!-- Dashboard init -->
+<script src="{% static 'js/pages/dashboard-blog.init.js'%}"></script>
+      
 <script>
 document.getElementById("openAddAuditProgramHeaderModal").addEventListener("click", function () {
   fetch("{% url 'audits:add_audit_program_header' %}")
