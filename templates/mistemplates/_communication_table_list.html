@@ -1,3 +1,5 @@
+<h5 class="mb-3">Últimas tablas de comunicación</h5>
+
 <ul class="list-group list-group-flush border-dashed">
     {% for comm in comm_page_obj %}
     <li class="list-group-item ps-0">
@@ -8,7 +10,16 @@
                 </a>
                 <small class="text-muted d-block">Emisor: {{ comm.emiter.name }}</small>
                 <small class="text-muted d-block">Estado: {{ comm.get_status_display }}</small>
-                <small class="text-muted d-block">Creado por: {{ comm.created_by.name }}</small>
+                
+                <small class="text-muted d-block">
+                    Receptores: 
+                    {% for msg in comm.message.all %}
+                        {{ msg.receiver.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No asignados
+                    {% endfor %}
+                </small>
+
                 <small class="text-muted d-block">Fecha revisión: {{ comm.review_date|date:"d M Y" }}</small>
             </div>
         </div>
