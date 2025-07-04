@@ -41,43 +41,47 @@
 
 <div class="row">
     <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
-    <div class="col-md-6 mt-5">
-        <!-- Programa de Auditorías -->
-        <h3 class="text-center">Programa de Auditorías</h3>
-        <div class="table-responsive">
-            <table class="table table-bordered mt-3">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Proceso</th>
-                        <th>Año</th>
-                        <th>Mes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for plan in audit_data %}
-                    <tr>
-                        <td>{{ plan.process }}</td>
-                        <td>{{ plan.year }}</td>
-                        <td>{{ plan.month }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center">No hay programas disponibles.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="col-md-6 mt-5">
+    <!-- Línea de Tiempo -->
+    <h3 class="text-center">Línea de Tiempo de Auditorías</h3>
+    <div class="card-body">
+        <div id="timeline-chart" style="min-height: 400px;"></div>
+    </div>
 
-        <!-- Línea de Tiempo -->
-        <h3 class="text-center mt-5">Línea de Tiempo de Auditorías</h3>
-        <div class="card-body">
-            <div id="timeline-chart" style="min-height: 400px;"></div>
+    <!-- Programa + Equipo Auditor -->
+    <div class="row mt-4">
+        <!-- Programa de Auditorías -->
+        <div class="col-md-6">
+            <h5 class="text-center">Programa de Auditorías</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered mt-3">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Proceso</th>
+                            <th>Año</th>
+                            <th>Mes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in audit_data %}
+                        <tr>
+                            <td>{{ plan.process }}</td>
+                            <td>{{ plan.year }}</td>
+                            <td>{{ plan.month }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No hay programas disponibles.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Equipo Auditor y Auditados -->
-        <div class="mt-5">
-            <h3 class="text-center">Equipo Auditor y Auditados</h3>
+        <div class="col-md-6">
+            <h5 class="text-center">Equipo Auditor y Auditados</h5>
             <div class="table-responsive">
                 <table class="table table-bordered mt-3">
                     <thead class="table-dark">
@@ -104,6 +108,7 @@
             </div>
         </div>
     </div>
+</div>
 
     <!-- Columna derecha: Reuniones -->
     <div class="col-md-6 mt-5">
