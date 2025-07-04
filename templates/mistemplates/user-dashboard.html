@@ -49,117 +49,105 @@
 </style>
 
 <!-- Auditorías Realizadas / Planificadas -->
-<div class="col">
-  <div class="py-4 px-3">
-    <div class="fixed-title d-flex justify-content-between align-items-start">
+<div class="row g-3">
+  <div class="col">
+    <div class="card card-animate py-4 px-3">
       <h5 class="text-muted text-uppercase fs-13 mb-3">
         Auditorías Realizadas / Planificadas
       </h5>
-    </div>
-    <div class="d-flex align-items-center fixed-value">
-      <div class="flex-shrink-0">
-        <i class="bi bi-folder-fill icon-small" style="color:#0d6efd;"></i>
-      </div>
-      <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="number-small fw-semibold mb-0">
-          {{ realizadas }} / {{ planificadas }}
-        </p>
-        <small class="number-small fw-semibold text-muted mb-0 ms-3">
-          ({{ porcentaje }}%)
-        </small>
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0">
+          <i class="bi bi-folder-fill icon-small" style="color:#0d6efd;"></i>
+        </div>
+        <div class="flex-grow-1 ms-3 d-flex align-items-center">
+          <p class="number-small fw-semibold mb-0">
+            {{ realizadas }} / {{ planificadas }}
+          </p>
+          <small class="number-small fw-semibold text-muted mb-0 ms-3">
+            ({{ porcentaje }}%)
+          </small>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Acciones Correctivas Abiertas / Cerradas -->
-<div class="col">
-  <div class="mt-3 mt-md-0 py-4 px-3">
-    <div class="fixed-title d-flex justify-content-between align-items-start">
+  <div class="col">
+    <div class="card card-animate py-4 px-3">
       <h5 class="text-muted text-uppercase fs-13 mb-3">
         Acciones Correctivas Abiertas / Cerradas
       </h5>
-    </div>
-    <div class="d-flex align-items-center fixed-value">
-      <div class="flex-shrink-0">
-        <i class="bi bi-card-checklist icon-small" style="color:#198754;"></i>
-      </div>
-      <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="number-small fw-semibold mb-0">
-          {{ acciones_abiertas }} / {{ acciones_totales }}
-        </p>
-        <small class="number-small fw-semibold text-muted mb-0 ms-3">
-          ({{ acciones_porcentaje }}%)
-        </small>
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0">
+          <i class="bi bi-card-checklist icon-small" style="color:#198754;"></i>
+        </div>
+        <div class="flex-grow-1 ms-3 d-flex align-items-center">
+          <p class="number-small fw-semibold mb-0">
+            {{ acciones_abiertas }} / {{ acciones_totales }}
+          </p>
+          <small class="number-small fw-semibold text-muted mb-0 ms-3">
+            ({{ acciones_porcentaje }}%)
+          </small>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Tasa de No Conformidades -->
-<div class="col">
-  <div class="mt-3 mt-md-0 py-4 px-3">
-    <div class="fixed-title d-flex justify-content-between align-items-start">
+  <div class="col">
+    <div class="card card-animate py-4 px-3">
       <h5 class="text-muted text-uppercase fs-13 mb-3">
         Tasa de No Conformidades
       </h5>
-    </div>
-    <div class="d-flex align-items-center fixed-value">
-      <div class="flex-shrink-0">
-        <i class="bi bi-exclamation-triangle-fill icon-small" style="color:#fd7e14;"></i>
-      </div>
-      <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="number-small fw-semibold mb-0">
-          {{ auditorias_con_nc }} / {{ realizadas }}
-        </p>
-        <small class="number-small fw-semibold text-muted mb-0 ms-3">
-          ({{ tasa_nc }}%)
-        </small>
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0">
+          <i class="bi bi-exclamation-triangle-fill icon-small" style="color:#fd7e14;"></i>
+        </div>
+        <div class="flex-grow-1 ms-3 d-flex align-items-center">
+          <p class="number-small fw-semibold mb-0">
+            {{ auditorias_con_nc }} / {{ realizadas }}
+          </p>
+          <small class="number-small fw-semibold text-muted mb-0 ms-3">
+            ({{ tasa_nc }}%)
+          </small>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Procesos en Alerta -->
-<div class="col">
-  <div class="mt-3 mt-lg-0 py-4 px-3">
-    <div class="fixed-title d-flex justify-content-between align-items-start">
+  <div class="col">
+    <div class="card card-animate py-4 px-3">
       <h5 class="text-muted text-uppercase fs-13 mb-3">
         Procesos en Alerta
       </h5>
-    </div>
-    <div class="d-flex align-items-center fixed-value">
-      <div class="flex-shrink-0">
-        <i class="bi bi-bell-fill icon-small" style="color:#dc3545;"></i>
-      </div>
-      <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="number-small fw-semibold mb-0">
-          {{ procesos_en_alerta }} / {{ total_procesos }}
-        </p>
-        <small class="number-small fw-semibold text-muted mb-0 ms-3">
-          ({{ tasa_procesos_alerta }}%)
-        </small>
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0">
+          <i class="bi bi-bell-fill icon-small" style="color:#dc3545;"></i>
+        </div>
+        <div class="flex-grow-1 ms-3 d-flex align-items-center">
+          <p class="number-small fw-semibold mb-0">
+            {{ procesos_en_alerta }} / {{ total_procesos }}
+          </p>
+          <small class="number-small fw-semibold text-muted mb-0 ms-3">
+            ({{ tasa_procesos_alerta }}%)
+          </small>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Índice de Mejora Continua -->
-<div class="col">
-  <div class="mt-3 mt-lg-0 py-4 px-3">
-    <div class="fixed-title d-flex justify-content-between align-items-start">
+  <div class="col">
+    <div class="card card-animate py-4 px-3">
       <h5 class="text-muted text-uppercase fs-13 mb-3">
         Índice de Mejora Continua
       </h5>
-    </div>
-    <div class="d-flex align-items-center fixed-value">
-      <div class="flex-shrink-0">
-        <i class="bi bi-graph-up-arrow icon-small" style="color:#0d6efd;"></i>
-      </div>
-      <div class="flex-grow-1 ms-3 d-flex align-items-center">
-        <p class="number-small fw-semibold mb-0">
-          {{ indice_mejora_continua }}
-        </p>
+      <div class="d-flex align-items-center">
+        <div class="flex-shrink-0">
+          <i class="bi bi-graph-up-arrow icon-small" style="color:#0d6efd;"></i>
+        </div>
+        <div class="flex-grow-1 ms-3 d-flex align-items-center">
+          <p class="number-small fw-semibold mb-0">
+            {{ indice_mejora_continua }}
+          </p>
+        </div>
       </div>
     </div>
   </div>
