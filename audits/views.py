@@ -47,7 +47,92 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @csrf_protect
 @login_required
 def audits_home(request):
-    return render(request, 'mistemplates/audits.html')
+    # Gráfico de barras: número de requisitos por mes
+    requisitos_mes = defaultdict(int)
+    for program in annual_programs:
+        requisitos = requirements_by_process.get(program.process_id, [])
+        key = (program.program_header.year, program.month)
+        requisitos_mes[key] += len(requisitos)
+
+    bar_chart_data = [
+        {
+            "mes": format_date(datetime(y, m, 1), "MMMM", locale='es').capitalize(),
+            "total_requisitos": requisitos_mes.get((y, m), 0)
+        }
+        for y, m in combined_months
+    ]
+    
+    audit_data = []
+    timeline_data = []
+
+    # Para el gráfico de barras apiladas
+    auditor_counter = defaultdict(int)
+    audited_counter = defaultdict(int)
+
+    for plan in plans:
+        auditors = [auditor.user.get_full_name() for auditor in plan.auditors.all()]
+        audited_users = [audited.user.get_full_name() for audited in plan.audited_users.all()]
+
+        # Contar auditorías por usuario
+        for auditor in auditors:
+            auditor_counter[auditor] += 1
+        for audited in audited_users:
+            audited_counter[audited] += 1
+
+        paired_list = list(zip_longest(auditors, audited_users, fillvalue=None))
+
+        open_dt = dt.combine(plan.audit_opening_date, plan.audit_opening_time)
+        close_dt = dt.combine(plan.audit_closing_date, plan.audit_closing_time)
+
+        open_ts = int(open_dt.timestamp() * 1000)
+        close_ts = int(close_dt.timestamp() * 1000)
+
+        if plan.annual_program and plan.annual_program.program_header and plan.annual_program.month:
+            month_name = format_date(
+                dt(plan.annual_program.program_header.year, plan.annual_program.month, 1), 
+                'MMMM', 
+                locale='es'
+            ).capitalize()
+        else:
+            month_name = None
+
+        audit_data.append({
+            "plan_id": plan.id,
+            "process": plan.annual_program.process.name if plan.annual_program and plan.annual_program.process else None,
+            "year": plan.annual_program.program_header.year if plan.annual_program and plan.annual_program.program_header else None,
+            "month": month_name,
+            "audit_opening_date": plan.audit_opening_date,
+            "audit_closing_date": plan.audit_closing_date,
+            "audit_opening_time": plan.audit_opening_time,
+            "audit_closing_time": plan.audit_closing_time,
+            "audit_opening_location": plan.audit_opening_location,
+            "audit_closing_location": plan.audit_closing_location,
+            "auditors": auditors,
+            "audited_users": audited_users,
+            "paired_team": paired_list,
+        })
+
+        timeline_data.append({
+            "x": f"Plan {plan.id} ({plan.annual_program.process.name if plan.annual_program else 'Sin proceso'})",
+            "y": [open_ts, close_ts]
+        })
+
+    # Combinar todos los usuarios únicos
+    all_users = sorted(set(list(auditor_counter.keys()) + list(audited_counter.keys())))
+    auditor_data = [auditor_counter.get(user, 0) for user in all_users]
+    audited_data = [audited_counter.get(user, 0) for user in all_users]
+
+    return render(request, 'mistemplates/audits.html',  {
+        'bar_chart_data': bar_chart_data,
+        "audit_data": audit_data,
+        "timeline_data": timeline_data,
+        "user_labels": all_users,
+        "auditor_data": auditor_data,
+        "audited_data": audited_data,
+        "scatter_data": scatter_data,
+        "clasificaciones_labels": clasificaciones_labels,
+        "clasificaciones_values": clasificaciones_values,
+    })
 
 
 # === ANNUAL AUDIT PROGRAM ===
@@ -206,6 +291,52 @@ def annual_audit_plan(request):
     all_users = sorted(set(list(auditor_counter.keys()) + list(audited_counter.keys())))
     auditor_data = [auditor_counter.get(user, 0) for user in all_users]
     audited_data = [audited_counter.get(user, 0) for user in all_users]
+
+        # === Distribución de No Conformidades por Clasificación ===
+    # Filtramos findings relacionados con auditorías del año actual
+    findings_dist = (
+        Findings.objects
+        #.filter(audit_plan__annual_program__program_header__year=current_year)
+        .values('classification')
+        .annotate(total=Count('id'))
+    )
+    
+    clasificaciones_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+    
+    clasificaciones_labels = []
+    clasificaciones_values = []
+
+    for key, label in clasificaciones_map.items():
+        clasificaciones_labels.append(label)
+        total = next((item['total'] for item in findings_dist if item['classification'] == key), 0)
+        clasificaciones_values.append(total)
+
+
+
+    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
+    severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
+    scatter_data = []
+
+    acciones = CorrectiveAction.objects.select_related('audit_report').filter(
+        audit_report__audit_plan__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
+    ).distinct()
+
+    for action in acciones:
+        findings = action.audit_report.audit_plan.findings.all()
+        if findings.exists():
+            sev_num = severity_map.get(findings.first().classification, 0)
+            duracion_dias = abs((now().date() - action.due_date).days) if action.due_date else 0
+
+
+            scatter_data.append({
+                'x': duracion_dias,
+                'y': sev_num,
+                'label': findings.first().classification,
+            })
 
     return render(request, 'mistemplates/annual_audit_plan.html', {
         "audit_data": audit_data,
