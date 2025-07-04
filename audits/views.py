@@ -47,6 +47,7 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @csrf_protect
 @login_required
 def audits_home(request):
+    audit_headers = AuditProgramHeader.objects.all()
     today = datetime.today()
 
     # Mes anterior al actual
@@ -72,6 +73,30 @@ def audits_home(request):
         program_header__year__in=years,
         month__in=months
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
+
+    requirements_by_process = defaultdict(list)
+    for pr in ProcessRequirement.objects.select_related("process"):
+        requirements_by_process[pr.process_id].append(pr.requirement)
+
+    annual_programs_by_year = OrderedDict()
+    all_users = User.objects.all()
+
+    for y, m in combined_months:
+        month_name = format_date(datetime(y, m, 1), "MMMM", locale='es').capitalize()
+        if y not in annual_programs_by_year:
+            annual_programs_by_year[y] = OrderedDict()
+
+        filtered = annual_programs.filter(program_header__year=y, month=m)
+        enriched_programs = [
+            {
+                "program": program,
+                "requirements": requirements_by_process.get(program.process_id, [])
+            }
+            for program in filtered
+        ]
+
+        annual_programs_by_year[y][month_name] = enriched_programs
+
 
     # Gráfico de barras: número de requisitos por mes
     requisitos_mes = defaultdict(int)
