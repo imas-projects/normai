@@ -324,7 +324,7 @@ def conduct_internal_audits(request):
     ).distinct()
 
     for action in acciones:
-        findings = action.audit_report.findings.all()
+        findings = action.audit_report.audit_plan.findings.all()
         if findings.exists():
             sev_num = severity_map.get(findings.first().classification, 0)
             duracion_dias = (now().date() - action.due_date).days if action.due_date else 0
@@ -334,6 +334,7 @@ def conduct_internal_audits(request):
                 'y': sev_num,
                 'label': findings.first().classification,
             })
+
 
     # 5) Tabla resumen: auditorías con mayor cantidad de hallazgos
     auditorias_resumen_qs = (
