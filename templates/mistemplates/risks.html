@@ -139,8 +139,8 @@
 </div>
 
 <div class="row">
-  <!-- Columna Izquierda (Gráficas y Visualizaciones) -->
-  <div class="col-md-3">
+  <!-- Columna Izquierda (6 columnas) -->
+  <div class="col-md-6">
     <!-- A. Riesgos por Proceso y Nivel -->
     <div class="card mt-3">
       <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
@@ -148,41 +148,34 @@
         <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
       </div>
     </div>
-      </div>
 
     <!-- Pie de Niveles -->
-    <div class="col-md-3">
-
     <div class="card mt-3">
       <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
       <div class="card-body">
         <div id="pie_riesgos_nivel"></div>
       </div>
     </div>
-    </div>
-
 
     <!-- Pie de Acciones -->
-<div class="row">
- <div class="col-md-6">
     <div class="card mt-3">
       <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
-</div>
- </div>
-</div>
+  </div>
 
-<div class="col-md-6">
-       <!-- B. FODA Riesgo -->
-    <div class="card mt-4">
+  <!-- Columna Derecha (6 columnas) -->
+  <div class="col-md-6">
+    <!-- B. FODA Riesgo -->
+    <div class="card mt-3">
       <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
       <div class="card-body">
         <div id="bubble_foda_riesgo" style="height: 350px;"></div>
       </div>
     </div>
+
 <div class="mt-3">
 
     {% for key, risks in grouped_risks.items %}
