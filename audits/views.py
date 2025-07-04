@@ -16,7 +16,9 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 import traceback
 from django.views.decorators.csrf import csrf_protect
-from django.db.models import Count, F
+from django.db.models import Avg, Case, When, FloatField, Count, Q, F
+from django.db.models.functions import Coalesce
+
 import locale
 from babel.dates import format_date
 
@@ -220,7 +222,6 @@ def annual_audit_plan(request):
 @csrf_protect
 @login_required
 def conduct_internal_audits(request):
-    # Mapa para mostrar la clasificación legible en hallazgos
     classification_map = {
         'NC_MAYOR': 'No Conformidad Mayor',
         'NC_MENOR': 'No Conformidad Menor',
@@ -240,41 +241,32 @@ def conduct_internal_audits(request):
     data = []
 
     for plan in plans:
-        # Checklist con etiqueta "P" en vez de "Q"
         checklist = []
         for item in plan.checklists.all():
             item_dict = item.as_dict()
-            item_dict["orden_label"] = f"P{item.orden}"  # etiqueta personalizada
+            item_dict["orden_label"] = f"P{item.orden}"
             checklist.append(item_dict)
 
-        # Evaluación del auditado (sin cursiva se hace en template, aquí solo pasamos datos)
         auditor_evaluation = [eval.as_dict() for eval in plan.auditor_evaluations.all()]
 
-        # Reporte (1:1)
         report = AuditReport.objects.filter(audit_plan=plan).first()
         report_data = report.as_dict() if report else None
 
-        # Hallazgos con requisito y clasificación legible
         findings_data = []
         for finding in plan.findings.all():
             f_dict = finding.as_dict()
-            # Mapear clasificación a texto legible
             f_dict["classification_text"] = classification_map.get(f_dict["classification"], f_dict["classification"])
             findings_data.append(f_dict)
 
-        # Acciones correctivas y seguimiento, responsable como nombre completo
         corrective_actions = []
         if report:
             for action in report.corrective_actions.select_related("responsible_user").prefetch_related("followups").all():
                 action_dict = action.as_dict()
-                # Cambiar responsable a nombre completo
                 responsible_user = action.responsible_user
                 action_dict["responsible_user"]["full_name"] = responsible_user.get_full_name()
-                # Seguimientos
                 action_dict["followups"] = [f.as_dict() for f in action.followups.all()]
                 corrective_actions.append(action_dict)
 
-        # Ensamblar entrada
         entry = {
             "plan_id": plan.id,
             "process": plan.annual_program.process.name,
@@ -287,10 +279,85 @@ def conduct_internal_audits(request):
             "findings": findings_data,
             "corrective_actions": corrective_actions,
         }
-
         data.append(entry)
 
-    return render(request, "mistemplates/conduct_internal_audits.html", {"audit_data": data})
+    # --- Datos para los gráficos ---
+
+    # 1) Radar chart: promedio cumplimiento por proceso
+    from yourapp.models import Finding, CorrectiveAction, AuditReport  # importa los modelos correctos
+
+    cumplimiento_por_proceso_qs = (
+        Finding.objects.values('proceso')
+        .annotate(promedio_cumplimiento=Coalesce(Avg(
+            Case(
+                When(cumplido=True, then=1.0),
+                When(cumplido=False, then=0.0),
+                output_field=FloatField()
+            )
+        ), 0.0))
+        .order_by('proceso')
+    )
+    radar_labels = [item['proceso'] for item in cumplimiento_por_proceso_qs]
+    radar_values = [round(item['promedio_cumplimiento'] * 100, 2) for item in cumplimiento_por_proceso_qs]
+
+    # 2) Gráfico de barras: hallazgos por clasificación
+    hallazgos_por_clasificacion_qs = (
+        Finding.objects.values('clasificacion')
+        .annotate(total=Count('id'))
+        .order_by('clasificacion')
+    )
+    bar_labels = [classification_map.get(item['clasificacion'], item['clasificacion']) for item in hallazgos_por_clasificacion_qs]
+    bar_values = [item['total'] for item in hallazgos_por_clasificacion_qs]
+
+    # 3) Gráfico de pastel: distribución cumplimiento (Checklist)
+    total_cumplidas = Finding.objects.filter(cumplido=True).count()
+    total_no_cumplidas = Finding.objects.filter(cumplido=False).count()
+    pie_labels = ['Cumplidas', 'No Cumplidas']
+    pie_values = [total_cumplidas, total_no_cumplidas]
+
+    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
+    acciones = CorrectiveAction.objects.select_related('finding').filter(
+        finding__clasificacion__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
+    )
+    scatter_data = []
+    severity_map = {'NC_MAYOR':3, 'NC_MENOR':2, 'OPORTUNIDAD_MEJORA':1}
+    for a in acciones:
+        sev_num = severity_map.get(a.finding.clasificacion, 0)
+        scatter_data.append({
+            'x': a.duracion_dias,
+            'y': sev_num,
+            'label': a.finding.clasificacion
+        })
+
+    # 5) Tabla resumen: auditorías con mayor cantidad de hallazgos
+    auditorias_resumen_qs = (
+        AuditReport.objects
+        .annotate(
+            num_findings=Count('finding'),
+            porcentaje_cumplimiento=Avg(
+                Case(
+                    When(finding__cumplido=True, then=1.0),
+                    default=0.0,
+                    output_field=FloatField()
+                )
+            ) * 100
+        )
+        .order_by('-num_findings')[:10]
+    )
+
+    context = {
+        "audit_data": data,
+        "radar_labels": radar_labels,
+        "radar_values": radar_values,
+        "bar_labels": bar_labels,
+        "bar_values": bar_values,
+        "pie_labels": pie_labels,
+        "pie_values": pie_values,
+        "scatter_data": scatter_data,
+        "auditorias_resumen": auditorias_resumen_qs,
+    }
+
+    return render(request, "mistemplates/conduct_internal_audits.html", context)
 
 
 # === ADD VIEWS ===
