@@ -167,7 +167,7 @@
         <div class="card">
           <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
           <div class="card-body">
-            <div id="pie_riesgos_nivel"></div>
+            <div id="pie_riesgos_nivel" style="height: 300px;"></div>
           </div>
         </div>
       </div>
@@ -1569,7 +1569,10 @@ document.addEventListener("DOMContentLoaded", function () {
     label === 'High' ? 'Alto' : label === 'Moderado' ? 'Moderado' : 'Bajo');
 
   new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
-    chart: { type: 'pie' },
+    chart: { 
+        type: 'pie',
+        height: 300
+    },
     series: pieValues,
     labels: translatedLabels,
     colors: pieColors,
