@@ -47,7 +47,7 @@ def create_risk(request):
     reevaluations_qs = Reevaluation.objects.select_related('risk').all()
 
     # === A. Riesgos por Nivel y Proceso ===
-    riesgos_por_proceso_nivel = (
+    riesgos_eval = (
         RiskEvaluation.objects
         .values(nombre_proceso=F('risk__process__name'))
         .annotate(
@@ -58,45 +58,52 @@ def create_risk(request):
         .order_by('nombre_proceso')
     )
 
-    procesos, altos, moderados, bajos = [], [], [], []
-    for r in riesgos_por_proceso_nivel:
-        procesos.append(r['nombre_proceso'])
-        altos.append(r['alto'])
-        moderados.append(r['moderado'])
-        bajos.append(r['bajo'])
+    riesgos_reeval = (
+        Reevaluation.objects
+        .values(nombre_proceso=F('risk__process__name'))
+        .annotate(
+            alto=Count('id', filter=Q(risk_level='High')),
+            moderado=Count('id', filter=Q(risk_level='Moderate')),
+            bajo=Count('id', filter=Q(risk_level='Low'))
+        )
+        .order_by('nombre_proceso')
+    )
+
+    def descomponer(queryset):
+        procesos, altos, moderados, bajos = [], [], [], []
+        for r in queryset:
+            procesos.append(r['nombre_proceso'])
+            altos.append(r['alto'])
+            moderados.append(r['moderado'])
+            bajos.append(r['bajo'])
+        return procesos, altos, moderados, bajos
+
+    procesos_eval, altos_eval, moderados_eval, bajos_eval = descomponer(riesgos_eval)
+    procesos_reeval, altos_reeval, moderados_reeval, bajos_reeval = descomponer(riesgos_reeval)
 
     # === A. Pie Chart Riesgo por Nivel ===
-    total_niveles = RiskEvaluation.objects.values('risk_level').annotate(total=Count('id'))
-    pie_labels = [nivel['risk_level'] for nivel in total_niveles]
-    pie_values = [nivel['total'] for nivel in total_niveles]
+    pie_eval = RiskEvaluation.objects.values('risk_level').annotate(total=Count('id'))
+    pie_reeval = Reevaluation.objects.values('risk_level').annotate(total=Count('id'))
+
+    pie_eval_labels = [nivel['risk_level'] for nivel in pie_eval]
+    pie_eval_values = [nivel['total'] for nivel in pie_eval]
+    pie_reeval_labels = [nivel['risk_level'] for nivel in pie_reeval]
+    pie_reeval_values = [nivel['total'] for nivel in pie_reeval]
 
     # === A. Pie Chart Acciones de Contingencia por Tipo ===
     contingency_actions = ContingencyPlan.objects.values_list('contingency_actions', flat=True)
     flat_actions = [accion for acciones in contingency_actions for accion in acciones]
-
     action_counter = Counter(flat_actions)
     acciones_labels = list(action_counter.keys())
     acciones_values = list(action_counter.values())
 
     # === B. FODA-Riesgo (Bubble Chart) ===
-    foda_data = list(
-        RiskEvaluation.objects
-        .values('severity', 'occurrence', 'detection', 'risk_level')
+    foda_eval = list(
+        RiskEvaluation.objects.values('severity', 'occurrence', 'detection', 'risk_level')
     )
-
-    # === C. Cronograma de Tratamiento ===
-    tratamientos = RiskTreatment.objects.select_related('risk__process').prefetch_related('responsible')
-
-    # === C. Acciones por Responsable ===
-    responsable_counter = Counter()
-    for t in tratamientos:
-        for responsable in t.responsible.all():
-            responsable_counter[responsable.name] += 1
-
-    responsables_labels = list(responsable_counter.keys())
-    responsables_values = list(responsable_counter.values())
-
-
+    foda_reeval = list(
+        Reevaluation.objects.values('severity', 'occurrence', 'detection', 'risk_level')
+    )
 
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
@@ -105,22 +112,29 @@ def create_risk(request):
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations_qs,
 
-        # A
-        'procesos': procesos,
-        'riesgo_alto': altos,
-        'riesgo_moderado': moderados,
-        'riesgo_bajo': bajos,
-        'pie_labels': pie_labels,
-        'pie_values': pie_values,
+        # A - Evaluation
+        'procesos_eval': procesos_eval,
+        'riesgo_alto_eval': altos_eval,
+        'riesgo_moderado_eval': moderados_eval,
+        'riesgo_bajo_eval': bajos_eval,
+        'pie_labels_eval': pie_eval_labels,
+        'pie_values_eval': pie_eval_values,
+
+        # A - Reevaluation
+        'procesos_reeval': procesos_reeval,
+        'riesgo_alto_reeval': altos_reeval,
+        'riesgo_moderado_reeval': moderados_reeval,
+        'riesgo_bajo_reeval': bajos_reeval,
+        'pie_labels_reeval': pie_reeval_labels,
+        'pie_values_reeval': pie_reeval_values,
+
+        # A - Acciones
         'acciones_labels': acciones_labels,
         'acciones_values': acciones_values,
 
-        # B
-        'foda_data': foda_data,
-
-        # C
-        'responsables_labels': responsables_labels,
-        'responsables_values': responsables_values,
+        # B - FODA
+        'foda_data_eval': foda_eval,
+        'foda_data_reeval': foda_reeval,
     })
 
 
