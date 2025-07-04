@@ -86,12 +86,6 @@ def create_risk(request):
 
     # === C. Cronograma de Tratamiento ===
     tratamientos = RiskTreatment.objects.select_related('risk__process').prefetch_related('responsible')
-    cronograma_data = [{
-        "proceso": t.risk.process.name,
-        "accion": t.treatment_action[:30],
-        "inicio": t.actual_date.strftime("%Y-%m-%d"),
-        "fin": t.target_date.strftime("%Y-%m-%d")
-    } for t in tratamientos]
 
     # === C. Acciones por Responsable ===
     responsable_counter = Counter()
@@ -102,12 +96,6 @@ def create_risk(request):
     responsables_labels = list(responsable_counter.keys())
     responsables_values = list(responsable_counter.values())
 
-    # === D. Reevaluación Radar y Línea Temporal ===
-    reevaluaciones = list(
-        Reevaluation.objects
-        .values('risk__identified_risk', 'severity', 'occurrence', 'detection', 'risk_level')
-        .order_by('risk_id')
-    )
 
 
     return render(request, 'mistemplates/risks.html', {
@@ -131,12 +119,8 @@ def create_risk(request):
         'foda_data': foda_data,
 
         # C
-        'cronograma_data': cronograma_data,
         'responsables_labels': responsables_labels,
         'responsables_values': responsables_values,
-
-        # D
-        'reevaluaciones': reevaluaciones,
     })
 
 
