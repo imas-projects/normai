@@ -56,80 +56,80 @@
         </div>
       </div>
       
-  <!-- Fila superior: gráfico Participación y tarjetas lado a lado -->
-  <div class="row">
-    <!-- Gráfico Participación de Auditores y Auditados (7/12) -->
-    <div class="col-md-7 mt-3">
-      <div class="card card-animate mb-4">
-        <div class="card-body">
-          <h4 class="card-title">Participación de Auditores y Auditados</h4>
-          <div id="participation_chart" style="height: 400px;"></div>
+<!-- Fila superior: gráfico Participación y tarjetas lado a lado -->
+<div class="row align-items-stretch">
+  <!-- Gráfico Participación de Auditores y Auditados (7/12) -->
+  <div class="col-md-7 d-flex flex-column">
+    <div class="card card-animate mb-4 h-100">
+      <div class="card-body">
+        <h4 class="card-title">Participación de Auditores y Auditados</h4>
+        <div id="participation_chart" style="height: 100%; min-height: 400px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarjetas (5/12) -->
+  <div class="col-md-5 d-flex flex-column">
+    <div class="card p-4 shadow mb-4 flex-grow-1">
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{% url 'audits:annual_audit_program' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+          <h3 class="mb-0">Programa Anual de Auditorias Internas</h3>
+        </a>
+        <div class="dropdown">
+          <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Añadir Encabezado del Programa Anual</a></li>
+            <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Añadir Programa</a></li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <!-- Tarjetas (5/12) -->
-    <div class="col-md-5 mt-6">
-      <div class="card p-4 shadow mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-          <a href="{% url 'audits:annual_audit_program' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-            <h3 class="mb-0">Programa Anual de Auditorias Internas</h3>
-          </a>
-          <div class="dropdown">
-            <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" id="openAddAuditProgramHeaderModal">Añadir Encabezado del Programa Anual</a></li>
-              <li><a class="dropdown-item" href="#" id="openAddAnnualProgramModal">Añadir Programa</a></li>
-            </ul>
-          </div>
+    <div class="card p-4 shadow mb-4 flex-grow-1">
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{% url 'audits:annual_audit_plan' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+          <h3 class="mb-0">Plan Anual de Auditorias Internas</h3>
+        </a>
+        <div class="dropdown">
+          <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Añadir Plan</a></li>
+            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Añadir Auditado del Plan</a></li>
+            <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Añadir Auditor del Plan</a></li>
+          </ul>
         </div>
       </div>
+    </div>
 
-      <div class="card p-4 shadow mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-          <a href="{% url 'audits:annual_audit_plan' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-            <h3 class="mb-0">Plan Anual de Auditorias Internas</h3>
-          </a>
-          <div class="dropdown">
+    <div class="card p-4 shadow mb-4 flex-grow-1">
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{% url 'audits:conduct_internal_audits' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
+          <h3 class="mb-0">Realización de Auditorias Internas</h3>
+        </a>
+        <div class="d-flex gap-2">
+          <div class="dropdown me-1">
             <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" id="openAddAnnualPlanModal">Añadir Plan</a></li>
-              <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditedModal">Añadir Auditado del Plan</a></li>
-              <li><a class="dropdown-item" href="#" id="openAddAnnualPlanAuditorModal">Añadir Auditor del Plan</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Añadir Hallazgos</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Añadir Reporte de Auditoria</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Añadir Acciones Correctivas</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Añadir Seguimiento de Acciones Correctivas</a></li>
             </ul>
           </div>
-        </div>
-      </div>
-
-      <div class="card p-4 shadow mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-          <a href="{% url 'audits:conduct_internal_audits' %}" class="text-dark text-decoration-none border-bottom border-dark pb-1" style="cursor: pointer;">
-            <h3 class="mb-0">Realización de Auditorias Internas</h3>
-          </a>
-          <div class="d-flex gap-2">
-            <div class="dropdown me-1">
-              <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" id="openAddFindingsModal">Añadir Hallazgos</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddAuditReportModal">Añadir Reporte de Auditoria</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionModal">Añadir Acciones Correctivas</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddCorrectiveActionFollowupModal">Añadir Seguimiento de Acciones Correctivas</a></li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add Questions</button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Añadir Lista de Verificación</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditado</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditor Lider</a></li>
-                <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Añadir Evaluación del Auditor</a></li>
-              </ul>
-            </div>
+          <div class="dropdown">
+            <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add Questions</button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#" id="openAddChecklistQuestionModal">Añadir Lista de Verificación</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddAuditedEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditado</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddLeadAuditorEvaluationQuestionModal">Añadir Preguntas de la Evaluación del Auditor Lider</a></li>
+              <li><a class="dropdown-item" href="#" id="openAddAuditorEvaluationModal">Añadir Evaluación del Auditor</a></li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
   <!-- Fila inferior: resto de gráficos (12/12 ancho) -->
   <div class="row">
@@ -165,7 +165,7 @@
       </div>
     </div>
   </div>
-
+  </div>
 
 
 
