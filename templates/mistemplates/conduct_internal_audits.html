@@ -55,6 +55,60 @@
 
 <div class="row mt-5">
   <div class="col-lg-12">
+
+    <div class="card card-animate mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Cumplimiento Promedio por Proceso</h4>
+            <div id="radar_chart" style="max-width:600px; margin: 35px auto;"></div>
+        </div>
+    </div>
+
+    <div class="card card-animate mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Número de Hallazgos por Clasificación</h4>
+            <div id="bar_chart" style="max-width:600px; margin: 35px auto;"></div>
+        </div>
+    </div>
+
+    <div class="card card-animate mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Distribución de Cumplimiento</h4>
+            <div id="pie_chart" style="max-width:400px; margin: 35px auto;"></div>
+        </div>
+    </div>
+
+    <div class="card card-animate mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
+            <div id="scatter_chart" style="max-width:600px; margin: 35px auto;"></div>
+        </div>
+    </div>
+
+    <div class="card card-animate mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Auditorías con Mayor Cantidad de Hallazgos</h4>
+            <table class="table table-striped mt-4">
+                <thead>
+                    <tr>
+                        <th>ID Auditoría</th>
+                        <th>Número de Hallazgos</th>
+                        <th>% Cumplimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in auditorias_resumen %}
+                    <tr>
+                        <td>{{ a.id }}</td>
+                        <td>{{ a.num_findings }}</td>
+                        <td>{{ a.porcentaje_cumplimiento|floatformat:2 }}%</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
     {% for audit in audit_data %}
     <div class="card mb-4 shadow-sm">
       <div class="card-header bg-dark text-center" style="color: white !important;">
@@ -889,6 +943,97 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Radar chart
+    const radarLabels = JSON.parse(document.getElementById('radar-labels').textContent);
+    const radarValues = JSON.parse(document.getElementById('radar-values').textContent);
+    const radarOptions = {
+        chart: { height: 350, type: 'radar', toolbar: { show: false } },
+        series: [{ name: 'Cumplimiento (%)', data: radarValues }],
+        labels: radarLabels,
+        yaxis: { min: 0, max: 100, tickAmount: 5, labels: { formatter: val => val + '%' } },
+        colors: ['#0d6efd'],
+        dataLabels: { enabled: true },
+        stroke: { width: 2 },
+        fill: { opacity: 0.2 }
+    };
+    new ApexCharts(document.querySelector('#radar_chart'), radarOptions).render();
+
+    // Bar chart
+    const barLabels = JSON.parse(document.getElementById('bar-labels').textContent);
+    const barValues = JSON.parse(document.getElementById('bar-values').textContent);
+    const barOptions = {
+        chart: { type: 'bar', height: 350, toolbar: { show: false } },
+        series: [{ name: 'Hallazgos', data: barValues }],
+        xaxis: { categories: barLabels, title: { text: 'Clasificación' } },
+        yaxis: { title: { text: 'Número de hallazgos' }, min: 0, forceNiceScale: true },
+        colors: ['#198754'],
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#f1f1f1' }
+    };
+    new ApexCharts(document.querySelector('#bar_chart'), barOptions).render();
+
+    // Pie chart
+    const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
+    const pieValues = JSON.parse(document.getElementById('pie-values').textContent);
+    const pieOptions = {
+        chart: { type: 'pie', height: 350, toolbar: { show: false } },
+        series: pieValues,
+        labels: pieLabels,
+        colors: ['#0d6efd', '#dc3545'],
+        legend: { position: 'bottom' },
+        dataLabels: { formatter: (val) => val.toFixed(1) + '%' }
+    };
+    new ApexCharts(document.querySelector('#pie_chart'), pieOptions).render();
+
+    // Scatter chart
+    const scatterDataRaw = JSON.parse(document.getElementById('scatter-data').textContent);
+    const scatterSeries = [{
+        name: 'Acciones Correctivas',
+        data: scatterDataRaw.map(item => ({
+            x: item.x,
+            y: item.y,
+            z: 5,
+            fillColor: item.label === 'NC_MAYOR' ? '#dc3545' : (item.label === 'NC_MENOR' ? '#fd7e14' : '#0d6efd')
+        })),
+    }];
+    const scatterOptions = {
+        chart: { height: 350, type: 'scatter', zoom: { enabled: true }, toolbar: { show: false } },
+        series: scatterSeries,
+        xaxis: { title: { text: 'Duración (días)' } },
+        yaxis: {
+            title: { text: 'Severidad' },
+            min: 0, max: 4, tickAmount: 4,
+            labels: {
+                formatter: val => {
+                    switch(val){
+                        case 1: return 'Oportunidad';
+                        case 2: return 'NC Menor';
+                        case 3: return 'NC Mayor';
+                        default: return '';
+                    }
+                }
+            }
+        },
+        tooltip: {
+            custom: ({ dataPointIndex }) => {
+                const label = scatterDataRaw[dataPointIndex].label;
+                const duracion = scatterDataRaw[dataPointIndex].x;
+                return `<div style="padding:5px;">
+                    <strong>Severidad:</strong> ${label}<br/>
+                    <strong>Duración:</strong> ${duracion} días
+                </div>`;
+            }
+        },
+        markers: { size: 7 }
+    };
+    new ApexCharts(document.querySelector('#scatter_chart'), scatterOptions).render();
+
+});
+
 
 </script>
 {% endblock extra_js %}
