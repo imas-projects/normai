@@ -28,13 +28,9 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
-    # Agrupar por Área y Proceso
-    grouped_risks = {}
+    grouped_risks = defaultdict(lambda: defaultdict(list))
     for risk in all_risks:
-        key = (risk.area, risk.process)
-        if key not in grouped_risks:
-            grouped_risks[key] = []
-        grouped_risks[key].append(risk)
+        grouped_risks[risk.area][risk.process].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -48,6 +44,7 @@ def create_risk(request):
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
+
 
 
 
