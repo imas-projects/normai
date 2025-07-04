@@ -138,6 +138,70 @@
     </div>
 </div>
 
+<div class="row">
+  <!-- A. Riesgos por Proceso y Nivel -->
+  <div class="col-xxl-12 mt-3">
+    <div class="card">
+      <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
+      <div class="card-body">
+        <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pie de Niveles -->
+  <div class="col-md-6 mt-3">
+    <div class="card">
+      <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
+      <div class="card-body">
+        <div id="pie_riesgos_nivel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pie de Acciones -->
+  <div class="col-md-6 mt-3">
+    <div class="card">
+      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
+      <div class="card-body">
+        <div id="pie_acciones_contingencia"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- B. FODA Riesgo -->
+<div class="card mt-4">
+  <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
+  <div class="card-body">
+    <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+  </div>
+</div>
+
+<!-- C. Cronograma y Acciones -->
+<div class="card mt-4">
+  <div class="card-header"><h4>Cronograma de Tratamiento</h4></div>
+  <div class="card-body">
+    <div id="gantt_tratamientos"></div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-header"><h4>Acciones por Responsable</h4></div>
+  <div class="card-body">
+    <div id="bar_responsables_acciones"></div>
+  </div>
+</div>
+
+<!-- D. Reevaluaciones -->
+<div class="card mt-4">
+  <div class="card-header"><h4>Radar Reevaluación</h4></div>
+  <div class="card-body">
+    <div id="radar_reevaluacion"></div>
+  </div>
+</div>
+
+
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
     {% for key, risks in grouped_risks.items %}
@@ -510,6 +574,19 @@
 </div>
 
 
+{{ procesos|json_script:"procesos" }}
+{{ riesgo_alto|json_script:"riesgo-alto" }}
+{{ riesgo_moderado|json_script:"riesgo-moderado" }}
+{{ riesgo_bajo|json_script:"riesgo-bajo" }}
+{{ pie_labels|json_script:"pie-labels" }}
+{{ pie_values|json_script:"pie-values" }}
+{{ acciones_labels|json_script:"acciones-labels" }}
+{{ acciones_values|json_script:"acciones-values" }}
+{{ foda_data|json_script:"foda-data" }}
+{{ cronograma_data|json_script:"cronograma-data" }}
+{{ responsables_labels|json_script:"responsables-labels" }}
+{{ responsables_values|json_script:"responsables-values" }}
+{{ reevaluaciones|json_script:"reevaluaciones-data" }}
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1469,6 +1546,109 @@ document.addEventListener("DOMContentLoaded", function () {
   document.addEventListener('DOMContentLoaded', function () {
     initChoicesJS();
   });
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // === A. Riesgos por Proceso ===
+  const procesos = JSON.parse(document.getElementById('procesos').textContent);
+  const alto = JSON.parse(document.getElementById('riesgo-alto').textContent);
+  const moderado = JSON.parse(document.getElementById('riesgo-moderado').textContent);
+  const bajo = JSON.parse(document.getElementById('riesgo-bajo').textContent);
+
+  new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
+    chart: { type: "bar", stacked: true, height: 300 },
+    series: [
+      { name: "Alto", data: alto },
+      { name: "Moderado", data: moderado },
+      { name: "Bajo", data: bajo },
+    ],
+    xaxis: { categories: procesos },
+    colors: ['#e74c3c', '#f1c40f', '#2ecc71']
+  }).render();
+
+  // === A. Pie Charts ===
+  const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
+  const pieValues = JSON.parse(document.getElementById('pie-values').textContent);
+
+  new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
+    chart: { type: 'pie' },
+    series: pieValues,
+    labels: pieLabels
+  }).render();
+
+  const accionesLabels = JSON.parse(document.getElementById('acciones-labels').textContent);
+  const accionesValues = JSON.parse(document.getElementById('acciones-values').textContent);
+
+  new ApexCharts(document.querySelector("#pie_acciones_contingencia"), {
+    chart: { type: 'donut' },
+    series: accionesValues,
+    labels: accionesLabels
+  }).render();
+
+  // === B. FODA Riesgo ===
+  const foda = JSON.parse(document.getElementById('foda-data').textContent);
+  const fodaSeries = foda.map(item => ({
+    x: item.occurrence,
+    y: item.severity,
+    z: 10 - item.detection,
+    fillColor: item.risk_level === 'High' ? '#e74c3c' : item.risk_level === 'Moderate' ? '#f1c40f' : '#2ecc71',
+  }));
+
+  new ApexCharts(document.querySelector("#bubble_foda_riesgo"), {
+    chart: { height: 350, type: 'bubble' },
+    series: [{ name: "Riesgos", data: fodaSeries }],
+    xaxis: { title: { text: 'Ocurrencia' } },
+    yaxis: { title: { text: 'Severidad' } }
+  }).render();
+
+  // === C. Cronograma Tratamiento ===
+  const cronograma = JSON.parse(document.getElementById('cronograma-data').textContent);
+  const ganttSeries = cronograma.map((item, i) => ({
+    x: item.accion,
+    y: [new Date(item.inicio).getTime(), new Date(item.fin).getTime()]
+  }));
+
+  new ApexCharts(document.querySelector("#gantt_tratamientos"), {
+    chart: { type: 'rangeBar', height: 300 },
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        rangeBarGroupRows: true
+      }
+    },
+    series: [{ data: ganttSeries }],
+    xaxis: { type: 'datetime' }
+  }).render();
+
+  // === C. Acciones por Responsable ===
+  const responsablesLabels = JSON.parse(document.getElementById('responsables-labels').textContent);
+  const responsablesValues = JSON.parse(document.getElementById('responsables-values').textContent);
+
+  new ApexCharts(document.querySelector("#bar_responsables_acciones"), {
+    chart: { type: "bar", height: 300 },
+    series: [{ name: "Acciones", data: responsablesValues }],
+    xaxis: { categories: responsablesLabels }
+  }).render();
+
+  // === D. Radar Reevaluación ===
+  const reevaluaciones = JSON.parse(document.getElementById('reevaluaciones-data').textContent);
+  const radarSeries = [{
+    name: 'Última Reevaluación',
+    data: [
+      reevaluaciones[reevaluaciones.length - 1]?.severity || 0,
+      reevaluaciones[reevaluaciones.length - 1]?.occurrence || 0,
+      reevaluaciones[reevaluaciones.length - 1]?.detection || 0
+    ]
+  }];
+
+  new ApexCharts(document.querySelector("#radar_reevaluacion"), {
+    chart: { type: 'radar', height: 300 },
+    series: radarSeries,
+    labels: ['Severidad', 'Ocurrencia', 'Detección']
+  }).render();
+});
 </script>
 
 {% endblock extra_js %}
