@@ -48,18 +48,31 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @login_required
 def audits_home(request):
     today = datetime.today()
+
+    # Mes anterior al actual
+    start_month = today.month - 1 if today.month > 1 else 12
+    start_year = today.year if today.month > 1 else today.year - 1
+
+    # Construir rango de 12 meses desde el mes anterior
+    month_range = [(start_year, start_month)]
+    for _ in range(11):
+        y, m = month_range[-1]
+        next_month = (m % 12) + 1
+        next_year = y + (1 if next_month == 1 else 0)
+        month_range.append((next_year, next_month))
+
     current_year = today.year
     all_months_current_year = [(current_year, m) for m in range(1, 13)]
     combined_months = sorted(set(all_months_current_year) | set(month_range))
 
     years = {y for y, _ in combined_months}
     months = {m for _, m in combined_months}
-    
+
     annual_programs = AnnualProgram.objects.filter(
         program_header__year__in=years,
         month__in=months
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
-    
+
     # Gráfico de barras: número de requisitos por mes
     requisitos_mes = defaultdict(int)
     for program in annual_programs:
