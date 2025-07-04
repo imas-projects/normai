@@ -290,30 +290,26 @@ def conduct_internal_audits(request):
 
     # --- Datos para los gráficos ---
 
-    # 1) Radar chart: promedio hallazgos por proceso (cantidad de hallazgos por proceso)
-    cumplimiento_por_proceso_qs = (
+    # === Distribución de No Conformidades por Clasificación ===
+    # Filtramos findings relacionados con auditorías del año actual
+    findings_dist = (
         Findings.objects
-        .filter(requirement__process__isnull=False)
-        .values('requirement__process__name')
-        .annotate(total_findings=Count('id'))
-        .order_by('requirement__process__name')
-    )
-    radar_labels = [item['requirement__process__name'] for item in cumplimiento_por_proceso_qs]
-    radar_values = [item['total_findings'] for item in cumplimiento_por_proceso_qs]
-
-    # 2) Gráfico de barras: hallazgos por clasificación
-    hallazgos_por_clasificacion_qs = (
-        Findings.objects.values('classification')
+        #.filter(audit_plan__annual_program__program_header__year=current_year)
+        .values('classification')
         .annotate(total=Count('id'))
-        .order_by('classification')
     )
-    bar_labels = [classification_map.get(item['classification'], item['classification']) for item in hallazgos_por_clasificacion_qs]
-    bar_values = [item['total'] for item in hallazgos_por_clasificacion_qs]
 
-    # 3) Gráfico de pastel: distribución cumplimiento (cantidad total de hallazgos)
-    total_hallazgos = Findings.objects.count()
-    pie_labels = ['Hallazgos']
-    pie_values = [total_hallazgos]
+    # Mapear para mostrar etiquetas legibles y evitar que falte alguna categoría
+    clasificaciones_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+
+    # Inicializar con 0 para todas las categorías
+    clasificaciones_labels = []
+    clasificaciones_values = []
+
 
     # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
     severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
@@ -335,26 +331,10 @@ def conduct_internal_audits(request):
                 'label': findings.first().classification,
             })
 
-
-    # 5) Tabla resumen: auditorías con mayor cantidad de hallazgos
-    auditorias_resumen_qs = (
-        AuditReport.objects
-        .annotate(
-            num_findings=Count('audit_plan__findings', distinct=True)
-        )
-        .order_by('-num_findings')[:10]
-    )
-
     context = {
-        "audit_data": data,
-        "radar_labels": radar_labels,
-        "radar_values": radar_values,
-        "bar_labels": bar_labels,
-        "bar_values": bar_values,
-        "pie_labels": pie_labels,
-        "pie_values": pie_values,
         "scatter_data": scatter_data,
-        "auditorias_resumen": auditorias_resumen_qs,
+        "clasificaciones_labels": clasificaciones_labels,
+        "clasificaciones_values": clasificaciones_values,
     }
 
     return render(request, "mistemplates/conduct_internal_audits.html", context)
