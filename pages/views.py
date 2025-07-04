@@ -406,13 +406,12 @@ def area_detail_view(request, area_id):
     area = get_object_or_404(Area, id=area_id)
     current_date = timezone.now().date()
 
+    # === Actividades ===
     activities = []
-
-    # === Recopilar actividades ===
     risk_treatments = RiskTreatment.objects.filter(target_date__gte=current_date).prefetch_related('responsible__area')
     for rt in risk_treatments:
         for pos in rt.responsible.all():
-            if pos.area and pos.area.id == area.id:
+            if pos.area_id == area.id:
                 activities.append({
                     "date": rt.target_date,
                     "name": f"Tratamiento del Riesgo: {rt.treatment_action}",
@@ -424,7 +423,7 @@ def area_detail_view(request, area_id):
 
     processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
     for p in processes:
-        if p.responsible and p.responsible.area and p.responsible.area.id == area.id:
+        if p.responsible and p.responsible.area_id == area.id:
             activities.append({
                 "date": p.review_date,
                 "name": f"Revisión del Proceso: {p.name}",
@@ -436,7 +435,7 @@ def area_detail_view(request, area_id):
 
     communications = CommunicationTable.objects.filter(review_date__gte=current_date).select_related('emiter__area')
     for c in communications:
-        if c.emiter and c.emiter.area and c.emiter.area.id == area.id:
+        if c.emiter and c.emiter.area_id == area.id:
             activities.append({
                 "date": c.review_date,
                 "name": f"Revisión de Comunicación: {c.code}",
@@ -450,7 +449,7 @@ def area_detail_view(request, area_id):
     for ca in corrective_actions:
         for up in ca.responsible_user.user_position.all():
             pos = up.position
-            if pos and pos.area and pos.area.id == area.id:
+            if pos and pos.area_id == area.id:
                 activities.append({
                     "date": ca.due_date,
                     "name": f"Acción Correctiva: {ca.corrective_action}",
@@ -465,7 +464,7 @@ def area_detail_view(request, area_id):
         for audited in ap.audited.all():
             for up in audited.user.user_position.all():
                 pos = up.position
-                if pos and pos.area and pos.area.id == area.id:
+                if pos and pos.area_id == area.id:
                     activities.append({
                         "date": ap.audit_opening_date,
                         "name": f"Plan de Auditoría: {ap.annual_program}",
@@ -476,22 +475,31 @@ def area_detail_view(request, area_id):
                     })
 
     activities.sort(key=lambda x: x['date'])
-
     paginator = Paginator(activities, 4)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+    # === Comunicaciones ===
+    comm_queryset = CommunicationTable.objects.filter(
+        emiter__area_id=area.id
+    ).order_by('-review_date').select_related('created_by__area', 'reviewed_by', 'approved_by')
 
-    # === Contexto final ===
+    comm_paginator = Paginator(comm_queryset, 4)
+    comm_page_number = request.GET.get('comm_page')
+    comm_page_obj = comm_paginator.get_page(comm_page_number)
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if 'comm_page' in request.GET:
+            return render(request, "mistemplates/_communication_table_list.html", {"comm_page_obj": comm_page_obj})
+        else:
+            return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+
     contexto = {
         "area": area,
         "page_obj": page_obj,
+        "comm_page_obj": comm_page_obj,
     }
-
     return render(request, "mistemplates/area-dashboard.html", contexto)
-
 
 
 class PagesView(TemplateView):
