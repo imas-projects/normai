@@ -44,6 +44,7 @@ def create_risk(request):
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
+    tratamientos = RiskTreatment.objects.select_related('risk').all()
     reevaluations_qs = Reevaluation.objects.select_related('risk').all()
 
     # === A. Riesgos por Nivel y Proceso ===
