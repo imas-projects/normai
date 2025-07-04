@@ -151,7 +151,7 @@
 
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
-{% for area_obj, processes in grouped_risks.items %}
+{% for area, processes in grouped_risks.items %}
   <div class="accordion mb-3" id="accordion-{{ area|slugify }}">
     <div class="accordion-item">
       <h2 class="accordion-header" id="heading-{{ area|slugify }}">
@@ -165,7 +165,7 @@
            aria-labelledby="heading-{{ area|slugify }}" data-bs-parent="#accordion-{{ area|slugify }}">
         <div class="accordion-body">
 
-          {% for process_obj, risks in processes.items %}
+          {% for process, risks in processes.items %}
             <div class="accordion mt-2" id="accordion-{{ area|slugify }}-{{ process|slugify }}">
               <div class="accordion-item">
                 <h2 class="accordion-header" id="heading-{{ area|slugify }}-{{ process|slugify }}">
@@ -175,7 +175,8 @@
                           aria-controls="collapse-{{ area|slugify }}-{{ process|slugify }}">
                     {{ process }}
                   </button>
-                    <a href="{% url 'risks:download_risks_pdf' area_obj.name %}" class="btn btn-danger btn-sm ms-2">
+
+                  <a href="{% url 'risks:download_risks_pdf' area %}" class="btn btn-danger btn-sm ms-2">
                     <i class="ri-file-download-line"></i> Descargar PDF
                   </a>
                 </h2>
