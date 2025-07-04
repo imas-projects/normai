@@ -298,7 +298,13 @@ def conduct_internal_audits(request):
         .values('classification')
         .annotate(total=Count('id'))
     )
-
+    
+    clasificaciones_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+    
     clasificaciones_labels = []
     clasificaciones_values = []
 
