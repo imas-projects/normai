@@ -67,6 +67,18 @@
                                 </tbody>
                             </table>
                         </div>
+<div id="heatmap_requisitos_mes" style="min-height: 400px;"></div>
+{{ heatmap_data|json_script:"heatmap-data" }}
+
+<table class="table" id="tabla-proceso-requisito">
+  <thead>
+    <tr><th>Proceso</th><th>Requisito</th><th>Frecuencia</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+{{ tabla_frecuencia|json_script:"tabla-frecuencia" }}
+
 
                         <div>
                             <h3 class="text-center">Programa Anual</h3>
@@ -451,6 +463,48 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
     });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+  // --- Heatmap ---
+  const heatmapDataRaw = JSON.parse(document.getElementById("heatmap-data").textContent);
+
+  // Agrupar datos por requisito (Y-axis)
+  const grouped = {};
+  heatmapDataRaw.forEach(({ x, y, value }) => {
+    if (!grouped[y]) grouped[y] = [];
+    grouped[y].push({ x: `Mes ${x}`, y: value });
+  });
+
+  const series = Object.entries(grouped).map(([key, values]) => ({
+    name: key,
+    data: values
+  }));
+
+  const heatmapChart = new ApexCharts(document.querySelector("#heatmap_requisitos_mes"), {
+    chart: {
+      height: 400,
+      type: 'heatmap',
+      toolbar: { show: false }
+    },
+    dataLabels: { enabled: true },
+    xaxis: {
+      type: 'category'
+    },
+    colors: ["#008FFB"],
+    series
+  });
+
+  heatmapChart.render();
+
+  // --- Tabla de frecuencia ---
+  const tabla = JSON.parse(document.getElementById("tabla-frecuencia").textContent);
+  const tbody = document.querySelector("#tabla-proceso-requisito tbody");
+
+  tabla.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${row.proceso}</td><td>${row.requisito}</td><td>${row.total}</td>`;
+    tbody.appendChild(tr);
+  });
+});
 
 </script>
 {% endblock extra_js %}
