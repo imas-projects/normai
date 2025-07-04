@@ -181,6 +181,53 @@ def audits_home(request):
     auditor_data = [auditor_counter.get(user, 0) for user in all_users]
     audited_data = [audited_counter.get(user, 0) for user in all_users]
 
+            # === Distribución de No Conformidades por Clasificación ===
+    # Filtramos findings relacionados con auditorías del año actual
+    findings_dist = (
+        Findings.objects
+        #.filter(audit_plan__annual_program__program_header__year=current_year)
+        .values('classification')
+        .annotate(total=Count('id'))
+    )
+    
+    clasificaciones_map = {
+        'NC_MAYOR': 'No Conformidad Mayor',
+        'NC_MENOR': 'No Conformidad Menor',
+        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
+    }
+    
+    clasificaciones_labels = []
+    clasificaciones_values = []
+
+    for key, label in clasificaciones_map.items():
+        clasificaciones_labels.append(label)
+        total = next((item['total'] for item in findings_dist if item['classification'] == key), 0)
+        clasificaciones_values.append(total)
+
+
+
+    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
+    severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
+    scatter_data = []
+
+    acciones = CorrectiveAction.objects.select_related('audit_report').filter(
+        audit_report__audit_plan__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
+    ).distinct()
+
+    for action in acciones:
+        findings = action.audit_report.audit_plan.findings.all()
+        if findings.exists():
+            sev_num = severity_map.get(findings.first().classification, 0)
+            duracion_dias = abs((now().date() - action.due_date).days) if action.due_date else 0
+
+
+            scatter_data.append({
+                'x': duracion_dias,
+                'y': sev_num,
+                'label': findings.first().classification,
+            })
+
+
     return render(request, 'mistemplates/audits.html',  {
         'bar_chart_data': bar_chart_data,
         "audit_data": audit_data,
