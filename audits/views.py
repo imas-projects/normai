@@ -299,16 +299,14 @@ def conduct_internal_audits(request):
         .annotate(total=Count('id'))
     )
 
-    # Mapear para mostrar etiquetas legibles y evitar que falte alguna categoría
-    clasificaciones_map = {
-        'NC_MAYOR': 'No Conformidad Mayor',
-        'NC_MENOR': 'No Conformidad Menor',
-        'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
-    }
-
-    # Inicializar con 0 para todas las categorías
     clasificaciones_labels = []
     clasificaciones_values = []
+
+    for key, label in clasificaciones_map.items():
+        clasificaciones_labels.append(label)
+        total = next((item['total'] for item in findings_dist if item['classification'] == key), 0)
+        clasificaciones_values.append(total)
+
 
 
     # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
