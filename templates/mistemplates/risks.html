@@ -144,65 +144,59 @@
 <div class="row">
   <!-- Mitad izquierda -->
   <div class="col-md-6">
+    
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4>Mapa FODA de Riesgo</h4>
+    <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="foda" data-state="eval">
+      <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+    </button>
+  </div>
+  <div class="card-body">
+    <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+  </div>
+</div>
 
-    <!-- FODA -->
-    <div class="card mt-3">
+<div class="row mt-3">
+  <div class="col-6">
+    <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Mapa FODA de Riesgo</h4>
-        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="foda" data-state="eval">
+        <h4>Riesgos por Proceso y Nivel</h4>
+        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
           <i class="bi bi-arrow-left-right"></i> Reevaluaciones
         </button>
       </div>
       <div class="card-body">
-        <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+        <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
       </div>
     </div>
+  </div>
 
-    <!-- Gráficos de barras y pie -->
-    <div class="row mt-3">
-      <div class="col-6">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Riesgos por Proceso y Nivel</h4>
-            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
-              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-            </button>
-          </div>
-          <div class="card-body">
-            <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
-          </div>
-        </div>
+  <div class="col-6">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4>Distribución por Nivel de Riesgo</h4>
+        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
+          <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+        </button>
       </div>
-
-      <div class="col-6">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Distribución por Nivel de Riesgo</h4>
-            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
-              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-            </button>
-          </div>
-          <div class="card-body">
-            <div id="pie_riesgos_nivel" style="height: 300px;"></div>
-          </div>
-        </div>
+      <div class="card-body">
+        <div id="pie_riesgos_nivel" style="height: 300px;"></div>
       </div>
     </div>
+  </div>
+</div>
+
 
     <!-- Acciones de Contingencia -->
     <div class="card mt-3">
-      <div class="card-header">
-        <h4>Acciones de Contingencia</h4>
-      </div>
+      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
-
-
   </div>
-</div>
-</div>
+
 
 
   <!-- Aquí terminan las dos columnas arriba. Ahora un nuevo row para las dos tarjetas que ocupan ambas columnas (6 cols) --
