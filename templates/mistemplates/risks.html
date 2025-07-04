@@ -139,37 +139,45 @@
 </div>
 
 <div class="row">
-  <!-- Columna izquierda (6 columnas): todas las gráficas apiladas verticalmente -->
+  <!-- Mitad izquierda -->
   <div class="col-md-6">
-    <!-- Riesgos por Proceso y Nivel -->
-    <div class="card mt-3">
-      <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
-      <div class="card-body">
-        <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
-      </div>
-    </div>
-
-    <!-- Distribución por Nivel de Riesgo -->
-    <div class="card mt-3">
-      <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
-      <div class="card-body">
-        <div id="pie_riesgos_nivel"></div>
-      </div>
-    </div>
-
-    <!-- Acciones de Contingencia -->
-    <div class="card mt-3">
-      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
-      <div class="card-body">
-        <div id="pie_acciones_contingencia"></div>
-      </div>
-    </div>
-
-    <!-- Mapa FODA de Riesgo -->
+    
+    <!-- Mapa FODA de Riesgo (fila 1, ocupa toda la mitad izquierda) -->
     <div class="card mt-3">
       <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
       <div class="card-body">
         <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+      </div>
+    </div>
+
+    <!-- Segunda fila interna con dos tarjetas lado a lado -->
+    <div class="row mt-3">
+      <div class="col-6">
+        <!-- Riesgos por Proceso y Nivel -->
+        <div class="card">
+          <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
+          <div class="card-body">
+            <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <!-- Distribución por Nivel de Riesgo -->
+        <div class="card">
+          <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
+          <div class="card-body">
+            <div id="pie_riesgos_nivel"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acciones de Contingencia (tercera fila, ocupa toda la mitad izquierda) -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
+      <div class="card-body">
+        <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
   </div>
