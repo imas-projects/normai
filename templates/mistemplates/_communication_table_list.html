@@ -2,22 +2,14 @@
     {% for comm in comm_page_obj %}
     <li class="list-group-item ps-0">
         <div class="row align-items-center g-3">
-            <div class="col-auto d-flex flex-column align-items-center">
-                <div class="avatar-sm p-1 py-2 h-auto bg-light rounded-3 text-center">
-                    <h5 class="mb-0">{{ comm.review_date|date:"d" }}</h5>
-                    <div class="text-muted">{{ comm.review_date|date:"D" }}</div>
-                </div>
-                <div class="text-muted mt-2 fw-bold fs-5 text-center">{{ comm.review_date|date:"M" }}</div>
-            </div>
             <div class="col">
-                <a href="/communications/" class="text-reset fs-14 mb-0">
-                    Comunicación: {{ comm.code }}
-                </a><br>
-                <small class="text-muted">Estado: {{ comm.get_status_display }}</small><br>
-                <small class="text-muted">Creado por: {{ comm.created_by.name }}</small>
-            </div>
-            <div class="col-sm-auto">
-                <span class="badge bg-info">Comunicación</span>
+                <a href="/communications/" class="text-reset fs-14 fw-semibold mb-1 d-block">
+                    {{ comm.code }}
+                </a>
+                <small class="text-muted d-block">Emisor: {{ comm.emiter.name }}</small>
+                <small class="text-muted d-block">Estado: {{ comm.get_status_display }}</small>
+                <small class="text-muted d-block">Creado por: {{ comm.created_by.name }}</small>
+                <small class="text-muted d-block">Fecha revisión: {{ comm.review_date|date:"d M Y" }}</small>
             </div>
         </div>
     </li>
