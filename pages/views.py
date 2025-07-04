@@ -494,11 +494,86 @@ def area_detail_view(request, area_id):
             return render(request, "mistemplates/_communication_table_list.html", {"comm_page_obj": comm_page_obj})
         else:
             return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+    
+    riesgos_eval = (
+        RiskEvaluation.objects
+        .filter(risk__area=area)
+        .values(nombre_proceso=F('risk__process__name'))
+        .annotate(
+            alto=Count('id', filter=Q(risk_level='High')),
+            moderado=Count('id', filter=Q(risk_level='Moderate')),
+            bajo=Count('id', filter=Q(risk_level='Low'))
+        )
+        .order_by('nombre_proceso')
+    )
+
+    riesgos_reeval = (
+        Reevaluation.objects
+        .filter(risk__area=area)
+        .values(nombre_proceso=F('risk__process__name'))
+        .annotate(
+            alto=Count('id', filter=Q(risk_level='High')),
+            moderado=Count('id', filter=Q(risk_level='Moderate')),
+            bajo=Count('id', filter=Q(risk_level='Low'))
+        )
+        .order_by('nombre_proceso')
+    )
+
+    def descomponer(queryset):
+        procesos, altos, moderados, bajos = [], [], [], []
+        for r in queryset:
+            procesos.append(r['nombre_proceso'])
+            altos.append(r['alto'])
+            moderados.append(r['moderado'])
+            bajos.append(r['bajo'])
+        return procesos, altos, moderados, bajos
+
+    procesos_eval, altos_eval, moderados_eval, bajos_eval = descomponer(riesgos_eval)
+    procesos_reeval, altos_reeval, moderados_reeval, bajos_reeval = descomponer(riesgos_reeval)
+
+    # Pie charts (por nivel) para el área
+    pie_eval_qs = (
+        RiskEvaluation.objects
+        .filter(risk__area=area)
+        .values('risk_level')
+        .annotate(total=Count('id'))
+    )
+
+    pie_reeval_qs = (
+        Reevaluation.objects
+        .filter(risk__area=area)
+        .values('risk_level')
+        .annotate(total=Count('id'))
+    )
+
+    pie_labels_eval = [item['risk_level'] for item in pie_eval_qs]
+    pie_values_eval = [item['total'] for item in pie_eval_qs]
+
+    pie_labels_reeval = [item['risk_level'] for item in pie_reeval_qs]
+    pie_values_reeval = [item['total'] for item in pie_reeval_qs]
+
+
 
     contexto = {
         "area": area,
         "page_obj": page_obj,
         "comm_page_obj": comm_page_obj,
+        # Datos para gráficos (evaluaciones)
+        "procesos_eval": procesos_eval,
+        "riesgo_alto_eval": altos_eval,
+        "riesgo_moderado_eval": moderados_eval,
+        "riesgo_bajo_eval": bajos_eval,
+        "pie_labels_eval": pie_labels_eval,
+        "pie_values_eval": pie_values_eval,
+
+        # Datos para gráficos (reevaluaciones)
+        "procesos_reeval": procesos_reeval,
+        "riesgo_alto_reeval": altos_reeval,
+        "riesgo_moderado_reeval": moderados_reeval,
+        "riesgo_bajo_reeval": bajos_reeval,
+        "pie_labels_reeval": pie_labels_reeval,
+        "pie_values_reeval": pie_values_reeval,
+
     }
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
