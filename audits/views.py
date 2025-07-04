@@ -340,7 +340,7 @@ def conduct_internal_audits(request):
     auditorias_resumen_qs = (
         AuditReport.objects
         .annotate(
-            num_findings=Count('findings')
+            num_findings=Count('audit_plan__findings', distinct=True)
         )
         .order_by('-num_findings')[:10]
     )
