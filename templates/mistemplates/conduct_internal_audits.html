@@ -53,60 +53,58 @@
             </div>
             {% endblock pagetitle %}
 
-<div class="row mt-5">
-  <div class="col-lg-12">
+<div class="card card-animate mt-4">
+  <div class="card-body">
+    <h4 class="card-title">Cumplimiento Promedio por Proceso</h4>
+    <div id="radar_chart" style="max-width:600px; margin: 35px auto;"></div>
+  </div>
+</div>
 
-    <div class="card card-animate mt-4">
-        <div class="card-body">
-            <h4 class="card-title">Cumplimiento Promedio por Proceso</h4>
-            <div id="radar_chart" style="max-width:600px; margin: 35px auto;"></div>
-        </div>
-    </div>
+<div class="card card-animate mt-4">
+  <div class="card-body">
+    <h4 class="card-title">Número de Hallazgos por Clasificación</h4>
+    <div id="bar_chart" style="max-width:600px; margin: 35px auto;"></div>
+  </div>
+</div>
 
-    <div class="card card-animate mt-4">
-        <div class="card-body">
-            <h4 class="card-title">Número de Hallazgos por Clasificación</h4>
-            <div id="bar_chart" style="max-width:600px; margin: 35px auto;"></div>
-        </div>
-    </div>
+<div class="card card-animate mt-4">
+  <div class="card-body">
+    <h4 class="card-title">Distribución de Cumplimiento</h4>
+    <div id="pie_chart" style="max-width:400px; margin: 35px auto;"></div>
+  </div>
+</div>
 
-    <div class="card card-animate mt-4">
-        <div class="card-body">
-            <h4 class="card-title">Distribución de Cumplimiento</h4>
-            <div id="pie_chart" style="max-width:400px; margin: 35px auto;"></div>
-        </div>
-    </div>
+<div class="card card-animate mt-4">
+  <div class="card-body">
+    <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
+    <div id="scatter_chart" style="max-width:600px; margin: 35px auto;"></div>
+  </div>
+</div>
 
-    <div class="card card-animate mt-4">
-        <div class="card-body">
-            <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
-            <div id="scatter_chart" style="max-width:600px; margin: 35px auto;"></div>
-        </div>
-    </div>
+<div class="card card-animate mt-4">
+  <div class="card-body">
+    <h4 class="card-title">Auditorías con Mayor Cantidad de Hallazgos</h4>
+    <table class="table table-striped mt-4">
+      <thead>
+        <tr>
+          <th>ID Auditoría</th>
+          <th>Número de Hallazgos</th>
+          <th>% Cumplimiento</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for a in auditorias_resumen %}
+        <tr>
+          <td>{{ a.id }}</td>
+          <td>{{ a.num_findings }}</td>
+          <td>{{ a.porcentaje_cumplimiento|floatformat:2 }}%</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    <div class="card card-animate mt-4">
-        <div class="card-body">
-            <h4 class="card-title">Auditorías con Mayor Cantidad de Hallazgos</h4>
-            <table class="table table-striped mt-4">
-                <thead>
-                    <tr>
-                        <th>ID Auditoría</th>
-                        <th>Número de Hallazgos</th>
-                        <th>% Cumplimiento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for a in auditorias_resumen %}
-                    <tr>
-                        <td>{{ a.id }}</td>
-                        <td>{{ a.num_findings }}</td>
-                        <td>{{ a.porcentaje_cumplimiento|floatformat:2 }}%</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 
     
     {% for audit in audit_data %}
@@ -371,6 +369,15 @@
         </div>
     </div>
 </div>
+
+
+{{ radar_labels|json_script:"radar-labels" }}
+{{ radar_values|json_script:"radar-values" }}
+{{ bar_labels|json_script:"bar-labels" }}
+{{ bar_values|json_script:"bar-values" }}
+{{ pie_labels|json_script:"pie-labels" }}
+{{ pie_values|json_script:"pie-values" }}
+{{ scatter_data|json_script:"scatter-data" }}
             
             
 {% block footer %}
