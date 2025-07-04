@@ -47,6 +47,11 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @csrf_protect
 @login_required
 def audits_home(request):
+    annual_programs = AnnualProgram.objects.filter(
+        program_header__year__in=years,
+        month__in=months
+    ).select_related("program_header", "process").order_by('program_header__year', 'month')
+    
     # Gráfico de barras: número de requisitos por mes
     requisitos_mes = defaultdict(int)
     for program in annual_programs:
