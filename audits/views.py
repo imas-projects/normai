@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
 import traceback
 from django.views.decorators.csrf import csrf_protect
+from django.db.models import Count, F
 import locale
 from babel.dates import format_date
 
@@ -53,7 +54,7 @@ def audits_home(request):
 def annual_audit_program(request):
     audit_headers = AuditProgramHeader.objects.all()
     today = datetime.today()
-    
+
     # Mes anterior al actual
     start_month = today.month - 1 if today.month > 1 else 12
     start_year = today.year if today.month > 1 else today.year - 1
@@ -66,54 +67,81 @@ def annual_audit_program(request):
         next_year = y + (1 if next_month == 1 else 0)
         month_range.append((next_year, next_month))
 
-    # Todos los meses del año actual (enero a diciembre)
+    # Todos los meses del año actual
     current_year = today.year
     all_months_current_year = [(current_year, m) for m in range(1, 13)]
 
     # Combinar y ordenar sin repeticiones
     combined_months = sorted(set(all_months_current_year) | set(month_range))
 
-    # Obtener programas filtrados para estos años y meses
+    # Obtener años y meses
     years = {y for y, _ in combined_months}
     months = {m for _, m in combined_months}
 
+    # Obtener programas anuales
     annual_programs = AnnualProgram.objects.filter(
         program_header__year__in=years,
         month__in=months
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
+    # Agrupar requisitos por proceso
     requirements_by_process = defaultdict(list)
     for pr in ProcessRequirement.objects.select_related("process"):
         requirements_by_process[pr.process_id].append(pr.requirement)
 
+    # Agrupar programas por año y mes
     annual_programs_by_year = OrderedDict()
-    
     all_users = User.objects.all()
 
     for y, m in combined_months:
-        # Usar Babel para obtener el nombre del mes en español
-        month_name = format_date(datetime(y, m, 1), "MMMM", locale='es')
-        month_name = month_name.capitalize()
-        
+        month_name = format_date(datetime(y, m, 1), "MMMM", locale='es').capitalize()
         if y not in annual_programs_by_year:
             annual_programs_by_year[y] = OrderedDict()
 
         filtered = annual_programs.filter(program_header__year=y, month=m)
-        enriched_programs = []
-
-        for program in filtered:
-            enriched_programs.append({
-                "program": program, 
+        enriched_programs = [
+            {
+                "program": program,
                 "requirements": requirements_by_process.get(program.process_id, [])
-            })
+            }
+            for program in filtered
+        ]
 
         annual_programs_by_year[y][month_name] = enriched_programs
+
+    requisitos_por_mes = (
+        ProcessRequirement.objects
+        .filter(process__audit_annual_programs__isnull=False)
+        .values(
+            requisito=F('requirement'),
+            mes=F('process__audit_annual_programs__month')
+        )
+        .annotate(total=Count('id'))
+        .order_by('mes', 'requisito')
+    )
+
+    heatmap_data = [
+        {"x": r["mes"], "y": r["requisito"], "value": r["total"]}
+        for r in requisitos_por_mes
+    ]
+
+    requisito_proceso = (
+        ProcessRequirement.objects
+        .values(proceso=F('process__name'), requisito=F('requirement'))
+        .annotate(total=Count('id'))
+        .order_by('proceso', 'requisito')
+    )
+
+    tabla_frecuencia = list(requisito_proceso)
 
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
         'annual_programs_by_year': annual_programs_by_year,
         'users': all_users,
+        'heatmap_data': heatmap_data,
+        'tabla_frecuencia': tabla_frecuencia,
     })
+
 
 
 
