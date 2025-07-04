@@ -575,6 +575,11 @@ def area_detail_view(request, area_id):
         "pie_values_reeval": pie_values_reeval,
 
     }
+    print("procesos_eval:", procesos_eval)
+    print("altos_eval:", altos_eval)
+    print("pie_labels_eval:", pie_labels_eval)
+    print("pie_values_eval:", pie_values_eval)
+
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
 
