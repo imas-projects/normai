@@ -47,6 +47,9 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @csrf_protect
 @login_required
 def audits_home(request):
+    years = {y for y, _ in combined_months}
+    months = {m for _, m in combined_months}
+    
     annual_programs = AnnualProgram.objects.filter(
         program_header__year__in=years,
         month__in=months
