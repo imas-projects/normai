@@ -33,6 +33,29 @@
             </div>
             {% endblock pagetitle %}
 
+
+  <div class="row">
+    <div class="col-12">
+      <!-- Requisitos auditados por mes -->
+      <div class="card card-animate mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-3">
+            <div>
+              <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
+            </div>
+            <div>
+              <div class="avatar-sm flex-shrink-0">
+                <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
+                  <i data-feather="bar-chart-2" class="text-primary"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div id="grafico_requisitos_mes" style="height: 300px;"></div>
+          {{ bar_chart_data|json_script:"bar-chart-data" }}
+        </div>
+      </div>
+      
 <div class="container">
   <!-- Fila superior: gráfico Participación y tarjetas lado a lado -->
   <div class="row">
@@ -112,25 +135,6 @@
   <!-- Fila inferior: resto de gráficos (12/12 ancho) -->
   <div class="row">
     <div class="col-12">
-      <!-- Requisitos auditados por mes -->
-      <div class="card card-animate mb-4">
-        <div class="card-body">
-          <div class="d-flex justify-content-between mb-3">
-            <div>
-              <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
-            </div>
-            <div>
-              <div class="avatar-sm flex-shrink-0">
-                <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
-                  <i data-feather="bar-chart-2" class="text-primary"></i>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div id="grafico_requisitos_mes" style="height: 300px;"></div>
-          {{ bar_chart_data|json_script:"bar-chart-data" }}
-        </div>
-      </div>
 
       <!-- Línea de Tiempo de Auditorías -->
       <div class="card card-animate mb-4">
