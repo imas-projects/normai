@@ -132,7 +132,7 @@ def annual_audit_program(request):
 # === ANNUAL AUDIT PLAN ===
 
 from itertools import zip_longest
-
+from django.utils.dateformat import format as format_date
 from datetime import datetime as dt
 @csrf_protect
 @login_required
@@ -146,11 +146,22 @@ def annual_audit_plan(request):
     )
 
     audit_data = []
-    timeline_data = []  # Datos para ApexCharts timeline
+    timeline_data = []
+
+    # Para el gráfico de barras apiladas
+    auditor_counter = defaultdict(int)
+    audited_counter = defaultdict(int)
 
     for plan in plans:
         auditors = [auditor.user.get_full_name() for auditor in plan.auditors.all()]
         audited_users = [audited.user.get_full_name() for audited in plan.audited_users.all()]
+
+        # Contar auditorías por usuario
+        for auditor in auditors:
+            auditor_counter[auditor] += 1
+        for audited in audited_users:
+            audited_counter[audited] += 1
+
         paired_list = list(zip_longest(auditors, audited_users, fillvalue=None))
 
         open_dt = dt.combine(plan.audit_opening_date, plan.audit_opening_time)
@@ -189,10 +200,19 @@ def annual_audit_plan(request):
             "y": [open_ts, close_ts]
         })
 
+    # Combinar todos los usuarios únicos
+    all_users = sorted(set(list(auditor_counter.keys()) + list(audited_counter.keys())))
+    auditor_data = [auditor_counter.get(user, 0) for user in all_users]
+    audited_data = [audited_counter.get(user, 0) for user in all_users]
+
     return render(request, 'mistemplates/annual_audit_plan.html', {
         "audit_data": audit_data,
         "timeline_data": timeline_data,
+        "user_labels": all_users,
+        "auditor_data": auditor_data,
+        "audited_data": audited_data,
     })
+
 
 
 # === CONDUCT INTERNAL AUDITS ===
