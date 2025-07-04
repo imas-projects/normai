@@ -151,7 +151,7 @@
 
   <!-- Pie de Niveles -->
   <div class="col-md-6 mt-3">
-    <div class="card" style="width: 50%; margin-left: auto; margin-right: auto;">
+    <div class="card">
       <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
       <div class="card-body">
         <div id="pie_riesgos_nivel"></div>
@@ -161,7 +161,7 @@
 
   <!-- Pie de Acciones -->
   <div class="col-md-6 mt-3">
-    <div class="card" style="width: 50%; margin-left: auto; margin-right: auto;">
+    <div class="card">
       <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
@@ -175,9 +175,6 @@
   <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
   <div class="card-body">
     <div id="bubble_foda_riesgo" style="height: 350px;"></div>
-    <small class="text-muted">
-      <strong>Colores:</strong> Rojo: Alto, Amarillo: Moderado, Verde: Bajo. Tamaño de burbuja: 10 - Detección (menor = más crítico)
-    </small>
   </div>
 </div>
 
@@ -189,24 +186,8 @@
   </div>
 </div>
 
-<div class="card mt-4">
-  <div class="card-header"><h4>Acciones por Responsable</h4></div>
-  <div class="card-body">
-    <div id="bar_responsables_acciones"></div>
-  </div>
 </div>
-
-<!-- D. Reevaluaciones -->
-<div class="card mt-4">
-  <div class="card-header"><h4>Radar Reevaluación</h4></div>
-  <div class="card-body">
-    <div id="radar_reevaluacion"></div>
-    <small class="text-muted">
-      Este radar representa los valores de Severidad, Ocurrencia y Detección en la última reevaluación del riesgo.
-    </small>
-  </div>
-</div>
-</div>
+<div class="row">
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
     {% for key, risks in grouped_risks.items %}
@@ -575,6 +556,7 @@
       {% endwith %}
     {% endfor %}
   </div>
+</div>
 </div>
 </div>
 
