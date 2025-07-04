@@ -21,6 +21,12 @@ from django.views.decorators.csrf import csrf_protect
 from company.models import Area
 import json
 from processes.models import Process
+from collections import Counter
+from django.db.models import Count, Q, F, Value
+from django.db.models.functions import TruncMonth
+from django.utils.timezone import now
+import datetime
+
 
 from ai_functions.monitoring_functions import suggest_risk_fields, suggest_controls, suggest_rating_ranges, suggest_risk_level, suggest_treatment_action, suggest_contingency_actions, suggest_reevaluation_rating_ranges, suggest_reevaluation_risk_level
 
@@ -37,17 +43,100 @@ def create_risk(request):
         grouped_risks[key].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
-    treatments = RiskTreatment.objects.select_related('risk').all()
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
-    reevaluations = Reevaluation.objects.select_related('risk').all()
+    reevaluations_qs = Reevaluation.objects.select_related('risk').all()
+
+    # === A. Riesgos por Nivel y Proceso ===
+    riesgos_por_proceso_nivel = (
+        RiskEvaluation.objects
+        .values(nombre_proceso=F('risk__process__name'))
+        .annotate(
+            alto=Count('id', filter=Q(risk_level='High')),
+            moderado=Count('id', filter=Q(risk_level='Moderate')),
+            bajo=Count('id', filter=Q(risk_level='Low'))
+        )
+        .order_by('nombre_proceso')
+    )
+
+    procesos, altos, moderados, bajos = [], [], [], []
+    for r in riesgos_por_proceso_nivel:
+        procesos.append(r['nombre_proceso'])
+        altos.append(r['alto'])
+        moderados.append(r['moderado'])
+        bajos.append(r['bajo'])
+
+    # === A. Pie Chart Riesgo por Nivel ===
+    total_niveles = RiskEvaluation.objects.values('risk_level').annotate(total=Count('id'))
+    pie_labels = [nivel['risk_level'] for nivel in total_niveles]
+    pie_values = [nivel['total'] for nivel in total_niveles]
+
+    # === A. Pie Chart Acciones de Contingencia por Tipo ===
+    contingency_actions = ContingencyPlan.objects.values_list('contingency_actions', flat=True)
+    flat_actions = [accion for acciones in contingency_actions for accion in acciones.split(',')]
+    action_counter = Counter(flat_actions)
+    acciones_labels = list(action_counter.keys())
+    acciones_values = list(action_counter.values())
+
+    # === B. FODA-Riesgo (Bubble Chart) ===
+    foda_data = list(
+        RiskEvaluation.objects
+        .values('severity', 'occurrence', 'detection', 'risk_level')
+    )
+
+    # === C. Cronograma de Tratamiento ===
+    tratamientos = RiskTreatment.objects.select_related('risk__process').prefetch_related('responsible')
+    cronograma_data = [{
+        "proceso": t.risk.process.name,
+        "accion": t.treatment_action[:30],
+        "inicio": t.actual_date.strftime("%Y-%m-%d"),
+        "fin": t.target_date.strftime("%Y-%m-%d")
+    } for t in tratamientos]
+
+    # === C. Acciones por Responsable ===
+    responsable_counter = Counter()
+    for t in tratamientos:
+        for responsable in t.responsible.all():
+            responsable_counter[responsable.name] += 1
+
+    responsables_labels = list(responsable_counter.keys())
+    responsables_values = list(responsable_counter.values())
+
+    # === D. Reevaluación Radar y Línea Temporal ===
+    reevaluaciones = (
+        reevaluations_qs
+        .values('risk__identified_risk', 'severity', 'occurrence', 'detection', 'risk_level')
+        .order_by('risk_id')
+    )
 
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
         'evaluations': evaluations,
-        'treatments': treatments,
+        'treatments': tratamientos,
         'contingency_plans': contingency_plans,
-        'reevaluations': reevaluations,
+        'reevaluations': reevaluations_qs,
+
+        # A
+        'procesos': procesos,
+        'riesgo_alto': altos,
+        'riesgo_moderado': moderados,
+        'riesgo_bajo': bajos,
+        'pie_labels': pie_labels,
+        'pie_values': pie_values,
+        'acciones_labels': acciones_labels,
+        'acciones_values': acciones_values,
+
+        # B
+        'foda_data': foda_data,
+
+        # C
+        'cronograma_data': cronograma_data,
+        'responsables_labels': responsables_labels,
+        'responsables_values': responsables_values,
+
+        # D
+        'reevaluaciones': reevaluaciones,
     })
+
 
 
 
