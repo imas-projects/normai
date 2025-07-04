@@ -97,6 +97,14 @@ def audits_home(request):
 
         annual_programs_by_year[y][month_name] = enriched_programs
 
+    plans = AnnualPlan.objects.select_related(
+        "annual_program__program_header",
+        "annual_program__process",
+    ).prefetch_related(
+        "auditors__user",
+        "audited_users__user"
+    )
+
 
     # Gráfico de barras: número de requisitos por mes
     requisitos_mes = defaultdict(int)
