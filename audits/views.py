@@ -325,7 +325,10 @@ def conduct_internal_audits(request):
     severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
     scatter_data = []
 
-    acciones = CorrectiveAction.objects.select_related('audit_report').prefetch_related('audit_report__findings')
+    acciones = CorrectiveAction.objects.select_related('audit_report').filter(
+        audit_report__audit_plan__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
+    ).distinct()
+
 
     for action in acciones:
         # Obtener severidad de la primera clasificación relacionada al reporte
