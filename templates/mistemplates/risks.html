@@ -142,19 +142,23 @@
   <!-- Columna Izquierda (6 columnas) -->
   <div class="col-md-6">
     <!-- A. Riesgos por Proceso y Nivel -->
+    <div class="col-md-3">
     <div class="card mt-3">
       <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
       <div class="card-body">
         <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
       </div>
     </div>
+    </div>
 
     <!-- Pie de Niveles -->
+    <div class="col-md-6">
     <div class="card mt-3">
       <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
       <div class="card-body">
         <div id="pie_riesgos_nivel"></div>
       </div>
+    </div>
     </div>
 
     <!-- Pie de Acciones -->
@@ -165,9 +169,7 @@
       </div>
     </div>
   </div>
-
-  <!-- Columna Derecha (6 columnas) -->
-  <div class="col-md-6">
+    
     <!-- B. FODA Riesgo -->
     <div class="card mt-3">
       <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
@@ -176,6 +178,9 @@
       </div>
     </div>
 
+
+  <!-- Columna Derecha (6 columnas) -->
+  <div class="col-md-6">
 <div class="mt-3">
 
     {% for key, risks in grouped_risks.items %}
@@ -1527,58 +1532,28 @@ document.addEventListener("DOMContentLoaded", function () {
   const bajo = JSON.parse(document.getElementById('riesgo-bajo').textContent);
 
   new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
-    chart: {
-      type: "bar",
-      stacked: true,
-      height: 300,
-      toolbar: { show: true },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: true,  // <== Esto pone las barras horizontales
-      }
-    },
-    series: [
-      { name: "Alto", data: alto },
-      { name: "Moderado", data: moderado },
-      { name: "Bajo", data: bajo },
-    ],
-    xaxis: {
-      // En barras horizontales, el eje X es numérico (valores),
-      // así que para las categorías usaremos el eje Y:
-      labels: {
-        formatter: function(val) {
-          return val;
+  chart: { type: "bar", stacked: true, height: 300 },
+  series: [
+    { name: "Alto", data: alto },
+    { name: "Moderado", data: moderado },
+    { name: "Bajo", data: bajo },
+  ],
+  xaxis: {
+    categories: procesos,
+    labels: {
+      rotate: 0,
+      trim: false,
+      style: { whiteSpace: 'normal', fontSize: '12px' },
+      formatter: function(val) {
+        if(val.length > 10){
+          return val.match(/.{1,10}/g).join('\n');
         }
+        return val;
       }
-    },
-    yaxis: {
-      categories: procesos,
-      labels: {
-        style: {
-          // Para que el texto del eje Y (las categorías) pueda hacer wrap:
-          whiteSpace: 'normal',
-          minWidth: 100,   // Ajusta según convenga
-          maxWidth: 150,
-          // Puedes controlar la altura y overflow:
-          overflow: 'visible',
-          textOverflow: 'ellipsis',
-        },
-        formatter: function(val) {
-          // Aquí puedes agregar un salto de línea si es necesario,
-          // ejemplo si la etiqueta es muy larga:
-          if(val.length > 15){
-            return val.match(/.{1,15}/g).join("\n");
-          }
-          return val;
-        }
-      }
-    },
-    colors: ['#e74c3c', '#f1c40f', '#2ecc71'],
-    legend: {
-      position: 'top'
     }
-  }).render();
+  },
+  colors: ['#e74c3c', '#f1c40f', '#2ecc71']
+}).render();
 
   // === Pie de Riesgo ===
   const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
