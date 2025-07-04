@@ -228,7 +228,7 @@ def conduct_internal_audits(request):
         'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
     }
 
-    # Traemos los planes con relaciones necesarias para no hacer muchas consultas
+    # Traemos los planes con relaciones necesarias para evitar consultas múltiples
     plans = AnnualPlan.objects.select_related(
         "annual_program__process",
         "annual_program__program_header"
@@ -243,7 +243,7 @@ def conduct_internal_audits(request):
     data = []
 
     for plan in plans:
-        # Armamos checklist con orden label
+        # Construimos checklist con orden label
         checklist = []
         for item in plan.checklists.all():
             item_dict = item.as_dict()
@@ -290,9 +290,7 @@ def conduct_internal_audits(request):
 
     # --- Datos para los gráficos ---
 
-    # 1) Radar chart: promedio hallazgos por proceso (como ejemplo, el promedio puede ser cantidad de hallazgos por proceso)
-    from django.db.models import Q
-
+    # 1) Radar chart: promedio hallazgos por proceso (cantidad de hallazgos por proceso)
     cumplimiento_por_proceso_qs = (
         Findings.objects
         .filter(requirement__process__isnull=False)
@@ -312,16 +310,12 @@ def conduct_internal_audits(request):
     bar_labels = [classification_map.get(item['classification'], item['classification']) for item in hallazgos_por_clasificacion_qs]
     bar_values = [item['total'] for item in hallazgos_por_clasificacion_qs]
 
-    # 3) Gráfico de pastel: distribución cumplimiento (como no tienes 'cumplido', usamos hallazgos por clasificación mayor/menor/op)
-    # Aquí solo hago una distribución simple de hallazgos vs no hallazgos, o se puede omitir si no hay campo.
-    # Para el ejemplo: cantidad total de hallazgos
+    # 3) Gráfico de pastel: distribución cumplimiento (cantidad total de hallazgos)
     total_hallazgos = Findings.objects.count()
     pie_labels = ['Hallazgos']
     pie_values = [total_hallazgos]
 
-    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad (aquí necesitas calcular duración)
-    from django.utils.timezone import now
-
+    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
     severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
     scatter_data = []
 
@@ -329,13 +323,10 @@ def conduct_internal_audits(request):
         audit_report__audit_plan__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
     ).distinct()
 
-
     for action in acciones:
-        # Obtener severidad de la primera clasificación relacionada al reporte
         findings = action.audit_report.findings.all()
         if findings.exists():
             sev_num = severity_map.get(findings.first().classification, 0)
-            # Duración estimada como días desde fecha de creación a hoy (si no tienes otro campo)
             duracion_dias = (now().date() - action.due_date).days if action.due_date else 0
 
             scatter_data.append({
