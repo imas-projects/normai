@@ -1,13 +1,12 @@
-<h5 class="mb-3">Últimas tablas de comunicación</h5>
-
 <ul class="list-group list-group-flush border-dashed">
     {% for comm in comm_page_obj %}
     <li class="list-group-item ps-0">
         <div class="row align-items-center g-3">
             <div class="col">
-                <a href="/communications/" class="text-reset fs-14 fw-semibold mb-1 d-block">
-                    {{ comm.code }}
-                </a>
+<a href="/communications/communication-tables/" class="text-reset fs-14 fw-semibold mb-1 d-block">
+    {{ comm.code }}
+</a>
+
                 <small class="text-muted d-block">Emisor: {{ comm.emiter.name }}</small>
                 <small class="text-muted d-block">Estado: {{ comm.get_status_display }}</small>
                 
