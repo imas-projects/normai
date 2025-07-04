@@ -228,8 +228,10 @@ def conduct_internal_audits(request):
         'OPORTUNIDAD_MEJORA': 'Oportunidad de mejora',
     }
 
+    # Traemos los planes con relaciones necesarias para no hacer muchas consultas
     plans = AnnualPlan.objects.select_related(
-        "annual_program__process"
+        "annual_program__process",
+        "annual_program__program_header"
     ).prefetch_related(
         "auditors__user",
         "audited_users__user",
@@ -241,23 +243,28 @@ def conduct_internal_audits(request):
     data = []
 
     for plan in plans:
+        # Armamos checklist con orden label
         checklist = []
         for item in plan.checklists.all():
             item_dict = item.as_dict()
             item_dict["orden_label"] = f"P{item.orden}"
             checklist.append(item_dict)
 
+        # Evaluaciones del auditor
         auditor_evaluation = [eval.as_dict() for eval in plan.auditor_evaluations.all()]
 
+        # Reporte del plan (solo uno)
         report = AuditReport.objects.filter(audit_plan=plan).first()
         report_data = report.as_dict() if report else None
 
+        # Hallazgos con texto de clasificación
         findings_data = []
         for finding in plan.findings.all():
             f_dict = finding.as_dict()
             f_dict["classification_text"] = classification_map.get(f_dict["classification"], f_dict["classification"])
             findings_data.append(f_dict)
 
+        # Acciones correctivas y sus seguimientos
         corrective_actions = []
         if report:
             for action in report.corrective_actions.select_related("responsible_user").prefetch_related("followups").all():
@@ -283,20 +290,18 @@ def conduct_internal_audits(request):
 
     # --- Datos para los gráficos ---
 
-    # 1) Radar chart: promedio cumplimiento por proceso
+    # 1) Radar chart: promedio hallazgos por proceso (como ejemplo, el promedio puede ser cantidad de hallazgos por proceso)
+    from django.db.models import Q
+
     cumplimiento_por_proceso_qs = (
-        Findings.objects.values('requirement__process__name')  # Ajusta según el campo correcto para proceso
-        .annotate(promedio_cumplimiento=Coalesce(Avg(
-            Case(
-                When(cumplido=True, then=1.0),
-                When(cumplido=False, then=0.0),
-                output_field=FloatField()
-            )
-        ), 0.0))
+        Findings.objects
+        .filter(requirement__process__isnull=False)
+        .values('requirement__process__name')
+        .annotate(total_findings=Count('id'))
         .order_by('requirement__process__name')
     )
     radar_labels = [item['requirement__process__name'] for item in cumplimiento_por_proceso_qs]
-    radar_values = [round(item['promedio_cumplimiento'] * 100, 2) for item in cumplimiento_por_proceso_qs]
+    radar_values = [item['total_findings'] for item in cumplimiento_por_proceso_qs]
 
     # 2) Gráfico de barras: hallazgos por clasificación
     hallazgos_por_clasificacion_qs = (
@@ -307,39 +312,40 @@ def conduct_internal_audits(request):
     bar_labels = [classification_map.get(item['classification'], item['classification']) for item in hallazgos_por_clasificacion_qs]
     bar_values = [item['total'] for item in hallazgos_por_clasificacion_qs]
 
-    # 3) Gráfico de pastel: distribución cumplimiento (Checklist)
-    total_cumplidas = Findings.objects.filter(cumplido=True).count()
-    total_no_cumplidas = Findings.objects.filter(cumplido=False).count()
-    pie_labels = ['Cumplidas', 'No Cumplidas']
-    pie_values = [total_cumplidas, total_no_cumplidas]
+    # 3) Gráfico de pastel: distribución cumplimiento (como no tienes 'cumplido', usamos hallazgos por clasificación mayor/menor/op)
+    # Aquí solo hago una distribución simple de hallazgos vs no hallazgos, o se puede omitir si no hay campo.
+    # Para el ejemplo: cantidad total de hallazgos
+    total_hallazgos = Findings.objects.count()
+    pie_labels = ['Hallazgos']
+    pie_values = [total_hallazgos]
 
-    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
-    acciones = CorrectiveAction.objects.select_related('audit_report').filter(
-        audit_report__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
-    )
+    # 4) Gráfico de dispersión: duración acciones correctivas vs severidad (aquí necesitas calcular duración)
+    from django.utils.timezone import now
+
+    severity_map = {'NC_MAYOR': 3, 'NC_MENOR': 2, 'OPORTUNIDAD_MEJORA': 1}
     scatter_data = []
-    severity_map = {'NC_MAYOR':3, 'NC_MENOR':2, 'OPORTUNIDAD_MEJORA':1}
-    for a in acciones:
-        # Aquí debes calcular duración días (según campos que tengas)
-        sev_num = severity_map.get(a.audit_report.findings.first().classification, 0)
-        scatter_data.append({
-            'x': a.duracion_dias if hasattr(a, 'duracion_dias') else 0,  # Ajusta según el campo correcto
-            'y': sev_num,
-            'label': a.audit_report.findings.first().classification if a.audit_report.findings.exists() else ''
-        })
+
+    acciones = CorrectiveAction.objects.select_related('audit_report').prefetch_related('audit_report__findings')
+
+    for action in acciones:
+        # Obtener severidad de la primera clasificación relacionada al reporte
+        findings = action.audit_report.findings.all()
+        if findings.exists():
+            sev_num = severity_map.get(findings.first().classification, 0)
+            # Duración estimada como días desde fecha de creación a hoy (si no tienes otro campo)
+            duracion_dias = (now().date() - action.due_date).days if action.due_date else 0
+
+            scatter_data.append({
+                'x': duracion_dias,
+                'y': sev_num,
+                'label': findings.first().classification,
+            })
 
     # 5) Tabla resumen: auditorías con mayor cantidad de hallazgos
     auditorias_resumen_qs = (
         AuditReport.objects
         .annotate(
-            num_findings=Count('findings'),
-            porcentaje_cumplimiento=Avg(
-                Case(
-                    When(findings__cumplido=True, then=1.0),
-                    default=0.0,
-                    output_field=FloatField()
-                )
-            ) * 100
+            num_findings=Count('findings')
         )
         .order_by('-num_findings')[:10]
     )
