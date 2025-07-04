@@ -139,55 +139,69 @@
 </div>
 
 <div class="row">
-  <!-- A. Riesgos por Proceso y Nivel -->
-  <div class="col-xxl-12 mt-3">
-    <div class="card">
+  <!-- Mitad Izquierda -->
+  <div class="col-md-6">
+    <!-- Riesgos por Proceso y Nivel -->
+    <div class="card mt-3">
       <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
       <div class="card-body">
         <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
       </div>
     </div>
-  </div>
 
-  <!-- Pie de Niveles -->
-  <div class="col-md-6 mt-3">
-    <div class="card">
+    <!-- Distribución por Nivel de Riesgo -->
+    <div class="card mt-3">
       <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
       <div class="card-body">
         <div id="pie_riesgos_nivel"></div>
       </div>
     </div>
-  </div>
 
-  <!-- Pie de Acciones -->
-  <div class="col-md-6 mt-3">
-    <div class="card">
+    <!-- Acciones de Contingencia -->
+    <div class="card mt-3">
       <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- B. FODA Riesgo -->
-<div class="card mt-4">
-  <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
-  <div class="card-body">
-    <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+  <!-- Mitad Derecha -->
+  <div class="col-md-6">
+    <!-- FODA Riesgo -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
+      <div class="card-body">
+        <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+      </div>
+    </div>
+
+    <!-- Cronograma -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Cronograma de Tratamiento</h4></div>
+      <div class="card-body">
+        <div id="gantt_tratamientos"></div>
+      </div>
+    </div>
+
+    <!-- Acciones por Responsable -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Acciones por Responsable</h4></div>
+      <div class="card-body">
+        <div id="bar_responsables_acciones"></div>
+      </div>
+    </div>
+
+    <!-- Radar Reevaluación -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Radar Reevaluación</h4></div>
+      <div class="card-body">
+        <div id="radar_reevaluacion"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- C. Cronograma y Acciones -->
-<div class="card mt-4">
-  <div class="card-header"><h4>Cronograma de Tratamiento</h4></div>
-  <div class="card-body">
-    <div id="gantt_tratamientos"></div>
-  </div>
-</div>
-
-</div>
-<div class="row">
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
     {% for key, risks in grouped_risks.items %}
