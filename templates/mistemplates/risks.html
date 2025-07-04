@@ -142,20 +142,25 @@
   <!-- Mitad izquierda -->
   <div class="col-md-6">
     
-    <!-- Mapa FODA de Riesgo (fila 1, ocupa toda la mitad izquierda) -->
+    <!-- Mapa FODA de Riesgo -->
     <div class="card mt-3">
-      <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4>Mapa FODA de Riesgo</h4>
+        <button id="toggle-foda" class="btn btn-sm btn-outline-primary">Ver Reevaluaciones</button>
+      </div>
       <div class="card-body">
         <div id="bubble_foda_riesgo" style="height: 350px;"></div>
       </div>
     </div>
 
-    <!-- Segunda fila interna con dos tarjetas lado a lado -->
+    <!-- Segunda fila interna con dos tarjetas -->
     <div class="row mt-3">
       <div class="col-6">
-        <!-- Riesgos por Proceso y Nivel -->
         <div class="card">
-          <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Riesgos por Proceso y Nivel</h4>
+            <button id="toggle-bar" class="btn btn-sm btn-outline-primary">Ver Reevaluaciones</button>
+          </div>
           <div class="card-body">
             <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
           </div>
@@ -163,9 +168,11 @@
       </div>
 
       <div class="col-6">
-        <!-- Distribución por Nivel de Riesgo -->
         <div class="card">
-          <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Distribución por Nivel de Riesgo</h4>
+            <button id="toggle-pie" class="btn btn-sm btn-outline-primary">Ver Reevaluaciones</button>
+          </div>
           <div class="card-body">
             <div id="pie_riesgos_nivel" style="height: 300px;"></div>
           </div>
@@ -173,7 +180,7 @@
       </div>
     </div>
 
-    <!-- Acciones de Contingencia (tercera fila, ocupa toda la mitad izquierda) -->
+    <!-- Acciones de Contingencia -->
     <div class="card mt-3">
       <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
@@ -559,15 +566,28 @@
 </div>
 
 
-{{ procesos|json_script:"procesos" }}
-{{ riesgo_alto|json_script:"riesgo-alto" }}
-{{ riesgo_moderado|json_script:"riesgo-moderado" }}
-{{ riesgo_bajo|json_script:"riesgo-bajo" }}
-{{ pie_labels|json_script:"pie-labels" }}
-{{ pie_values|json_script:"pie-values" }}
+{{ procesos_eval|json_script:"procesos-eval" }}
+{{ riesgo_alto_eval|json_script:"riesgo-alto-eval" }}
+{{ riesgo_moderado_eval|json_script:"riesgo-moderado-eval" }}
+{{ riesgo_bajo_eval|json_script:"riesgo-bajo-eval" }}
+
+{{ procesos_reeval|json_script:"procesos-reeval" }}
+{{ riesgo_alto_reeval|json_script:"riesgo-alto-reeval" }}
+{{ riesgo_moderado_reeval|json_script:"riesgo-moderado-reeval" }}
+{{ riesgo_bajo_reeval|json_script:"riesgo-bajo-reeval" }}
+
+{{ pie_labels_eval|json_script:"pie-labels-eval" }}
+{{ pie_values_eval|json_script:"pie-values-eval" }}
+{{ pie_labels_reeval|json_script:"pie-labels-reeval" }}
+{{ pie_values_reeval|json_script:"pie-values-reeval" }}
+
 {{ acciones_labels|json_script:"acciones-labels" }}
 {{ acciones_values|json_script:"acciones-values" }}
-{{ foda_data|json_script:"foda-data" }}
+
+{{ foda_data_eval|json_script:"foda-data-eval" }}
+{{ foda_data_reeval|json_script:"foda-data-reeval" }}
+
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1532,58 +1552,94 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const procesos = JSON.parse(document.getElementById('procesos').textContent);
-  const alto = JSON.parse(document.getElementById('riesgo-alto').textContent);
-  const moderado = JSON.parse(document.getElementById('riesgo-moderado').textContent);
-  const bajo = JSON.parse(document.getElementById('riesgo-bajo').textContent);
-
-  // === Bar: Riesgos por Proceso y Nivel ===
-  new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
-    chart: {
-      type: "bar",
-      stacked: true,
-      height: 300,
-      toolbar: { show: false }
+  // === Inicialización de datos ===
+  const datasets = {
+    eval: {
+      procesos: JSON.parse(document.getElementById("procesos-eval").textContent),
+      alto: JSON.parse(document.getElementById("riesgo-alto-eval").textContent),
+      moderado: JSON.parse(document.getElementById("riesgo-moderado-eval").textContent),
+      bajo: JSON.parse(document.getElementById("riesgo-bajo-eval").textContent),
+      pieLabels: JSON.parse(document.getElementById("pie-labels-eval").textContent),
+      pieValues: JSON.parse(document.getElementById("pie-values-eval").textContent),
+      foda: JSON.parse(document.getElementById("foda-data-eval").textContent)
     },
-    series: [
-      { name: "Alto", data: alto },
-      { name: "Moderado", data: moderado },
-      { name: "Bajo", data: bajo },
-    ],
-    xaxis: {
-      categories: procesos,
-      labels: { show: false }
-    },
-    tooltip: {
-      x: { show: true }
-    },
-    colors: ['#e74c3c', '#f1c40f', '#2ecc71']
-  }).render();
-
-  // === Pie de Riesgo ===
-  const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
-  const pieValues = JSON.parse(document.getElementById('pie-values').textContent);
-  const pieColors = pieLabels.map(label =>
-    label === 'High' ? '#e74c3c' : label === 'Moderate' ? '#f1c40f' : '#2ecc71');
-  const translatedLabels = pieLabels.map(label =>
-    label === 'High' ? 'Alto' : label === 'Moderado' ? 'Moderado' : 'Bajo');
-
-  new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
-    chart: { 
-        type: 'pie',
-        height: 300
-    },
-    series: pieValues,
-    labels: translatedLabels,
-    colors: pieColors,
-    legend: {
-      position: 'bottom'  // leyenda abajo
+    reeval: {
+      procesos: JSON.parse(document.getElementById("procesos-reeval").textContent),
+      alto: JSON.parse(document.getElementById("riesgo-alto-reeval").textContent),
+      moderado: JSON.parse(document.getElementById("riesgo-moderado-reeval").textContent),
+      bajo: JSON.parse(document.getElementById("riesgo-bajo-reeval").textContent),
+      pieLabels: JSON.parse(document.getElementById("pie-labels-reeval").textContent),
+      pieValues: JSON.parse(document.getElementById("pie-values-reeval").textContent),
+      foda: JSON.parse(document.getElementById("foda-data-reeval").textContent)
     }
-  }).render();
+  };
 
-  // === Donut Acciones de Contingencia ===
-  const accionesLabels = JSON.parse(document.getElementById('acciones-labels').textContent);
-  const accionesValues = JSON.parse(document.getElementById('acciones-values').textContent);
+  let currentSet = "eval";
+
+  // === Colores y traducciones ===
+  const pieColors = { High: '#e74c3c', Moderate: '#f1c40f', Low: '#2ecc71' };
+  const translateLabel = l => l === "High" ? "Alto" : l === "Moderate" ? "Moderado" : "Bajo";
+
+  // === Función para renderizar gráficos ===
+  let barChart, pieChart, fodaChart;
+
+  function renderBar() {
+    if (barChart) barChart.destroy();
+    barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
+      chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
+      series: [
+        { name: "Alto", data: datasets[currentSet].alto },
+        { name: "Moderado", data: datasets[currentSet].moderado },
+        { name: "Bajo", data: datasets[currentSet].bajo }
+      ],
+      xaxis: { categories: datasets[currentSet].procesos, labels: { show: false } },
+      tooltip: { x: { show: true } },
+      colors: [pieColors.High, pieColors.Moderate, pieColors.Low]
+    });
+    barChart.render();
+  }
+
+  function renderPie() {
+    if (pieChart) pieChart.destroy();
+    const labels = datasets[currentSet].pieLabels.map(translateLabel);
+    const values = datasets[currentSet].pieValues;
+    const colors = datasets[currentSet].pieLabels.map(l => pieColors[l] || '#999');
+
+    pieChart = new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
+      chart: { type: 'pie', height: 300 },
+      series: values,
+      labels: labels,
+      colors: colors,
+      legend: { position: 'bottom' }
+    });
+    pieChart.render();
+  }
+
+  function renderFoda() {
+    if (fodaChart) fodaChart.destroy();
+    const fodaSeries = datasets[currentSet].foda.map(item => ({
+      x: item.occurrence,
+      y: item.severity,
+      z: 10 - item.detection,
+      fillColor: pieColors[item.risk_level] || '#999'
+    }));
+    fodaChart = new ApexCharts(document.querySelector("#bubble_foda_riesgo"), {
+      chart: { height: 350, type: 'bubble' },
+      series: [{ name: "Riesgos", data: fodaSeries }],
+      xaxis: { title: { text: 'Ocurrencia' }, min: 0, max: 10 },
+      yaxis: { title: { text: 'Severidad' }, min: 0, max: 10 }
+    });
+    fodaChart.render();
+  }
+
+  // === Inicializar todos los gráficos ===
+  renderBar();
+  renderPie();
+  renderFoda();
+
+  // === Acciones de Contingencia (sin toggle) ===
+  const accionesLabels = JSON.parse(document.getElementById("acciones-labels").textContent);
+  const accionesValues = JSON.parse(document.getElementById("acciones-values").textContent);
   const translatedMap = {
     "N/A": "N/A",
     "ALT_PROCEDURES": "Procedimientos alternativos",
@@ -1607,23 +1663,30 @@ document.addEventListener("DOMContentLoaded", function () {
     colors: uniqueColors
   }).render();
 
-  // === Bubble FODA ===
-  const foda = JSON.parse(document.getElementById('foda-data').textContent);
-  const fodaSeries = foda.map(item => ({
-    x: item.occurrence,
-    y: item.severity,
-    z: 10 - item.detection,
-    fillColor: item.risk_level === 'High' ? '#e74c3c' : item.risk_level === 'Moderate' ? '#f1c40f' : '#2ecc71',
-  }));
+  // === Botones toggle ===
+  document.getElementById("toggle-bar").addEventListener("click", () => {
+    currentSet = currentSet === "eval" ? "reeval" : "eval";
+    renderBar();
+    document.getElementById("toggle-bar").textContent =
+      currentSet === "eval" ? "Ver Reevaluaciones" : "Ver Evaluaciones";
+  });
 
-  new ApexCharts(document.querySelector("#bubble_foda_riesgo"), {
-    chart: { height: 350, type: 'bubble' },
-    series: [{ name: "Riesgos", data: fodaSeries }],
-    xaxis: { title: { text: 'Ocurrencia' }, min: 0, max: 10 },
-    yaxis: { title: { text: 'Severidad' }, min: 0, max: 10 }
-  }).render();
+  document.getElementById("toggle-pie").addEventListener("click", () => {
+    currentSet = currentSet === "eval" ? "reeval" : "eval";
+    renderPie();
+    document.getElementById("toggle-pie").textContent =
+      currentSet === "eval" ? "Ver Reevaluaciones" : "Ver Evaluaciones";
+  });
+
+  document.getElementById("toggle-foda").addEventListener("click", () => {
+    currentSet = currentSet === "eval" ? "reeval" : "eval";
+    renderFoda();
+    document.getElementById("toggle-foda").textContent =
+      currentSet === "eval" ? "Ver Reevaluaciones" : "Ver Evaluaciones";
+  });
 });
 </script>
+
 
 
 {% endblock extra_js %}
