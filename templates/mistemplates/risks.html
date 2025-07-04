@@ -205,22 +205,29 @@
     <div class="col-md-6">
 <div class="mt-3">
 
-{% for area, risks_by_process in grouped_risks_by_area.items %}
-  <div class="accordion" id="accordion-{{ area.name|slugify }}">
-    {% for process, risks in risks_by_process.items %}
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="heading-{{ area.name|slugify }}-{{ process.name|slugify }}">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#collapse-{{ area.name|slugify }}-{{ process.name|slugify }}"
-            aria-expanded="false" aria-controls="collapse-{{ area.name|slugify }}-{{ process.name|slugify }}">
-            {{ area.name }} - {{ process.name }}
-          </button>
-        </h2>
-        <div id="collapse-{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse"
-          aria-labelledby="heading-{{ area.name|slugify }}-{{ process.name|slugify }}"
-          data-bs-parent="#accordion-{{ area.name|slugify }}">
-          <div class="accordion-body">
-            {% for risk in risks %}
+    {% for key, risks in grouped_risks.items %}
+        {% with area=key.0 process=key.1 %}
+        <div class="accordion" id="accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
+            <div class="accordion-item">
+                <h2 class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ area.name|slugify }}-{{ process.name|slugify }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse{{ area.name|slugify }}-{{ process.name|slugify }}" 
+                        aria-expanded="false" 
+                        aria-controls="collapse{{ area.name|slugify }}-{{ process.name|slugify }}">
+                        {{ area.name }} - {{ process.name }}
+                    </button>
+
+
+                    <a href="{% url 'risks:download_risks_pdf' area.name %}" class="btn btn-danger btn-sm ms-2">
+                        <i class="ri-file-download-line"></i> Descargar PDF
+                    </a>
+                </h2>
+            <div id="collapse{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse" 
+              aria-labelledby="heading{{ area.name|slugify }}-{{ process.name|slugify }}" 
+              data-bs-parent="#accordion{{ area.name|slugify }}-{{ process.name|slugify }}">
+              <div class="accordion-body">
+{% for risk in risks %}
+
 
 
 <div class="card mb-3">
@@ -563,7 +570,7 @@
             </div>
           </div>
         </div>
-      {% endfor %}
+      {% endwith %}
     {% endfor %}
   </div>
 </div>
