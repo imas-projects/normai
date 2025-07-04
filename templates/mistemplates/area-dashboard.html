@@ -28,7 +28,7 @@
                 </div>
             </div>
             
-<<div class="col-md-4 mt-4">
+<div class="col-md-4 mt-4">
   <div class="card">
     <div class="card-header">
       <h5 class="mb-0">Tablas de Comunicación</h5>
@@ -39,7 +39,35 @@
   </div>
 </div>
 
+    <div class="row mt-3">
+      <div class="col-6">
+        <div class="card card-animate">
+          <div class="card-body">
+            <h4 class="card-title d-flex justify-content-between align-items-center">
+              Riesgos por Proceso y Nivel
+              <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
+                <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+              </button>
+            </h4>
+            <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+          </div>
+        </div>
+      </div>
 
+      <div class="col-6">
+        <div class="card card-animate">
+          <div class="card-body">
+            <h4 class="card-title d-flex justify-content-between align-items-center">
+              Distribución por Nivel de Riesgo
+              <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
+                <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+              </button>
+            </h4>
+            <div id="pie_riesgos_nivel" style="height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+    </div> 
 
   <div class="col-md-4 mt-4">
     <div class="card">
@@ -56,6 +84,20 @@
 
 
 
+{{ procesos_eval|json_script:"procesos-eval" }}
+{{ riesgo_alto_eval|json_script:"riesgo-alto-eval" }}
+{{ riesgo_moderado_eval|json_script:"riesgo-moderado-eval" }}
+{{ riesgo_bajo_eval|json_script:"riesgo-bajo-eval" }}
+
+{{ procesos_reeval|json_script:"procesos-reeval" }}
+{{ riesgo_alto_reeval|json_script:"riesgo-alto-reeval" }}
+{{ riesgo_moderado_reeval|json_script:"riesgo-moderado-reeval" }}
+{{ riesgo_bajo_reeval|json_script:"riesgo-bajo-reeval" }}
+
+{{ pie_labels_eval|json_script:"pie-labels-eval" }}
+{{ pie_values_eval|json_script:"pie-values-eval" }}
+{{ pie_labels_reeval|json_script:"pie-labels-reeval" }}
+{{ pie_values_reeval|json_script:"pie-values-reeval" }}
 
 
   
@@ -96,7 +138,6 @@
 
 
 <script>
-<script>
 document.addEventListener('click', function (e) {
     // AJAX paginación de actividades
     if (e.target.closest('.pagination a') && e.target.closest('#activity-list')) {
@@ -128,7 +169,74 @@ document.addEventListener('click', function (e) {
         });
     }
 });
-</script>
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  // === Inicialización de datos ===
+  const datasets = {
+    eval: {
+      procesos: JSON.parse(document.getElementById("procesos-eval").textContent),
+      alto: JSON.parse(document.getElementById("riesgo-alto-eval").textContent),
+      moderado: JSON.parse(document.getElementById("riesgo-moderado-eval").textContent),
+      bajo: JSON.parse(document.getElementById("riesgo-bajo-eval").textContent),
+      pieLabels: JSON.parse(document.getElementById("pie-labels-eval").textContent),
+      pieValues: JSON.parse(document.getElementById("pie-values-eval").textContent),
+    },
+    reeval: {
+      procesos: JSON.parse(document.getElementById("procesos-reeval").textContent),
+      alto: JSON.parse(document.getElementById("riesgo-alto-reeval").textContent),
+      moderado: JSON.parse(document.getElementById("riesgo-moderado-reeval").textContent),
+      bajo: JSON.parse(document.getElementById("riesgo-bajo-reeval").textContent),
+      pieLabels: JSON.parse(document.getElementById("pie-labels-reeval").textContent),
+      pieValues: JSON.parse(document.getElementById("pie-values-reeval").textContent),
+    }
+  };
+
+  const chartStates = {
+    bar: "eval",
+    pie: "eval",
+    foda: "eval"
+  };
+
+  const pieColors = { High: '#e74c3c', Moderate: '#f1c40f', Low: '#2ecc71' };
+  const translateLabel = l => l === "High" ? "Alto" : l === "Moderate" ? "Moderado" : "Bajo";
+
+  let barChart, pieChart, fodaChart;
+
+  function renderBar() {
+    const currentSet = chartStates.bar;
+    if (barChart) barChart.destroy();
+    barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
+      chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
+      series: [
+        { name: "Alto", data: datasets[currentSet].alto },
+        { name: "Moderado", data: datasets[currentSet].moderado },
+        { name: "Bajo", data: datasets[currentSet].bajo }
+      ],
+      xaxis: { categories: datasets[currentSet].procesos, labels: { show: false } },
+      tooltip: { x: { show: true } },
+      colors: [pieColors.High, pieColors.Moderate, pieColors.Low]
+    });
+    barChart.render();
+  }
+
+  function renderPie() {
+    const currentSet = chartStates.pie;
+    if (pieChart) pieChart.destroy();
+    const labels = datasets[currentSet].pieLabels.map(translateLabel);
+    const values = datasets[currentSet].pieValues;
+    const colors = datasets[currentSet].pieLabels.map(l => pieColors[l] || '#999');
+
+    pieChart = new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
+      chart: { type: 'pie', height: 300 },
+      series: values,
+      labels: labels,
+      colors: colors,
+      legend: { position: 'bottom' }
+    });
+    pieChart.render();
+  }
+});
 
 </script>
 {% endblock extra_js %}
