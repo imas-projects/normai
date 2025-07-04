@@ -482,7 +482,8 @@ def area_detail_view(request, area_id):
     # === Comunicaciones ===
     comm_queryset = CommunicationTable.objects.filter(
         emiter__area_id=area.id
-    ).order_by('-review_date').select_related('created_by__area', 'reviewed_by', 'approved_by')
+    ).order_by('-review_date').select_related('emiter', 'reviewed_by', 'approved_by').prefetch_related('message__receiver')
+
 
     comm_paginator = Paginator(comm_queryset, 4)
     comm_page_number = request.GET.get('comm_page')
