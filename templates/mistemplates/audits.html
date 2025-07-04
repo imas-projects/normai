@@ -425,6 +425,13 @@
     </div>
 </div>
             
+
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
+{% endblock content %}
+
+{% block extra_js %}
 <!-- Datos JSON para los gráficos -->
 <script type="application/json" id="bar-chart-data">{{ bar_chart_data|safe }}</script>
 
@@ -439,12 +446,6 @@
 <script type="application/json" id="clasificaciones-labels">{{ clasificaciones_labels|safe }}</script>
 <script type="application/json" id="clasificaciones-values">{{ clasificaciones_values|safe }}</script>
 
-{% block footer %}
-{% include "partials/footer.html" %}
-{% endblock footer %}
-{% endblock content %}
-
-{% block extra_js %}
 <!-- apexcharts -->
 <script src="{% static 'libs/apexcharts/dist/apexcharts.min.js'%}"></script>
 
