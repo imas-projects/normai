@@ -275,7 +275,6 @@ def conduct_internal_audits(request):
                 corrective_actions.append(action_dict)
 
         entry = {
-            "audit_data": data,
             "plan_id": plan.id,
             "process": plan.annual_program.process.name,
             "year": plan.annual_program.program_header.year,
@@ -333,6 +332,7 @@ def conduct_internal_audits(request):
             })
 
     context = {
+        "audit_data": data,
         "scatter_data": scatter_data,
         "clasificaciones_labels": clasificaciones_labels,
         "clasificaciones_values": clasificaciones_values,
