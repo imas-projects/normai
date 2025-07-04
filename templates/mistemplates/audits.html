@@ -33,51 +33,52 @@
             </div>
             {% endblock pagetitle %}
 
-<div class="col-md-12 mt-4">
-  <div class="card card-animate">
-    <div class="card-body">
-      <div class="d-flex justify-content-between mb-3">
-        <div>
-          <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
-        </div>
-        <div>
-          <div class="avatar-sm flex-shrink-0">
-            <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
-              <i data-feather="bar-chart-2" class="text-primary"></i>
-            </span>
+  <!-- Requisitos auditados por mes -->
+  <div class="row">
+    <div class="col-12 mt-4">
+      <div class="card card-animate">
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-3">
+            <div>
+              <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
+            </div>
+            <div>
+              <div class="avatar-sm flex-shrink-0">
+                <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
+                  <i data-feather="bar-chart-2" class="text-primary"></i>
+                </span>
+              </div>
+            </div>
           </div>
+          <div id="grafico_requisitos_mes" style="height: 300px;"></div>
+          {{ bar_chart_data|json_script:"bar-chart-data" }}
         </div>
       </div>
-      <div id="grafico_requisitos_mes" style="height: 300px;"></div>
-      {{ bar_chart_data|json_script:"bar-chart-data" }}
     </div>
   </div>
-</div>
 
-
-  <div class="row">
-    <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
-<div class="col-md-9 mt-5">
-
-        <div class="card card-animate">
-            <div class="card-body">
-                <h4 class="card-title">Participación de Auditores y Auditados</h4>
-                <div id="participation_chart" style="height: 400px;"></div>
-            </div>
+  <!-- Participación y Línea de Tiempo -->
+  <div class="row mt-5">
+    <div class="col-md-9">
+      <div class="card card-animate mb-4">
+        <div class="card-body">
+          <h4 class="card-title">Participación de Auditores y Auditados</h4>
+          <div id="participation_chart" style="height: 400px;"></div>
         </div>
- 
+      </div>
 
-    <!-- Línea de Tiempo -->
-          <div class="card card-animate">
-            <div class="card-body">
-                <h4 class="card-title">Línea de Tiempo de Auditorías</h4>
-        <div id="timeline-chart" style="min-height: 400px;"></div>
-         </div>
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title">Línea de Tiempo de Auditorías</h4>
+          <div id="timeline-chart" style="min-height: 400px;"></div>
         </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Gráficos lado a lado -->
-  <div class="row mb-4">
-    <div class="col-md-6 mt-3">
+  <!-- Gráficos lado a lado -->
+  <div class="row mt-4 mb-4">
+    <div class="col-md-6">
       <div class="card card-animate">
         <div class="card-body">
           <h4 class="card-title">Distribución de No Conformidades por Clasificación</h4>
@@ -86,7 +87,7 @@
       </div>
     </div>
 
-    <div class="col-md-6 mt-3">
+    <div class="col-md-6">
       <div class="card card-animate">
         <div class="card-body">
           <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
@@ -95,6 +96,7 @@
       </div>
     </div>
   </div>
+
 
             <!-- Tarjeta para el Programa Anual de Auditorías -->
             <div class="card p-4 shadow mt-5">
