@@ -172,7 +172,7 @@ document.addEventListener('click', function (e) {
 
 
 document.addEventListener("DOMContentLoaded", function () {
-  // === Inicialización de datos ===
+  // Cargar datos desde json_script
   const datasets = {
     eval: {
       procesos: JSON.parse(document.getElementById("procesos-eval").textContent),
@@ -192,40 +192,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  const chartStates = {
-    bar: "eval",
-    pie: "eval",
-    foda: "eval"
-  };
-
   const pieColors = { High: '#e74c3c', Moderate: '#f1c40f', Low: '#2ecc71' };
   const translateLabel = l => l === "High" ? "Alto" : l === "Moderate" ? "Moderado" : "Bajo";
 
-  let barChart, pieChart, fodaChart;
+  let barChart = null;
+  let pieChart = null;
 
-  function renderBar() {
-    const currentSet = chartStates.bar;
+  // Función para renderizar gráfica de barras
+  function renderBar(state = "eval") {
     if (barChart) barChart.destroy();
     barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
       chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
       series: [
-        { name: "Alto", data: datasets[currentSet].alto },
-        { name: "Moderado", data: datasets[currentSet].moderado },
-        { name: "Bajo", data: datasets[currentSet].bajo }
+        { name: "Alto", data: datasets[state].alto },
+        { name: "Moderado", data: datasets[state].moderado },
+        { name: "Bajo", data: datasets[state].bajo }
       ],
-      xaxis: { categories: datasets[currentSet].procesos, labels: { show: false } },
+      xaxis: { categories: datasets[state].procesos, labels: { show: true } },
       tooltip: { x: { show: true } },
       colors: [pieColors.High, pieColors.Moderate, pieColors.Low]
     });
     barChart.render();
   }
 
-  function renderPie() {
-    const currentSet = chartStates.pie;
+  // Función para renderizar gráfica pie
+  function renderPie(state = "eval") {
     if (pieChart) pieChart.destroy();
-    const labels = datasets[currentSet].pieLabels.map(translateLabel);
-    const values = datasets[currentSet].pieValues;
-    const colors = datasets[currentSet].pieLabels.map(l => pieColors[l] || '#999');
+    const labels = datasets[state].pieLabels.map(translateLabel);
+    const values = datasets[state].pieValues;
+    const colors = datasets[state].pieLabels.map(l => pieColors[l] || '#999');
 
     pieChart = new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
       chart: { type: 'pie', height: 300 },
@@ -236,6 +231,33 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     pieChart.render();
   }
+
+  // Render inicial (eval)
+  renderBar("eval");
+  renderPie("eval");
+
+  // Botones para alternar eval/reeval
+  document.querySelectorAll('.toggle-eval').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const chartType = this.dataset.chart;  // "bar" o "pie"
+      const currentState = this.dataset.state; // "eval" o "reeval"
+      const newState = currentState === "eval" ? "reeval" : "eval";
+
+      // Actualizar dataset state en el botón
+      this.dataset.state = newState;
+
+      // Cambiar texto del botón (opcional)
+      this.innerHTML = `<i class="bi bi-arrow-left-right"></i> ${newState === "eval" ? "Reevaluaciones" : "Evaluaciones"}`;
+
+      // Renderizar la gráfica correcta según el botón y estado
+      if (chartType === "bar") {
+        renderBar(newState);
+      } else if (chartType === "pie") {
+        renderPie(newState);
+      }
+    });
+  });
+
 });
 
 </script>
