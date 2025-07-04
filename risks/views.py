@@ -28,11 +28,20 @@ from ai_functions.monitoring_functions import suggest_risk_fields, suggest_contr
 def create_risk(request):
     all_risks = RiskIdentification.objects.select_related('area', 'process').all()
 
+    print(f"Total riesgos encontrados: {all_risks.count()}")
+
     grouped_risks = defaultdict(lambda: defaultdict(list))
     for risk in all_risks:
-        if risk.area and risk.process:
-            grouped_risks[risk.area.name][risk.process.name].append(risk)
+        # Debug de cada riesgo
+        print(f"Riesgo: {risk.identified_risk}")
+        print(f"  Área: {risk.area} (ID: {risk.area_id})")
+        print(f"  Proceso: {risk.process} (ID: {risk.process_id})")
 
+        # Solo agrupa si tiene área y proceso asignados y ambos con nombre válido
+        if risk.area_id and risk.process_id:
+            area_name = getattr(risk.area, 'name', 'Área desconocida')
+            process_name = getattr(risk.process, 'name', 'Proceso desconocido')
+            grouped_risks[area_name][process_name].append(risk)
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
@@ -41,11 +50,13 @@ def create_risk(request):
 
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
+        'all_risks': all_risks,  # Para debugging en el template si quieres
         'evaluations': evaluations,
         'treatments': treatments,
         'contingency_plans': contingency_plans,
         'reevaluations': reevaluations,
     })
+
 
 
 
