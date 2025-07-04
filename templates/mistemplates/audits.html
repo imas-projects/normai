@@ -425,6 +425,15 @@
     </div>
 </div>
             
+{{ bar_chart_data|json_script:"bar-chart-data" }}
+{{ timeline_data|json_script:"timeline-data" }}
+{{ user_labels|json_script:"user-labels" }}
+{{ auditor_data|json_script:"auditor-data" }}
+{{ audited_data|json_script:"audited-data" }}
+{{ scatter_data|json_script:"scatter-data" }}
+{{ clasificaciones_labels|json_script:"clasificaciones-labels" }}
+{{ clasificaciones_values|json_script:"clasificaciones-values" }}
+
 
 {% block footer %}
 {% include "partials/footer.html" %}
@@ -432,20 +441,6 @@
 {% endblock content %}
 
 {% block extra_js %}
-<!-- Datos JSON para los gráficos -->
-<script type="application/json" id="bar-chart-data">{{ bar_chart_data|safe }}</script>
-
-<script type="application/json" id="timeline-data">{{ timeline_data|safe }}</script>
-
-<script type="application/json" id="user-labels">{{ user_labels|safe }}</script>
-<script type="application/json" id="auditor-data">{{ auditor_data|safe }}</script>
-<script type="application/json" id="audited-data">{{ audited_data|safe }}</script>
-
-<script type="application/json" id="scatter-data">{{ scatter_data|safe }}</script>
-
-<script type="application/json" id="clasificaciones-labels">{{ clasificaciones_labels|safe }}</script>
-<script type="application/json" id="clasificaciones-values">{{ clasificaciones_values|safe }}</script>
-
 <!-- apexcharts -->
 <script src="{% static 'libs/apexcharts/dist/apexcharts.min.js'%}"></script>
 
