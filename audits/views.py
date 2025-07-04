@@ -275,6 +275,7 @@ def conduct_internal_audits(request):
                 corrective_actions.append(action_dict)
 
         entry = {
+            "audit_data": data,
             "plan_id": plan.id,
             "process": plan.annual_program.process.name,
             "year": plan.annual_program.program_header.year,
