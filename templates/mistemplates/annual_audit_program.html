@@ -67,15 +67,28 @@
                                 </tbody>
                             </table>
                         </div>
-<div class="card mt-5">
-  <div class="card-header bg-primary text-white">
-    Requisitos auditados por mes
-  </div>
-  <div class="card-body">
-    <div id="grafico_requisitos_mes" style="height: 400px;"></div>
-    {{ bar_chart_data|json_script:"bar-chart-data" }}
+                      
+<div class="col-md-12 mt-4">
+  <div class="card card-animate">
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-3">
+        <div>
+          <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
+        </div>
+        <div>
+          <div class="avatar-sm flex-shrink-0">
+            <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
+              <i data-feather="bar-chart-2" class="text-primary"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div id="grafico_requisitos_mes" style="height: 300px;"></div>
+      {{ bar_chart_data|json_script:"bar-chart-data" }}
+    </div>
   </div>
 </div>
+
 
 
                         <div>
@@ -470,49 +483,55 @@ document.addEventListener("DOMContentLoaded", function () {
   const options = {
     chart: {
       type: 'bar',
-      height: 400,
-      toolbar: { show: true }
-    },
-    title: {
-      text: 'Número de Requisitos por Mes',
-      align: 'center',
-      style: {
-        fontSize: '20px',
-        color: '#333'
+      height: 300,
+      toolbar: { show: false },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 500,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        }
       }
     },
+    series: [{
+      name: 'Requisitos',
+      data: valores
+    }],
     xaxis: {
       categories: meses,
-      title: {
-        text: 'Mes',
-        style: {
-          fontSize: '14px',
-          fontWeight: 600
-        }
-      }
+      title: { text: 'Mes', style: { fontWeight: 600 } },
+      labels: { rotate: -45 }
     },
     yaxis: {
-      title: {
-        text: 'Número de Requisitos',
-        style: {
-          fontSize: '14px',
-          fontWeight: 600
+      title: { text: 'N.º de Requisitos', style: { fontWeight: 600 } },
+      labels: { formatter: val => parseInt(val) }
+    },
+    colors: ['#556ee6'],
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: '#f1f1f1'
+    },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return `${val} requisitos`;
         }
       }
     },
-    dataLabels: {
-      enabled: true
-    },
-    colors: ['#1E90FF'],
-    series: [{
-      name: "Requisitos",
-      data: valores
-    }]
+    fill: {
+      opacity: 1
+    }
   };
 
-  const chart = new ApexCharts(document.querySelector("#grafico_requisitos_mes"), options);
-  chart.render();
+  const el = document.querySelector('#grafico_requisitos_mes');
+  if (el) {
+    const chart = new ApexCharts(el, options);
+    chart.render();
+  }
 });
+
 
 
 </script>
