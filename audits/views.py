@@ -284,10 +284,8 @@ def conduct_internal_audits(request):
     # --- Datos para los gráficos ---
 
     # 1) Radar chart: promedio cumplimiento por proceso
-    from yourapp.models import Finding, CorrectiveAction, AuditReport  # importa los modelos correctos
-
     cumplimiento_por_proceso_qs = (
-        Finding.objects.values('proceso')
+        Findings.objects.values('requirement__process__name')  # Ajusta según el campo correcto para proceso
         .annotate(promedio_cumplimiento=Coalesce(Avg(
             Case(
                 When(cumplido=True, then=1.0),
@@ -295,48 +293,49 @@ def conduct_internal_audits(request):
                 output_field=FloatField()
             )
         ), 0.0))
-        .order_by('proceso')
+        .order_by('requirement__process__name')
     )
-    radar_labels = [item['proceso'] for item in cumplimiento_por_proceso_qs]
+    radar_labels = [item['requirement__process__name'] for item in cumplimiento_por_proceso_qs]
     radar_values = [round(item['promedio_cumplimiento'] * 100, 2) for item in cumplimiento_por_proceso_qs]
 
     # 2) Gráfico de barras: hallazgos por clasificación
     hallazgos_por_clasificacion_qs = (
-        Finding.objects.values('clasificacion')
+        Findings.objects.values('classification')
         .annotate(total=Count('id'))
-        .order_by('clasificacion')
+        .order_by('classification')
     )
-    bar_labels = [classification_map.get(item['clasificacion'], item['clasificacion']) for item in hallazgos_por_clasificacion_qs]
+    bar_labels = [classification_map.get(item['classification'], item['classification']) for item in hallazgos_por_clasificacion_qs]
     bar_values = [item['total'] for item in hallazgos_por_clasificacion_qs]
 
     # 3) Gráfico de pastel: distribución cumplimiento (Checklist)
-    total_cumplidas = Finding.objects.filter(cumplido=True).count()
-    total_no_cumplidas = Finding.objects.filter(cumplido=False).count()
+    total_cumplidas = Findings.objects.filter(cumplido=True).count()
+    total_no_cumplidas = Findings.objects.filter(cumplido=False).count()
     pie_labels = ['Cumplidas', 'No Cumplidas']
     pie_values = [total_cumplidas, total_no_cumplidas]
 
     # 4) Gráfico de dispersión: duración acciones correctivas vs severidad
-    acciones = CorrectiveAction.objects.select_related('finding').filter(
-        finding__clasificacion__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
+    acciones = CorrectiveAction.objects.select_related('audit_report').filter(
+        audit_report__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
     )
     scatter_data = []
     severity_map = {'NC_MAYOR':3, 'NC_MENOR':2, 'OPORTUNIDAD_MEJORA':1}
     for a in acciones:
-        sev_num = severity_map.get(a.finding.clasificacion, 0)
+        # Aquí debes calcular duración días (según campos que tengas)
+        sev_num = severity_map.get(a.audit_report.findings.first().classification, 0)
         scatter_data.append({
-            'x': a.duracion_dias,
+            'x': a.duracion_dias if hasattr(a, 'duracion_dias') else 0,  # Ajusta según el campo correcto
             'y': sev_num,
-            'label': a.finding.clasificacion
+            'label': a.audit_report.findings.first().classification if a.audit_report.findings.exists() else ''
         })
 
     # 5) Tabla resumen: auditorías con mayor cantidad de hallazgos
     auditorias_resumen_qs = (
         AuditReport.objects
         .annotate(
-            num_findings=Count('finding'),
+            num_findings=Count('findings'),
             porcentaje_cumplimiento=Avg(
                 Case(
-                    When(finding__cumplido=True, then=1.0),
+                    When(findings__cumplido=True, then=1.0),
                     default=0.0,
                     output_field=FloatField()
                 )
