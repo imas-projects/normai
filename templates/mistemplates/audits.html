@@ -33,6 +33,69 @@
             </div>
             {% endblock pagetitle %}
 
+<div class="col-md-12 mt-4">
+  <div class="card card-animate">
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-3">
+        <div>
+          <p class="fw-medium text-muted mb-0">Requisitos auditados por mes</p>
+        </div>
+        <div>
+          <div class="avatar-sm flex-shrink-0">
+            <span class="avatar-title bg-primary-subtle rounded-circle fs-2">
+              <i data-feather="bar-chart-2" class="text-primary"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div id="grafico_requisitos_mes" style="height: 300px;"></div>
+      {{ bar_chart_data|json_script:"bar-chart-data" }}
+    </div>
+  </div>
+</div>
+
+
+  <div class="row">
+    <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
+<div class="col-md-9 mt-5">
+
+        <div class="card card-animate">
+            <div class="card-body">
+                <h4 class="card-title">Participación de Auditores y Auditados</h4>
+                <div id="participation_chart" style="height: 400px;"></div>
+            </div>
+        </div>
+ 
+
+    <!-- Línea de Tiempo -->
+          <div class="card card-animate">
+            <div class="card-body">
+                <h4 class="card-title">Línea de Tiempo de Auditorías</h4>
+        <div id="timeline-chart" style="min-height: 400px;"></div>
+         </div>
+        </div>
+
+    <!-- Gráficos lado a lado -->
+  <div class="row mb-4">
+    <div class="col-md-6 mt-3">
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title">Distribución de No Conformidades por Clasificación</h4>
+          <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mt-3">
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
+          <div id="scatter_chart" style="min-height: 350px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
             <!-- Tarjeta para el Programa Anual de Auditorías -->
             <div class="card p-4 shadow mt-5">
                 <div class="d-flex justify-content-between align-items-center">
@@ -1771,6 +1834,233 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+  const data = JSON.parse(document.getElementById("bar-chart-data").textContent);
+
+  const meses = data.map(d => d.mes);
+  const valores = data.map(d => d.total_requisitos);
+
+  const options = {
+    chart: {
+      type: 'bar',
+      height: 300,
+      toolbar: { show: false },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 500,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        }
+      }
+    },
+    series: [{
+      name: 'Requisitos',
+      data: valores
+    }],
+    xaxis: {
+      categories: meses,
+      title: { text: 'Mes', style: { fontWeight: 600 } },
+      labels: { rotate: -45 }
+    },
+    yaxis: {
+      title: { text: 'N.º de Requisitos', style: { fontWeight: 600 } },
+      labels: { formatter: val => parseInt(val) }
+    },
+    colors: ['#556ee6'],
+    dataLabels: { enabled: false },
+    grid: {
+      borderColor: '#f1f1f1'
+    },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return `${val} requisitos`;
+        }
+      }
+    },
+    fill: {
+      opacity: 1
+    }
+  };
+
+  const el = document.querySelector('#grafico_requisitos_mes');
+  if (el) {
+    const chart = new ApexCharts(el, options);
+    chart.render();
+  }
+});
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Aumentar artificialmente duración si es demasiado corta
+        const data = {{ timeline_data|safe }}.map(item => {
+            const MIN_DURATION_MS = 1000 * 60 * 60 * 24; // 1 día
+
+            const start = new Date(item.x).getTime();
+            const end = new Date(item.x2).getTime();
+
+            if (end - start < MIN_DURATION_MS) {
+                item.x2 = new Date(start + MIN_DURATION_MS).toISOString();
+            }
+
+            return item;
+        });
+
+        var options = {
+            chart: {
+                height: {{ timeline_data|length }} * 60,
+                type: 'rangeBar'
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: 40,  // grosor vertical, no afecta ancho horizontal
+                    distributed: true
+                }
+            },
+            colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0'],
+            xaxis: {
+                type: 'datetime',
+            },
+            series: [{
+                data: data
+            }],
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy HH:mm'
+                }
+            }
+        };
+
+        var chart = new ApexCharts(document.querySelector("#timeline-chart"), options);
+        chart.render();
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const userLabels = JSON.parse(document.getElementById("user-labels").textContent);
+        const auditorData = JSON.parse(document.getElementById("auditor-data").textContent);
+        const auditedData = JSON.parse(document.getElementById("audited-data").textContent);
+
+        const options = {
+            chart: {
+                type: 'bar',
+                stacked: true,
+                height: 400,
+                toolbar: { show: false }
+            },
+            series: [
+                { name: 'Como Auditor', data: auditorData },
+                { name: 'Como Auditado', data: auditedData }
+            ],
+            xaxis: {
+                categories: userLabels,
+                labels: {
+                    rotate: -45,
+                    style: { fontSize: '12px' }
+                },
+                title: { text: 'Usuarios' }
+            },
+            yaxis: {
+                title: { text: 'Número de Auditorías' }
+            },
+            colors: ['#00b894', '#d63031'],
+            legend: { position: 'top' },
+            dataLabels: { enabled: false },
+            grid: { borderColor: '#f1f1f1' }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#participation_chart"), options);
+        chart.render();
+    });
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Scatter chart
+    const scatterDataRaw = JSON.parse(document.getElementById('scatter-data').textContent);
+    const scatterSeries = [{
+        name: 'Acciones Correctivas',
+        data: scatterDataRaw.map(item => ({
+            x: item.x,
+            y: item.y,
+            z: 5,
+            fillColor: item.label === 'NC_MAYOR' ? '#dc3545' : (item.label === 'NC_MENOR' ? '#fd7e14' : '#34c38f')
+        })),
+    }];
+    const scatterOptions = {
+        chart: { height: 350, type: 'scatter', zoom: { enabled: true }, toolbar: { show: false } },
+        series: scatterSeries,
+        xaxis: { title: { text: 'Duración (días)' } },
+        yaxis: {
+            title: { text: 'Severidad' },
+            min: 0, max: 4, tickAmount: 4,
+            labels: {
+                formatter: val => {
+                    switch(val){
+                        case 1: return 'Oportunidad de Mejora';
+                        case 2: return 'No Conformidad Menor';
+                        case 3: return 'No Conformidad Mayor';
+                        default: return '';
+                    }
+                }
+            }
+        },
+        tooltip: {
+            custom: ({ dataPointIndex }) => {
+                const label = scatterDataRaw[dataPointIndex].label;
+                const duracion = scatterDataRaw[dataPointIndex].x;
+                // Etiquetas más legibles
+                const labelMap = {
+                    'NC_MAYOR': 'No Conformidad Mayor',
+                    'NC_MENOR': 'No Conformidad Menor',
+                    'OPORTUNIDAD_MEJORA': 'Oportunidad de Mejora'
+                };
+                return `<div style="padding:5px;">
+                    <strong>Severidad:</strong> ${labelMap[label] || label}<br/>
+                    <strong>Duración:</strong> ${duracion} días
+                </div>`;
+            }
+        },
+        markers: { size: 7 }
+    };
+    new ApexCharts(document.querySelector('#scatter_chart'), scatterOptions).render();
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const labels = JSON.parse(document.getElementById('clasificaciones-labels').textContent);
+    const values = JSON.parse(document.getElementById('clasificaciones-values').textContent);
+
+    const options = {
+        chart: {
+            type: 'pie',
+            height: 350,
+        },
+        series: values,
+        labels: labels,
+        colors: ['#dc3545', '#fd7e14', '#34c38f'],  // rojo, naranja, verde
+        legend: {
+            position: 'bottom',
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    width: 300
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }]
+    };
+
+    const chart = new ApexCharts(document.querySelector("#nc_distribution_chart"), options);
+    chart.render();
+});
 </script>
 
 
