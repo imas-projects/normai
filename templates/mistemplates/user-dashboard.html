@@ -315,18 +315,17 @@
     
 
 <div class="row">
-    <!-- Gráfica de Tendencia -->
-    <div class="col-xxl-12">
-        <div class="card mt-4 card-height-100">
-            <div class="card-header border-0 align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Tendencia de Auditorías Realizadas por Mes</h4>
-            </div>
-            <div class="card-body">
-                <div id="audit_trend_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
-            </div>
-        </div>
+  <!-- Gráfica de Tendencia -->
+  <div class="col-xxl-12">
+    <div class="card card-animate mt-4 card-height-100">
+      <div class="card-body">
+        <h4 class="card-title">Tendencia de Auditorías Realizadas por Mes</h4>
+        <div id="audit_trend_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+      </div>
     </div>
-    </div>
+  </div>
+</div>
+
                                 </div>
                 
                             <div class="col-xxl-4">
@@ -388,45 +387,37 @@
                             </div>
                             </div><!-- end col -->
                 
-<div class="row">
-    <!-- Tendencia de Alerta Procesos -->
-    <div class="col-xxl-4 col-md-6">
-        <div class="card">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Indicadores en Alerta por Proceso</h4>
-            </div>
-            <div class="card-body pb-0">
-                <div id="process_alert_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
-            </div>
-        </div>
+<div class="row mt-3">
+  <!-- Tendencia de Alerta Procesos -->
+  <div class="col-xxl-4 col-md-6">
+    <div class="card card-animate">
+      <div class="card-body pb-0">
+        <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
+        <div id="process_alert_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+      </div>
     </div>
+  </div>
 
-    <!-- Distribución de No Conformidades -->
-    <div class="col-xxl-4 col-md-6">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Distribución de No Conformidades por Clasificación</h4>
-            </div>
-            <div class="card-body pb-0">
-                <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
-            </div>
-        </div>
+  <!-- Distribución de No Conformidades -->
+  <div class="col-xxl-4 col-md-6">
+    <div class="card card-animate card-height-100">
+      <div class="card-body pb-0">
+        <h4 class="card-title">Distribución de No Conformidades por Clasificación</h4>
+        <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
+      </div>
     </div>
+  </div>
 
-    <!-- Evolución Mensual del Índice de Mejora Continua -->
-    <div class="col-xxl-4">
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Evolución Mensual del Índice de Mejora Continua</h4>
-                <div class="flex-shrink-0">
-                </div>
-            </div><!-- end card header -->
-            <div class="card-body px-0">
-                <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
-            </div>
-        </div><!-- end card -->
-    </div><!-- end col -->
-</div><!-- end row -->
+  <!-- Evolución Mensual del Índice de Mejora Continua -->
+  <div class="col-xxl-4">
+    <div class="card card-animate card-height-100">
+      <div class="card-body px-0">
+        <h4 class="card-title">Evolución Mensual del Índice de Mejora Continua</h4>
+        <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Scripts para gráficas -->
 {{ auditorias_labels|json_script:"auditorias-labels" }}
