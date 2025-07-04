@@ -132,7 +132,7 @@ def annual_audit_program(request):
 # === ANNUAL AUDIT PLAN ===
 
 from itertools import zip_longest
-from django.utils.dateformat import format as format_date
+from babel.dates import format_date
 from datetime import datetime as dt
 @csrf_protect
 @login_required
@@ -212,6 +212,7 @@ def annual_audit_plan(request):
         "auditor_data": auditor_data,
         "audited_data": audited_data,
     })
+
 
 
 
