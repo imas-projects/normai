@@ -323,17 +323,22 @@ def conduct_internal_audits(request):
         audit_report__audit_plan__findings__classification__in=['NC_MAYOR', 'NC_MENOR', 'OPORTUNIDAD_MEJORA']
     ).distinct()
 
-    if action.due_date:
-        duracion_dias = (now().date() - action.due_date).days
-        duracion_dias = duracion_dias if duracion_dias > 0 else 0
-    else:
-        duracion_dias = 0
+    for action in acciones:
+        findings = action.audit_report.audit_plan.findings.all()
+        if findings.exists():
+            sev_num = severity_map.get(findings.first().classification, 0)
+            if action.due_date:
+                duracion_dias = (now().date() - action.due_date).days
+                duracion_dias = duracion_dias if duracion_dias > 0 else 0
+            else:
+                duracion_dias = 0
 
             scatter_data.append({
                 'x': duracion_dias,
                 'y': sev_num,
                 'label': findings.first().classification,
             })
+
 
     context = {
         "audit_data": data,
