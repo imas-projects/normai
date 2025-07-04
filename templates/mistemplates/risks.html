@@ -141,6 +141,8 @@
 
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
+<p>Estoy dentro del bloque de grouped_risks</p>
+
 {% for area, processes in grouped_risks.items %}
   <div class="accordion mb-3" id="accordion-{{ area.name|slugify }}">
     <div class="accordion-item">
