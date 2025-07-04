@@ -349,13 +349,13 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
     document.addEventListener('DOMContentLoaded', function () {
         var options = {
             chart: {
-                height: {{ timeline_data|length|add:"1" }} * 60,
+                height: {{ timeline_data|length }} * 60,  // espacio por barra
                 type: 'rangeBar'
             },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    barHeight: '1000%',  
+                    barHeight: 30,  // grosor real
                     distributed: true
                 }
             },
@@ -376,6 +376,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
         var chart = new ApexCharts(document.querySelector("#timeline-chart"), options);
         chart.render();
     });
+
 </script>
 
 
