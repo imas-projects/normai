@@ -137,6 +137,15 @@
         </div>
     </div>
 </div>
+                
+<p>Áreas encontradas:</p>
+<ul>
+{% for area, processes in grouped_risks.items %}
+  <li>{{ area }} ({{ processes|length }} procesos)</li>
+{% empty %}
+  <li>No hay riesgos agrupados</li>
+{% endfor %}
+</ul>
 
 
 <div class="d-flex mt-3">
@@ -165,14 +174,13 @@
                           aria-controls="collapse-{{ area|slugify }}-{{ process|slugify }}">
                     {{ process }}
                   </button>
-
-                  <a href="{% url 'risks:download_risks_pdf' area.name process.name %}" class="btn btn-danger btn-sm ms-2">
+                  <a href="{% url 'risks:download_risks_pdf' area process %}" class="btn btn-danger btn-sm ms-2">
                     <i class="ri-file-download-line"></i> Descargar PDF
                   </a>
                 </h2>
-                <div id="collapse-{{ area.name|slugify }}-{{ process.name|slugify }}" class="accordion-collapse collapse"
-                     aria-labelledby="heading-{{ area.name|slugify }}-{{ process.name|slugify }}"
-                     data-bs-parent="#accordion-{{ area.name|slugify }}-{{ process.name|slugify }}">
+                <div id="collapse-{{ area|slugify }}-{{ process|slugify }}" class="accordion-collapse collapse"
+                     aria-labelledby="heading-{{ area|slugify }}-{{ process|slugify }}"
+                     data-bs-parent="#accordion-{{ area|slugify }}-{{ process|slugify }}">
                   <div class="accordion-body">
                     {% for risk in risks %}
 
