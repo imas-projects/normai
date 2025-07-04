@@ -32,15 +32,6 @@ def create_risk(request):
     for risk in all_risks:
         grouped_risks[risk.area][risk.process].append(risk)
 
-    # DEBUGGING PRINTS
-    print(f"Total riesgos encontrados: {all_risks.count()}")
-    for area, processes in grouped_risks.items():
-        print(f"Área: {area.name}")
-        for process, risks in processes.items():
-            print(f"  Proceso: {process.name} - {len(risks)} riesgos")
-
-
-
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
     contingency_plans = ContingencyPlan.objects.select_related('risk').all()
