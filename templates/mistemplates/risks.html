@@ -510,16 +510,18 @@
                             </div>
                         </div>
                     </div>
-                  {% endfor %}
-{% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-    {% endfor %}
-  </div>
-</div>
-</div>
+                    {% endfor %} {# Fin del for risk in risks #}
+                  </div> {# .accordion-body de proceso #}
+                </div> {# .accordion-collapse de proceso #}
+              </div> {# .accordion-item de proceso #}
+            </div> {# .accordion de proceso #}
+          {% endfor %} {# Fin del for process, risks in processes.items #}
+        </div> {# .accordion-body de área #}
+      </div> {# .accordion-collapse de área #}
+    </div> {# .accordion-item de área #}
+  </div> {# .accordion de área #}
+{% endfor %} {# Fin del for area, processes in grouped_risks.items #}
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
