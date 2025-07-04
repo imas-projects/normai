@@ -137,17 +137,6 @@
         </div>
     </div>
 </div>
-                
-<p>Total riesgos: {{ all_risks.count }}</p>
-<ul>
-{% for risk in all_risks %}
-  <li>{{ risk.identified_risk }} - Área: {{ risk.area.name }} - Proceso: {{ risk.process.name }}</li>
-{% empty %}
-  <li>No hay riesgos</li>
-{% endfor %}
-</ul>
-
-
 
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
