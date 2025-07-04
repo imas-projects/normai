@@ -39,93 +39,96 @@
             </div>
             {% endblock pagetitle %}
 
-                <div class="row">
-                    <div class="col-md-6 mt-5">
-                        <h3 class="text-center">Programa de Auditorias</h3>
-                        <div class="table-responsive">
-                            <table class="table table-bordered mt-3">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Proceso</th>
-                                        <th>Año</th>
-                                        <th>Mes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for plan in audit_data %}
-                                    <tr>
-                                        <td>{{ plan.process }}</td>
-                                        <td>{{ plan.year }}</td>
-                                        <td>{{ plan.month }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center">No hay programas disponibles.</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-
-    <h3 class="text-center">Línea de Tiempo de Auditorías</h3>
-    <div class="card-body">
-      <div id="timeline-chart" style="min-height: 400px;"></div>
-    </div>
-
-
-
-<div class="mt-5">
-    <h3 class="text-center">Equipo Auditor y Auditados</h3>
-    <div class="table-responsive">
-        <table class="table table-bordered mt-3">
-            <thead class="table-dark">
-                <tr>
-                    <th>Auditores</th>
-                    <th>Auditados</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for plan in audit_data %}
-                    {% for auditor, audited in plan.paired_team %}
+<div class="row">
+    <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
+    <div class="col-md-6 mt-5">
+        <!-- Programa de Auditorías -->
+        <h3 class="text-center">Programa de Auditorías</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered mt-3">
+                <thead class="table-dark">
                     <tr>
-                        <td>{% if auditor %}{{ auditor }}{% endif %}</td>
-                        <td>{% if audited %}{{ audited }}{% endif %}</td>
+                        <th>Proceso</th>
+                        <th>Año</th>
+                        <th>Mes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plan in audit_data %}
+                    <tr>
+                        <td>{{ plan.process }}</td>
+                        <td>{{ plan.year }}</td>
+                        <td>{{ plan.month }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No hay programas disponibles.</td>
                     </tr>
                     {% endfor %}
-                {% empty %}
-                    <tr>
-                        <td colspan="2" class="text-center">No hay auditores ni auditados disponibles</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-                    </div>
-                <div class="row">
-                    <div class="col-md-6 mt-5">
-                        <h3 class="text-center">Reuniones de Auditorias</h3>
-                        <div class="row">
-                            {% for plan in audit_data %}
-                            <div class="col-md-12">
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h5 class="card-title text-primary">Reunión de Apertura</h5>
-                                        <p><strong>Localización:</strong> {{ plan.audit_opening_location }}</p>
-                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_opening_date }} {{ plan.audit_opening_time }}</p>
+                </tbody>
+            </table>
+        </div>
 
-                                        <h5 class="card-title text-danger">Reunión de Cierre</h5>
-                                        <p><strong>Localización:</strong> {{ plan.audit_closing_location }}</p>
-                                        <p><strong>Fecha y hora:</strong> {{ plan.audit_closing_date }} {{ plan.audit_closing_time }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <p class="text-center">no hay planes disponibles.</p>
+        <!-- Línea de Tiempo -->
+        <h3 class="text-center mt-5">Línea de Tiempo de Auditorías</h3>
+        <div class="card-body">
+            <div id="timeline-chart" style="min-height: 400px;"></div>
+        </div>
+
+        <!-- Equipo Auditor y Auditados -->
+        <div class="mt-5">
+            <h3 class="text-center">Equipo Auditor y Auditados</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered mt-3">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Auditores</th>
+                            <th>Auditados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in audit_data %}
+                            {% for auditor, audited in plan.paired_team %}
+                            <tr>
+                                <td>{% if auditor %}{{ auditor }}{% endif %}</td>
+                                <td>{% if audited %}{{ audited }}{% endif %}</td>
+                            </tr>
                             {% endfor %}
-                        </div>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center">No hay auditores ni auditados disponibles</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna derecha: Reuniones -->
+    <div class="col-md-6 mt-5">
+        <h3 class="text-center">Reuniones de Auditorías</h3>
+        <div class="row">
+            {% for plan in audit_data %}
+            <div class="col-md-12">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">Reunión de Apertura</h5>
+                        <p><strong>Localización:</strong> {{ plan.audit_opening_location }}</p>
+                        <p><strong>Fecha y hora:</strong> {{ plan.audit_opening_date }} {{ plan.audit_opening_time }}</p>
+
+                        <h5 class="card-title text-danger">Reunión de Cierre</h5>
+                        <p><strong>Localización:</strong> {{ plan.audit_closing_location }}</p>
+                        <p><strong>Fecha y hora:</strong> {{ plan.audit_closing_date }} {{ plan.audit_closing_time }}</p>
                     </div>
                 </div>
-                      </div>
+            </div>
+            {% empty %}
+            <p class="text-center">No hay planes disponibles.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 
 
 
