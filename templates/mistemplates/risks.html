@@ -138,14 +138,15 @@
     </div>
 </div>
                 
-<p>Áreas encontradas:</p>
+<p>Total riesgos: {{ all_risks.count }}</p>
 <ul>
-{% for area, processes in grouped_risks.items %}
-  <li>{{ area }} ({{ processes|length }} procesos)</li>
+{% for risk in all_risks %}
+  <li>{{ risk.identified_risk }} - Área: {{ risk.area.name }} - Proceso: {{ risk.process.name }}</li>
 {% empty %}
-  <li>No hay riesgos agrupados</li>
+  <li>No hay riesgos</li>
 {% endfor %}
 </ul>
+
 
 
 <div class="d-flex mt-3">
