@@ -138,48 +138,59 @@
     </div>
 </div>
 
-<div class="container">
-  <div class="row">
-    <!-- Columna Izquierda 1 -->
-    <div class="col-md-3">
-      <!-- Riesgos por Proceso y Nivel -->
-      <div class="card mt-3">
-        <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
-        <div class="card-body">
-          <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
-        </div>
+<div class="row">
+  <!-- Columna Izquierda 1 -->
+  <div class="col-md-3">
+    <!-- Riesgos por Proceso y Nivel -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Riesgos por Proceso y Nivel</h4></div>
+      <div class="card-body">
+        <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna Izquierda 2 -->
+  <div class="col-md-3">
+    <!-- Distribución por Nivel de Riesgo -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
+      <div class="card-body">
+        <div id="pie_riesgos_nivel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aquí terminan las dos columnas arriba. Ahora un nuevo row para las dos tarjetas que ocupan ambas columnas (6 cols) -->
+
+  <div class="col-md-6">
+    <!-- Acciones de Contingencia -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
+      <div class="card-body">
+        <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
 
-    <!-- Columna Izquierda 2 -->
-    <div class="col-md-3">
-      <!-- Distribución por Nivel de Riesgo -->
-      <div class="card mt-3">
-        <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
-        <div class="card-body">
-          <div id="pie_riesgos_nivel"></div>
-        </div>
+    <!-- Mapa FODA Riesgo -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
+      <div class="card-body">
+        <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna Derecha (6 cols) -->
+  <div class="col-md-6">
+    <!-- Aquí va el contenido de la mitad derecha -->
+    <div class="card mt-3">
+      <div class="card-header"><h4>Cronograma de Tratamiento</h4></div>
+      <div class="card-body">
+        <div id="gantt_tratamientos"></div>
       </div>
     </div>
 
-    <!-- Div para que las dos tarjetas ocupen ambas columnas -->
-    <div class="col-md-6">
-      <!-- Acciones de Contingencia -->
-      <div class="card mt-3">
-        <div class="card-header"><h4>Acciones de Contingencia</h4></div>
-        <div class="card-body">
-          <div id="pie_acciones_contingencia"></div>
-        </div>
-      </div>
-
-      <!-- Mapa FODA Riesgo -->
-      <div class="card mt-3">
-        <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
-        <div class="card-body">
-          <div id="bubble_foda_riesgo" style="height: 350px;"></div>
-        </div>
-      </div>
-    </div>
 
     <!-- Columna Derecha (6 cols) -->
     <div class="col-md-6">
