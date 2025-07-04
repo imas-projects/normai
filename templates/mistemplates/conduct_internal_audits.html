@@ -958,7 +958,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const radarLabels = JSON.parse(document.getElementById('radar-labels').textContent);
     const radarValues = JSON.parse(document.getElementById('radar-values').textContent);
     const radarOptions = {
-        chart: { height: 350, type: 'radar', toolbar: { show: false } },
+        chart: { height: 700, type: 'radar', toolbar: { show: false } },
         series: [{ name: 'Cumplimiento (%)', data: radarValues }],
         labels: radarLabels,
         yaxis: { min: 0, max: 100, tickAmount: 5, labels: { formatter: val => val + '%' } },
