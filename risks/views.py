@@ -30,7 +30,9 @@ def create_risk(request):
 
     grouped_risks = defaultdict(lambda: defaultdict(list))
     for risk in all_risks:
-        grouped_risks[risk.area][risk.process].append(risk)
+        if risk.area and risk.process:
+            grouped_risks[risk.area.name][risk.process.name].append(risk)
+
 
     evaluations = RiskEvaluation.objects.select_related('risk').all()
     treatments = RiskTreatment.objects.select_related('risk').all()
