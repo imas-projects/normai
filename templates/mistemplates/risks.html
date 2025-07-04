@@ -151,7 +151,7 @@
 
   <!-- Pie de Niveles -->
   <div class="col-md-6 mt-3">
-    <div class="card">
+    <div class="card" style="width: 50%; margin-left: auto; margin-right: auto;">
       <div class="card-header"><h4>Distribución por Nivel de Riesgo</h4></div>
       <div class="card-body">
         <div id="pie_riesgos_nivel"></div>
@@ -161,7 +161,7 @@
 
   <!-- Pie de Acciones -->
   <div class="col-md-6 mt-3">
-    <div class="card">
+    <div class="card" style="width: 50%; margin-left: auto; margin-right: auto;">
       <div class="card-header"><h4>Acciones de Contingencia</h4></div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
@@ -175,6 +175,9 @@
   <div class="card-header"><h4>Mapa FODA de Riesgo</h4></div>
   <div class="card-body">
     <div id="bubble_foda_riesgo" style="height: 350px;"></div>
+    <small class="text-muted">
+      <strong>Colores:</strong> Rojo: Alto, Amarillo: Moderado, Verde: Bajo. Tamaño de burbuja: 10 - Detección (menor = más crítico)
+    </small>
   </div>
 </div>
 
@@ -198,10 +201,12 @@
   <div class="card-header"><h4>Radar Reevaluación</h4></div>
   <div class="card-body">
     <div id="radar_reevaluacion"></div>
+    <small class="text-muted">
+      Este radar representa los valores de Severidad, Ocurrencia y Detección en la última reevaluación del riesgo.
+    </small>
   </div>
 </div>
-
-
+</div>
 <div class="d-flex mt-3">
   <div class="w-50 ms-auto">
     {% for key, risks in grouped_risks.items %}
@@ -1551,7 +1556,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // === A. Riesgos por Proceso ===
   const procesos = JSON.parse(document.getElementById('procesos').textContent);
   const alto = JSON.parse(document.getElementById('riesgo-alto').textContent);
   const moderado = JSON.parse(document.getElementById('riesgo-moderado').textContent);
@@ -1568,23 +1572,46 @@ document.addEventListener("DOMContentLoaded", function () {
     colors: ['#e74c3c', '#f1c40f', '#2ecc71']
   }).render();
 
-  // === A. Pie Charts ===
+  // === Pie de Riesgo ===
   const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
   const pieValues = JSON.parse(document.getElementById('pie-values').textContent);
+  const pieColors = pieLabels.map(label =>
+    label === 'High' ? '#e74c3c' : label === 'Moderate' ? '#f1c40f' : '#2ecc71');
+  const translatedLabels = pieLabels.map(label =>
+    label === 'High' ? 'Alto' : label === 'Moderate' ? 'Moderado' : 'Bajo');
 
   new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
     chart: { type: 'pie' },
     series: pieValues,
-    labels: pieLabels
+    labels: translatedLabels,
+    colors: pieColors
   }).render();
 
+  // === Pie de Acciones de Contingencia ===
   const accionesLabels = JSON.parse(document.getElementById('acciones-labels').textContent);
   const accionesValues = JSON.parse(document.getElementById('acciones-values').textContent);
+  const translatedMap = {
+    "N/A": "N/A",
+    "ALT_PROCEDURES": "Procedimientos alternativos",
+    "ALT_SUPPLIERS": "Proveedores sustitutos",
+    "BACKUP_STAFF": "Personal de respaldo",
+    "EMERGENCY_STOCK": "Inventario de emergencia",
+    "TECH_REDUNDANCY": "Redundancia tecnológica",
+    "CRISIS_COMM": "Comunicación de crisis",
+    "DRILLS": "Simulacros y pruebas",
+    "INSURANCE": "Cobertura/Seguro",
+    "OUTSOURCE": "Externalización temporal",
+    "MANUALS": "Manuales de operación"
+  };
+  const translatedAcciones = accionesLabels.map(l => translatedMap[l] || l);
+
+  const uniqueColors = accionesLabels.map((_, i) => `hsl(${i * 36}, 70%, 60%)`);
 
   new ApexCharts(document.querySelector("#pie_acciones_contingencia"), {
     chart: { type: 'donut' },
     series: accionesValues,
-    labels: accionesLabels
+    labels: translatedAcciones,
+    colors: uniqueColors
   }).render();
 
   // === B. FODA Riesgo ===
@@ -1599,27 +1626,29 @@ document.addEventListener("DOMContentLoaded", function () {
   new ApexCharts(document.querySelector("#bubble_foda_riesgo"), {
     chart: { height: 350, type: 'bubble' },
     series: [{ name: "Riesgos", data: fodaSeries }],
-    xaxis: { title: { text: 'Ocurrencia' } },
-    yaxis: { title: { text: 'Severidad' } }
+    xaxis: { title: { text: 'Ocurrencia' }, min: 0, max: 10 },
+    yaxis: { title: { text: 'Severidad' }, min: 0, max: 10 }
   }).render();
 
   // === C. Cronograma Tratamiento ===
   const cronograma = JSON.parse(document.getElementById('cronograma-data').textContent);
-  const ganttSeries = cronograma.map((item, i) => ({
-    x: item.accion,
-    y: [new Date(item.inicio).getTime(), new Date(item.fin).getTime()]
+  const ganttSeries = cronograma.map(item => ({
+    x: '',
+    y: [new Date(item.inicio).getTime(), new Date(item.fin).getTime()],
+    name: item.accion
   }));
 
   new ApexCharts(document.querySelector("#gantt_tratamientos"), {
     chart: { type: 'rangeBar', height: 300 },
     plotOptions: {
-      bar: {
-        horizontal: true,
-        rangeBarGroupRows: true
-      }
+      bar: { horizontal: true, rangeBarGroupRows: true }
+    },
+    tooltip: {
+      y: { formatter: (_, opts) => opts.w.globals.initialSeries[0].data[opts.dataPointIndex].name }
     },
     series: [{ data: ganttSeries }],
-    xaxis: { type: 'datetime' }
+    xaxis: { type: 'datetime' },
+    yaxis: { show: false }
   }).render();
 
   // === C. Acciones por Responsable ===
@@ -1629,26 +1658,23 @@ document.addEventListener("DOMContentLoaded", function () {
   new ApexCharts(document.querySelector("#bar_responsables_acciones"), {
     chart: { type: "bar", height: 300 },
     series: [{ name: "Acciones", data: responsablesValues }],
-    xaxis: { categories: responsablesLabels }
+    xaxis: {
+      categories: responsablesLabels,
+      labels: { rotate: -45, style: { fontSize: '10px' } }
+    }
   }).render();
 
   // === D. Radar Reevaluación ===
   const reevaluaciones = JSON.parse(document.getElementById('reevaluaciones-data').textContent);
-  const radarSeries = [{
-    name: 'Última Reevaluación',
-    data: [
-      reevaluaciones[reevaluaciones.length - 1]?.severity || 0,
-      reevaluaciones[reevaluaciones.length - 1]?.occurrence || 0,
-      reevaluaciones[reevaluaciones.length - 1]?.detection || 0
-    ]
-  }];
+  const last = reevaluaciones[reevaluaciones.length - 1] || { severity: 0, occurrence: 0, detection: 0 };
 
   new ApexCharts(document.querySelector("#radar_reevaluacion"), {
     chart: { type: 'radar', height: 300 },
-    series: radarSeries,
+    series: [{ name: 'Valores', data: [last.severity, last.occurrence, last.detection] }],
     labels: ['Severidad', 'Ocurrencia', 'Detección']
   }).render();
 });
 </script>
+
 
 {% endblock extra_js %}
