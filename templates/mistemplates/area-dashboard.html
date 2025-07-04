@@ -28,54 +28,52 @@
                 </div>
             </div>
             
-<div class="col-md-4 mt-4">
-  <div class="card">
-    <div class="card-header">
-      <h5 class="mb-0">Tablas de Comunicación</h5>
+<div class="container">
+  <div class="row">
+    <!-- Izquierda: Tablas de Comunicación -->
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header"><h5>Tablas de Comunicación</h5></div>
+        <div class="card-body" id="communication-table-list">
+          {% include 'mistemplates/_communication_table_list.html' %}
+        </div>
+      </div>
     </div>
-    <div class="card-body" id="communication-table-list">
-      {% include 'mistemplates/_communication_table_list.html' %}
-    </div>
-  </div>
-</div>
 
-    <div class="row mt-3">
-      <div class="col-6">
-        <div class="card card-animate">
-          <div class="card-body">
-            <h4 class="card-title d-flex justify-content-between align-items-center">
-              Riesgos por Proceso y Nivel
-              <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
-                <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-              </button>
-            </h4>
-            <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
-          </div>
+    <!-- Centro: Gráficos apilados verticalmente -->
+    <div class="col-md-6">
+      <div class="card card-animate mb-4">
+        <div class="card-body">
+          <h4 class="card-title d-flex justify-content-between align-items-center">
+            Riesgos por Proceso y Nivel
+            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
+              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+            </button>
+          </h4>
+          <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
         </div>
       </div>
 
-      <div class="col-6">
-        <div class="card card-animate">
-          <div class="card-body">
-            <h4 class="card-title d-flex justify-content-between align-items-center">
-              Distribución por Nivel de Riesgo
-              <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
-                <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-              </button>
-            </h4>
-            <div id="pie_riesgos_nivel" style="height: 300px;"></div>
-          </div>
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title d-flex justify-content-between align-items-center">
+            Distribución por Nivel de Riesgo
+            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
+              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+            </button>
+          </h4>
+          <div id="pie_riesgos_nivel" style="height: 300px;"></div>
         </div>
       </div>
-    </div> 
+    </div>
 
-  <div class="col-md-4 mt-4">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0">Próximas Actividades</h5>
-      </div>
-      <div class="card-body" id="activity-list">
-        {% include 'mistemplates/_activity_list.html' %}
+    <!-- Derecha: Próximas actividades -->
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header"><h5>Próximas Actividades</h5></div>
+        <div class="card-body" id="activity-list">
+          {% include 'mistemplates/_activity_list.html' %}
+        </div>
       </div>
     </div>
   </div>
@@ -199,21 +197,23 @@ document.addEventListener("DOMContentLoaded", function () {
   let pieChart = null;
 
   // Función para renderizar gráfica de barras
-  function renderBar(state = "eval") {
-    if (barChart) barChart.destroy();
-    barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
-      chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
-      series: [
-        { name: "Alto", data: datasets[state].alto },
-        { name: "Moderado", data: datasets[state].moderado },
-        { name: "Bajo", data: datasets[state].bajo }
-      ],
-      xaxis: { categories: datasets[state].procesos, labels: { show: true } },
-      tooltip: { x: { show: true } },
-      colors: [pieColors.High, pieColors.Moderate, pieColors.Low]
-    });
-    barChart.render();
-  }
+function renderBar(state = currentBarState) {
+  currentBarState = state;  // actualizar variable global
+  if (barChart) barChart.destroy();
+  barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
+    chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
+    series: [
+      { name: "Alto", data: datasets[state].alto },
+      { name: "Moderado", data: datasets[state].moderado },
+      { name: "Bajo", data: datasets[state].bajo }
+    ],
+    xaxis: { categories: datasets[state].procesos, labels: { show: false } },  // acá está el cambio
+    tooltip: { x: { show: true } },
+    colors: [pieColors.High, pieColors.Moderate, pieColors.Low]
+  });
+  barChart.render();
+}
+
 
   // Función para renderizar gráfica pie
   function renderPie(state = "eval") {
