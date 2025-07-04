@@ -172,30 +172,13 @@
         <div id="bubble_foda_riesgo" style="height: 350px;"></div>
       </div>
     </div>
-
-    <!-- C. Cronograma y Acciones -->
-    <div class="card mt-4">
-      <div class="card-header"><h4>Cronograma de Tratamiento</h4></div>
-      <div class="card-body">
-        <div id="gantt_tratamientos"></div>
-      </div>
-    </div>
-
+      
     <div class="card mt-4">
       <div class="card-header"><h4>Acciones por Responsable</h4></div>
       <div class="card-body">
         <div id="bar_responsables_acciones"></div>
       </div>
     </div>
-
-    <!-- D. Reevaluaciones -->
-    <div class="card mt-4">
-      <div class="card-header"><h4>Radar Reevaluación</h4></div>
-      <div class="card-body">
-        <div id="radar_reevaluacion"></div>
-      </div>
-    </div>
-  </div>
 
 
 <div class="col-md-6">
@@ -1621,26 +1604,6 @@ document.addEventListener("DOMContentLoaded", function () {
     yaxis: { title: { text: 'Severidad' }, min: 0, max: 10 }
   }).render();
 
-  // === C. Cronograma Tratamiento ===
-  const cronograma = JSON.parse(document.getElementById('cronograma-data').textContent);
-  const ganttSeries = cronograma.map(item => ({
-    x: '',
-    y: [new Date(item.inicio).getTime(), new Date(item.fin).getTime()],
-    name: item.accion
-  }));
-
-  new ApexCharts(document.querySelector("#gantt_tratamientos"), {
-    chart: { type: 'rangeBar', height: 300 },
-    plotOptions: {
-      bar: { horizontal: true, rangeBarGroupRows: true }
-    },
-    tooltip: {
-      y: { formatter: (_, opts) => opts.w.globals.initialSeries[0].data[opts.dataPointIndex].name }
-    },
-    series: [{ data: ganttSeries }],
-    xaxis: { type: 'datetime' },
-    yaxis: { show: false }
-  }).render();
 
   // === C. Acciones por Responsable ===
   const responsablesLabels = JSON.parse(document.getElementById('responsables-labels').textContent);
@@ -1653,16 +1616,6 @@ document.addEventListener("DOMContentLoaded", function () {
       categories: responsablesLabels,
       labels: { rotate: -45, style: { fontSize: '10px' } }
     }
-  }).render();
-
-  // === D. Radar Reevaluación ===
-  const reevaluaciones = JSON.parse(document.getElementById('reevaluaciones-data').textContent);
-  const last = reevaluaciones[reevaluaciones.length - 1] || { severity: 0, occurrence: 0, detection: 0 };
-
-  new ApexCharts(document.querySelector("#radar_reevaluacion"), {
-    chart: { type: 'radar', height: 300 },
-    series: [{ name: 'Valores', data: [last.severity, last.occurrence, last.detection] }],
-    labels: ['Severidad', 'Ocurrencia', 'Detección']
   }).render();
 });
 </script>
