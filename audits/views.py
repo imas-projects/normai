@@ -47,6 +47,7 @@ from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annu
 @csrf_protect
 @login_required
 def audits_home(request):
+    today = datetime.today()
     current_year = today.year
     all_months_current_year = [(current_year, m) for m in range(1, 13)]
     combined_months = sorted(set(all_months_current_year) | set(month_range))
