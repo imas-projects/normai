@@ -52,130 +52,131 @@
                 </div>
             </div>
             {% endblock pagetitle %}
-
-        <div class="card card-height-100">
-            <div class="card-header align-items-center d-flex">
-                <h4 class="card-title mb-0 flex-grow-1">Distribución de No Conformidades por Clasificación</h4>
-            </div>
-            <div class="card-body pb-0">
-                <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
-            </div>
+  <!-- Gráficos lado a lado -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title">Distribución de No Conformidades por Clasificación</h4>
+          <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
         </div>
-          
-<div class="card card-animate mt-4">
-  <div class="card-body">
-    <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
-    <div id="scatter_chart" style="max-width:600px; margin: 35px auto;"></div>
-  </div>
-</div>
-
-    
-    {% for audit in audit_data %}
-    <div class="card mb-4 shadow-sm">
-      <div class="card-header bg-dark text-center" style="color: white !important;">
-        <h3 class="mb-0" style="color: white !important;">Auditoría: {{ audit.process }}</h3>
       </div>
+    </div>
 
-      <div class="card-body fs-5">
-        <div class="row">
-          <!-- Columna izquierda -->
-          <div class="col-md-6">
-            <!-- Evaluación por el Auditado -->
-            <h4 class="mt-3">Evaluación por el Auditado</h4>
-            {% if audit.auditor_evaluation %}
-            <ul class="list-group mb-3">
-              {% for eval in audit.auditor_evaluation %}
-              <li class="list-group-item">
-                <strong>P{{ eval.orden }}:</strong> {{ eval.question.question_text }}<br>
-                <strong>Requisito:</strong> {{ eval.question.requirement }}<br>
-                <strong>Valoración:</strong> {{ eval.rate }}
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No hay evaluaciones.</p>
-            {% endif %}
+    <div class="col-md-6">
+      <div class="card card-animate">
+        <div class="card-body">
+          <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
+          <div id="scatter_chart" style="min-height: 350px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            <!-- Checklist -->
-            <h4 class="mt-4">Lista de Verificación</h4>
-            {% if audit.checklist %}
-            <ul class="list-group mb-3">
-              {% for item in audit.checklist %}
-              <li class="list-group-item">
-                <strong>P{{ item.orden }}:</strong> {{ item.question_text }}<br>
-                <strong>Cumplimiento:</strong> {{ item.compliance|yesno:"Sí,No" }}<br>
-                {% if item.evidence %}
-                <strong>Evidencia:</strong> {{ item.evidence }}
-                {% endif %}
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No checklist disponible.</p>
-            {% endif %}
-          </div>
+  <!-- Acordeones para auditorías -->
+  <div class="accordion" id="auditsAccordion">
+    {% for audit in audit_data %}
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+        <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+          Auditoría: {{ audit.process }}
+        </button>
+      </h2>
+      <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#auditsAccordion">
+        <div class="accordion-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h4>Evaluación por el Auditado</h4>
+              {% if audit.auditor_evaluation %}
+              <ul class="list-group mb-3">
+                {% for eval in audit.auditor_evaluation %}
+                <li class="list-group-item">
+                  <strong>P{{ eval.orden }}:</strong> {{ eval.question.question_text }}<br>
+                  <strong>Requisito:</strong> {{ eval.question.requirement }}<br>
+                  <strong>Valoración:</strong> {{ eval.rate }}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No hay evaluaciones.</p>
+              {% endif %}
 
-          <!-- Columna derecha -->
-          <div class="col-md-6">
-            <!-- Hallazgos -->
-            <h4 class="mt-3">Hallazgos</h4>
-            {% if audit.findings %}
-            <ul class="list-group mb-3">
-              {% for f in audit.findings %}
-              <li class="list-group-item">
-                <strong>Hallazgo:</strong> {{ f.finding_text }}<br>
-                {{ f.text }}
-                <strong>Requisito:</strong> {{ f.requirement }}<br>
-                <strong>Clasificación:</strong> {{ f.classification_text }}<br>
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No hay hallazgos disponibles.</p>
-            {% endif %}
+              <h4>Lista de Verificación</h4>
+              {% if audit.checklist %}
+              <ul class="list-group mb-3">
+                {% for item in audit.checklist %}
+                <li class="list-group-item">
+                  <strong>P{{ item.orden }}:</strong> {{ item.question_text }}<br>
+                  <strong>Cumplimiento:</strong> {{ item.compliance|yesno:"Sí,No" }}<br>
+                  {% if item.evidence %}
+                  <strong>Evidencia:</strong> {{ item.evidence }}
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No checklist disponible.</p>
+              {% endif %}
+            </div>
 
-            <!-- Reporte de Auditoría -->
-            <h4 class="mt-4">Reporte de Auditoría</h4>
-            {% if audit.report %}
-            <p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
-            <p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
-            <p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
-            {% else %}
-            <p>No hay reporte de auditoría.</p>
-            {% endif %}
+            <div class="col-md-6">
+              <h4>Hallazgos</h4>
+              {% if audit.findings %}
+              <ul class="list-group mb-3">
+                {% for f in audit.findings %}
+                <li class="list-group-item">
+                  <strong>Hallazgo:</strong> {{ f.finding_text }}<br>
+                  {{ f.text }}
+                  <strong>Requisito:</strong> {{ f.requirement }}<br>
+                  <strong>Clasificación:</strong> {{ f.classification_text }}<br>
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No hay hallazgos disponibles.</p>
+              {% endif %}
 
-            <!-- Acciones Correctivas -->
-            <h4 class="mt-4">Acciones Correctivas</h4>
-            {% if audit.corrective_actions %}
-            <ul class="list-group mb-3">
-              {% for ca in audit.corrective_actions %}
-              <li class="list-group-item">
-                <strong>Acción:</strong> {{ ca.corrective_action }}<br>
-                <strong>Responsable:</strong> {{ ca.responsible_user.full_name }}<br>
-                <strong>Fecha Límite:</strong> {{ ca.due_date }}
+              <h4>Reporte de Auditoría</h4>
+              {% if audit.report %}
+              <p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
+              <p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
+              <p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
+              {% else %}
+              <p>No hay reporte de auditoría.</p>
+              {% endif %}
 
-                {% if ca.followups %}
-                <div class="mt-2">
-                  <strong>Seguimientos:</strong>
-                  <ul class="list-group mt-1">
-                    {% for f in ca.followups %}
-                    <li class="list-group-item">
-                      <strong>Fecha:</strong> {{ f.followup_date }}<br>
-                      <strong>Estado:</strong> {{ f.status }}<br>
-                      {% if f.comments %}
-                      <strong>Comentarios:</strong> {{ f.comments }}
-                      {% endif %}
-                    </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-                {% endif %}
-              </li>
-              {% endfor %}
-            </ul>
-            {% else %}
-            <p>No hay acciones correctivas registradas.</p>
-            {% endif %}
+              <h4>Acciones Correctivas</h4>
+              {% if audit.corrective_actions %}
+              <ul class="list-group mb-3">
+                {% for ca in audit.corrective_actions %}
+                <li class="list-group-item">
+                  <strong>Acción:</strong> {{ ca.corrective_action }}<br>
+                  <strong>Responsable:</strong> {{ ca.responsible_user.full_name }}<br>
+                  <strong>Fecha Límite:</strong> {{ ca.due_date }}
+
+                  {% if ca.followups %}
+                  <div class="mt-2">
+                    <strong>Seguimientos:</strong>
+                    <ul class="list-group mt-1">
+                      {% for f in ca.followups %}
+                      <li class="list-group-item">
+                        <strong>Fecha:</strong> {{ f.followup_date }}<br>
+                        <strong>Estado:</strong> {{ f.status }}<br>
+                        {% if f.comments %}
+                        <strong>Comentarios:</strong> {{ f.comments }}
+                        {% endif %}
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p>No hay acciones correctivas registradas.</p>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
@@ -184,8 +185,6 @@
     <p class="text-center fs-4">No hay auditorías disponibles.</p>
     {% endfor %}
   </div>
-</div>
-
 
 
 
