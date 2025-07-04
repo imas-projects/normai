@@ -59,7 +59,7 @@ def annual_audit_program(request):
     start_month = today.month - 1 if today.month > 1 else 12
     start_year = today.year if today.month > 1 else today.year - 1
 
-    # Construir month_range original (12 meses empezando por mes anterior)
+    # Construir rango de 12 meses desde el mes anterior
     month_range = [(start_year, start_month)]
     for _ in range(11):
         y, m = month_range[-1]
@@ -67,29 +67,22 @@ def annual_audit_program(request):
         next_year = y + (1 if next_month == 1 else 0)
         month_range.append((next_year, next_month))
 
-    # Todos los meses del año actual
     current_year = today.year
     all_months_current_year = [(current_year, m) for m in range(1, 13)]
-
-    # Combinar y ordenar sin repeticiones
     combined_months = sorted(set(all_months_current_year) | set(month_range))
 
-    # Obtener años y meses
     years = {y for y, _ in combined_months}
     months = {m for _, m in combined_months}
 
-    # Obtener programas anuales
     annual_programs = AnnualProgram.objects.filter(
         program_header__year__in=years,
         month__in=months
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
-    # Agrupar requisitos por proceso
     requirements_by_process = defaultdict(list)
     for pr in ProcessRequirement.objects.select_related("process"):
         requirements_by_process[pr.process_id].append(pr.requirement)
 
-    # Agrupar programas por año y mes
     annual_programs_by_year = OrderedDict()
     all_users = User.objects.all()
 
@@ -109,38 +102,28 @@ def annual_audit_program(request):
 
         annual_programs_by_year[y][month_name] = enriched_programs
 
-    requisitos_por_mes = (
-        ProcessRequirement.objects
-        .filter(process__audit_annual_programs__isnull=False)
-        .values(
-            requisito=F('requirement'),
-            mes=F('process__audit_annual_programs__month')
-        )
-        .annotate(total=Count('id'))
-        .order_by('mes', 'requisito')
-    )
+    # Gráfico de barras: número de requisitos por mes
+    requisitos_mes = defaultdict(int)
+    for program in annual_programs:
+        requisitos = requirements_by_process.get(program.process_id, [])
+        key = (program.program_header.year, program.month)
+        requisitos_mes[key] += len(requisitos)
 
-    heatmap_data = [
-        {"x": r["mes"], "y": r["requisito"], "value": r["total"]}
-        for r in requisitos_por_mes
+    bar_chart_data = [
+        {
+            "mes": format_date(datetime(y, m, 1), "MMMM", locale='es').capitalize(),
+            "total_requisitos": requisitos_mes.get((y, m), 0)
+        }
+        for y, m in combined_months
     ]
-
-    requisito_proceso = (
-        ProcessRequirement.objects
-        .values(proceso=F('process__name'), requisito=F('requirement'))
-        .annotate(total=Count('id'))
-        .order_by('proceso', 'requisito')
-    )
-
-    tabla_frecuencia = list(requisito_proceso)
 
     return render(request, 'mistemplates/annual_audit_program.html', {
         'audit_headers': audit_headers,
         'annual_programs_by_year': annual_programs_by_year,
         'users': all_users,
-        'heatmap_data': heatmap_data,
-        'tabla_frecuencia': tabla_frecuencia,
+        'bar_chart_data': bar_chart_data,
     })
+
 
 
 
