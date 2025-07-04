@@ -67,17 +67,15 @@
                                 </tbody>
                             </table>
                         </div>
-<div id="heatmap_requisitos_mes" style="min-height: 400px;"></div>
-{{ heatmap_data|json_script:"heatmap-data" }}
-
-<table class="table" id="tabla-proceso-requisito">
-  <thead>
-    <tr><th>Proceso</th><th>Requisito</th><th>Frecuencia</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-{{ tabla_frecuencia|json_script:"tabla-frecuencia" }}
+<div class="card mt-5">
+  <div class="card-header bg-primary text-white">
+    Requisitos auditados por mes
+  </div>
+  <div class="card-body">
+    <div id="grafico_requisitos_mes" style="height: 400px;"></div>
+    {{ bar_chart_data|json_script:"bar-chart-data" }}
+  </div>
+</div>
 
 
                         <div>
@@ -464,47 +462,58 @@ document.getElementById("openAddAnnualProgramModal").addEventListener("click", f
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  // --- Heatmap ---
-  const heatmapDataRaw = JSON.parse(document.getElementById("heatmap-data").textContent);
+  const data = JSON.parse(document.getElementById("bar-chart-data").textContent);
 
-  // Agrupar datos por requisito (Y-axis)
-  const grouped = {};
-  heatmapDataRaw.forEach(({ x, y, value }) => {
-    if (!grouped[y]) grouped[y] = [];
-    grouped[y].push({ x: `Mes ${x}`, y: value });
-  });
+  const meses = data.map(d => d.mes);
+  const valores = data.map(d => d.total_requisitos);
 
-  const series = Object.entries(grouped).map(([key, values]) => ({
-    name: key,
-    data: values
-  }));
-
-  const heatmapChart = new ApexCharts(document.querySelector("#heatmap_requisitos_mes"), {
+  const options = {
     chart: {
+      type: 'bar',
       height: 400,
-      type: 'heatmap',
-      toolbar: { show: false }
+      toolbar: { show: true }
     },
-    dataLabels: { enabled: true },
+    title: {
+      text: 'Número de Requisitos por Mes',
+      align: 'center',
+      style: {
+        fontSize: '20px',
+        color: '#333'
+      }
+    },
     xaxis: {
-      type: 'category'
+      categories: meses,
+      title: {
+        text: 'Mes',
+        style: {
+          fontSize: '14px',
+          fontWeight: 600
+        }
+      }
     },
-    colors: ["#008FFB"],
-    series
-  });
+    yaxis: {
+      title: {
+        text: 'Número de Requisitos',
+        style: {
+          fontSize: '14px',
+          fontWeight: 600
+        }
+      }
+    },
+    dataLabels: {
+      enabled: true
+    },
+    colors: ['#1E90FF'],
+    series: [{
+      name: "Requisitos",
+      data: valores
+    }]
+  };
 
-  heatmapChart.render();
-
-  // --- Tabla de frecuencia ---
-  const tabla = JSON.parse(document.getElementById("tabla-frecuencia").textContent);
-  const tbody = document.querySelector("#tabla-proceso-requisito tbody");
-
-  tabla.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row.proceso}</td><td>${row.requisito}</td><td>${row.total}</td>`;
-    tbody.appendChild(tr);
-  });
+  const chart = new ApexCharts(document.querySelector("#grafico_requisitos_mes"), options);
+  chart.render();
 });
+
 
 </script>
 {% endblock extra_js %}
