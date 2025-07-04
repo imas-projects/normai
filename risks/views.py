@@ -72,7 +72,8 @@ def create_risk(request):
 
     # === A. Pie Chart Acciones de Contingencia por Tipo ===
     contingency_actions = ContingencyPlan.objects.values_list('contingency_actions', flat=True)
-    flat_actions = [accion for acciones in contingency_actions for accion in acciones.split(',')]
+    flat_actions = [accion for acciones in contingency_actions for accion in acciones]
+
     action_counter = Counter(flat_actions)
     acciones_labels = list(action_counter.keys())
     acciones_values = list(action_counter.values())
