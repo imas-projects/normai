@@ -264,17 +264,19 @@
             <!-- Dropdown Edit + Delete -->
             <div class="col-md-2 d-flex flex-column align-items-end align-self-start">
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm" type="button" id="dropdownEditButton{{ risk.id }}"
+<button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="dropdownEditButton{{ risk.id }}"
     data-bs-toggle="dropdown" aria-expanded="false" title="Editar">
     <i class="ri-pencil-line"></i>
 </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownEditButton{{ risk.id }}">
-                        <li><a class="dropdown-item openEditRiskIdentificationModal" href="#" data-risk-id="{{ risk.id }}">Editar Identificación</a></li>
-                        <li><a class="dropdown-item openEditRiskEvaluationModal" href="#" data-risk-id="{{ risk.id }}">Editar Evaluación</a></li>
-                        <li><a class="dropdown-item openEditRiskTreatmentModal" href="#" data-risk-id="{{ risk.id }}">Editar Tratamiento</a></li>
-                        <li><a class="dropdown-item openEditContingencyPlanModal" href="#" data-risk-id="{{ risk.id }}">Editar Contingencia</a></li>
-                        <li><a class="dropdown-item openEditReevaluationModal" href="#" data-risk-id="{{ risk.id }}">Editar Revaluación</a></li>
-                    </ul>
+
+<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownEditButton{{ risk.id }}">
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editRiskIdentificationModal{{ risk.id }}">Editar Identificación</a></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editRiskEvaluationModal{{ risk.id }}">Editar Evaluación</a></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editRiskTreatmentModal{{ risk.id }}">Editar Tratamiento</a></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editContingencyPlanModal{{ risk.id }}">Editar Contingencia</a></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#editReevaluationModal{{ risk.id }}">Editar Revaluación</a></li>
+</ul>
+
                 </div>
                 <button class="btn btn-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#deleteModal{{ risk.id }}" title="Eliminar">
                     <i class="ri-delete-back-2-fill"></i>
