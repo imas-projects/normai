@@ -921,7 +921,7 @@ document.addEventListener("DOMContentLoaded", function () {
             x: item.x,
             y: item.y,
             z: 5,
-            fillColor: item.label === 'NC_MAYOR' ? '#dc3545' : (item.label === 'NC_MENOR' ? '#fd7e14' : '#0d6efd')
+            fillColor: item.label === 'NC_MAYOR' ? '#dc3545' : (item.label === 'NC_MENOR' ? '#fd7e14' : '#34c38f')
         })),
     }];
     const scatterOptions = {
@@ -934,9 +934,9 @@ document.addEventListener("DOMContentLoaded", function () {
             labels: {
                 formatter: val => {
                     switch(val){
-                        case 1: return 'Oportunidad';
-                        case 2: return 'NC Menor';
-                        case 3: return 'NC Mayor';
+                        case 1: return 'Oportunidad de Mejora';
+                        case 2: return 'No Conformidad Menor';
+                        case 3: return 'No Conformidad Mayor';
                         default: return '';
                     }
                 }
@@ -946,8 +946,14 @@ document.addEventListener("DOMContentLoaded", function () {
             custom: ({ dataPointIndex }) => {
                 const label = scatterDataRaw[dataPointIndex].label;
                 const duracion = scatterDataRaw[dataPointIndex].x;
+                // Etiquetas más legibles
+                const labelMap = {
+                    'NC_MAYOR': 'No Conformidad Mayor',
+                    'NC_MENOR': 'No Conformidad Menor',
+                    'OPORTUNIDAD_MEJORA': 'Oportunidad de Mejora'
+                };
                 return `<div style="padding:5px;">
-                    <strong>Severidad:</strong> ${label}<br/>
+                    <strong>Severidad:</strong> ${labelMap[label] || label}<br/>
                     <strong>Duración:</strong> ${duracion} días
                 </div>`;
             }
@@ -955,7 +961,6 @@ document.addEventListener("DOMContentLoaded", function () {
         markers: { size: 7 }
     };
     new ApexCharts(document.querySelector('#scatter_chart'), scatterOptions).render();
-
 });
 
 document.addEventListener("DOMContentLoaded", function () {
