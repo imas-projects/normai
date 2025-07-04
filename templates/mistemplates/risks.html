@@ -1469,23 +1469,16 @@ if (suggestRiskLevelBtn) {
 
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Evitar que el dropdown se cierre al hacer click en los enlaces para modales dinámicos
-    document.querySelectorAll('.dropdown-menu a').forEach(a => {
-        a.addEventListener('click', e => {
-            e.preventDefault();
-        });
-    });
-
     // Cargar el formulario de edición de Risk Identification
     document.querySelectorAll(".openEditRiskIdentificationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/risks/edit-risk-identification/${riskId}/`)
+            fetch(/risks/edit-risk-identification/${riskId}/)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(`editRiskIdentificationContent${riskId}`).innerHTML = html;
+                    document.getElementById(editRiskIdentificationContent${riskId}).innerHTML = html;
                     initChoicesJS();
-                    new bootstrap.Modal(document.getElementById(`editRiskIdentificationModal${riskId}`)).show();
+                    new bootstrap.Modal(document.getElementById(editRiskIdentificationModal${riskId})).show();
                 });
         });
     });
@@ -1494,12 +1487,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskEvaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/risks/edit-risk-evaluation/${riskId}/`)
+            fetch(/risks/edit-risk-evaluation/${riskId}/)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(`editRiskEvaluationContent${riskId}`).innerHTML = html;
+                    document.getElementById(editRiskEvaluationContent${riskId}).innerHTML = html;
                     initChoicesJS();
-                    new bootstrap.Modal(document.getElementById(`editRiskEvaluationModal${riskId}`)).show();
+                    new bootstrap.Modal(document.getElementById(editRiskEvaluationModal${riskId})).show();
                 });
         });
     });
@@ -1508,12 +1501,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditRiskTreatmentModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/risks/edit-risk-treatment/${riskId}/`)
+            fetch(/risks/edit-risk-treatment/${riskId}/)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(`editRiskTreatmentContent${riskId}`).innerHTML = html;
+                    document.getElementById(editRiskTreatmentContent${riskId}).innerHTML = html;
                     initChoicesJS();
-                    new bootstrap.Modal(document.getElementById(`editRiskTreatmentModal${riskId}`)).show();
+                    new bootstrap.Modal(document.getElementById(editRiskTreatmentModal${riskId})).show();
                 });
         });
     });
@@ -1522,12 +1515,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditContingencyPlanModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/risks/edit-contingency-plan/${riskId}/`)
+            fetch(/risks/edit-contingency-plan/${riskId}/)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(`editContingencyPlanContent${riskId}`).innerHTML = html;
+                    document.getElementById(editContingencyPlanContent${riskId}).innerHTML = html;
                     initChoicesJS();
-                    new bootstrap.Modal(document.getElementById(`editContingencyPlanModal${riskId}`)).show();
+                    new bootstrap.Modal(document.getElementById(editContingencyPlanModal${riskId})).show();
                 });
         });
     });
@@ -1536,12 +1529,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".openEditReevaluationModal").forEach(button => {
         button.addEventListener("click", function () {
             let riskId = this.getAttribute("data-risk-id");
-            fetch(`/risks/edit-reevaluation/${riskId}/`)
+            fetch(/risks/edit-reevaluation/${riskId}/)
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById(`editReevaluationContent${riskId}`).innerHTML = html;
+                    document.getElementById(editReevaluationContent${riskId}).innerHTML = html;
                     initChoicesJS();
-                    new bootstrap.Modal(document.getElementById(`editReevaluationModal${riskId}`)).show();
+                    new bootstrap.Modal(document.getElementById(editReevaluationModal${riskId})).show();
                 });
         });
     });
