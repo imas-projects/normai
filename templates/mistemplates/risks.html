@@ -144,58 +144,60 @@
 <div class="row">
   <!-- Mitad izquierda -->
   <div class="col-md-6">
-    
-<div class="card mt-3">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h4>Mapa FODA de Riesgo</h4>
-    <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="foda" data-state="eval">
-      <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-    </button>
-  </div>
-  <div class="card-body">
-    <div id="bubble_foda_riesgo" style="height: 350px;"></div>
-  </div>
-</div>
 
-<div class="row mt-3">
-  <div class="col-6">
-    <div class="card">
+    <!-- FODA -->
+    <div class="card mt-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Riesgos por Proceso y Nivel</h4>
-        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
+        <h4>Mapa FODA de Riesgo</h4>
+        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="foda" data-state="eval">
           <i class="bi bi-arrow-left-right"></i> Reevaluaciones
         </button>
       </div>
       <div class="card-body">
-        <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+        <div id="bubble_foda_riesgo" style="height: 350px;"></div>
       </div>
     </div>
-  </div>
 
-  <div class="col-6">
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Distribución por Nivel de Riesgo</h4>
-        <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
-          <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-        </button>
+    <!-- Gráficos de barras y pie -->
+    <div class="row mt-3">
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Riesgos por Proceso y Nivel</h4>
+            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
+              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+          </div>
+        </div>
       </div>
-      <div class="card-body">
-        <div id="pie_riesgos_nivel" style="height: 300px;"></div>
+
+      <div class="col-6">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Distribución por Nivel de Riesgo</h4>
+            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
+              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="pie_riesgos_nivel" style="height: 300px;"></div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
 
     <!-- Acciones de Contingencia -->
     <div class="card mt-3">
-      <div class="card-header"><h4>Acciones de Contingencia</h4></div>
+      <div class="card-header">
+        <h4>Acciones de Contingencia</h4>
+      </div>
       <div class="card-body">
         <div id="pie_acciones_contingencia"></div>
       </div>
     </div>
-  </div>
 
 
 
@@ -1582,16 +1584,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  let currentSet = "eval";
+  const chartStates = {
+    bar: "eval",
+    pie: "eval",
+    foda: "eval"
+  };
 
-  // === Colores y traducciones ===
   const pieColors = { High: '#e74c3c', Moderate: '#f1c40f', Low: '#2ecc71' };
   const translateLabel = l => l === "High" ? "Alto" : l === "Moderate" ? "Moderado" : "Bajo";
 
-  // === Función para renderizar gráficos ===
   let barChart, pieChart, fodaChart;
 
   function renderBar() {
+    const currentSet = chartStates.bar;
     if (barChart) barChart.destroy();
     barChart = new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
       chart: { type: "bar", stacked: true, height: 300, toolbar: { show: false } },
@@ -1608,6 +1613,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderPie() {
+    const currentSet = chartStates.pie;
     if (pieChart) pieChart.destroy();
     const labels = datasets[currentSet].pieLabels.map(translateLabel);
     const values = datasets[currentSet].pieValues;
@@ -1624,6 +1630,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderFoda() {
+    const currentSet = chartStates.foda;
     if (fodaChart) fodaChart.destroy();
     const fodaSeries = datasets[currentSet].foda.map(item => ({
       x: item.occurrence,
@@ -1640,12 +1647,12 @@ document.addEventListener("DOMContentLoaded", function () {
     fodaChart.render();
   }
 
-  // === Inicializar todos los gráficos ===
+  // Inicializar todos los gráficos
   renderBar();
   renderPie();
   renderFoda();
 
-  // === Acciones de Contingencia (sin toggle) ===
+  // Acciones de Contingencia
   const accionesLabels = JSON.parse(document.getElementById("acciones-labels").textContent);
   const accionesValues = JSON.parse(document.getElementById("acciones-values").textContent);
   const translatedMap = {
@@ -1671,19 +1678,20 @@ document.addEventListener("DOMContentLoaded", function () {
     colors: uniqueColors
   }).render();
 
-// === Botones toggle con estado dinámico ===
-document.querySelectorAll(".toggle-eval").forEach(button => {
-  button.addEventListener("click", function () {
-    const chart = this.getAttribute("data-chart");
-    const current = this.getAttribute("data-state");
-    const next = current === "eval" ? "reeval" : "eval";
-    currentSet = next;
-    this.setAttribute("data-state", next);
-    this.innerHTML = `<i class="bi bi-arrow-left-right"></i> ${next === "eval" ? "Reevaluaciones" : "Evaluaciones"}`;
+  // Botones toggle independientes
+  document.querySelectorAll(".toggle-eval").forEach(button => {
+    button.addEventListener("click", function () {
+      const chart = this.getAttribute("data-chart");
+      const current = chartStates[chart];
+      const next = current === "eval" ? "reeval" : "eval";
+      chartStates[chart] = next;
+      this.setAttribute("data-state", next);
+      this.innerHTML = `<i class="bi bi-arrow-left-right"></i> ${next === "eval" ? "Reevaluaciones" : "Evaluaciones"}`;
 
-    if (chart === "bar") renderBar();
-    else if (chart === "pie") renderPie();
-    else if (chart === "foda") renderFoda();
+      if (chart === "bar") renderBar();
+      else if (chart === "pie") renderPie();
+      else if (chart === "foda") renderFoda();
+    });
   });
 });
 </script>
