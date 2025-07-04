@@ -1537,29 +1537,28 @@ document.addEventListener("DOMContentLoaded", function () {
   const moderado = JSON.parse(document.getElementById('riesgo-moderado').textContent);
   const bajo = JSON.parse(document.getElementById('riesgo-bajo').textContent);
 
+  // === Bar: Riesgos por Proceso y Nivel ===
   new ApexCharts(document.querySelector("#bar_riesgos_por_proceso"), {
-  chart: { type: "bar", stacked: true, height: 300 },
-  series: [
-    { name: "Alto", data: alto },
-    { name: "Moderado", data: moderado },
-    { name: "Bajo", data: bajo },
-  ],
-  xaxis: {
-    categories: procesos,
-    labels: {
-      rotate: 0,
-      trim: false,
-      style: { whiteSpace: 'normal', fontSize: '12px' },
-      formatter: function(val) {
-        if(val.length > 10){
-          return val.match(/.{1,10}/g).join('\n');
-        }
-        return val;
-      }
-    }
-  },
-  colors: ['#e74c3c', '#f1c40f', '#2ecc71']
-}).render();
+    chart: {
+      type: "bar",
+      stacked: true,
+      height: 300,
+      toolbar: { show: false }
+    },
+    series: [
+      { name: "Alto", data: alto },
+      { name: "Moderado", data: moderado },
+      { name: "Bajo", data: bajo },
+    ],
+    xaxis: {
+      categories: procesos,
+      labels: { show: false }
+    },
+    tooltip: {
+      x: { show: true }
+    },
+    colors: ['#e74c3c', '#f1c40f', '#2ecc71']
+  }).render();
 
   // === Pie de Riesgo ===
   const pieLabels = JSON.parse(document.getElementById('pie-labels').textContent);
@@ -1567,16 +1566,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const pieColors = pieLabels.map(label =>
     label === 'High' ? '#e74c3c' : label === 'Moderate' ? '#f1c40f' : '#2ecc71');
   const translatedLabels = pieLabels.map(label =>
-    label === 'High' ? 'Alto' : label === 'Moderate' ? 'Moderado' : 'Bajo');
+    label === 'High' ? 'Alto' : label === 'Moderado' ? 'Moderado' : 'Bajo');
 
   new ApexCharts(document.querySelector("#pie_riesgos_nivel"), {
     chart: { type: 'pie' },
     series: pieValues,
     labels: translatedLabels,
-    colors: pieColors
+    colors: pieColors,
+    legend: {
+      position: 'bottom'  // leyenda abajo
+    }
   }).render();
 
-  // === Pie de Acciones de Contingencia ===
+  // === Donut Acciones de Contingencia ===
   const accionesLabels = JSON.parse(document.getElementById('acciones-labels').textContent);
   const accionesValues = JSON.parse(document.getElementById('acciones-values').textContent);
   const translatedMap = {
@@ -1593,7 +1595,6 @@ document.addEventListener("DOMContentLoaded", function () {
     "MANUALS": "Manuales de operación"
   };
   const translatedAcciones = accionesLabels.map(l => translatedMap[l] || l);
-
   const uniqueColors = accionesLabels.map((_, i) => `hsl(${i * 36}, 70%, 60%)`);
 
   new ApexCharts(document.querySelector("#pie_acciones_contingencia"), {
@@ -1603,7 +1604,7 @@ document.addEventListener("DOMContentLoaded", function () {
     colors: uniqueColors
   }).render();
 
-  // === B. FODA Riesgo ===
+  // === Bubble FODA ===
   const foda = JSON.parse(document.getElementById('foda-data').textContent);
   const fodaSeries = foda.map(item => ({
     x: item.occurrence,
