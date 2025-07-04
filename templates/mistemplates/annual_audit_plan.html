@@ -347,15 +347,29 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Aumentar artificialmente duración si es demasiado corta
+        const data = {{ timeline_data|safe }}.map(item => {
+            const MIN_DURATION_MS = 1000 * 60 * 60 * 24; // 1 día
+
+            const start = new Date(item.x).getTime();
+            const end = new Date(item.x2).getTime();
+
+            if (end - start < MIN_DURATION_MS) {
+                item.x2 = new Date(start + MIN_DURATION_MS).toISOString();
+            }
+
+            return item;
+        });
+
         var options = {
             chart: {
-                height: {{ timeline_data|length }} * 60,  // espacio por barra
+                height: {{ timeline_data|length }} * 60,
                 type: 'rangeBar'
             },
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    barHeight: 200,  // grosor real
+                    barHeight: 40,  // grosor vertical, no afecta ancho horizontal
                     distributed: true
                 }
             },
@@ -364,7 +378,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
                 type: 'datetime',
             },
             series: [{
-                data: {{ timeline_data|safe }}
+                data: data
             }],
             tooltip: {
                 x: {
@@ -376,6 +390,7 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
         var chart = new ApexCharts(document.querySelector("#timeline-chart"), options);
         chart.render();
     });
+
 
 </script>
 
