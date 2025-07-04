@@ -103,11 +103,12 @@ def create_risk(request):
     responsables_values = list(responsable_counter.values())
 
     # === D. Reevaluación Radar y Línea Temporal ===
-    reevaluaciones = (
-        reevaluations_qs
+    reevaluaciones = list(
+        Reevaluation.objects
         .values('risk__identified_risk', 'severity', 'occurrence', 'detection', 'risk_level')
         .order_by('risk_id')
     )
+
 
     return render(request, 'mistemplates/risks.html', {
         'grouped_risks': grouped_risks,
