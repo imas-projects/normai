@@ -42,6 +42,15 @@
 <div class="row">
     <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
 <div class="col-md-9 mt-5">
+
+        <div class="card card-animate">
+            <div class="card-body">
+                <h4 class="card-title">Participación de Auditores y Auditados</h4>
+                <div id="participation_chart" style="height: 400px;"></div>
+            </div>
+        </div>
+ 
+
     <!-- Línea de Tiempo -->
     <h3 class="text-center">Línea de Tiempo de Auditorías</h3>
     <div class="card-body">
@@ -184,6 +193,11 @@
         </div>
     </div>
 </div>
+          
+{{ user_labels|json_script:"user-labels" }}
+{{ auditor_data|json_script:"auditor-data" }}
+{{ audited_data|json_script:"audited-data" }}
+
 
         {% block footer %}
         {% include "partials/footer.html" %}
@@ -398,6 +412,42 @@ document.getElementById("openAddAnnualPlanAuditorModal").addEventListener("click
         chart.render();
     });
 
+    document.addEventListener("DOMContentLoaded", function () {
+        const userLabels = JSON.parse(document.getElementById("user-labels").textContent);
+        const auditorData = JSON.parse(document.getElementById("auditor-data").textContent);
+        const auditedData = JSON.parse(document.getElementById("audited-data").textContent);
+
+        const options = {
+            chart: {
+                type: 'bar',
+                stacked: true,
+                height: 400,
+                toolbar: { show: false }
+            },
+            series: [
+                { name: 'Como Auditor', data: auditorData },
+                { name: 'Como Auditado', data: auditedData }
+            ],
+            xaxis: {
+                categories: userLabels,
+                labels: {
+                    rotate: -45,
+                    style: { fontSize: '12px' }
+                },
+                title: { text: 'Usuarios' }
+            },
+            yaxis: {
+                title: { text: 'Número de Auditorías' }
+            },
+            colors: ['#00b894', '#d63031'],
+            legend: { position: 'top' },
+            dataLabels: { enabled: false },
+            grid: { borderColor: '#f1f1f1' }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#participation_chart"), options);
+        chart.render();
+    });
 
 </script>
 
