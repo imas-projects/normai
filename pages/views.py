@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from decimal import Decimal
 from datetime import date, timedelta
 from django.utils import timezone
-from django.db.models import Count, Avg, F
+from django.db.models import Count, Avg, F, Q
 from django.utils.timezone import now
 from django.db.models import OuterRef, Subquery
 from django.core.paginator import Paginator
