@@ -546,11 +546,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = {
         chart: {
             type: 'bar',
-            height: 300,
+            height: 350,
             toolbar: { show: false }
         },
+        plotOptions: {
+          bar: {
+              horizontal: true,
+              dataLabels: {
+                  position: 'top'
+                  }
+              }
+        },
         series: [{
-            name: 'Procesos',
+            name: 'Alertas',
             data: processValues
         }],
         xaxis: {
@@ -558,9 +566,15 @@ document.addEventListener("DOMContentLoaded", function () {
             title: { text: 'Proceso' }
         },
         yaxis: {
-            title: { text: 'Número de Alertas' }
+            min: 0,
+            title: { text: 'Número de Alertas' },
+            labels: {
+                formatter: function (val) {
+                    return Math.floor(val);
+                }
+            },
         },
-        colors: ['#FFA500'],
+        colors: ['#dc3545'],
         dataLabels: { enabled: false },
         grid: { borderColor: '#f1f1f1' }
     };
