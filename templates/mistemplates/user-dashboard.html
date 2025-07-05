@@ -225,44 +225,41 @@
 </div>
 
 
+</div>
+</div>
+
+<div class="col-xxl-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
+                        <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
+                        <div class="flex-grow-1 text-truncate">
+                            <i class="bi-exclamation-triangle-fill"></i>  Quedan <b> {{siguiente_auditoria_dias_restantes}} </b> días para la próxima auditoría
+                        </div>
+                        <div class="flex-shrink-0">
+                            <a href="" class="text-reset text-decoration-underline"></a>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-end">
+                        <div class="card-body p-3">
+                            <div class="p-3">
+                                <p class="fs-16 lh-base px-0">Responsable: {{ siguiente_auditoria.responsible }}<span class="fw-semibold">
+                                  <p class="fs-16 lh-base">Área: {{ siguiente_auditoria.area }}<span class="fw-semibold"></span>
+                                    </span><i class=""></i></p>
+                                <div class="mt-3">
+                                    <a href="{% url 'audits:audits_home' %}" class="btn btn-warning">Ir a Auditorías</a>
                                 </div>
                             </div>
-
-                            <div class="col-xxl-5">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-body p-0">
-                                                <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
-                                                    <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
-                                                    <div class="flex-grow-1 text-truncate">
-                                                        Your free trial expired in <b>17</b> days. 
-                                                    </div>
-                                                    <div class="flex-shrink-0">
-                                                        <a href="{% url 'pages:pages.pricing' %}" class="text-reset text-decoration-underline"><b>Upgrade</b></a>
-                                                    </div>
-                                                </div>
-    
-                                                <div class="row align-items-end">
-                                                    <div class="col-sm-8">
-                                                        <div class="p-3">
-                                                            <p class="fs-16 lh-base">Upgrade your plan from a <span class="fw-semibold">Free
-                                                                trial</span>, to ‘Premium Plan’ <i class="mdi mdi-arrow-right"></i></p>
-                                                            <div class="mt-3">
-                                                                <a href="{% url 'pages:pages.pricing' %}" class="btn btn-success">Upgrade Account!</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="px-3">
-                                                            <img src="{% static 'images/user-illustarator-2.png'%}" class="img-fluid" alt="">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> <!-- end card-body-->
-                                        </div>
-                                    </div> <!-- end col-->
-                                </div> <!-- end row-->
+                        </div>
+                    
+                    </div>
+                </div> <!-- end card-body-->
+            </div>
+        </div> <!-- end col-->
+    </div> <!-- end row-->
     
 <div class="row">
     <div class="col-md-6">
@@ -319,43 +316,45 @@
   </div>
 </div>
 
-                                </div>
-                
-                            <div class="col-xxl-4">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-body p-3">
-                                                <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
-                                                    <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
-                                                    <div class="flex-grow-1 text-truncate">
-                                                        Your free trial expired in <b>17</b> days. 
-                                                    </div>
-                                                    <div class="flex-shrink-0">
-                                                        <a href="{% url 'pages:pages.pricing' %}" class="text-reset text-decoration-underline"><b>Upgrade</b></a>
-                                                    </div>
-                                                </div>
-    
-                                                <div class="row align-items-end">
-                                                    <div class="col-sm-8">
-                                                        <div class="p-3">
-                                                            <p class="fs-16 lh-base">Upgrade your plan from a <span class="fw-semibold">Free
-                                                                trial</span>, to ‘Premium Plan’ <i class="mdi mdi-arrow-right"></i></p>
-                                                            <div class="mt-3">
-                                                                <a href="{% url 'pages:pages.pricing' %}" class="btn btn-success">Upgrade Account!</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-4">
-                                                        <div class="px-3">
-                                                            <img src="{% static 'images/user-illustarator-2.png'%}" class="img-fluid" alt="">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> <!-- end card-body-->
-                                        </div>
-                                    </div> <!-- end col-->
-                                </div> <!-- end row-->
+</div>
+
+<div class="col-xxl-4">
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
+                    <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
+                    <div class="flex-grow-1 text-truncate">
+                        <i class="bi-exclamation-triangle-fill"></i>   Al menos <b> {{kpis_revision}}</b> KPIs  necesitan revisión
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="" class="text-reset text-decoration-underline"><b></b></a>
+                    </div>
+                </div>
+
+                <div class="row align-items-end">
+                    <div class="">
+                        <div class="p-3">
+                          {% for p in procesos_con_alertas %}
+                            <p class="fs-16 lh-base">Proceso {{p}}<span class="fw-semibold">
+                                </span></p>
+                          {% endfor %}
+                            <div class="mt-3">
+                                <a href="{% url 'processes:list_processes' %}" class="btn btn-warning">Ir a Procesos</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="px-3">
+                            <img src="" class="img-fluid" alt="">
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- end card-body-->
+        </div>
+    </div> <!-- end col-->
+</div> <!-- end row-->
                                 
 <div class="col-xxl-12">
     <div class="card">

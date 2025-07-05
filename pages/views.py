@@ -310,7 +310,7 @@ def wellcome_view(request):
                 proceso_numero_alertas[nombre] += 1
             else:
                 proceso_numero_alertas[nombre] = 1
-
+        procesos_con_alertas = list(proceso_numero_alertas.keys())
 
         for proceso in Process.objects.all():
             if proceso.name not in proceso_numero_alertas:
@@ -343,7 +343,7 @@ def wellcome_view(request):
     kpis_values = []
 
     meses_ordenados = list(datos_por_mes.keys())
-    print("Meses encontrados:", meses_ordenados)
+    
 
     for i in range(1, len(meses_ordenados)):
         mes_anterior = datos_por_mes[meses_ordenados[i - 1]]
@@ -367,8 +367,12 @@ def wellcome_view(request):
         kpis_labels.append(meses_ordenados[i])
         kpis_values.append(round(promedio_mes, 2))
 
-        print('etiquetucas:',kpis_labels)
-        print('valores:',kpis_values)
+    # === Recuadros de Alertas ===
+    siguiente_auditoria = next(
+    (a for a in activities if a['type'] == 'Auditoria' and a['date'] >= current_date),
+    None
+    )
+    siguiente_auditoria_dias_restantes = (siguiente_auditoria['date'] - date.today()).days
 
     # === Contexto final ===
     contexto = {
@@ -413,7 +417,11 @@ def wellcome_view(request):
         'page_obj': page_obj,
 
         'total_clientes': total_clientes,
-        'total_proveedores': total_proveedores
+        'total_proveedores': total_proveedores,
+        'siguiente_auditoria': siguiente_auditoria,
+        'siguiente_auditoria_dias_restantes':siguiente_auditoria_dias_restantes,
+        'kpis_revision': len(kpis_values),
+        'procesos_con_alertas':procesos_con_alertas
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
