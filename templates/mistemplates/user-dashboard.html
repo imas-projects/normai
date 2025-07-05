@@ -270,13 +270,13 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="fw-medium text-muted mb-0">Número Total de Procesos</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold">{{total_procesos}}</h2>
+                        <p class="fw-medium text-muted mb-0">Número de Proveedores</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold">{{total_proveedores}}</h2>
                     </div>
                     <div>
                         <div class="avatar-sm flex-shrink-0">
-                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
-                                <i data-feather="users" class="text-info"></i>
+                            <span class="avatar-title bg-success-subtle text-success rounded-circle fs-2">
+                                <i class="ri-team-line"></i>
                             </span>
                         </div>
                     </div>
@@ -290,16 +290,13 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="fw-medium text-muted mb-0">Users</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="28.05">0</span>k</h2>
-                        <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0">
-                            <i class="ri-arrow-up-line align-middle"></i> 16.24 %
-                        </span> vs. previous month</p>
+                        <p class="fw-medium text-muted mb-0">Número de Clientes</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold">{{ total_clientes }}</h2>
                     </div>
                     <div>
                         <div class="avatar-sm flex-shrink-0">
-                            <span class="avatar-title bg-info-subtle rounded-circle fs-2">
-                                <i data-feather="users" class="text-info"></i>
+                            <span class="avatar-title bg-success-subtle text-success rounded-circle fs-2">
+                                <i class="ri-group-2-line"></i>
                             </span>
                         </div>
                     </div>
@@ -407,8 +404,8 @@
   <!-- Evolución Mensual del Índice de Mejora Continua -->
   <div class="col-xxl-4">
     <div class="card card-animate card-height-100">
-      <div class="card-body px-0">
-        <h4 class="card-title">Evolución Mensual del Índice de Mejora Continua</h4>
+      <div class="card-body pb-0">
+        <h4 class="card-title">Evolución Trimestral del Índice de Mejora Continua</h4>
         <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
       </div>
     </div>

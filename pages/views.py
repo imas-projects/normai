@@ -20,7 +20,7 @@ from django.db.models import Prefetch
 from django.db.models.functions import TruncMonth
 from audits.models import AnnualPlan, AuditReport, CorrectiveAction, CorrectiveActionFollowUp, Findings, AnnualPlanAudited 
 from processes.models import Process, ProcessPerformanceIndicators, PerformanceIndicator, ProcessPerformanceMeasurements
-from company.models import Area, Position, UserPosition
+from company.models import Area, Position, UserPosition, ExternalClient, ExternalSupplier
 from risks.models import RiskTreatment, RiskEvaluation, Reevaluation, RiskIdentification
 from communications.models import CommunicationTable
 
@@ -31,6 +31,8 @@ from communications.models import CommunicationTable
 @login_required
 def wellcome_view(request):
     current_year = now().year
+    total_clientes = ExternalClient.objects.count()
+    total_proveedores = ExternalSupplier.objects.count()
 
     # === Indicador 1: Auditorías realizadas / planificadas ===
     audit_plans = AnnualPlan.objects.filter(
@@ -410,7 +412,8 @@ def wellcome_view(request):
 
         'page_obj': page_obj,
 
-        #"alertas_por_proceso": dict(alertas_por_proceso)
+        'total_clientes': total_clientes,
+        'total_proveedores': total_proveedores
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
