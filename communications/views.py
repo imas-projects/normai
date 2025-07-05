@@ -53,11 +53,35 @@ def all_messages(request):
     communications_labels=[item['table__emiter__name'] for item in datos_comunicaciones]
     communications_values=[item['total'] for item in datos_comunicaciones]
 
+    # -- últimas comunicaciones
+    mensajes = (
+        CommunicationMessage.objects
+        .select_related('message', 'table', 'receiver', 'table__emiter')
+        .order_by('-id')[:5]
+    )
+
+    resultados = []
+    for m in mensajes:
+        resultados.append({
+            'asunto': m.message.name,
+            'emisor': m.table.emiter.name if m.table and m.table.emiter else "Sin emisor",
+            'receptor': m.receiver.name if m.receiver else "Sin receptor",
+        })
+
+    emisores_recientes = [r['emisor'] for r in resultados]
+    receptores_recientes = [r['receptor'] for r in resultados]
+    asuntos_recientes = [r['asunto'] for r in resultados]
+    comunicaciones_recientes = resultados
+
 
     context = {
         'all_communicationtables': all_communicationtables,
         'communications_labels':communications_labels,
-        'communications_values':communications_values
+        'communications_values':communications_values,
+        'emisores_recientes':emisores_recientes,
+        'receptores_recientes':receptores_recientes,
+        'asuntos_recientes':asuntos_recientes,
+        'comunicaciones_recientes':comunicaciones_recientes
 
     }
 

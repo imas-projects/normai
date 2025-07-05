@@ -51,9 +51,15 @@
                                 <div class="card card-animate">
                                     <div class="card-body">
                                         <h4 class="card-title d-flex justify-content-between align-items-center">
-                                        Comunicaciones más recientes
+                                        Comunicaciones Recientes
                                         </h4>
-                                        <div id="cuadro_comunicaciones_recientes" style="height: 350px;"></div>
+                                        <div class="col-md-11 border-bottom card-border-light ">
+                                            
+                                            {% for r in comunicaciones_recientes %}
+                                                <p class="border-bottom card-border-light"><b>{{ r.asunto }}</b> | {{ r.emisor }} <i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
+                                            {% endfor %}
+                                            
+                                        </div>
                                     </div>
                                 </div>
 
