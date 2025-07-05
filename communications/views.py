@@ -45,12 +45,21 @@ def all_messages(request):
     # -- Gráficas
     datos_comunicaciones = (
         CommunicationMessage.objects
-        .values('table__emiter__id', 'table__emiter__name') 
+        .values('table__emiter__id', 'table__emiter__name','table__emiter__area') 
         .annotate(total=Count('id'))
         .order_by('-total')
     )
+
+    areas_emiters = [item['table__emiter__area'] for item in datos_comunicaciones]
+
+    communication_areas=[]
+    for a in areas_emiters:
+        cm=Area.objects.get(id=a)
+        communication_areas.append(cm.name)
+    
         
-    communications_labels=[item['table__emiter__name'] for item in datos_comunicaciones]
+    #communications_labels=[item['table__emiter__name'] for item in datos_comunicaciones]
+    communications_labels=communication_areas
     communications_values=[item['total'] for item in datos_comunicaciones]
 
     # -- últimas comunicaciones
