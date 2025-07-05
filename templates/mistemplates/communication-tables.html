@@ -62,7 +62,7 @@
                                     <div class="card card-animate">
                                     <div class="card-body">
                                         <h4 class="card-title d-flex justify-content-between align-items-center">
-                                        Comunicaciones Por Área
+                                        Comunicaciones Por Persona
                                         </h4>
                                         <div id="communications_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
                                     </div>
@@ -479,8 +479,12 @@ document.addEventListener("DOMContentLoaded", function () {
         chart: {
             type: 'bar',
             height: 250,
-            outerWidth:10,
-            toolbar: { show: false }
+            toolbar: { show: false },
+            animations: { enabled: false },
+            scrollablePlotArea: {
+                enabled: true,
+                scrollType: 'xy',
+                minWidth: 0
         },
         series: [{
             name: 'Mensajes',
