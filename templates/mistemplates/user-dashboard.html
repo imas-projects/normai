@@ -549,22 +549,20 @@ document.addEventListener("DOMContentLoaded", function () {
             height: 350,
             toolbar: { show: false }
         },
-        plotOptions: {
-          bar: {
-              horizontal: true,
-              }
-        },
         series: [{
             name: 'Alertas',
             data: processValues
         }],
         xaxis: {
             categories: processLabels,
-            title: { text: 'Número de Alertas' }
+            title: { text: 'Proceso' },
+            label: {
+              show: false
+            }
         },
         yaxis: {
             min: 0,
-            title: { text: '' },
+            title: { text: 'Número de Alertas' },
             labels: {
                 formatter: function (val) {
                     return Math.floor(val);
@@ -572,7 +570,17 @@ document.addEventListener("DOMContentLoaded", function () {
             },
         },
         colors: ['#dc3545'],
-        dataLabels: { enabled: false },
+        dataLabels: {
+          enabled: true,
+          offsetY: -20, 
+          formatter: function (val, opts) {
+              return opts.w.globals.labels[opts.dataPointIndex]; 
+          },
+          style: {
+              fontSize: '12px',
+              colors: ['#000']
+          } 
+        },
         grid: { borderColor: '#f1f1f1' }
     };
 
