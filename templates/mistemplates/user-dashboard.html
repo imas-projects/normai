@@ -542,7 +542,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     const processLabels = JSON.parse(document.getElementById('process-labels').textContent);
     const processValues = JSON.parse(document.getElementById('process-values').textContent);
-
+    const maxValor = Math.max(...processValues)
     const options = {
         chart: {
             type: 'bar',
@@ -564,6 +564,8 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         yaxis: {
             min: 0,
+            max: maxValor,
+            tickAmount: maxValor,
             title: { text: 'Número de Alertas' },
             labels: {
                 formatter: function (val) {
