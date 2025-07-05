@@ -58,7 +58,7 @@
                                 </div>
 
                                 
-                                <div class="col-6">
+                                <div class="">
                                     <div class="card card-animate">
                                     <div class="card-body">
                                         <h4 class="card-title d-flex justify-content-between align-items-center">
@@ -478,7 +478,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = {
         chart: {
             type: 'bar',
-            height: 350,
+            height: 250,
+            outerWidth:10,
             toolbar: { show: false }
         },
         series: [{
@@ -487,10 +488,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }],
         xaxis: {
             categories: communicationsLabels,
-            title: { text: 'Área' },
+            title: { text: 'Responsable' },
             labels: {
                 style: {
-                    fontSize: '10px'
+                    fontSize: '8px'
                 },
             }
         },
