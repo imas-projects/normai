@@ -153,7 +153,7 @@
       </div>
       <div class="flex-grow-1 ms-3 d-flex align-items-center">
         <p class="number-small fw-semibold mb-0">
-          {{ indice_mejora_continua }}
+          {{ indice_mejora_continua|floatformat:1}} %
         </p>
       </div>
     </div>
@@ -389,9 +389,13 @@
     <div class="card card-animate">
       <div class="card-body pb-0">
         <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
-        <div id="process_alert_chart_mini" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+        <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
       </div>
     </div>
+    <pre>
+    <!--Labels: {{ process_labels }}-->
+    <!--Values: {{ process_values }}-->
+    </pre>
   </div>
 
   <!-- Distribución de No Conformidades -->

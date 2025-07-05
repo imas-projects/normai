@@ -86,6 +86,7 @@ def wellcome_view(request):
 
     recientes_process_perform_measure = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
     alerta = []
+    procesos_en_alerta = []
 
     for ppm in recientes_process_perform_measure:
         
@@ -100,16 +101,18 @@ def wellcome_view(request):
 
         if ((min_val is not None and ppm.measured_value < min_val) or (max_val is not None and ppm.measured_value > max_val)):
             alerta.append(ppm)
+            procesos_en_alerta.append(ppm.process.name)
 
-    procesos_en_alerta = len(alerta)
-    tasa_procesos_alerta = (procesos_en_alerta / total_procesos) * 100 if realizadas > 0 else 0
+    #procesos_en_alerta = len(alerta)
+    numero_procesos_alerta = len(set(procesos_en_alerta))
+    tasa_procesos_alerta = (numero_procesos_alerta / total_procesos) * 100 if realizadas > 0 else 0
        
 
     # === Indicador 5: Índice de Mejora Continua ===
+    ultimos_dosmeses = hoy - timedelta(days=60)
     ultimo_mes = hoy - timedelta(days=30)
-    ultimo_dosmese = hoy - timedelta(days=60)
     actuales = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes).values('performance_indicator').annotate(avg_actual=Avg('measured_value'))
-    anteriores = ProcessPerformanceMeasurements.objects.filter(date__range=(ultimo_dosmese, ultimo_mes)).values('performance_indicator').annotate(avg_anterior=Avg('measured_value'))
+    anteriores = ProcessPerformanceMeasurements.objects.filter(date__range=(ultimos_dosmeses, ultimo_mes)).values('performance_indicator').annotate(avg_anterior=Avg('measured_value'))
 
     anteriores_dict = {a['performance_indicator']: a['avg_anterior'] for a in anteriores}
 
@@ -277,32 +280,45 @@ def wellcome_view(request):
 
 
     # === Gráfico: Número de Alertas Por Proceso ===
-    process_todos = ProcessPerformanceIndicators.objects.all()
+    todos_procesos = Process.objects.all()
 
-    alertas_por_proceso = defaultdict(int)
-    mediciones = ProcessPerformanceMeasurements.objects.all()
-    indicadores = ProcessPerformanceIndicators.objects.all()
+    process_labels = [proceso.name for proceso in todos_procesos]
 
-    indicadores_dict = {
-        (i.process_id, i.performanceindicator_id): i
-        for i in indicadores
-    }
+    alerta = []
+    procesos_alerta = []
 
-    for ppm in mediciones:
-        key = (ppm.process_id, ppm.performance_indicator_id)
-        if key in indicadores_dict:
-            indicador = indicadores_dict[key]
-            min_val = indicador.min_acceptable_value
-            max_val = indicador.max_acceptable_value
+    for ppm in recientes_process_perform_measure:
+        indicador = ProcessPerformanceIndicators.objects.get(
+            process=ppm.process,
+            performanceindicator=ppm.performance_indicator
+        )
 
-            if (
-                (min_val is not None and ppm.measured_value < min_val) or
-                (max_val is not None and ppm.measured_value > max_val)
-            ):
-                alertas_por_proceso[ppm.process] += 1 
-    
-    process_labels = [proceso.name for proceso in alertas_por_proceso.keys()]
-    process_values = [total for total in alertas_por_proceso.values()]
+        min_val = indicador.min_acceptable_value
+        max_val = indicador.max_acceptable_value
+
+        if ((min_val is not None and ppm.measured_value < min_val) or
+            (max_val is not None and ppm.measured_value > max_val)):
+            
+            alerta.append(ppm)
+            procesos_alerta.append(ppm.process.name)
+        
+        proceso_numero_alertas = {}
+        for nombre in procesos_alerta:
+            if nombre in proceso_numero_alertas:
+                proceso_numero_alertas[nombre] += 1
+            else:
+                proceso_numero_alertas[nombre] = 1
+
+
+        for proceso in Process.objects.all():
+            if proceso.name not in proceso_numero_alertas:
+                proceso_numero_alertas[proceso.name] = 0
+
+    process_labels=list(proceso_numero_alertas.keys()) 
+    process_values=list(proceso_numero_alertas.values())
+
+    print("Labels:", process_labels)
+    print("Values:", process_values)
 
 
     # === Gráfico: Tendencia Índice de Mejora Continua === #
@@ -370,7 +386,7 @@ def wellcome_view(request):
         'sin_nc': auditorias_sin_nc,
         'tasa_nc': round(tasa_nc, 2),
 
-        'procesos_en_alerta': procesos_en_alerta,
+        'procesos_en_alerta': numero_procesos_alerta,
         'total_procesos': total_procesos,
         'tasa_procesos_alerta':tasa_procesos_alerta,
 
@@ -384,7 +400,7 @@ def wellcome_view(request):
         'clasificaciones_labels': clasificaciones_labels,
         'clasificaciones_values': clasificaciones_values,
 
-        'process_labels ':process_labels ,
+        'process_labels':process_labels,
         'process_values':process_values,
 
         'kpis_labels': kpis_labels,
@@ -396,7 +412,7 @@ def wellcome_view(request):
 
         'page_obj': page_obj,
 
-        "alertas_por_proceso": dict(alertas_por_proceso)
+        #"alertas_por_proceso": dict(alertas_por_proceso)
     }
 
     return render(request, "mistemplates/user-dashboard.html", contexto)
