@@ -556,8 +556,25 @@ document.addEventListener("DOMContentLoaded", function () {
         xaxis: {
             categories: processLabels,
             title: { text: 'Proceso' },
-            label: {
-              show: false
+            labels: {
+                style: {
+                    fontSize: '12px'
+                },
+                formatter: function (value) {
+                    const palabras = value.split(' ');
+                    let resultado = '';
+
+                    for (let i = 0; i < palabras.length; i++) {
+                        resultado += palabras[i];
+                        if ((i + 1) % 2 === 0 && i !== palabras.length - 1) {
+                            resultado += '\n';  // salto de línea cada 2 palabras
+                        } else {
+                            resultado += ' ';
+                        }
+                    }
+
+                    return resultado.trim();
+                }
             }
         },
         yaxis: {
@@ -571,15 +588,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         colors: ['#dc3545'],
         dataLabels: {
-          enabled: true,
-          offsetY: -20, 
-          formatter: function (val, opts) {
-              return opts.w.globals.labels[opts.dataPointIndex]; 
-          },
-          style: {
-              fontSize: '12px',
-              colors: ['#000']
-          } 
+          enabled: false    
         },
         grid: { borderColor: '#f1f1f1' }
     };
