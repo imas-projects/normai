@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Count
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.exceptions import PermissionDenied
@@ -40,8 +41,23 @@ def all_messages(request):
     'message__message__message_channels__channel'
     )
 
+
+    # -- Gráficas
+    datos_comunicaciones = (
+        CommunicationMessage.objects
+        .values('table__emiter__id', 'table__emiter__name') 
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+        
+    communications_labels=[item['table__emiter__name'] for item in datos_comunicaciones]
+    communications_values=[item['total'] for item in datos_comunicaciones]
+
+
     context = {
         'all_communicationtables': all_communicationtables,
+        'communications_labels':communications_labels,
+        'communications_values':communications_values
 
     }
 
