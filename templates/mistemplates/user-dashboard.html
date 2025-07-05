@@ -558,23 +558,8 @@ document.addEventListener("DOMContentLoaded", function () {
             title: { text: 'Proceso' },
             labels: {
                 style: {
-                    fontSize: '12px'
+                    fontSize: '8px'
                 },
-                formatter: function (value) {
-                    const palabras = value.split(' ');
-                    let resultado = '';
-
-                    for (let i = 0; i < palabras.length; i++) {
-                        resultado += palabras[i];
-                        if ((i + 1) % 2 === 0 && i !== palabras.length - 1) {
-                            resultado += '\n';  // salto de línea cada 2 palabras
-                        } else {
-                            resultado += ' ';
-                        }
-                    }
-
-                    return resultado.trim();
-                }
             }
         },
         yaxis: {
