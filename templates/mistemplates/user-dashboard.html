@@ -552,9 +552,6 @@ document.addEventListener("DOMContentLoaded", function () {
         plotOptions: {
           bar: {
               horizontal: true,
-              dataLabels: {
-                  position: 'top'
-                  }
               }
         },
         series: [{
@@ -563,11 +560,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }],
         xaxis: {
             categories: processLabels,
-            title: { text: 'Proceso' }
+            title: { text: 'Número de Alertas' }
         },
         yaxis: {
             min: 0,
-            title: { text: 'Número de Alertas' },
+            title: { text: '' },
             labels: {
                 formatter: function (val) {
                     return Math.floor(val);
