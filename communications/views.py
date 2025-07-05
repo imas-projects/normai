@@ -73,8 +73,7 @@ def get_message(request, id):
 
         message = current_message_info.message
 
-        # Solo debe haber un canal por mensaje
-        message_channel = MessageChanel.objects.get(message=message)
+        message_channel = MessageChanel.objects.filter(message=message)
 
         form_options = load_form_options()
 
@@ -85,7 +84,7 @@ def get_message(request, id):
             'subject': message.name,
             'periodicity': current_message_info.periodicity.id,
             'receivers': current_message_info.receiver.id,
-            'channels': message_channel.channel.id,
+            'channels': [msg.channel.id for msg in message_channel],
             **form_options,
         })
     except Message.DoesNotExist:
@@ -103,7 +102,7 @@ def update_message(request):
             communication_type_id = data.get('message_communication_type')
             subject = data.get('message_subject')
             periodicity_id = data.get('message_periodicity')
-            channel_id = data.get('message_channel')
+            channel_id = [data.get('message_channel')]
             receiver_id = data.get('message_receiver')
 
             # Obtener el CommunicationMessage y su Message relacionado
@@ -116,14 +115,17 @@ def update_message(request):
             com_message.periodicity_id = periodicity_id
             com_message.receiver_id = receiver_id
 
-            # Actualizar canal (asumimos uno por mensaje)
-            message_channel = MessageChanel.objects.get(message=message)
-            message_channel.channel_id = channel_id
+            # Actualizar canal
+            MessageChanel.objects.filter(message=message).delete()
+
+            # Crear nuevos canales
+            for channel_id in channel_id:
+                MessageChanel.objects.create(message=message, channel_id=channel_id)
 
             # Guardar cambios
             message.save()
             com_message.save()
-            message_channel.save()
+            
 
 
             return JsonResponse({'success': True})
@@ -342,8 +344,8 @@ def communication_table_review(request):
 
     return render(request,"mistemplates/communication-tables-review.html", context)
 
-@csrf_protect
-@login_required
+
+
 def save_table_summarize_ia(request):
 
     if request.method == "POST":
