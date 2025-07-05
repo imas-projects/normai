@@ -27,237 +27,192 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Tablas" %}
+            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Tablas de Comunicación" %}
             {% endblock pagetitle %}
 
             <body>
                 <div id="alert-container"></div>
-                <button type="button" class="btn btn-soft-success add-table-btn" id="add-table-btn"
-                    data-bs-toggle="modal" data-bs-target="#addTableModal"><i
-                        class="ri-add-line"></i>
-                    Nueva Tabla
-                </button>
-                {% for table in all_communicationtables %}
-                <div class="card border card-border-dark">
-                    <div class="card-header">
-                        <div class="hstack gap-4 w-auto">
-                            <div class="hstack gap-1">
-                                <h4 class="card-title bg-dark text-light p-1 px-1 rounded-top"> Código Tabla: {{ table.code }}</h4>
-                            </div>
-                            <!--<div class="hstack gap-1">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Área: {{ table.area.name }}</h4>
-                            </div>-->
-                            <div class="hstack gap-1">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Estado: {{ table.get_status_display }}</h4>
-                            </div>
-                            <!--<button type="button" class="btn btn-soft-success ms-auto add-btn" id="add-message-btn"
-                                data-table-id="{{ table.id }}" data-bs-toggle="modal" data-bs-target="#addModal"><i
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <h1 class="text-center flex-grow-1">Tablas de Comunicación</h1>
+                        <div class="">
+                            <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
+                                data-bs-toggle="modal" data-bs-target="#addTableModal"><i
                                     class="ri-add-line"></i>
-                                Editar Tabla
-                            </button>-->
+                                Nueva Tabla
+                            </button>
                         </div>
-                        <div class="hstack gap-4 w-auto">
-                            <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Creada Por: {{ table.created_by.name }}</h4>
-                            </div>
-                            <div class="hstack gap-1 start-0 bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Emisor: {{ table.emiter.name }}</h4>
-                            </div>
-                            <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark p-1 px-1 rounded-top">Revisado Por: {{ table.reviewed_by.name}}</h4>
-                            </div>
-                            <div class="hstack gap-1 w-auto bottom-0">
-                                <h4 class="card-title bg-light text-dark fs-bold p-1 px-1 rounded-top">Aprobado Por: {{ table.approved_by.name }}</h4>
-                            </div>
-                            </div>
-                            
-                            <button type="button" class="btn btn-secondary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#summarizeModal{{ table.id }}">
-                                <i class="ri-add-line"></i> Resumir tabla
-                            </button>
-                        
-                            <button type="button" class="btn btn-outline-info ms-2" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#flowMapModal{{ table.id }}">
-                                <i class="ri-map-pin-line"></i> Mapa IA
-                            </button>
-
-
-                           <!--<form method="post" id="summarize_form" action="{% url 'communications:table-summarize-ia' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="table_id" value="{{ table.id }}">
-                                <button type="submit" class="btn btn-secondary add-table-btn w-auto rounded-top">
-                                    <i class="bx bx-bulb"></i> Resumir con IA
-                                </button>
-                            </form>  -->               
                     </div>
-
-                    <!--Mostrar Mensajes-->
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="w-100">
-                                <thead class="bg-light text-dark align-middle fs-5 text">
-                                    <tr>
-                                        <div class="hstack gap-3">
-                                            <h3>Mensajes</h3>
-                                            {% if table.status == "open" %}
-                                            <button type="button" class="btn btn-soft-info ms-auto add-btn"
-                                                id="add-message-btn" data-table-id="{{ table.id }}"
-                                                data-bs-toggle="modal" data-bs-target="#addModal"><i
-                                                    class="ri-add-line"></i>
-                                                Nuevo Mensaje
-                                            </button>
-                                            {% endif %}
-                                        </div>
-                                    </tr>
-                                    <tr>
-                                        <th>Comunicación</th>
-                                        <th>Asunto</th>
-                                        <th>Receptor</th>
-                                        <th>Canal</th>
-                                        <th>Periodicidad</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="table-responsive bg-light text-dark">
-                                    {% for msg in table.message.all %}
-                                    <tr>
-                                        <td>{{ msg.type.scope }} {{ msg.type.direction }}</td>
-                                        <td>{{ msg.message.name }}</td>
-                                        <td>{{ msg.receiver.name}}</td>
-                                        <td>{% for mc in msg.message.message_channels.all %}
-                                                {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
-                                            {% empty %}
-                                                Sin canal
-                                            {% endfor %}
-                                        </td>
-
-                                        <td>{{ msg.periodicity.name }}</td>
-                                        <td>
-
-                                            {% if user.user_position.first.position.name|stringformat:"s" == table.emiter|stringformat:"s" %}
-                                            <button class="btn edit-btn btn-ghost-info" data-id="{{ msg.id }}"
-                                                data-bs-toggle="modal" data-bs-target="#editModal">
-                                                <i class="ri-edit-2-line" style="font-size: 18px;"></i>
-                                            </button>
-
-                                            <button class="btn open-delete-modal btn-ghost-danger"
-                                                data-id="{{ msg.message.id }}" data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal">
-                                                <i class="ri-delete-bin-6-line" style="font-size: 18px;"></i>
-                                            </button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-            <!-- Modal Resumen Tabla IA -->
-                <div class="modal fade" id="summarizeModal{{ table.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ table.id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content bg-white text-dark">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="summarizeModalLabel{{ table.id }}">Resumen Tabla</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-
-                            <div class="modal-body">
-                                {% if table.summary %}
-                                    <div class="alert alert-info" id="summary-box-{{ table.id }}">
-                                        <label class="form-label"><strong>Resumen Previo:</strong></label>
-                                        <textarea class="form-control" readonly>{{ table.summary }}</textarea>
-                                    </div>
-                                {% else %}
-                                    <p>Aún no hay resumen para esta tabla</p>
-                                {% endif %}
-
-                                {% if table_summary and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                                    <div class="mt-3">
-                                        <div class="alert alert-info" id="summary-box-{{ table.id }}">
-                                            <label class="form-label"><strong>Resumen generado:</strong></label>
-                                            <textarea class="form-control" rows="9" readonly>{{ table_summary }}</textarea>
-                                        </div>
-
-                                        <form method="post" action="{% url 'communications:save_table_summarize_ia' %}" class="mt-3">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="form_name" value="save_table_summarize_form">
-                                            <input type="hidden" name="table_id" value="{{ table.id }}">
-                                            <input type="hidden" name="summary" value="{{ table_summary }}">
-                                            <button type="submit" class="btn btn-secondary">Guardar resumen</button>
-                                        </form>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="modal-footer">
-                                <form method="post" action="{% url 'communications:table-summarize-ia' %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="form_name" value="table_summarize_form">
-                                    <input type="hidden" name="table_id" value="{{ table.id }}">
-                                    <button type="submit" class="btn btn-primary">
-                                        {% if table.summary %} Generar Nuevo Resumen con IA {% else %} Resumir tabla con IA {% endif %}
+                
+                    <div class="accordion" id="accordion-comunicaciones">
+                        {% for table in all_communicationtables %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading-{{ table.id }}">
+                                    <button class="accordion-button collapsed fw-semibold" type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#collapse-{{ table.id }}"
+                                            aria-expanded="false"
+                                            aria-controls="collapse-{{ table.id }}">
+                                        {{ table.emiter }}
                                     </button>
-                                </form>
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                </h2>
+                                <div id="collapse-{{ table.id }}"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="heading-{{ table.id }}"
+                                    data-bs-parent="#accordion-comunicaciones">
+                                    <div class="accordion-body ">
+                                        <div class="hstack gap-1 align-items-center justify-content-end pb-3">
+                                            <h3 class="text-start flex-grow-1">Mensajes</h3>
+
+                                            <button type="button" class="btn btn-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#summarizeModal{{ table.id }}">
+                                                <i class="bx bx-brain align-middle"></i> Resumen
+                                            </button>
+                                        
+                                            <button type="button" class="btn btn-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#flowMapModal{{ table.id }}">
+                                                <i class="bx bx-brain align-middle"></i> Mapa IA
+                                            </button>
+                                        </div>
+
+                                        {% for msg in table.message.all %}
+                                        <div class="hstack">
+                                            <div class="col-md-11 border-bottom card-border-light ">
+                                                <p class="mb-1 bg-light text-dark px-1 pb-0" style="font-size: 0.925rem;"><strong>Asunto:</strong> {{ msg.message.name }}</p>
+                                                <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ msg.receiver.name }}</p>
+                                                <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ msg.type.scope }} {{ msg.type.direction }}</p>
+                                                <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in msg.message.message_channels.all %}
+                                                        {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                                    {% empty %}
+                                                        Sin canal
+                                                    {% endfor %}</p>
+                                                <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ msg.periodicity.name }}</p>
+                                            </div>
+                                            <div class="col-md-0">
+                                                <div class="vstack gap-1 px-3">
+                                                <button class="btn btn-outline-secondary edit-btn" data-id="{{ msg.id }}"
+                                                    data-bs-toggle="modal" data-bs-target="#editModal">
+                                                    <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button class="btn open-delete-modal btn-danger"
+                                                    data-id="{{ msg.message.id }}" data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal">
+                                                    <i class="ri-delete-back-2-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        
+                            <!-- Resumen con IA -->
+                            <div class="modal fade" id="summarizeModal{{ table.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ table.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content bg-white text-dark">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="summarizeModalLabel{{ table.id }}">Resumen Tabla</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            {% if table.summary %}
+                                                <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                                                    <label class="form-label"><strong>Resumen Previo:</strong></label>
+                                                    <textarea class="form-control" readonly>{{ table.summary }}</textarea>
+                                                </div>
+                                            {% else %}
+                                                <p>Aún no hay resumen para esta tabla</p>
+                                            {% endif %}
+
+                                            {% if table_summary and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                                                <div class="mt-3">
+                                                    <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                                                        <label class="form-label"><strong>Resumen generado:</strong></label>
+                                                        <textarea class="form-control" rows="9" readonly>{{ table_summary }}</textarea>
+                                                    </div>
+
+                                                    <form method="post" action="{% url 'communications:save_table_summarize_ia' %}" class="mt-3">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="form_name" value="save_table_summarize_form">
+                                                        <input type="hidden" name="table_id" value="{{ table.id }}">
+                                                        <input type="hidden" name="summary" value="{{ table_summary }}">
+                                                        <button type="submit" class="btn btn-secondary">Guardar resumen</button>
+                                                    </form>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'communications:table-summarize-ia' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="form_name" value="table_summarize_form">
+                                                <input type="hidden" name="table_id" value="{{ table.id }}">
+                                                <button type="submit" class="btn btn-info">
+                                                    {% if table.summary %} Generar Nuevo Resumen con IA {% else %} Resumir tabla con IA {% endif %}
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modal Mapa de Comunicación IA -->
+                            <div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content bg-white text-dark shadow-sm border-0">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-semibold" id="flowMapModalLabel{{ table.id }}">Informe IA de Comunicación</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
+                                                {% for section, items in flow_ia_sections.items %}
+                                                    <div class="mb-4">
+                                                        <h6 class="fw-semibold">{{ section }}</h6>
+                                                        {% if items %}
+                                                            <ul class="ps-3">
+                                                                {% for item in items %}
+                                                                    <li>{{ item }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        {% else %}
+                                                            <p class="text-muted fst-italic">No se encontraron datos en esta sección.</p>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <p class="text-muted">Haz clic en el botón para generar el informe IA.</p>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="table_id" value="{{ table.id }}">
+                                                <button type="submit" class="btn btn-outline-info generateFlowMapBtn">Generar Informe IA</button>
+                                            </form>
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                <!--Fin for tablas -->            
+                        {% endfor %}
                     </div>
-                </div>
-
-<!-- Modal Mapa de Comunicación IA -->
-<div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content bg-white text-dark shadow-sm border-0">
-            <div class="modal-header">
-                <h5 class="modal-title fw-semibold" id="flowMapModalLabel{{ table.id }}">Informe IA de Comunicación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                {% if flow_ia_insights and table.id|stringformat:"s" == table_id|stringformat:"s" %}
-                    {% for section, items in flow_ia_sections.items %}
-                        <div class="mb-4">
-                            <h6 class="fw-semibold">{{ section }}</h6>
-                            {% if items %}
-                                <ul class="ps-3">
-                                    {% for item in items %}
-                                        <li>{{ item }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="text-muted fst-italic">No se encontraron datos en esta sección.</p>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">Haz clic en el botón para generar el informe IA.</p>
-                {% endif %}
-            </div>
-
-            <div class="modal-footer">
-                <form method="post" action="{% url 'communications:table_flow_map_ia' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="table_id" value="{{ table.id }}">
-                    <button type="submit" class="btn btn-outline-info generateFlowMapBtn">Generar Informe IA</button>
-                </form>
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-
-
-
-        
                 <!--Fin MOdales-->
-                            </table>
+                           
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+           
+            </div>
             <!--Fin tablas-->
             </body>
         </div>
@@ -822,6 +777,7 @@
         }
     </script>
 
+
     <!--Añadir Tabla de comunicación-->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -925,27 +881,28 @@
             return cookieValue;
         }
 
-document.addEventListener('DOMContentLoaded', function () {
-    {% if open_flow_modal and table_id %}
-        const modalId = 'flowMapModal{{ table_id }}';
-        const flowModal = document.getElementById(modalId);
-        if (flowModal) {
-            const modalInstance = new bootstrap.Modal(flowModal);
-            modalInstance.show();
-        }
-    {% endif %}
 
-    const allGenerateBtns = document.querySelectorAll('.generateFlowMapBtn');
-    allGenerateBtns.forEach(btn => {
-        const form = btn.closest('form');
-        if (form) {
-            form.addEventListener('submit', function () {
-                btn.disabled = true;
-                btn.textContent = 'Obteniendo análisis...';
-            });
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if open_flow_modal and table_id %}
+            const modalId = 'flowMapModal{{ table_id }}';
+            const flowModal = document.getElementById(modalId);
+            if (flowModal) {
+                const modalInstance = new bootstrap.Modal(flowModal);
+                modalInstance.show();
+            }
+        {% endif %}
+
+        const allGenerateBtns = document.querySelectorAll('.generateFlowMapBtn');
+        allGenerateBtns.forEach(btn => {
+            const form = btn.closest('form');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    btn.disabled = true;
+                    btn.textContent = 'Obteniendo análisis...';
+                });
+            }
+        });
     });
-});
 
 
 
