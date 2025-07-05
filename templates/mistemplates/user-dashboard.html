@@ -392,10 +392,6 @@
         <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
       </div>
     </div>
-    <pre>
-    <!--Labels: {{ process_labels }}-->
-    <!--Values: {{ process_values }}-->
-    </pre>
   </div>
 
   <!-- Distribución de No Conformidades -->
@@ -569,7 +565,7 @@ document.addEventListener("DOMContentLoaded", function () {
         grid: { borderColor: '#f1f1f1' }
     };
 
-    const el = document.querySelector('#process_alert_chart_mini');
+    const el = document.querySelector('#process_alert_chart');
     if (el) {
         const chart = new ApexCharts(el, options);
         chart.render();
