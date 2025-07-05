@@ -62,7 +62,12 @@
                                     <div class="accordion-body ">
                                         <div class="hstack gap-1 align-items-center justify-content-end pb-3">
                                             <h3 class="text-start flex-grow-1">Mensajes</h3>
-
+                                            <button type="button" class="btn btn-dark ms-auto add-btn"
+                                                id="add-message-btn" data-table-id="{{ table.id }}"
+                                                data-bs-toggle="modal" data-bs-target="#addModal"><i
+                                                    class="ri-add-line"></i>
+                                                Nuevo Mensaje
+                                            </button>
                                             <button type="button" class="btn btn-info" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#summarizeModal{{ table.id }}">
@@ -228,7 +233,7 @@
                         {% csrf_token %}
                         <div class="modal-header">
                             <h5 class="modal-title bg-white text-dark p-1" id="editModalLabel">Editar Mensaje</h5>
-                            <button type="button" class="btn-close bg-danger bg-opacity-50" data-bs-dismiss="modal"
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -277,8 +282,8 @@
                     <form id="addForm" method="post">
                         {% csrf_token %}
                         <div class="modal-header">
-                            <h5 class="modal-title bg-dark text-light p-1" id="addModalLabel">Nuevo Mensaje</h5>
-                            <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
+                            <h5 class="modal-title text-dark p-1" id="addModalLabel">Nuevo Mensaje</h5>
+                            <button type="button" class="btn-close close-btn"
                                 data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -325,11 +330,14 @@
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="editModalLabel">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
+                    <div class="modal-header">
+                            <h5 class="modal-title text-dark p-1" id="addModalLabel">Eliminar Mensaje</h5>
+                        </div>
                     <div class="modal-body text-center p-5">
                         ¿Está seguro de eliminar este mensaje?
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" id="confirm-delete-btn" class="btn btn-danger">Eliminar</button>
                     </div>
                 </div>
@@ -344,7 +352,7 @@
                     <form id="addTableForm" method="post">
                         {% csrf_token %}
                         <div class="modal-header">
-                            <h5 class="modal-title bg-dark text-light p-1" id="addTableLabel">Nueva Tabla</h5>
+                            <h5 class="modal-title text-dark p-1" id="addTableLabel">Nueva Tabla</h5>
                             <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
                                 data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
@@ -486,16 +494,15 @@
                                 option.textContent = opt.name;
                                 channelSelect.appendChild(option);
                             });
-
+                            
                             if (channelChoicesInstance) channelChoicesInstance.destroy();
                             channelChoicesInstance = new Choices(channelSelect, {
                                 removeItemButton: true,
                                 searchEnabled: false
                             });
-
                             
                             channelChoicesInstance.setChoiceByValue(data.channels.map(String));
-                            
+
 
                             // --- Receiver ---
                             const receiverSelect = document.getElementById('message-receiver');
@@ -598,6 +605,7 @@
                                     modalInstance.hide();
                                     location.reload();
                                 }
+                                location.reload()
                             } else {
                                 alert(data.error);
                             }

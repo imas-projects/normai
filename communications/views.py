@@ -151,6 +151,9 @@ def delete_message(request, id):
             return JsonResponse({'success': True})
         except Message.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Message not found'})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
