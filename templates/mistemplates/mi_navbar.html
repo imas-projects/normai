@@ -8,55 +8,50 @@
                     <div id="two-column-menu">
                     </div>
                     <ul class="navbar-nav" id="navbar-nav">
-                        <!--Menu Comunicaciones-->
+                        
                         <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="{% url 'pages:wellcome_view' %}" role="button">
                                 <i class="bx bx-home"></i> <span data-key="t-dashboards">Inicio</span>
                             </a>
                         </li>
-<li class="nav-item">
-    <a class="nav-link menu-link" href="#sidebarAreas" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAreas">
-        <i class="bx bx-border-all"></i> <span data-key="t-areas">Áreas</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarAreas">
-        <ul class="nav nav-sm flex-column">
-            {% for area in all_areas %}
-            <li class="nav-item">
-                <a href="{% url 'pages:area_detail' area.id %}" class="nav-link">{{ area.name }}</a>
-            </li>
-            {% empty %}
-            <li class="nav-item">
-                <span class="nav-link disabled">No hay áreas disponibles</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-</li>
-
                         <li class="nav-item">
-                            <a class="nav-link menu-link" data-bs-toggle="collapse" role="button"
+                            <a class="nav-link menu-link" href="#sidebarAreas" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAreas">
+                                <i class="bx bx-border-all"></i> <span data-key="t-areas">Áreas</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAreas">
+                                <ul class="nav nav-sm flex-column">
+                                    {% for area in all_areas %}
+                                    <li class="nav-item">
+                                        <a href="{% url 'pages:area_detail' area.id %}" class="nav-link">{{ area.name }}</a>
+                                    </li>
+                                    {% empty %}
+                                    <li class="nav-item">
+                                        <span class="nav-link disabled">No hay áreas disponibles</span>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                         <!--Menu Procesos-->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
-                                <i class="bx bxs-message"></i> <span data-key="t-dashboards">Comunicaciones</span>
+                                <i class="bx bx-selection"></i> <span data-key="t-dashboards">Procesos</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="{% url 'communications:communication_tables' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
+                                        <a href="{% url 'processes:list_processes' %}" class="nav-link" data-key="t-analytics"> Ver Procesos </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{% url 'communications:received_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes recibidos </a>
+                                        <a href="{% url 'processes:kpis_processes' %}" class="nav-link" data-key="t-analytics"> KPIs </a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a href="{% url 'communications:sent_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes enviados </a>
-                                    </li>
-                                    <!--<li class="nav-item">
-                                        <a href="{% url 'communications:communication_table_review' %}" class="nav-link" data-key="t-analytics"> Revisiones </a>
-                                    </li>  -->                                  
                                 </ul>
-                            </div>
+                            </div>    
                         </li>
-                        <!-- Fin Menu Comunicaciones -->
+                        <!-- Fin Menu Procesos -->
+                        
                         <!--Menu Riesgos-->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse"
@@ -76,7 +71,7 @@
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
-                                <i class="bx bxs-dashboard"></i> <span data-key="t-dashboards">Auditorias</span>
+                                <i class="bx bx-receipt"></i> <span data-key="t-dashboards">Auditorias</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
@@ -96,25 +91,31 @@
                             </div>
                         </li>
                         <!-- Fin Menu Auditorias --> 
-                        <!--Menu Procesos-->
+                        <!--Menu Comunicaciones-->
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="" data-bs-toggle="collapse" role="button"
+                            <a class="nav-link menu-link" data-bs-toggle="collapse" role="button"
                                 aria-expanded="false" aria-controls="sidebarDashboards">
-                                <i class="bx bx-selection"></i> <span data-key="t-dashboards">Procesos</span>
+                                <i class="bx bx-message"></i> <span data-key="t-dashboards">Comunicaciones</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="{% url 'processes:list_processes' %}" class="nav-link" data-key="t-analytics"> Ver Procesos </a>
+                                        <a href="{% url 'communications:communication_tables' %}" class="nav-link" data-key="t-analytics"> Tablas de Comunicación </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{% url 'processes:kpis_processes' %}" class="nav-link" data-key="t-analytics"> KPIs </a>
+                                        <a href="{% url 'communications:received_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes recibidos </a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a href="{% url 'communications:sent_messages' %}" class="nav-link" data-key="t-analytics"> Mensajes enviados </a>
+                                    </li>
+                                    <!--<li class="nav-item">
+                                        <a href="{% url 'communications:communication_table_review' %}" class="nav-link" data-key="t-analytics"> Revisiones </a>
+                                    </li>  -->                                  
                                 </ul>
-                            </div>    
+                            </div>
                         </li>
-                        <!-- Fin Menu Procesos -->
-                       
+                        <!-- Fin Menu Comunicaciones -->
+                        
 
                         
                         <!-- Menu Autenticacion--> 

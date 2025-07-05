@@ -12,6 +12,8 @@
                             <i class='bx bx-fullscreen fs-22'></i>
                         </button>
                         <a href="{% url 'pages:wellcome_view' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle bx bx-home fs-22"></a>
+                        <a href="{% url 'admin:index' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle  bx bx-shield fs-22"></a>
+
                         {% if user.is_authenticated %}
                             <a href="{% url 'authentication:authentication_log_out' %}" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle bx bx-log-out-circle fs-22"></a>
                         
@@ -21,6 +23,7 @@
                         {% endif %}
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </header>

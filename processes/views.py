@@ -222,7 +222,7 @@ def kpis_processes(request):
 
     return render(request, 'mistemplates/kpis-processes.html', {'processes': processes})
 
-
+@login_required
 def save_kpi_processes(request):
     if request.method == "POST":
         form_name = request.POST.get("form_name")
