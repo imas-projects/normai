@@ -312,7 +312,7 @@ def wellcome_view(request):
 
         for proceso in Process.objects.all():
             if proceso.name not in proceso_numero_alertas:
-                proceso_numero_alertas[proceso.name] = 0
+                proceso_numero_alertas[proceso.name] = 0.01
 
     process_labels=list(proceso_numero_alertas.keys()) 
     process_values=list(proceso_numero_alertas.values())
