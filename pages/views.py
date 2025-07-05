@@ -317,10 +317,6 @@ def wellcome_view(request):
     process_labels=list(proceso_numero_alertas.keys()) 
     process_values=list(proceso_numero_alertas.values())
 
-    print("Labels:", process_labels)
-    print("Values:", process_values)
-
-
     # === Gráfico: Tendencia Índice de Mejora Continua === #
 
     mediciones = (
@@ -331,10 +327,9 @@ def wellcome_view(request):
         .order_by('month')
     )
 
-    # 2. Organizar por mes → {mes: {indicador: promedio}}
     datos_por_mes = OrderedDict()
     for fila in mediciones:
-        mes = fila['month'].strftime("%Y-%m")  # ej: '2025-06'
+        mes = fila['month'].strftime("%b").upper() # ej: '2025-06'
         kpi = fila['performance_indicator']
         avg = fila['avg_valor']
 
@@ -342,11 +337,11 @@ def wellcome_view(request):
             datos_por_mes[mes] = {}
         datos_por_mes[mes][kpi] = avg
 
-    # 3. Calcular % de variación mes a mes
     kpis_labels = []
     kpis_values = []
 
     meses_ordenados = list(datos_por_mes.keys())
+    print("Meses encontrados:", meses_ordenados)
 
     for i in range(1, len(meses_ordenados)):
         mes_anterior = datos_por_mes[meses_ordenados[i - 1]]
@@ -369,6 +364,9 @@ def wellcome_view(request):
 
         kpis_labels.append(meses_ordenados[i])
         kpis_values.append(round(promedio_mes, 2))
+
+        print('etiquetucas:',kpis_labels)
+        print('valores:',kpis_values)
 
     # === Contexto final ===
     contexto = {
