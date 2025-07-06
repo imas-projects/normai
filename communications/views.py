@@ -322,35 +322,28 @@ def create_table(request):
 @csrf_protect
 @login_required
 #@user_passes_test(communication_check)
-def user_received_messages(request):
+def user_received_sent_messages(request):
     user = request.user
     user_position = UserPosition.objects.get(user_id=user)
 
     received_messages = CommunicationMessage.objects.filter(receiver=user_position.position).distinct()
     received_messages = [message for message in received_messages]
+
+    sent_messages_table = CommunicationTable.objects.filter(emiter=user_position.position)
+    sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_table)
+
+    comunicaciones_labels = ['Recibidas','Enviadas']
+    comunicaciones_values = [len(received_messages),len(sent_messages)]
   
 
     # Contexto para la plantilla
     context = {
         'received_messages' : received_messages,
-    }
-    return render(request,"mistemplates/user-received-messages.html", context)
-
-
-@csrf_protect
-@login_required
-#@user_passes_test(communication_check)
-def user_sent_messages(request):
-    user = request.user
-    user_position = UserPosition.objects.get(user_id=user)
-
-    sent_messages_table = CommunicationTable.objects.filter(emiter=user_position.position)
-    sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_table)
-    # Contexto para la plantilla
-    context = {
         'sent_messages' : sent_messages,
+        'comunicaciones_labels':comunicaciones_labels,
+        'comunicaciones_values':comunicaciones_values
     }
-    return render(request,"mistemplates/user-sent-messages.html", context)
+    return render(request,"mistemplates/user-received-sent-messages.html", context)
 
 
 @csrf_protect

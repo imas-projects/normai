@@ -27,111 +27,65 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Tablas de Comunicación" %}
+            {% include "partials/page-title.html" with pagetitle="Comunicaciones" title="Mis Comunicaciones" %}
             {% endblock pagetitle %}
 
             <body>
-                <div id="alert-container"></div>
-                    
-                    <div class="d-flex justify-content-between align-items-center mt-5">
-                        <h1 class="text-center flex-grow-1">Tablas de Comunicación</h1>
-                        <div class="">
-                            <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
-                                data-bs-toggle="modal" data-bs-target="#addTableModal"><i
-                                    class="ri-add-line"></i>
-                                Nueva Tabla
-                            </button>
-                        </div>
-                    </div>
-                  
-                    <div class="hstack">
-                        <!--Parte izquierda-->
-                        <div class="vstack col-md-6 px-1">
-                            
-                                <div class="">
-                                    <div class="card card-animate">
-                                    <div class="card-body">
-                                        <h4 class="card-title d-flex justify-content-between align-items-center">
-                                        Comunicaciones Por Área
-                                        </h4>
-                                        <div id="communications_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
-                                    </div>
-                                    </div>
-                                </div>
 
-
-                                <div class="card card-animate">
-                                    <div class="card-body">
-                                        <h4 class="card-title d-flex justify-content-between align-items-center">
-                                        Comunicaciones Recientes
-                                        </h4>
-                                        <div class="col-md-11 border-bottom card-border-light ">
-                                            
-                                            {% for r in comunicaciones_recientes %}
-                                                <p class="border-bottom card-border-light"><b>{{ r.asunto }}</b> | {{ r.emisor }} <i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
-                                            {% endfor %}
-                                            
-                                        </div>
-                                    </div>
-                                </div>
-
-                                
-
-                            </div>
                         
-                    
-                        <!--Parte derecha-->
+                <div id="alert-container"></div>                 
+                    <div class="hstack">
+                        <!--Parte izquierda Enviados-->
                         <div class="col-md-6 align-self-start">
-                        <div class="accordion" id="accordion-comunicaciones">
-                            {% for table in all_communicationtables %}
+                            <h1 class="text-center flex-grow-1">Comunicaciones Recibidas</h1>
+                        <div class="accordion" id="accordion-comunicaciones-recibidas">
+                            {% for received in received_messages %}
                                 <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading-{{ table.id }}">
+                                    <h2 class="accordion-header" id="heading-{{ received.id }}">
                                         <button class="accordion-button collapsed fw-semibold" type="button"
                                                 data-bs-toggle="collapse"
-                                                data-bs-target="#collapse-{{ table.id }}"
+                                                data-bs-target="#collapse-{{ received.id }}"
                                                 aria-expanded="false"
-                                                aria-controls="collapse-{{ table.id }}">
-                                            {{ table.emiter }}
+                                                aria-controls="collapse-{{ received.id }}">
+                                            Asunto:        {{ received.message.name }}
                                         </button>
                                     </h2>
-                                    <div id="collapse-{{ table.id }}"
+                                    <div id="collapse-{{ received.id }}"
                                         class="accordion-collapse collapse"
-                                        aria-labelledby="heading-{{ table.id }}"
-                                        data-bs-parent="#accordion-comunicaciones">
+                                        aria-labelledby="heading-{{ received.id }}"
+                                        data-bs-parent="#accordion-comunicaciones-recibidas">
                                         <div class="accordion-body ">
                                             <div class="hstack gap-1 align-items-center justify-content-end pb-3">
-                                                <h3 class="text-start flex-grow-1">Mensajes</h3>
-                                                <button type="button" class="btn btn-dark ms-auto add-btn"
-                                                    id="add-message-btn" data-table-id="{{ table.id }}"
+                                                <!--<button type="button" class="btn btn-dark ms-auto add-btn"
+                                                    id="add-message-btn" data-table-id="{{ received.id }}"
                                                     data-bs-toggle="modal" data-bs-target="#addModal"><i
                                                         class="ri-add-line"></i>
                                                     Nuevo Mensaje
-                                                </button>
-                                                <button type="button" class="btn btn-info" 
+                                                </button>-->
+                                                <!--<button type="button" class="btn btn-info" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#summarizeModal{{ table.id }}">
                                                     <i class="bx bx-brain align-middle"></i> Resumen
-                                                </button>
+                                                </button>-->
                                             
-                                                <button type="button" class="btn btn-info" 
+                                                <!--<button type="button" class="btn btn-info" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#flowMapModal{{ table.id }}">
                                                     <i class="bx bx-brain align-middle"></i> Mapa IA
-                                                </button>
+                                                </button>-->
                                             </div>
 
-                                            {% for msg in table.message.all %}
+                                            
                                             <div class="hstack">
                                                 <div class="col-md-11 border-bottom card-border-light ">
-                                                    <p class="mb-1 bg-light text-dark px-1 pb-0" style="font-size: 0.925rem;"><strong>Asunto:</strong> {{ msg.message.name }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ msg.receiver.name }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ msg.type.scope }} {{ msg.type.direction }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in msg.message.message_channels.all %}
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Emisor:</strong> {{ received.table.emiter.name }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ received.type.scope }} {{ received.type.direction }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in received.message.message_channels.all %}
                                                             {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
                                                         {% empty %}
                                                             Sin canal
                                                         {% endfor %}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ msg.periodicity.name }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ received.periodicity.name }}</p>
                                                 </div>
                                                 <div class="col-md-0">
                                                     <div class="vstack gap-1 px-3">
@@ -147,7 +101,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            {% endfor %}
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -205,7 +159,7 @@
                                 </div>
 
                                 <!-- Modal Mapa de Comunicación IA -->
-                                <div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
+                                <!--<div class="modal fade" id="flowMapModal{{ table.id }}" tabindex="-1" aria-labelledby="flowMapModalLabel{{ table.id }}" aria-hidden="true">
                                     <div class="modal-dialog modal-xl">
                                         <div class="modal-content bg-white text-dark shadow-sm border-0">
                                             <div class="modal-header">
@@ -244,6 +198,84 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>-->
+
+
+                        <!--Fin for tablas -->            
+                            {% endfor %}
+                        </div>
+                        </div>
+                        
+                    
+                        <!--Parte derecha-->
+                        <div class="col-md-6 align-self-start">
+                            <h1 class="text-center flex-grow-1">Comunicaciones Enviadas</h1>
+                        <div class="accordion" id="accordion-comunicaciones-enviadas">
+                            {% for sent in sent_messages %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-{{ sent.id }}">
+                                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#collapse-{{ sent.id }}"
+                                                aria-expanded="false"
+                                                aria-controls="collapse-{{ sent.id }}">
+                                            Asunto:        {{ sent.message.name }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-{{ sent.id }}"
+                                        class="accordion-collapse collapse"
+                                        aria-labelledby="heading-{{ sent.id }}"
+                                        data-bs-parent="#accordion-comunicaciones-enviadas">
+                                        <div class="accordion-body ">
+                                            <div class="hstack gap-1 align-items-center justify-content-end pb-3">
+                                                <!--<button type="button" class="btn btn-dark ms-auto add-btn"
+                                                    id="add-message-btn" data-table-id="{{ received.id }}"
+                                                    data-bs-toggle="modal" data-bs-target="#addModal"><i
+                                                        class="ri-add-line"></i>
+                                                    Nuevo Mensaje
+                                                </button>-->
+                                                <!--<button type="button" class="btn btn-info" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#summarizeModal{{ table.id }}">
+                                                    <i class="bx bx-brain align-middle"></i> Resumen
+                                                </button>-->
+                                            
+                                                <!--<button type="button" class="btn btn-info" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#flowMapModal{{ table.id }}">
+                                                    <i class="bx bx-brain align-middle"></i> Mapa IA
+                                                </button>-->
+                                            </div>
+
+                                            
+                                            <div class="hstack">
+                                                <div class="col-md-11 border-bottom card-border-light ">
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ sent.table.recived_by.name }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ sent.type.scope }} {{ sent.type.direction }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in sent.message.message_channels.all %}
+                                                            {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                                        {% empty %}
+                                                            Sin canal
+                                                        {% endfor %}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ sent.periodicity.name }}</p>
+                                                </div>
+                                                <div class="col-md-0">
+                                                    <div class="vstack gap-1 px-3">
+                                                    <button class="btn btn-outline-secondary edit-btn" data-id="{{ msg.id }}"
+                                                        data-bs-toggle="modal" data-bs-target="#editModal">
+                                                        <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                    </button>
+                                                    <button class="btn open-delete-modal btn-danger"
+                                                        data-id="{{ msg.message.id }}" data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal">
+                                                        <i class="ri-delete-back-2-fill" style="font-size: 12px;"></i>
+                                                    </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
                                 </div>
 
 
@@ -252,6 +284,16 @@
                         </div>
                         </div>
                     </div>
+
+                      <!-- Distribución de COmunicaciones-->
+                        <div class="col-xxl-4 col-md-6">
+                            <div class="card card-animate card-height-100">
+                            <div class="card-body pb-0">
+                                <h4 class="card-title">Distribución de Comunicaciones Enviadas/Recibidas</h4>
+                                <div id="comunicaciones_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
+                            </div>
+                            </div>
+                        </div>
                 <!--Fin MOdales-->
                            
                         </div>
@@ -437,8 +479,8 @@
         </div>
         <!--Fin Modal Añadir Tabla-->
 
-        {{ communications_labels|json_script:"communications-labels" }}
-        {{ communications_values|json_script:"communications-values" }}
+        {{ comunicaciones_labels|json_script:"comunicaciones-labels" }}
+        {{ comunicaciones_values|json_script:"comunicaciones-values" }}
 
         <!--Fin MOdales-->
         {% if open_summary_modal and table_id %}
@@ -478,60 +520,38 @@
 <!-- app js 
 <script src="{% static 'js/app.js'%}"></script>-->
 
-<!-- Gráfico de comunicaciones mensuales -->
+<!-- Proporcion de comunicaciones enviadas/recibidas -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const communicationsLabels = JSON.parse(document.getElementById('communications-labels').textContent);
-    const communicationsValues = JSON.parse(document.getElementById('communications-values').textContent);
-    const maxValor = Math.max(...communicationsValues)
+    const labels = JSON.parse(document.getElementById('comunicaciones-labels').textContent);
+    const values = JSON.parse(document.getElementById('comunicaciones-values').textContent);
+
     const options = {
         chart: {
-            type: 'bar',
+            type: 'pie',
             height: 350,
-            toolbar: { show: false },
-            animations: { enabled: false },
-            scrollablePlotArea: {
-                enabled: true,
-                scrollType: 'xy',
-                minWidth: 0
-            }
         },
-        series: [{
-            name: 'Mensajes',
-            data: communicationsValues
-        }],
-        xaxis: {
-            categories: communicationsLabels,
-            title: { text: 'Área' },
-            labels: {
-                style: {
-                    fontSize: '0px'
+        series: values,
+        labels: labels,
+        colors: ['#dc3545', '#fd7e14', '#34c38f'],  // rojo, naranja, verde
+        legend: {
+            position: 'bottom',
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    width: 300
                 },
-            }
-        },
-        yaxis: {
-            min: 0,
-            max: maxValor,
-            tickAmount: maxValor,
-            title: { text: 'Número de Mensajes' },
-            labels: {
-                formatter: function (val) {
-                    return Math.floor(val);
+                legend: {
+                    position: 'bottom'
                 }
-            },
-        },
-        colors: ['#ff33a5'],
-        dataLabels: {
-          enabled: false    
-        },
-        grid: { borderColor: '#f1f1f1' }
+            }
+        }]
     };
 
-    const el = document.querySelector('#communications_alert_chart');
-    if (el) {
-        const chart = new ApexCharts(el, options);
-        chart.render();
-    }
+    const chart = new ApexCharts(document.querySelector("#comunicaciones_distribution_chart"), options);
+    chart.render();
 });
 </script>
 
