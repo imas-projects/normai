@@ -34,7 +34,7 @@
             <body>
                 <div id="alert-container"></div>
                     
-                    <div class="d-flex justify-content-between align-items-center mt-5">
+                    <!--<div class="d-flex justify-content-between align-items-center mt-5">
                         <h1 class="text-center flex-grow-1">Procesos</h1>
                         <div class="">
                             <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
@@ -43,117 +43,108 @@
                                 Nuevo Proceso
                             </button>
                         </div>
-                    </div>
+                    </div>-->
                   
-                    <div class="hstack">
-                        <!--Parte izquierda-->
-                        <div class="vstack col-md-6 px-1">
-                            <div class="">
-                                <div class="card card-animate">
-                                    <div class="card-body">
-                                        <h4 class="card-title d-flex justify-content-between align-items-center">
-                                            <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
-                                            <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
-                                        </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
+                    <div class="">
+                        <div class="">
                             <div class="card card-animate">
                                 <div class="card-body">
                                     <h4 class="card-title d-flex justify-content-between align-items-center">
-                                    Comunicaciones Recientes
-                                    </h4>
-                                    <div class="col-md-11 border-bottom card-border-light ">
-                                        
-                                        {% for r in comunicaciones_recientes %}
-                                            <p class="border-bottom card-border-light"><b>{{ r.asunto }}</b> | {{ r.emisor }} <i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
-                                        {% endfor %}
-                                        
-                                    </div>
+                                        <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
+                                        <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                        
+                    <div class="hstack">
+                        <!--Parte izq-->
+                        <div class="col-md-6 align-self-start p-1">indicadores
+
+                        </div>
 
                         <!--Parte Derecha-->
-                        <div class="col-md-6 align-self-start">
-                        <div class="accordion" id="accordion-procesos">
-                            {% for process in processes %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading-{{ process.id }}">
-                                        <button class="accordion-button collapsed fw-semibold" type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#collapse-{{ process.id }}"
-                                                aria-expanded="false"
-                                                aria-controls="collapse-{{ process.id }}">
-                                            {{ process.name }}
-                                        </button>
-                                    </h2>
-                                    <div id="collapse-{{ process.id }}"
-                                        class="accordion-collapse collapse"
-                                        aria-labelledby="heading-{{ process.id }}"
-                                        data-bs-parent="#accordion-procesos">
-                                        <div class="accordion-body ">
-                                            <div class="vstack gap-1 justify-content-start pb-3">
-                                                <p><strong>Objetivo:</strong> {{ process.objective }}</p>
-                                                <p><strong>Responsable:</strong> {{ process.responsible.name }}</p>
-                                                <div class="hstack gap-1">
-                                                    <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#detailsModal{{ process.id }}">
-                                                        Detalles
-                                                    </button>
+                        <div class="col-md-6 align-self-start p-1">
+                            <div class="accordion" id="accordion-procesos">
+                                {% for process in processes %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading-{{ process.id }}">
+                                            <button class="accordion-button collapsed fw-semibold" type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#collapse-{{ process.id }}"
+                                                    aria-expanded="false"
+                                                    aria-controls="collapse-{{ process.id }}">
+                                                {{ process.name }}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-{{ process.id }}"
+                                            class="accordion-collapse collapse"
+                                            aria-labelledby="heading-{{ process.id }}"
+                                            data-bs-parent="#accordion-procesos">
+                                            <div class="accordion-body ">
+                                                <div class="vstack gap-1 justify-content-start pb-3">
+                                                    <p><strong>Objetivo:</strong> {{ process.objective }}</p>
+                                                    <p><strong>Responsable:</strong> {{ process.responsible.name }}</p>
+                                                    <div class="hstack gap-1">
+                                                        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#detailsModal{{ process.id }}">
+                                                            Detalles
+                                                        </button>
 
-                                                    <button class="btn btn-outline-secondary openEditProcessModal" data-process-id="{{ process.id }}">
-                                                        <i class="ri-pencil-line" style="font-size: 12px;"></i>
-                                                    </button>
+                                                        <button class="btn btn-outline-secondary openEditProcessModal" data-process-id="{{ process.id }}">
+                                                            <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                        </button>
 
-                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#riskModal{{ process.id }}" style="font-size: 12px;">
-                                                        <i class="bx bx-brain align-middle"></i>  Detectar Riesgos
-                                                    </button>
+                                                        <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#riskModal{{ process.id }}" style="font-size: 12px;">
+                                                            <i class="bx bx-brain align-middle"></i>  Riesgos
+                                                        </button>
 
-                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#complianceModal{{ process.id }}" style="font-size: 12px;">
-                                                        <i class="bx bx-brain align-middle"></i>  Cumplimiento ISO:9001
-                                                    </button>
+                                                        <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#complianceModal{{ process.id }}" style="font-size: 12px;">
+                                                            <i class="bx bx-brain align-middle"></i>  Cumplimiento ISO:9001
+                                                        </button>
 
-                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#summarizeModal{{ process.id }}">
-                                                        <i class="bx bx-brain align-middle"></i>  Resumir Proceso
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {% for msg in table.message.all %}
-                                            <div class="hstack">
-                                                <div class="col-md-11 border-bottom card-border-light ">
-                                                    <p class="mb-1 bg-light text-dark px-1 pb-0" style="font-size: 0.925rem;"><strong>Asunto:</strong> {{ msg.message.name }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ msg.receiver.name }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ msg.type.scope }} {{ msg.type.direction }}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in msg.message.message_channels.all %}
-                                                            {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
-                                                        {% empty %}
-                                                            Sin canal
-                                                        {% endfor %}</p>
-                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ msg.periodicity.name }}</p>
-                                                </div>
-                                                <div class="col-md-0">
-                                                    <div class="vstack gap-1 px-3">
-                                                    <button class="btn btn-outline-secondary edit-btn" data-id="{{ msg.id }}"
-                                                        data-bs-toggle="modal" data-bs-target="#editModal">
-                                                        <i class="ri-pencil-line" style="font-size: 12px;"></i>
-                                                    </button>
-                                                    <button class="btn open-delete-modal btn-danger"
-                                                        data-id="{{ msg.message.id }}" data-bs-toggle="modal"
-                                                        data-bs-target="#deleteModal">
-                                                        <i class="ri-delete-back-2-fill" style="font-size: 12px;"></i>
-                                                    </button>
+                                                        <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#summarizeModal{{ process.id }}" style="font-size: 12px;">
+                                                            <i class="bx bx-brain align-middle"></i>  Resumen Proceso
+                                                        </button>
                                                     </div>
                                                 </div>
+
+                                                {% for msg in table.message.all %}
+                                                <div class="hstack">
+                                                    <div class="col-md-11 border-bottom card-border-light ">
+                                                        <p class="mb-1 bg-light text-dark px-1 pb-0" style="font-size: 0.925rem;"><strong>Asunto:</strong> {{ msg.message.name }}</p>
+                                                        <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ msg.receiver.name }}</p>
+                                                        <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ msg.type.scope }} {{ msg.type.direction }}</p>
+                                                        <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in msg.message.message_channels.all %}
+                                                                {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                                            {% empty %}
+                                                                Sin canal
+                                                            {% endfor %}</p>
+                                                        <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ msg.periodicity.name }}</p>
+                                                    </div>
+                                                    <div class="col-md-0">
+                                                        <div class="vstack gap-1 px-3">
+                                                        <button class="btn btn-outline-secondary edit-btn" data-id="{{ msg.id }}"
+                                                            data-bs-toggle="modal" data-bs-target="#editModal">
+                                                            <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                        </button>
+                                                        <button class="btn open-delete-modal btn-danger"
+                                                            data-id="{{ msg.message.id }}" data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal">
+                                                            <i class="ri-delete-back-2-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
                                             </div>
-                                            {% endfor %}
                                         </div>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
                         </div>
+                    </div>
+                </div>
     {% for process in processes %}
     <!-- Modal de Detalles -->
     <div class="modal fade" id="detailsModal{{ process.id }}" tabindex="-1" aria-labelledby="detailsModalLabel{{ process.id }}" aria-hidden="true">
@@ -436,7 +427,7 @@
         <div class="modal-body">
             {% if risk_answer %}
             <div class="mt-4">
-                <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                <div class="alert" id="risks-box-{{ process.id }}">
                     <label class="form-label"><strong>Riesgos detectados</strong></label>
                     {% for risk in risk_answer.risks%}
                     <div class="border p-3 mb-3 bg-white text-dark rounded">
@@ -451,7 +442,7 @@
                         <input type="hidden" name="process_name" value="{{ process.name }}">
                         <input type="hidden" name="process_risk" value="{{ risk.risk }}">
                         <input type="hidden" name="process_consequence" value="{{ risk.consequence }}">
-                        <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
+                        <button type="submit" class="btn btn-success">Guardar Riesgo</button>
                         </form>
                     </div>
                     {% endfor %}
@@ -466,15 +457,15 @@
             {% csrf_token %}
             <input type="hidden" name="form_name" value="process_risk_detector_form">
             <input type="hidden" name="process_id" value="{{ process.id }}">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-info">
                 {% if risk_answer %}
-                    Volver a analizar riesgos con IA
+                   <i class="bx bx-brain align-middle"></i> Volver a analizar riesgos con IA
                 {% else %}
-                    Analizar riesgos con IA
+                    <i class="bx bx-brain align-middle"></i> Analizar riesgos con IA
                 {% endif %}
                 </button>
             </form>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
         </div>
         </div>
     </div>
@@ -486,13 +477,13 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content bg-white text-dark">
         <div class="modal-header">
-            <h5 class="modal-title">Análisis de Cumplimiento ISO9001 - {{ process.name }}</h5>
+            <h5 class="modal-title">Análisis de Cumplimiento ISO:9001 - {{ process.name }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
             {% if analysis_answer %}
             <div class="mt-4 p-1">
-                <div class="alert alert-info" id="compliance-box-{{ process.id }}">
+                <div class="alert" id="compliance-box-{{ process.id }}">
                     <label class="form-label"><strong>Analisis Cumplimiento ISO 9001:2015</strong></label>
                     <p><strong>Aspectos que podrían no estar alineados con ISO 9001:2015</strong></p>
                     {% for noncompliance in analysis_answer.potential_noncompliances %}
@@ -522,15 +513,15 @@
                 {% csrf_token %}
                 <input type="hidden" name="form_name" value="process_iso_compliance_form">
                 <input type="hidden" name="process_id" value="{{ process.id }}">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-info">
                 {% if analysis_answer %}
-                    Volver a ejecutar IA
+                    <i class="bx bx-brain align-middle"></i> Volver Analizar con IA
                 {% else %}
-                    Ejecutar análisis IA
+                    <i class="bx bx-brain align-middle"></i> Analizar con IA
                 {% endif %}
                 </button>
             </form>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
         </div>
         </div>
     </div>
@@ -546,7 +537,7 @@
         </div>
         <div class="modal-body">
             {% if process.summary %}
-                <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                <div class="alert" id="summary-box-{{ table.id }}">
                     <label class="form-label"><strong>Resumen Previo:</strong></label>
                     <textarea class="form-control" readonly>{{ process.summary }}</textarea>
                 </div>
@@ -556,9 +547,9 @@
 
             {% if process_summary %}
             <div class="mt-4">
-                <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                <div class="alert" id="risks-box-{{ process.id }}">
                         <label class="form-label"><strong>Resumen generado:</strong></label>
-                        <textarea class="form-control" rows="6" readonly>{{ process_summary  }}</textarea>
+                        <textarea class="form-control" rows="6">{{ process_summary }}</textarea>
                 </div>
             </div>
             {% endif %}
@@ -568,11 +559,11 @@
             {% csrf_token %}
             <input type="hidden" name="form_name" value="process_summarize_form">
             <input type="hidden" name="process_id" value="{{ process.id }}">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-info">
                 {% if process_summary %}
-                    Volver a resumir con IA
+                    <i class="bx bx-brain align-middle"></i>Volver a resumir con IA
                 {% else %}
-                    Resumir proceso con IA
+                    <i class="bx bx-brain align-middle"></i>Resumir con IA
                 {% endif %}
                 </button>  
             </form>
@@ -582,9 +573,9 @@
             <input type="hidden" name="form_name" value="save_process_summarize_form">
             <input type="hidden" name="summary" value="{{ process_summary }}">
             <input type="hidden" name="process_id" value="{{ process.id }}">
-            <button type="submit" class="btn btn-primary">Guardar Resumen</button>  
+            <button type="submit" class="btn btn-success">Guardar Resumen</button>  
             {% endif %}
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
         </div>
         </div>
     </div>
