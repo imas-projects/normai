@@ -50,12 +50,13 @@
                         <div class="vstack col-md-6 px-1">
                             <div class="">
                                 <div class="card card-animate">
-                                <div class="card-body">
-                                    <h4 class="card-title d-flex justify-content-between align-items-center">
-                                    Comunicaciones Por Área
-                                    </h4>
-                                    <div id="communications_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
-                                </div>
+                                    <div class="card-body">
+                                        <h4 class="card-title d-flex justify-content-between align-items-center">
+                                            <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
+                                            <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+                                        </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -397,6 +398,12 @@
                 </div>
 
                 <!--<div class="mb-3">
+                    <label for="process-activities" class="form-label">Actividades</label>
+                    <select id="process-activities" name="activities" class="form-control" multiple>
+                    </select>
+                </div>-->
+
+                <!--<div class="mb-3">
                     <label for="process-measurements" class="form-label">Mediciones</label>
                     <select id="process-measurements" name="measurements" class="form-control" multiple>
                     </select>
@@ -585,11 +592,64 @@
 
     {% endfor %}
     </div>
-
+{{ process_labels|json_script:"process-labels" }}
+{{ process_values|json_script:"process-values" }}
     
 {% endblock content %}
 
 {% block extra_js %}
+<!-- apexcharts -->
+<script src="{% static 'libs/apexcharts/dist/apexcharts.min.js'%}"></script>
+<!-- Gráfico de alertas por proceso -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const processLabels = JSON.parse(document.getElementById('process-labels').textContent);
+    const processValues = JSON.parse(document.getElementById('process-values').textContent);
+    const maxValor = Math.max(...processValues)
+    const options = {
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Alertas',
+            data: processValues
+        }],
+        xaxis: {
+            categories: processLabels,
+            title: { text: 'Proceso' },
+            labels: {
+                style: {
+                    fontSize: '8px'
+                },
+            }
+        },
+        yaxis: {
+            min: 0,
+            max: maxValor,
+            tickAmount: maxValor,
+            title: { text: 'Número de Alertas' },
+            labels: {
+                formatter: function (val) {
+                    return Math.floor(val);
+                }
+            },
+        },
+        colors: ['#dc3545'],
+        dataLabels: {
+          enabled: false    
+        },
+        grid: { borderColor: '#f1f1f1' }
+    };
+
+    const el = document.querySelector('#process_alert_chart');
+    if (el) {
+        const chart = new ApexCharts(el, options);
+        chart.render();
+    }
+});
+</script>
 
 <!--JS Modal Edición-->
 <script>
@@ -603,7 +663,8 @@
         externalClients: null,
         documents: null,
         measurements: null,
-        indicators: null
+        indicators: null,
+        //activities: null,
     };
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -618,6 +679,7 @@
                 const internalclientsSelect = document.getElementById('process-internal-clients');
                 const externalclientsSelect = document.getElementById('process-external-clients');
                 const documentsSelect = document.getElementById('process-documents');
+                //const activitiesSelect = document.getElementById('process-activities');
                 //const measurementsSelect = document.getElementById('process-measurements');
                 //const indicatorsSelect = document.getElementById('process-indicators');
 
@@ -630,6 +692,7 @@
                     { el: internalclientsSelect, key: 'internalClients' },
                     { el: externalclientsSelect, key: 'externalClients' },
                     { el: documentsSelect, key: 'documents' },
+                    //{ el: activitiesSelect, key: 'activities' },
                     //{ el: measurementsSelect, key: 'measurements' },
                     //{ el: indicatorsSelect, key: 'indicators' }
                 ];
@@ -733,16 +796,28 @@
                             });
 
                             // Documents
-                            data.documents.forEach(doc => {
+                            data.documents_options.forEach(option => {
                                 const el = document.createElement('option');
-                                el.value = doc.id;
-                                el.textContent = `${doc.document_description} | ${doc.document_code}`;
-                                el.selected = true;
+                                el.value = option.id;
+                                el.textContent = `${option.document_description} | ${option.document_code}`;
+                                if (data.documents.some(sel => sel.id === option.id)) el.selected = true;
                                 documentsSelect.appendChild(el);
                             });
                             choicesInstances.documents = new Choices(documentsSelect, {
                                 removeItemButton: true, closeDropdownOnSelect: true
                             });
+
+                            // Activities
+                            //data.activities_options.forEach(option => {
+                            //    const el = document.createElement('option');
+                            //    el.value = option.id;
+                            //    el.textContent = ` ${option.activity}`;
+                            //    if (data.activities.some(sel => sel.id === option.id)) el.selected = true;
+                            //    activitiesSelect.appendChild(el);
+                            //});
+                            //choicesInstances.activities = new Choices(activitiesSelect, {
+                            //    removeItemButton: true, closeDropdownOnSelect: true
+                            //});
 
                             // Measurements
                             //data.measurements_options.forEach(option => {
@@ -789,6 +864,7 @@
             const internalclientsSelect = document.getElementById('process-internal-clients');
             const externalclientsSelect = document.getElementById('process-external-clients');
             const documentsSelect = document.getElementById('process-documents');
+            //const activitiesSelect = document.getElementById('process-activities');
             //const measurementsSelect = document.getElementById('process-measurements');
             //const indicatorsSelect = document.getElementById('process-indicators');
 
@@ -804,6 +880,7 @@
                 process_internal_clients: Array.from(internalclientsSelect.selectedOptions).map(option => option.value),
                 process_external_clients: Array.from(externalclientsSelect.selectedOptions).map(option => option.value),
                 process_documents: Array.from(documentsSelect.selectedOptions).map(option => option.value),
+                //process_activities: Array.from(activitiesSelect.selectedOptions).map(option => option.value),
                 //process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
                 //process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
             };

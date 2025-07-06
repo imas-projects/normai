@@ -4,17 +4,59 @@ from django.contrib.auth.models import User
 from .forms import ProcessForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Process, ProcessInput, PerformanceIndicator, ProcessMeasurement, ProcessOutput, Documentation, ProcessActivity, ProcessPosition, ProductMeasurement
+from .models import Process, ProcessInput, PerformanceIndicator, ProcessMeasurement, ProcessOutput, Documentation, ProcessActivity, ProcessPosition, ProductMeasurement,ProcessPerformanceMeasurements, ProcessPerformanceIndicators
 from company.models import ExternalClient, ExternalSupplier, Area, Position
 from django.http import JsonResponse
 import json
 import datetime
+from datetime import date, timedelta
 
 @login_required
 def list_processes(request):
     processes = Process.objects.all().order_by('name')
 
-    return render(request, 'mistemplates/processes.html', {'processes': processes})
+    # === Gráfico: Número de Alertas Por Proceso ===
+    todos_procesos = Process.objects.all()
+    hoy = date.today()
+    ultimo_mes = hoy - timedelta(days=30)
+
+    process_labels = [proceso.name for proceso in todos_procesos]
+
+    recientes_process_perform_measure = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
+    alerta = []
+    procesos_alerta = []
+
+    for ppm in recientes_process_perform_measure:
+        indicador = ProcessPerformanceIndicators.objects.get(
+            process=ppm.process,
+            performanceindicator=ppm.performance_indicator
+        )
+
+        min_val = indicador.min_acceptable_value
+        max_val = indicador.max_acceptable_value
+
+        if ((min_val is not None and ppm.measured_value < min_val) or
+            (max_val is not None and ppm.measured_value > max_val)):
+            
+            alerta.append(ppm)
+            procesos_alerta.append(ppm.process.name)
+        
+        proceso_numero_alertas = {}
+        for nombre in procesos_alerta:
+            if nombre in proceso_numero_alertas:
+                proceso_numero_alertas[nombre] += 1
+            else:
+                proceso_numero_alertas[nombre] = 1
+        procesos_con_alertas = list(proceso_numero_alertas.keys())
+
+        for proceso in Process.objects.all():
+            if proceso.name not in proceso_numero_alertas:
+                proceso_numero_alertas[proceso.name] = 0.01
+
+    process_labels=list(proceso_numero_alertas.keys()) 
+    process_values=list(proceso_numero_alertas.values())
+
+    return render(request, 'mistemplates/processes.html', {'processes': processes, 'process_labels':process_labels,'process_values':process_values})
 
 @login_required
 def create_process(request):
@@ -40,8 +82,9 @@ def load_form_options(request):
     inputs_options= list(ProcessInput.objects.all().values('id', 'name'))
     outputs_options= list(ProcessOutput.objects.all().values('id', 'name'))
     documents_options= list(Documentation.objects.all().values('id', 'document_description','document_code'))
-    measurements_options= list(ProcessMeasurement.objects.all().values('id','measurement_process_parameter'))
-    indicators_options= list(PerformanceIndicator.objects.all().values('id', 'name'))
+    #measurements_options= list(ProcessMeasurement.objects.all().values('id','measurement_process_parameter'))
+    #indicators_options= list(PerformanceIndicator.objects.all().values('id', 'name'))
+    activities_options=list(ProcessActivity.objects.all().values('id','activity','order'))
 
     return {
         'responsible_options' : responsible_options,
@@ -52,8 +95,9 @@ def load_form_options(request):
         'inputs_options' : inputs_options,
         'outputs_options' : outputs_options,
         'documents_options' : documents_options,
-        'indicators_options' : indicators_options,
-        'measurements_options' : measurements_options,
+        'activities_options':activities_options,
+        #'indicators_options' : indicators_options,
+        #'measurements_options' : measurements_options,
     }
 
 @login_required
@@ -68,8 +112,12 @@ def get_process(request, id):
         current_process_inputs = list(current_process.inputs.all().values('id', 'name'))
         current_process_outputs = list(current_process.outputs.all().values('id', 'name'))
         current_process_documents = list(current_process.documents.all().values('id', 'document_description','document_code'))
-        current_process_indicators = list(current_process.performance_indicators.all().values('id', 'name'))
 
+        current_activites = ProcessActivity.objects.filter(process_id=id)
+        activities = list(current_activites.all().values('id','activity','order'))
+
+        current_process_indicators = list(current_process.performance_indicators.all().values('id', 'name'))
+        
         form_options = load_form_options(request)
 
         return JsonResponse({
@@ -98,7 +146,9 @@ def get_process(request, id):
             'inputs' : current_process_inputs,
             'outputs' : current_process_outputs,
             'documents': current_process_documents,
+            'activities':activities,
             'indicators' : current_process_indicators,
+           
 
             # Opciones formulario
             **form_options,
@@ -133,6 +183,7 @@ def update_process(request):
                 selected_internal_clients = [int(id) for id in data.get('process_internal_clients', [])]
                 selected_external_clients = [int(id) for id in data.get('process_external_clients', [])]
                 selected_documents = [int(id) for id in data.get('process_documents', [])]
+                #selected_activities = [int(id) for id in  data.get('process_activities', [])]
                 #selected_indicators = data.get('process_indicators', [])
 
                 updated_process = Process.objects.get(id=process_id)
@@ -148,11 +199,19 @@ def update_process(request):
                 updated_process.internal_clients.set(selected_internal_clients)
                 updated_process.external_clients.set(selected_external_clients)
                 updated_process.documents.set(selected_documents)
+
+                #print(selected_activities)
+                #for s in selected_activities:
+                #    ProcessActivity.objects.create(process_id=process_id,order=contador,activity=texto)
+
+
                 #updated_process.performance_indicators.set(selected_indicators)
 
                 updated_process.save()
                 return JsonResponse({'success': True})
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
