@@ -323,17 +323,44 @@ def create_table(request):
 @login_required
 #@user_passes_test(communication_check)
 def user_received_sent_messages(request):
+    assitant_answer_sent_messages = None
+    assitant_answer_received_messages = None
+
     user = request.user
     user_position = UserPosition.objects.get(user_id=user)
 
-    received_messages = CommunicationMessage.objects.filter(receiver=user_position.position).distinct()
-    received_messages = [message for message in received_messages]
+    received_messages_direct = CommunicationMessage.objects.filter(receiver=user_position.position).distinct()
+    received_messages = [message for message in received_messages_direct]
 
-    sent_messages_table = CommunicationTable.objects.filter(emiter=user_position.position)
-    sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_table)
+    sent_messages_direct = CommunicationTable.objects.filter(emiter=user_position.position)
+    sent_messages = CommunicationMessage.objects.filter(table__in=sent_messages_direct)
 
     comunicaciones_labels = ['Recibidas','Enviadas']
     comunicaciones_values = [len(received_messages),len(sent_messages)]
+
+    assitant_answer = None
+    max_tokens= 50
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "received_messages_form":
+            data_input = received_messages_direct
+        
+            user_input = "Analyze this messages. Identify the general context, highlight possible problems or actions needed.Be concise, avoid repetition and focus on high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting or symbols, just text string."
+
+            assitant_answer_received_messages= ai.ai_text_function(data_input,user_input,max_tokens)
+
+            print(assitant_answer_received_messages)
+
+        if form_name == "sent_messages_form":
+            data_input = sent_messages_direct
+        
+            user_input = "Analyze this messages. Identify the general context, highlight possible problems or actions needed.Be concise, avoid repetition and focus on high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting or symbols, just text string."
+
+            assitant_answer_sent_messages= ai.ai_text_function(data_input,user_input,max_tokens)
+
+            print(assitant_answer_sent_messages)
   
 
     # Contexto para la plantilla
@@ -341,7 +368,9 @@ def user_received_sent_messages(request):
         'received_messages' : received_messages,
         'sent_messages' : sent_messages,
         'comunicaciones_labels':comunicaciones_labels,
-        'comunicaciones_values':comunicaciones_values
+        'comunicaciones_values':comunicaciones_values,
+        'assitant_answer_received_messages':assitant_answer_received_messages,
+        'assitant_answer_sent_messages':assitant_answer_sent_messages
     }
     return render(request,"mistemplates/user-received-sent-messages.html", context)
 
@@ -492,3 +521,34 @@ def table_flow_map_ia(request):
     }
 
     return render(request, "mistemplates/communication-tables.html", context)
+
+'''
+def recived_messages_ia(request):
+    user = request.user
+    user_position = UserPosition.objects.get(user_id=user)
+
+    received_messages_direct = CommunicationMessage.objects.filter(receiver=user_position.position).distinct()
+    received_messages = [message for message in received_messages_direct]
+
+    print('mensajes:', received_messages_direct)
+
+    assitant_answer = None
+    max_tokens= 50
+
+    if request.method == "POST":
+        data_input = received_messages_direct
+    
+        user_input = "Analyze this messages. Identify the general context, highlight possible problems or actions needed.Be concise, avoid repetition and focus on high-impact information. If applicable, you may mention aspects that relate to ISO 9001 principles, but it's not required.Do not use Markdown formatting or symbols, just text string."
+
+        assitant_answer= ai.ai_text_function(data_input,user_input,max_tokens)
+
+        print(assitant_answer)
+
+    context = {
+            "received_summary": assitant_answer,
+            'received_messages': received_messages,
+            "open_received_summary_modal": True,
+        }
+
+    return render(request, "mistemplates/user-received-sent-messages.html", context)
+    '''
