@@ -1,56 +1,159 @@
 {% extends "mistemplates/mi_base.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en" {% block html %}data-layout="horizontal" data-topbar="dark" data-sidebar="dark" data-sidebar-size="lg"
+    {% endblock html %}>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
 {% block title %}Procesos{% endblock title %}
+{% block extra_css %}
+<!-- Sweet Alert css-->
+<link href="{% static 'libs/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet" type="text/css" />
+<!-- multi.js css -->
+<link rel="stylesheet" type="text/css" href="{% static 'libs/multi.js/dist/multi.min.css'%}" />
+{% endblock extra_css %}
 {% block content %}
+<!-- ============================================================== -->
+<!-- Start right Content here -->
+<!-- ============================================================== -->
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Processes" title="Procesos" %}
+            {% include "partials/page-title.html" with pagetitle="Procesos" title="Ver Procesos" %}
             {% endblock pagetitle %}
 
+            <body>
+                <div id="alert-container"></div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <h1 class="text-center flex-grow-1">Procesos</h1>
+                        <div class="">
+                            <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
+                                data-bs-toggle="modal" data-bs-target="#addTableModal"><i
+                                    class="ri-add-line"></i>
+                                Nuevo Proceso
+                            </button>
+                        </div>
+                    </div>
+                  
+                    <div class="hstack">
+                        <!--Parte izquierda-->
+                        <div class="vstack col-md-6 px-1">
+                            <div class="">
+                                <div class="card card-animate">
+                                <div class="card-body">
+                                    <h4 class="card-title d-flex justify-content-between align-items-center">
+                                    Comunicaciones Por Área
+                                    </h4>
+                                    <div id="communications_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-animate">
+                                <div class="card-body">
+                                    <h4 class="card-title d-flex justify-content-between align-items-center">
+                                    Comunicaciones Recientes
+                                    </h4>
+                                    <div class="col-md-11 border-bottom card-border-light ">
+                                        
+                                        {% for r in comunicaciones_recientes %}
+                                            <p class="border-bottom card-border-light"><b>{{ r.asunto }}</b> | {{ r.emisor }} <i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
+                                        {% endfor %}
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--Parte Derecha-->
+                        <div class="col-md-6 align-self-start">
+                        <div class="accordion" id="accordion-procesos">
+                            {% for process in processes %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-{{ process.id }}">
+                                        <button class="accordion-button collapsed fw-semibold" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#collapse-{{ process.id }}"
+                                                aria-expanded="false"
+                                                aria-controls="collapse-{{ process.id }}">
+                                            {{ process.name }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-{{ process.id }}"
+                                        class="accordion-collapse collapse"
+                                        aria-labelledby="heading-{{ process.id }}"
+                                        data-bs-parent="#accordion-procesos">
+                                        <div class="accordion-body ">
+                                            <div class="vstack gap-1 justify-content-start pb-3">
+                                                <p><strong>Objetivo:</strong> {{ process.objective }}</p>
+                                                <p><strong>Responsable:</strong> {{ process.responsible.name }}</p>
+                                                <div class="hstack gap-1">
+                                                    <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#detailsModal{{ process.id }}">
+                                                        Detalles
+                                                    </button>
+
+                                                    <button class="btn btn-outline-secondary openEditProcessModal" data-process-id="{{ process.id }}">
+                                                        <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                    </button>
+
+                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#riskModal{{ process.id }}" style="font-size: 12px;">
+                                                        <i class="bx bx-brain align-middle"></i>  Detectar Riesgos
+                                                    </button>
+
+                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#complianceModal{{ process.id }}" style="font-size: 12px;">
+                                                        <i class="bx bx-brain align-middle"></i>  Cumplimiento ISO:9001
+                                                    </button>
+
+                                                    <button class="btn btn-info rounded-top" data-bs-toggle="modal" data-bs-target="#summarizeModal{{ process.id }}">
+                                                        <i class="bx bx-brain align-middle"></i>  Resumir Proceso
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {% for msg in table.message.all %}
+                                            <div class="hstack">
+                                                <div class="col-md-11 border-bottom card-border-light ">
+                                                    <p class="mb-1 bg-light text-dark px-1 pb-0" style="font-size: 0.925rem;"><strong>Asunto:</strong> {{ msg.message.name }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Receptor:</strong> {{ msg.receiver.name }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Tipo de Comunicación:</strong> {{ msg.type.scope }} {{ msg.type.direction }}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Canal:</strong>{% for mc in msg.message.message_channels.all %}
+                                                            {{ mc.channel.name }}{% if not forloop.last %}, {% endif %}
+                                                        {% empty %}
+                                                            Sin canal
+                                                        {% endfor %}</p>
+                                                    <p class="mb-1 px-1 pb-0" style="font-size: 0.925rem;"><strong>Periodicidad:</strong> {{ msg.periodicity.name }}</p>
+                                                </div>
+                                                <div class="col-md-0">
+                                                    <div class="vstack gap-1 px-3">
+                                                    <button class="btn btn-outline-secondary edit-btn" data-id="{{ msg.id }}"
+                                                        data-bs-toggle="modal" data-bs-target="#editModal">
+                                                        <i class="ri-pencil-line" style="font-size: 12px;"></i>
+                                                    </button>
+                                                    <button class="btn open-delete-modal btn-danger"
+                                                        data-id="{{ msg.message.id }}" data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal">
+                                                        <i class="ri-delete-back-2-fill" style="font-size: 12px;"></i>
+                                                    </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
     {% for process in processes %}
-    <div class="card border card-border-dark">
-        <div class="card-body">
-            <h5 class="card-title bg-dark text-light p-2">{{ process.name }}</h5>
-            <p><strong>Code:</strong> {{ process.process_code }} | <strong>Responsible:</strong> {{ process.responsible.name }}</p>
-            <p><strong>Objective:</strong> {{ process.objective }}</p>
-
-            <div class="d-flex gap-2">
-                <!-- Botón para abrir modal de edicion -->
-                <button class="btn btn-outline-primary btn-sm openEditProcessModal" data-process-id="{{ process.id }}">
-                    Edit
-                </button>
-
-                <!-- Botón para abrir modal de detalles -->
-                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#detailsModal{{ process.id }}">
-                    View Details
-                </button>
-
-                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#riskModal{{ process.id }}">
-                    Detectar Riesgos
-                </button>
-
-                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#complianceModal{{ process.id }}">
-                    Analizar Cumplimiento ISO:9001
-                </button>
-
-                <button class="btn btn-secondary w-auto rounded-top" data-bs-toggle="modal" data-bs-target="#summarizeModal{{ process.id }}">
-                    Resumir Proceso
-                </button>
-                
-
-                <!-- (Opcional) Eliminar -->
-                <!--
-                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ process.id }}">
-                    Delete
-                </button>
-                -->
-            </div>
-        </div>
-    </div>
-
     <!-- Modal de Detalles -->
     <div class="modal fade" id="detailsModal{{ process.id }}" tabindex="-1" aria-labelledby="detailsModalLabel{{ process.id }}" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -60,94 +163,36 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Objective:</strong> {{ process.objective }}</p>
-                    <p><strong>Responsible:</strong> {{ process.responsible.name}}</p>
-                    <p><strong>Creation Date:</strong> {{ process.creation_date }}</p>
+                    <p><strong>Objetivo:</strong> {{ process.objective }}</p>
+                    <p><strong>Responsable:</strong> {{ process.responsible.name}}</p>
+                    <p><strong>Fecha de Creación:</strong> {{ process.creation_date }}</p>
                     {% if process.review_date %}
-                    <p><strong>Review:</strong> {{ process.review }} on {{ process.review_date }}</p>
+                    <p><strong>Fecha de Revisión:</strong> {{ process.review }} on {{ process.review_date }}</p>
                     {% endif %}
 
                     <hr>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Internal Suppliers:</h6>
-                                <ul>
-                                    {% for supplier in process.internal_suppliers.all %}
-                                    <li>{{ supplier.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                                <h6>External Suppliers:</h6>
-                                <ul>
-                                    {% for supplier in process.external_suppliers.all %}
-                                    <li>{{ supplier.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                                <h6>Inputs:</h6>
-                                <ul>
-                                    {% for input in process.inputs.all %}
-                                    <li>{{ input.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                                <h6>Outputs:</h6>
-                                <ul>
-                                    {% for output in process.outputs.all %}
-                                    <li>{{ output.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                                <h6>Internal Clients:</h6>
-                                <ul>
-                                    {% for client in process.internal_clients.all %}
-                                    <li>{{ client.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                                <h6>External Clients:</h6>
-                                <ul>
-                                    {% for client in process.external_clients.all %}
-                                    <li>{{ client.name }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Staff Roles:</h6>
-                                <ul>{{ process.staff_roles }}</ul>
-                                <h6>Workspaces:</h6>
-                                <ul>{{ process.workspaces}}</ul>
-                                <h6>Facilities:</h6>
-                                <ul>{{ process.facilities}}</ul>
-                                <h6>Materials:</h6>
-                                <ul>{{ process.materials}}</ul>
-                                <h6>Transport Resources:</h6>
-                                <ul>{{ process.transport_resources}}</ul>
-                                <h6>Communications Technologies:</h6>
-                                <ul>{{ process.communications_technologies}}</ul>
-                                <h6>Operational Environment:</h6>
-                                <ul>{{ process.operational_environment}}</ul>
-
-                            </div>
-                        </div>
-
-                        <hr>
-                        <h6>Activities:</h6>
+                        <h6>Actividades:</h6>
                         <ol>
                             {% for activity in process.processactivity_set.all|dictsort:"order" %}
                             <li>{{ activity.activity }}</li>
                             {% endfor %}
                         </ol>
 
-                        <h6>Documents:</h6>
+                    <hr>
+                        <h6>Documentos:</h6>
                         <ul>
                             {% for doc in process.documents.all %}
                             <li>{{ doc.document_code }} - {{ doc.document_description }}</li>
                             {% endfor %}
                         </ul>
 
-                        <h6>Process Measurements:</h6>
+                        <h6>Mediciones:</h6>
                         <ul>
                             {% for measurement in process.processmeasurement_set.all %}
                                 <li>{{ measurement.measurement_process_parameter }}</li>
                             {% endfor %}
                         </ul>
-                        <h6>Indicators:</h6>
+                        <h6>KPIs:</h6>
                                 <ul>
                                     {% for indicator in process.performance_indicators.all %}
                                     <li>
@@ -158,7 +203,68 @@
                                     {% empty %}
                                     <li class="text-muted">No indicators available</li>
                                     {% endfor %}
-                                </ul>  
+                                </ul> 
+
+                    <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Proveedores Internos:</h6>
+                                <ul>
+                                    {% for supplier in process.internal_suppliers.all %}
+                                    <li>{{ supplier.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <h6>Proveedores externos:</h6>
+                                <ul>
+                                    {% for supplier in process.external_suppliers.all %}
+                                    <li>{{ supplier.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <h6>Inputs del Proceso:</h6>
+                                <ul>
+                                    {% for input in process.inputs.all %}
+                                    <li>{{ input.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Outputs del Proceso:</h6>
+                                <ul>
+                                    {% for output in process.outputs.all %}
+                                    <li>{{ output.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <h6>Clientes Internos:</h6>
+                                <ul>
+                                    {% for cl in process.internal_clients.all %}
+                                    <li>{{ cl.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <h6>Clientes Externos:</h6>
+                                <ul>
+                                    {% for client in process.external_clients.all %}
+                                    <li>{{ client.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                                
+                            </div>
+                            <hr>
+                        </div>
+                                <h6>Personal Implicado:</h6><p>{{ process.staff_roles }}</p>
+                                <h6>Lugares de Trabajo:</h6><p>{{ process.workspaces}}</p>
+                                <h6>Herramientas:</h6><p>{{ process.facilities}}</p>
+                                <h6>Materiales:</h6><p>{{ process.materials}}</p>
+                                <h6>Transportes:</h6><p>{{ process.transport_resources}}</p>
+                                <h6>Communicación:</h6><p>{{ process.communications_technologies}}</p>
+                                <h6>Condiciones Ambientales:</h6><p>{{ process.operational_environment}}</p>
+                        <div class="row">
+
+
+                        </div>
+
+                        
+
                         <div class="row">
                                 {% if analysis_answer %}
                                 <div class="mt-4 p-1">
@@ -209,22 +315,6 @@
                                         {% endfor %}
                                     </div>
                                 </div>
-                                <!--
-                                    <button type="button" class="btn btn-primary" onclick="exportFlowPDF()">Guardar en PDF</button>
-                                        <script>
-                                        function exportFlowPDF() {
-                                            const element = document.getElementById('flow-container');
-                                            const opt = {
-                                                margin:       0.5,
-                                                filename:     'flujo_proceso.pdf',
-                                                image:        { type: 'jpeg', quality: 0.98 },
-                                                html2canvas:  { scale: 2 },
-                                                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                                            };
-                                            html2pdf().from(element).save('flujo_proceso.pdf');
-                                        }
-                                        </script>
-                                -->        
                                 {% endif %}
                         </div>
                     </div>
@@ -240,7 +330,7 @@
         <div class="modal-dialog modal-xl">
           <div class="modal-content bg-white text-dark">
             <div class="modal-header">
-              <h5 class="modal-title">Edit Process</h5>
+              <h5 class="modal-title">Editar Proceso</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -249,17 +339,17 @@
                 <input type="hidden" id="process-id">
       
                 <div class="mb-3">
-                  <label>Name</label>
+                  <label>Nombre</label>
                   <input type="text" id="process-name" class="form-control">
                 </div>
       
                 <div class="mb-3">
-                  <label>Objective</label>
+                  <label>Objetivo</label>
                   <textarea id="process-objective" class="form-control"></textarea>
                 </div>
       
                 <div class="mb-3">
-                  <label>Responsible</label>
+                  <label>Responsable</label>
                   <select id="process-responsible" class="form-control"></select>
                 </div>
       
@@ -277,13 +367,13 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="process-inputs" class="form-label">Entradas</label>
+                    <label for="process-inputs" class="form-label">Inputs del Proceso</label>
                     <select id="process-inputs" name="inputs" class="form-control" multiple>
                     </select>
                 </div>
 
                 <div class="mb-3">
-                    <label for="process-outputs" class="form-label">Salidas</label>
+                    <label for="process-outputs" class="form-label">Outputs del Proceso</label>
                     <select id="process-outputs" name="outputs" class="form-control" multiple>
                     </select>
                 </div>
@@ -306,7 +396,7 @@
                     </select>
                 </div>
 
-                <div class="mb-3">
+                <!--<div class="mb-3">
                     <label for="process-measurements" class="form-label">Mediciones</label>
                     <select id="process-measurements" name="measurements" class="form-control" multiple>
                     </select>
@@ -316,11 +406,11 @@
                     <label for="process-indicators" class="form-label">Indicadores</label>
                     <select id="process-indicators" name="indicators" class="form-control" multiple>
                     </select>
-                </div>
+                </div>-->
       
                 
       
-                <button type="submit" class="btn btn-success">Save</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
               </form>
             </div>
           </div>
@@ -328,173 +418,173 @@
       </div>
 
 
-<!-- Modal Riesgos IA -->
-<div class="modal fade" id="riskModal{{ process.id }}" tabindex="-1" aria-labelledby="riskModalLabel{{ process.id }}" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content bg-white text-dark">
-      <div class="modal-header">
-        <h5 class="modal-title" id="riskModalLabel{{ process.id }}">Riesgos detectados - {{ process.name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        {% if risk_answer %}
-        <div class="mt-4">
-            <div class="alert alert-info" id="risks-box-{{ process.id }}">
-                <label class="form-label"><strong>Riesgos detectados</strong></label>
-                {% for risk in risk_answer.risks%}
-                <div class="border p-3 mb-3 bg-white text-dark rounded">
-                    <p><strong>Posible Riesgo Detectado:</strong> {{ risk.risk }}</p>
-                    <p><strong>Descripción del Riesgo:</strong> {{ risk.risk_description }}</p>
-                    <p><strong>Posible Consecuencia:</strong> {{ risk.consequence }}</p>
-                    <p><strong>Descripción de la Consecuencia:</strong> {{ risk.consequence_description }}</p>
-                    <form method="post" action="{% url 'processes:add_risk_processes' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="form_name" value="add_risk_processes_form">
-                    <input type="hidden" name="process_id" value="{{ process.id }}">
-                    <input type="hidden" name="process_name" value="{{ process.name }}">
-                    <input type="hidden" name="process_risk" value="{{ risk.risk }}">
-                    <input type="hidden" name="process_consequence" value="{{ risk.consequence }}">
-                    <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
-                    </form>
-                </div>
-                {% endfor %}
-            </div>
+    <!-- Modal Riesgos IA -->
+    <div class="modal fade" id="riskModal{{ process.id }}" tabindex="-1" aria-labelledby="riskModalLabel{{ process.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-white text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title" id="riskModalLabel{{ process.id }}">Riesgos detectados - {{ process.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        {% else %}
-        <p><strong>Aún no se ha realizado el análisis de riesgos</strong> {{ risk.risk }}</p>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <form method="post" action="{% url 'processes:process_risk_detector_ia' %}">
-          {% csrf_token %}
-          <input type="hidden" name="form_name" value="process_risk_detector_form">
-          <input type="hidden" name="process_id" value="{{ process.id }}">
-          <button type="submit" class="btn btn-primary">
+        <div class="modal-body">
             {% if risk_answer %}
-                Volver a analizar riesgos con IA
+            <div class="mt-4">
+                <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                    <label class="form-label"><strong>Riesgos detectados</strong></label>
+                    {% for risk in risk_answer.risks%}
+                    <div class="border p-3 mb-3 bg-white text-dark rounded">
+                        <p><strong>Posible Riesgo Detectado:</strong> {{ risk.risk }}</p>
+                        <p><strong>Descripción del Riesgo:</strong> {{ risk.risk_description }}</p>
+                        <p><strong>Posible Consecuencia:</strong> {{ risk.consequence }}</p>
+                        <p><strong>Descripción de la Consecuencia:</strong> {{ risk.consequence_description }}</p>
+                        <form method="post" action="{% url 'processes:add_risk_processes' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_name" value="add_risk_processes_form">
+                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                        <input type="hidden" name="process_name" value="{{ process.name }}">
+                        <input type="hidden" name="process_risk" value="{{ risk.risk }}">
+                        <input type="hidden" name="process_consequence" value="{{ risk.consequence }}">
+                        <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             {% else %}
-                Analizar riesgos con IA
+            <p><strong>Aún no se ha realizado el análisis de riesgos</strong> {{ risk.risk }}</p>
             {% endif %}
-            </button>
-        </form>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- Modal Cumplimiento ISO -->
-<div class="modal fade" id="complianceModal{{ process.id }}" tabindex="-1" aria-labelledby="complianceModalLabel{{ process.id }}" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content bg-white text-dark">
-      <div class="modal-header">
-        <h5 class="modal-title">Análisis de Cumplimiento ISO9001 - {{ process.name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        {% if analysis_answer %}
-        <div class="mt-4 p-1">
-            <div class="alert alert-info" id="compliance-box-{{ process.id }}">
-                <label class="form-label"><strong>Analisis Cumplimiento ISO 9001:2015</strong></label>
-                <p><strong>Aspectos que podrían no estar alineados con ISO 9001:2015</strong></p>
-                {% for noncompliance in analysis_answer.potential_noncompliances %}
-                <div class="border p-3 mb-3 bg-white text-dark rounded">
-                    <p><strong>{{ noncompliance.title }}:</strong> {{ noncompliance.explanation }} </p>
-                </div>
-                {% endfor %}
-                <p><strong>Aspectos alineados con ISO 9001:2015</strong></p>
-                {% for compliance in analysis_answer.compliant_aspects %}
-                <div class="border p-3 mb-3 bg-white text-dark rounded">
-                    <p><strong>{{ compliance.title }}:</strong> {{ compliance.explanation }} </p>
-                </div>
-                {% endfor %}    
-            </div>
-            <div class="border p-3 mb-3 bg-white text-dark rounded">
-                <p>
-                    <strong>Este proceso cumpliría los estándares de calidad en un</strong> {{ analysis_answer.compliance_probability }} %
-                </p>
-            </div>
         </div>
-        {% else %}
-        <p><strong>Aún no se ha realizado el análisis de cumplimiento</strong> {{ risk.risk }}</p>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <form method="post" action="{% url 'processes:process_iso_compliance_ia' %}">
+        <div class="modal-footer">
+            <form method="post" action="{% url 'processes:process_risk_detector_ia' %}">
             {% csrf_token %}
-            <input type="hidden" name="form_name" value="process_iso_compliance_form">
+            <input type="hidden" name="form_name" value="process_risk_detector_form">
             <input type="hidden" name="process_id" value="{{ process.id }}">
             <button type="submit" class="btn btn-primary">
-            {% if analysis_answer %}
-                Volver a ejecutar IA
-            {% else %}
-                Ejecutar análisis IA
-            {% endif %}
-            </button>
-        </form>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Resumen Proceso IA -->
-<div class="modal fade" id="summarizeModal{{ process.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ process.id }}" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content bg-white text-dark">
-      <div class="modal-header">
-        <h5 class="modal-title" id="summarizeModalLabel{{ process.id }}">Resumen Proceso - {{ process.name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        {% if process.summary %}
-            <div class="alert alert-info" id="summary-box-{{ table.id }}">
-                <label class="form-label"><strong>Resumen Previo:</strong></label>
-                <textarea class="form-control" readonly>{{ process.summary }}</textarea>
-            </div>
-        {% else %}
-            <p>Aún no hay resumen para este proceso</p>
-        {% endif %}
-
-        {% if process_summary %}
-        <div class="mt-4">
-            <div class="alert alert-info" id="risks-box-{{ process.id }}">
-                    <label class="form-label"><strong>Resumen generado:</strong></label>
-                    <textarea class="form-control" rows="6" readonly>{{ process_summary  }}</textarea>
-            </div>
+                {% if risk_answer %}
+                    Volver a analizar riesgos con IA
+                {% else %}
+                    Analizar riesgos con IA
+                {% endif %}
+                </button>
+            </form>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
         </div>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <form method="post" action="{% url 'processes:process_summarize_ia' %}">
-          {% csrf_token %}
-          <input type="hidden" name="form_name" value="process_summarize_form">
-          <input type="hidden" name="process_id" value="{{ process.id }}">
-          <button type="submit" class="btn btn-primary">
-            {% if process_summary %}
-                Volver a resumir con IA
-            {% else %}
-                Resumir proceso con IA
-            {% endif %}
-            </button>  
-        </form>
-        {% if process_summary %}
-        <form method="post" action="{% url 'processes:save_process_summarize_ia' %}">
-          {% csrf_token %}
-          <input type="hidden" name="form_name" value="save_process_summarize_form">
-          <input type="hidden" name="summary" value="{{ process_summary }}">
-          <input type="hidden" name="process_id" value="{{ process.id }}">
-        <button type="submit" class="btn btn-primary">Guardar Resumen</button>  
-        {% endif %}
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
+        </div>
     </div>
-  </div>
-</div>
+    </div>
 
-{% endfor %}
-</div>
+
+    <!-- Modal Cumplimiento ISO -->
+    <div class="modal fade" id="complianceModal{{ process.id }}" tabindex="-1" aria-labelledby="complianceModalLabel{{ process.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-white text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title">Análisis de Cumplimiento ISO9001 - {{ process.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            {% if analysis_answer %}
+            <div class="mt-4 p-1">
+                <div class="alert alert-info" id="compliance-box-{{ process.id }}">
+                    <label class="form-label"><strong>Analisis Cumplimiento ISO 9001:2015</strong></label>
+                    <p><strong>Aspectos que podrían no estar alineados con ISO 9001:2015</strong></p>
+                    {% for noncompliance in analysis_answer.potential_noncompliances %}
+                    <div class="border p-3 mb-3 bg-white text-dark rounded">
+                        <p><strong>{{ noncompliance.title }}:</strong> {{ noncompliance.explanation }} </p>
+                    </div>
+                    {% endfor %}
+                    <p><strong>Aspectos alineados con ISO 9001:2015</strong></p>
+                    {% for compliance in analysis_answer.compliant_aspects %}
+                    <div class="border p-3 mb-3 bg-white text-dark rounded">
+                        <p><strong>{{ compliance.title }}:</strong> {{ compliance.explanation }} </p>
+                    </div>
+                    {% endfor %}    
+                </div>
+                <div class="border p-3 mb-3 bg-white text-dark rounded">
+                    <p>
+                        <strong>Este proceso cumpliría los estándares de calidad en un</strong> {{ analysis_answer.compliance_probability }} %
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <p><strong>Aún no se ha realizado el análisis de cumplimiento</strong> {{ risk.risk }}</p>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <form method="post" action="{% url 'processes:process_iso_compliance_ia' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_name" value="process_iso_compliance_form">
+                <input type="hidden" name="process_id" value="{{ process.id }}">
+                <button type="submit" class="btn btn-primary">
+                {% if analysis_answer %}
+                    Volver a ejecutar IA
+                {% else %}
+                    Ejecutar análisis IA
+                {% endif %}
+                </button>
+            </form>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Modal Resumen Proceso IA -->
+    <div class="modal fade" id="summarizeModal{{ process.id }}" tabindex="-1" aria-labelledby="summarizeModalLabel{{ process.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-white text-dark">
+        <div class="modal-header">
+            <h5 class="modal-title" id="summarizeModalLabel{{ process.id }}">Resumen Proceso - {{ process.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            {% if process.summary %}
+                <div class="alert alert-info" id="summary-box-{{ table.id }}">
+                    <label class="form-label"><strong>Resumen Previo:</strong></label>
+                    <textarea class="form-control" readonly>{{ process.summary }}</textarea>
+                </div>
+            {% else %}
+                <p>Aún no hay resumen para este proceso</p>
+            {% endif %}
+
+            {% if process_summary %}
+            <div class="mt-4">
+                <div class="alert alert-info" id="risks-box-{{ process.id }}">
+                        <label class="form-label"><strong>Resumen generado:</strong></label>
+                        <textarea class="form-control" rows="6" readonly>{{ process_summary  }}</textarea>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <form method="post" action="{% url 'processes:process_summarize_ia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_name" value="process_summarize_form">
+            <input type="hidden" name="process_id" value="{{ process.id }}">
+            <button type="submit" class="btn btn-primary">
+                {% if process_summary %}
+                    Volver a resumir con IA
+                {% else %}
+                    Resumir proceso con IA
+                {% endif %}
+                </button>  
+            </form>
+            {% if process_summary %}
+            <form method="post" action="{% url 'processes:save_process_summarize_ia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_name" value="save_process_summarize_form">
+            <input type="hidden" name="summary" value="{{ process_summary }}">
+            <input type="hidden" name="process_id" value="{{ process.id }}">
+            <button type="submit" class="btn btn-primary">Guardar Resumen</button>  
+            {% endif %}
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    {% endfor %}
+    </div>
 
     
 {% endblock content %}
@@ -528,8 +618,8 @@
                 const internalclientsSelect = document.getElementById('process-internal-clients');
                 const externalclientsSelect = document.getElementById('process-external-clients');
                 const documentsSelect = document.getElementById('process-documents');
-                const measurementsSelect = document.getElementById('process-measurements');
-                const indicatorsSelect = document.getElementById('process-indicators');
+                //const measurementsSelect = document.getElementById('process-measurements');
+                //const indicatorsSelect = document.getElementById('process-indicators');
 
                 const selects = [
                     { el: responsibleSelect, key: 'responsible' },
@@ -540,8 +630,8 @@
                     { el: internalclientsSelect, key: 'internalClients' },
                     { el: externalclientsSelect, key: 'externalClients' },
                     { el: documentsSelect, key: 'documents' },
-                    { el: measurementsSelect, key: 'measurements' },
-                    { el: indicatorsSelect, key: 'indicators' }
+                    //{ el: measurementsSelect, key: 'measurements' },
+                    //{ el: indicatorsSelect, key: 'indicators' }
                 ];
 
                 selects.forEach(({ el, key }) => {
@@ -655,28 +745,28 @@
                             });
 
                             // Measurements
-                            data.measurements_options.forEach(option => {
-                                const el = document.createElement('option');
-                                el.value = option.id;
-                                el.textContent = option.measurement_process_parameter;
-                                if (data.measurements.some(sel => sel.id === option.id)) el.selected = true;
-                                measurementsSelect.appendChild(el);
-                            });
-                            choicesInstances.measurements = new Choices(measurementsSelect, {
-                                removeItemButton: true, closeDropdownOnSelect: true
-                            });
+                            //data.measurements_options.forEach(option => {
+                            //    const el = document.createElement('option');
+                            //    el.value = option.id;
+                            //    el.textContent = option.measurement_process_parameter;
+                            //    if (data.measurements.some(sel => sel.id === option.id)) el.selected = true;
+                            //    measurementsSelect.appendChild(el);
+                            //});
+                            //choicesInstances.measurements = new Choices(measurementsSelect, {
+                            //    removeItemButton: true, closeDropdownOnSelect: true
+                            //});
 
                             // Indicators
-                            data.indicators_options.forEach(option => {
-                                const el = document.createElement('option');
-                                el.value = option.id;
-                                el.textContent = option.name;
-                                if (data.indicators.some(sel => sel.id === option.id)) el.selected = true;
-                                indicatorsSelect.appendChild(el);
-                            });
-                            choicesInstances.indicators = new Choices(indicatorsSelect, {
-                                removeItemButton: true, closeDropdownOnSelect: true
-                            });
+                            //data.indicators_options.forEach(option => {
+                            //    const el = document.createElement('option');
+                            //    el.value = option.id;
+                            //    el.textContent = option.name;
+                            //    if (data.indicators.some(sel => sel.id === option.id)) el.selected = true;
+                            //    indicatorsSelect.appendChild(el);
+                            //});
+                            //choicesInstances.indicators = new Choices(indicatorsSelect, {
+                            //    removeItemButton: true, closeDropdownOnSelect: true
+                            //});
 
                             new bootstrap.Modal(document.getElementById('editProcessModal')).show();
                         }
@@ -699,8 +789,8 @@
             const internalclientsSelect = document.getElementById('process-internal-clients');
             const externalclientsSelect = document.getElementById('process-external-clients');
             const documentsSelect = document.getElementById('process-documents');
-            const measurementsSelect = document.getElementById('process-measurements');
-            const indicatorsSelect = document.getElementById('process-indicators');
+            //const measurementsSelect = document.getElementById('process-measurements');
+            //const indicatorsSelect = document.getElementById('process-indicators');
 
             const data = {
                 id: document.getElementById('process-id').value,
@@ -709,12 +799,13 @@
                 process_responsible: document.getElementById('process-responsible').value,
                 process_internal_suppliers: Array.from(internalsuppliersSelect.selectedOptions).map(option => option.value),
                 process_external_suppliers: Array.from(externalsuppliersSelect.selectedOptions).map(option => option.value),
+                process_inputs: Array.from(inputsSelect.selectedOptions).map(option => option.value),
                 process_outputs: Array.from(outputsSelect.selectedOptions).map(option => option.value),
                 process_internal_clients: Array.from(internalclientsSelect.selectedOptions).map(option => option.value),
                 process_external_clients: Array.from(externalclientsSelect.selectedOptions).map(option => option.value),
                 process_documents: Array.from(documentsSelect.selectedOptions).map(option => option.value),
-                process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
-                process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
+                //process_measurements: Array.from(measurementsSelect.selectedOptions).map(option => option.value),
+                //process_indicators: Array.from(indicatorsSelect.selectedOptions).map(option => option.value),
             };
 
             fetch('/processes/update-process/', {

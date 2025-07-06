@@ -12,7 +12,7 @@ import datetime
 
 @login_required
 def list_processes(request):
-    processes = Process.objects.all()
+    processes = Process.objects.all().order_by('name')
 
     return render(request, 'mistemplates/processes.html', {'processes': processes})
 
@@ -31,7 +31,7 @@ def create_process(request):
     return render(request, 'mistemplates/create_process.html', {'form': form})
 
 @login_required
-def load_form_options():
+def load_form_options(request):
     responsible_options = list(Position.objects.all().values('id', 'name'))
     internal_suppliers_options = list(Area.objects.all().values('id', 'name'))
     external_suppliers_options = list(ExternalSupplier.objects.all().values('id', 'name'))
@@ -70,7 +70,7 @@ def get_process(request, id):
         current_process_documents = list(current_process.documents.all().values('id', 'document_description','document_code'))
         current_process_indicators = list(current_process.performance_indicators.all().values('id', 'name'))
 
-        form_options = load_form_options()
+        form_options = load_form_options(request)
 
         return JsonResponse({
             'success': True, 
@@ -126,14 +126,14 @@ def update_process(request):
                 process_communication_technologies = data.get('process_communication_technologies')
                 process_operational_environment = data.get('process_operational_environment')
 
-                selected_internal_suppliers = data.get('process_internal_suppliers', []) 
-                selected_external_suppliers = data.get('process_external_suppliers', [])  
-                selected_inputs = data.get('process_inputs', [])
-                selected_outputs = data.get('process_outputs', [])
-                selected_internal_clients = data.get('process_internal_clients', [])
-                selected_external_clients = data.get('process_external_clients', [])
-                selected_documents = data.get('process_documents', [])
-                selected_indicators = data.get('process_indicators', [])
+                selected_internal_suppliers = [int(id) for id in data.get('process_internal_suppliers', [])]
+                selected_external_suppliers = [int(id) for id in data.get('process_external_suppliers', [])]
+                selected_inputs = [int(id) for id in data.get('process_inputs', [])]
+                selected_outputs = [int(id) for id in data.get('process_outputs', [])]
+                selected_internal_clients = [int(id) for id in data.get('process_internal_clients', [])]
+                selected_external_clients = [int(id) for id in data.get('process_external_clients', [])]
+                selected_documents = [int(id) for id in data.get('process_documents', [])]
+                #selected_indicators = data.get('process_indicators', [])
 
                 updated_process = Process.objects.get(id=process_id)
                 updated_process.name = process_name
@@ -141,15 +141,14 @@ def update_process(request):
                 updated_process.review_date = process_review_date
                 updated_process.responsible = Position.objects.get(id=process_responsible) 
 
+                updated_process.internal_suppliers.set(selected_internal_suppliers)
+                updated_process.external_suppliers.set(selected_external_suppliers)
                 updated_process.inputs.set(selected_inputs)
                 updated_process.outputs.set(selected_outputs)
                 updated_process.internal_clients.set(selected_internal_clients)
                 updated_process.external_clients.set(selected_external_clients)
-                updated_process.internal_suppliers.set(selected_internal_suppliers)
-                updated_process.external_suppliers.set(selected_external_suppliers)
                 updated_process.documents.set(selected_documents)
-                updated_process.performance_indicators.set(selected_indicators)
-
+                #updated_process.performance_indicators.set(selected_indicators)
 
                 updated_process.save()
                 return JsonResponse({'success': True})
