@@ -417,7 +417,7 @@
 <!-- Gráfico de tendencias KPI -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const monthLabels = JSON.parse(document.getElementById('kpis-labels').textContent);
+    const monthLabels = JSON.parse(document.getElementById('month-labels').textContent);
     const monthValues = JSON.parse(document.getElementById('kpis-values').textContent);
     const monthSeries = JSON.parse(document.getElementById('kpi-series').textContent);
 
@@ -430,7 +430,8 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         series: [{
             name: "Medición",
-            data: monthSeries
+            data: monthSeries,
+            colors: ['#007bff','#71ff33','#ffc500 ','#ff00ff'],
         }],
         xaxis: {
             categories: monthLabels,
