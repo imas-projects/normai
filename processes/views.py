@@ -10,6 +10,9 @@ from django.http import JsonResponse
 import json
 import datetime
 from datetime import date, timedelta
+from django.db.models.functions import TruncMonth
+from django.db.models import Count, Avg, F, Q
+from collections import OrderedDict
 
 @login_required
 def list_processes(request):
@@ -279,7 +282,47 @@ def save_process_summarize_ia(request):
 def kpis_processes(request):
     processes = Process.objects.all()
 
-    return render(request, 'mistemplates/kpis-processes.html', {'processes': processes})
+    process_perform_measure = ProcessPerformanceMeasurements.objects.all()
+
+    qs = (
+        ProcessPerformanceMeasurements.objects
+        .annotate(month=TruncMonth('date'))
+        .values('performance_indicator__name', 'month', 'measured_value', 'date')
+        .order_by('performance_indicator__name', 'month', 'date')
+    )
+
+    months = sorted({row['month'] for row in qs})
+    month_labels = [m.strftime('%Y-%m') for m in months]
+
+    data = OrderedDict()
+    for row in qs:
+        name = row['performance_indicator__name']
+        mon  = row['month'].strftime('%Y-%m')
+        val  = float(row['measured_value'])
+
+        if name not in data:
+            data[name] = OrderedDict()
+
+        data[name][mon] = val
+
+
+    for series in data.values():
+        for m in month_labels:
+            series.setdefault(m, None)
+
+    # 5) Prepara las listas para el gráfico
+    kpi_labels = list(data.keys())
+    kpi_series = [list(series.values()) for series in data.values()]
+
+        
+    return render(request, 'mistemplates/kpis-processes.html', 
+                  {'processes': processes,
+                   'process_perform_measure':process_perform_measure,
+                    'month_labels': month_labels,
+                    'kpi_labels'  : kpi_labels,
+                    'kpi_series'  : kpi_series,
+
+                   })
 
 @login_required
 def save_kpi_processes(request):

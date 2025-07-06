@@ -7,8 +7,194 @@
         <div class="container-fluid">
 
             {% block pagetitle %}
-            {% include "partials/page-title.html" with pagetitle="Procesos" title="Procesos" %}
+            {% include "partials/page-title.html" with pagetitle="Procesos" title="KPIs" %}
             {% endblock pagetitle %}
+
+
+
+    <div id="alert-container"></div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <h1 class="text-center flex-grow-1">Procesos - KPIs</h1>
+                    </div>
+
+                    <div class="hstack">
+                        <!--Parte izq-->
+                        <div class="card card-animate col-md-6 p-1 align-self-start ">
+                            <div class="card card-animate card-height-100">
+                                <div class="card-body pb-0">
+                                    <h4 class="card-title">Evolución Trimestral KPIs</h4>
+                                    <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--Parte Derecha-->
+                        <div class="col-md-6 align-self-start p-1">
+                            <div class="accordion" id="accordion-procesos">
+                                {% for process in processes %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading-{{ process.id }}">
+                                            <button class="accordion-button collapsed fw-semibold" type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#collapse-{{ process.id }}"
+                                                    aria-expanded="false"
+                                                    aria-controls="collapse-{{ process.id }}">
+                                                {{ process.name }}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-{{ process.id }}"
+                                            class="accordion-collapse collapse"
+                                            aria-labelledby="heading-{{ process.id }}"
+                                            data-bs-parent="#accordion-procesos">
+                                            <div class="accordion-body ">
+                                                <div class="vstack gap-1 justify-content-start pb-3">
+                                                    <h5>KPIs del proceso:</h5>
+                                                    
+                                                        {% for indicator in process.performance_indicators.all %}
+                                                            <div class="vstack">
+                                                                <div class="hstack gap-2">
+                                                                    <div class="justify-content-start text-dark"><strong>{{ indicator.name }}</strong></div>
+                                                                    <div class="justify-content-end">{% if indicator.effective %}<span class="badge bg-success">Effective</span>{% endif %}</div>
+                                                                    <div class="justify-content-end">{% if indicator.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}</div>   
+                                                                </div>
+                                                            </div>    
+                                                            <div>
+                                                                {% for kpi in process_perform_measure %}
+                                                                    {% if kpi.process_id == process.id and kpi.performance_indicator_id == indicator.id %}
+                                                                    <div>Rango Óptimo: {{ kpi.target_value }} {{kpi.unit}}</div>   
+                                                                    <div>
+                                                                    Medición realizada {{ kpi.date}}: <strong>{{ kpi.measured_value }} {{kpi.unit}}</strong>
+                                                                    </div>
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            </div>
+                                                            <hr>
+                                                        {% endfor %}
+                                                        
+                                                        
+                                                        {% if kpi_answer %}
+                                                            <div class="alert alert-info p-2" id="kpi-box-{{ process.id }}">
+                                                            <label class="form-label"><strong>Riesgos detectados</strong></label>
+                                                                {% for kpi in kpi_answer.detected_kpi%}
+                                                                <div>
+                                                                    <div>{{ kpi.name }}</div>
+                                                                    <div>
+                                                                        {% if kpi.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                                                        {% if kpi.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                                                                    </div>
+                                                                    <div class="p-2">
+                                                                        <form method="post" action="{% url 'processes:save_kpi_processes' %}">
+                                                                        {% csrf_token %}
+                                                                        <input type="hidden" name="form_name" value="save_kpi_processes_form">
+                                                                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                                                                        <input type="hidden" name="kpi_name" value="{{ kpi.name }}">
+                                                                        <input type="hidden" name="kpi_is_effective" value="{{ kpi.effective }}">
+                                                                        <input type="hidden" name="kpi_is_efficient" value="{{ kpi.efficient }}">
+                                                                        <button type="submit" class="btn btn-primary btn-sm">Guardar KPI</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        
+
+                                                        </div>
+                                                        <div class="hstack gap-2 p-3">
+                                                        <form method="post" action="{% url 'processes:kpis_detector_ia' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="form_name" value="kpis-detector_form">
+                                                            <input type="hidden" name="process_id" value="{{ process.id }}">
+                                                            <button class="btn btn-secondary rounded-top">
+                                                                        Identificar nuevo KPI con IA
+                                                            </button>
+                                                        </form>
+
+                                                    <!--<form method="post" action="{% url 'processes:checklist_detector_ia' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="form_name" value="process-checklist_form">
+                                                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                                                        <button class="btn btn-secondary rounded-top" data-bs-toggle="modal" data-bs-target="#ChecklistModal{{ process.id }}">
+                                                                    Sugerir Controles de Calidad
+                                                        </button>
+                                                    </form>-->
+                                                
+                                                    <a class="btn btn-danger rounded-top" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">Cerrar</a>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                        {% else %}
+                                                <div class="collapse multi-collapse" id="multiCollapseExample{{process.id}}">
+                                            <div class="card border card-border-dark">
+                                                <div class="card-body">
+                                                    <div class="card-title bg-dark text-light p-2">
+                                                        KPIs para el proceso: {{process.name}}
+                                                    </div>
+                                                    
+                                                        {% for indicator in process.performance_indicators.all %}
+                                                        <div>{{ indicator.name }}</div>
+                                                        <div>
+                                                            {% if indicator.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                                            {% if indicator.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                                                        </div>
+                                                        {% empty %}
+                                                        <p class="text-muted">No indicators available</p>
+                                                        {% endfor %}
+                                                        
+                                                        {% if kpi_answer and process.id == selected_process_id %}
+                                                            <div class="alert alert-info" id="kpi-box-{{ process.id }}">
+                                                            <label class="form-label"><strong>Riesgos detectados</strong></label>
+                                                                {% for kpi in kpi_answer.detected_kpi%}
+                                                                <div>
+                                                                    <div>{{ kpi.name }}</div>
+                                                                    <div>
+                                                                        {% if kpi.effective %}<span class="badge bg-success">Effective</span>{% endif %}
+                                                                        {% if kpi.efficient %}<span class="badge bg-info">Efficient</span>{% endif %}
+                                                                    </div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                        {% endif %}
+
+                                                </div>
+                                                <div class="hstack gap-2 p-3">
+                                                    <form method="post" action="{% url 'processes:kpis_detector_ia' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="form_name" value="kpis-detector_form">
+                                                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                                                        <button class="btn btn-secondary rounded-top">
+                                                                    Identificar nuevos KPIs con IA
+                                                        </button>
+                                                    </form>
+
+                                                    <!--<form method="post" action="{% url 'processes:checklist_detector_ia' %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="form_name" value="process-checklist_form">
+                                                        <input type="hidden" name="process_id" value="{{ process.id }}">
+                                                        <button class="btn btn-secondary rounded-top" data-bs-toggle="modal" data-bs-target="#ChecklistModal{{ process.id }}">
+                                                                    Sugerir Checklist Auditoría
+                                                        </button>
+                                                    </form>-->
+                                                
+                                                    <a class="btn btn-danger rounded-top" data-bs-toggle="collapse" href="#multiCollapseExample{{process.id}}" role="button" aria-expanded="false" aria-controls="multiCollapseExample{{process.id}}">Cerrar</a>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                
+                                                </div>
+
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
 
     <div class="card border card-border-dark">
@@ -217,11 +403,81 @@
 {% endfor %}
 
 </div>
-
+{{ kpis_labels|json_script:"kpis-labels" }}
+{{ kpis_values|json_script:"kpis-values" }}
+{{ kpi_series|json_script:"kpi-series" }}
     
 {% endblock content %}
 
 {% block extra_js %}
+<!-- apexcharts -->
+<script src="{% static 'libs/apexcharts/dist/apexcharts.min.js'%}"></script>
+
+
+<!-- Gráfico de tendencias KPI -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const monthLabels = JSON.parse(document.getElementById('kpis-labels').textContent);
+    const monthValues = JSON.parse(document.getElementById('kpis-values').textContent);
+    const monthSeries = JSON.parse(document.getElementById('kpi-series').textContent).map(data => ({ name: names.shift(), data }));
+
+    const options = {
+        chart: {
+            type: 'line',
+            height: 350,
+            zoom: { enabled: false },
+            toolbar: { show: true }
+        },
+        series: [{
+            name: "Medición",
+            data: monthSeries
+        }],
+        xaxis: {
+            categories: monthLabels,
+            title: { text: 'Mes' }
+        },
+        yaxis: {
+            title: { text: 'Valor Medido' },
+            labels: {
+                formatter: function (val) {
+                    return val.toFixed(1) + "%";
+                }
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        markers: {
+            size: 5
+        },
+        colors: ['#007bff'],
+        dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+                return val.toFixed(1) + "%";
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    return val.toFixed(2) + "%";
+                }
+            }
+        },
+        grid: {
+            borderColor: '#e0e0e0'
+        }
+    };
+
+    const container = document.querySelector("#kpi_trend_chart");
+    if (container) {
+        const chart = new ApexCharts(container, options);
+        chart.render();
+    }
+});
+</script>
+
 
 <!--JS Modal Edición-->
 <script>

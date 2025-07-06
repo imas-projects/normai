@@ -34,16 +34,16 @@
             <body>
                 <div id="alert-container"></div>
                     
-                    <!--<div class="d-flex justify-content-between align-items-center mt-5">
+                    <div class="d-flex justify-content-between align-items-center mt-5">
                         <h1 class="text-center flex-grow-1">Procesos</h1>
-                        <div class="">
+                        <!--<div class="">
                             <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
                                 data-bs-toggle="modal" data-bs-target="#addTableModal"><i
                                     class="ri-add-line"></i>
                                 Nuevo Proceso
                             </button>
-                        </div>
-                    </div>-->
+                        </div>-->
+                    </div>
                   
                     <div class="">
                         <div class="">
@@ -60,7 +60,7 @@
                         
                     <div class="hstack">
                         <!--Parte izq-->
-                        <div class="card card-animate col-md-6 p-1">
+                        <div class="card card-animate col-md-6 p-1 align-self-start ">
                             <div class="card-body">
                                 <h4 class="card-title d-flex justify-content-between align-items-center">
                                 Documentación Añadida Recientemente
@@ -68,7 +68,7 @@
                                 <div class="col-md-11 border-bottom card-border-light ">
                                     
                                     {% for doc in todos_documentos %}
-                                        <p class="border-bottom card-border-light"><b>{{ doc.document_code}}</b> | {{ doc.document_description }}<i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
+                                        <p class="border-bottom card-border-light"><b>{{ doc.document_code}}</b> | {{ doc.document_description }}</p>
                                     {% endfor %}
                                     
                                 </div>
