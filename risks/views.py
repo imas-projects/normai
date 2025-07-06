@@ -760,7 +760,7 @@ def generate_risks_pdf(request, area_name):
                         'Low': colors.HexColor("#5cb85c")
                     }.get(reeval.risk_level, colors.black)
 
-                    translated_risk_level = risk_level_translation.get(reeval.risk_level, reeval.risk_level)
+                    translated_risk_level = reeval.get_risk_level_display() 
 
                     reevaluation_data.append([
                         str(reeval.severity),
@@ -768,6 +768,7 @@ def generate_risks_pdf(request, area_name):
                         str(reeval.detection),
                         Paragraph(f'<font color="{risk_level_color}"><b>{translated_risk_level}</b></font>', normal_style)
                     ])
+
 
                 reevaluation_table = Table(reevaluation_data, colWidths=[60, 60, 60, 80])
                 reevaluation_table.setStyle(TableStyle([
