@@ -21,7 +21,7 @@
                     <div class="hstack">
                         <!--Parte izq-->
                         <div class="card card-animate col-md-6 p-1 align-self-start ">
-                            <div class="card card-animate card-height-100">
+                            <div class="">
                                 <div class="card-body pb-0">
                                     <h4 class="card-title">Evolución Trimestral KPIs</h4>
                                     <div id="kpi_trend_chart" data-colors='["--vz-success", "--vz-danger"]' class="apex-charts" dir="ltr"></div>
@@ -424,7 +424,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = {
         chart: {
             type: 'line',
-            height: 350,
+            height: 550,
             zoom: { enabled: false },
             toolbar: { show: true }
         },
@@ -451,7 +451,7 @@ document.addEventListener("DOMContentLoaded", function () {
         markers: {
             size: 5
         },
-        colors: ['#007bff'],
+        colors: ['#007bff','#71ff33','#ffc500 ','#ff00ff'],
         dataLabels: {
             enabled: true,
             formatter: function (val) {
