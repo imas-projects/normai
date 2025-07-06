@@ -745,6 +745,13 @@ def generate_risks_pdf(request, area_name):
             if reevaluations.exists():
                 elements.append(Paragraph("Reevaluaciones", heading_style))
 
+                # Diccionario de traducción de niveles de riesgo
+                risk_level_translation = {
+                    'High': 'Alto',
+                    'Moderate': 'Moderado',
+                    'Low': 'Bajo'
+                }
+
                 reevaluation_data = [["Severidad", "Ocurrencia", "Detección", "Nivel de Riesgo"]]
                 for reeval in reevaluations:
                     risk_level_color = {
@@ -753,11 +760,13 @@ def generate_risks_pdf(request, area_name):
                         'Low': colors.HexColor("#5cb85c")
                     }.get(reeval.risk_level, colors.black)
 
+                    translated_risk_level = risk_level_translation.get(reeval.risk_level, reeval.risk_level)
+
                     reevaluation_data.append([
                         str(reeval.severity),
                         str(reeval.occurrence),
                         str(reeval.detection),
-                        Paragraph(f'<font color="{risk_level_color}"><b>{reeval.risk_level}</b></font>', normal_style)
+                        Paragraph(f'<font color="{risk_level_color}"><b>{translated_risk_level}</b></font>', normal_style)
                     ])
 
                 reevaluation_table = Table(reevaluation_data, colWidths=[60, 60, 60, 80])
