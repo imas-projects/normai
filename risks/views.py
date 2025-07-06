@@ -677,10 +677,12 @@ def generate_risks_pdf(request, area_name):
                         'Low': colors.HexColor("#5cb85c")  # verde
                     }.get(ev.risk_level, colors.black)
 
+                    translated_risk_level = ev.get_risk_level_display()
+
                     # Usar Paragraph para textos largos, para que hagan wrap
                     preventive_controls = Paragraph(ev.current_preventive_controls or "-", normal_style)
                     detection_controls = Paragraph(ev.current_detection_controls or "-", normal_style)
-                    risk_level_paragraph = Paragraph(f'<font color="{risk_level_color}"><b>{ev.risk_level}</b></font>', normal_style)
+                    risk_level_paragraph = Paragraph(f'<font color="{risk_level_color}"><b>{translated_risk_level}</b></font>', normal_style)
 
                     data.append([
                         str(ev.severity),
