@@ -60,8 +60,19 @@
                         
                     <div class="hstack">
                         <!--Parte izq-->
-                        <div class="col-md-6 align-self-start p-1">indicadores
-
+                        <div class="card card-animate col-md-6 p-1">
+                            <div class="card-body">
+                                <h4 class="card-title d-flex justify-content-between align-items-center">
+                                Documentación Añadida Recientemente
+                                </h4>
+                                <div class="col-md-11 border-bottom card-border-light ">
+                                    
+                                    {% for doc in todos_documentos %}
+                                        <p class="border-bottom card-border-light"><b>{{ doc.document_code}}</b> | {{ doc.document_description }}<i class="bx bx-right-arrow-alt"></i> {{ r.receptor }}</p>
+                                    {% endfor %}
+                                    
+                                </div>
+                            </div>
                         </div>
 
                         <!--Parte Derecha-->

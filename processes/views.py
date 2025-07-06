@@ -16,6 +16,7 @@ def list_processes(request):
     processes = Process.objects.all().order_by('name')
 
     # === Gráfico: Número de Alertas Por Proceso ===
+    todos_documentos = Documentation.objects.all().order_by('-id')[:5]
     todos_procesos = Process.objects.all()
     hoy = date.today()
     ultimo_mes = hoy - timedelta(days=30)
@@ -56,7 +57,7 @@ def list_processes(request):
     process_labels=list(proceso_numero_alertas.keys()) 
     process_values=list(proceso_numero_alertas.values())
 
-    return render(request, 'mistemplates/processes.html', {'processes': processes, 'process_labels':process_labels,'process_values':process_values})
+    return render(request, 'mistemplates/processes.html', {'processes': processes, 'process_labels':process_labels,'process_values':process_values, 'todos_documentos':todos_documentos})
 
 @login_required
 def create_process(request):
