@@ -597,7 +597,13 @@
 {{ process_labels|json_script:"process-labels" }}
 {{ process_values|json_script:"process-values" }}
     
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock footer %}
 {% endblock content %}
+
+
+
 
 {% block extra_js %}
 <!-- apexcharts -->

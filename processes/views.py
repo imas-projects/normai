@@ -60,6 +60,8 @@ def list_processes(request):
     process_labels=list(proceso_numero_alertas.keys()) 
     process_values=list(proceso_numero_alertas.values())
 
+            
+
     return render(request, 'mistemplates/processes.html', {'processes': processes, 'process_labels':process_labels,'process_values':process_values, 'todos_documentos':todos_documentos})
 
 @login_required
@@ -344,7 +346,6 @@ def save_kpi_processes(request):
             updated_process = Process.objects.get(id=process_id)
             updated_process.performance_indicators.add(kpi)
 
-
     return redirect('processes:kpis_processes')
 
 ############## Views con IA
@@ -438,15 +439,53 @@ def kpis_detector_ia(request):
             print(assistant_answer)
 
 
+    processes = Process.objects.all()
+
+    process_perform_measure = ProcessPerformanceMeasurements.objects.all()
+
+    qs = (
+        ProcessPerformanceMeasurements.objects
+        .annotate(month=TruncMonth('date'))
+        .values('performance_indicator__name', 'month', 'measured_value', 'date')
+        .order_by('performance_indicator__name', 'month', 'date')
+    )
+
+    months = sorted({row['month'] for row in qs})
+    month_labels = [m.strftime('%Y-%m') for m in months]
+
+    data = OrderedDict()
+    for row in qs:
+        name = row['performance_indicator__name']
+        mon  = row['month'].strftime('%Y-%m')
+        val  = float(row['measured_value'])
+
+        if name not in data:
+            data[name] = OrderedDict()
+
+        data[name][mon] = val
+
+
+    for series in data.values():
+        for m in month_labels:
+            series.setdefault(m, None)
+
+    # 5) Prepara las listas para el gráfico
+    kpi_labels = list(data.keys())
+    kpi_series = [list(series.values()) for series in data.values()]
+
+
     context = {
         'processes': processes,
         'kpi_answer': assistant_answer,
-        "selected_process_id": process_id
+        "selected_process_id": process_id,
+        'process_perform_measure':process_perform_measure,
+        'month_labels': month_labels,
+        'kpi_labels'  : kpi_labels,
+        'kpi_series'  : kpi_series,
         }
 
     return render(request, 'mistemplates/kpis-processes.html', context)
-
-
+    
 
 def process_risk_detector_ia(request):
     assistant_answer = None
