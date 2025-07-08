@@ -586,34 +586,13 @@ def area_detail_view(request, area_id):
             kpis_revision += indicadores_fuera_de_rango
 
     # === Auditoría más próxima por área ===
-    siguiente_auditoria = None
+    siguiente_auditoria = next(
+        (a for a in activities if a['type'] == 'Auditoría' and a['date'] >= current_date),
+        None
+    )
     siguiente_auditoria_dias_restantes = None
-
-    # Buscar todas las auditorías futuras relacionadas al área
-    auditorias_area = []
-
-    for ap in AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related(
-        'audited_users__user__user_position__position__area'
-    ):
-        print(f"Plan: {ap}")
-        for audited in ap.audited_users.all():
-            user = audited.user
-            print(f"  Usuario auditado: {user.username}")
-            for up in user.user_position.all():
-                pos = up.position
-                print(f"    Posición: {pos.name if pos else 'N/A'} - Área ID: {pos.area_id if pos else 'N/A'}")
-                if pos and pos.area_id == area.id:
-                    print("    → Coincide con el área actual")
-                    auditorias_area.append(ap)
-                    break
-
-
-
-    # Obtener la más próxima (fecha mínima)
-    if auditorias_area:
-        auditorias_area.sort(key=lambda x: x.audit_opening_date)
-        siguiente_auditoria = auditorias_area[0]
-        siguiente_auditoria_dias_restantes = (siguiente_auditoria.audit_opening_date - current_date).days
+    if siguiente_auditoria:
+        siguiente_auditoria_dias_restantes = (siguiente_auditoria['date'] - current_date).days
 
     # === Riesgos Evaluados y Re-Evaluados ===
     riesgos_eval = (
