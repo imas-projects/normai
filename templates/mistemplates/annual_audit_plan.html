@@ -43,21 +43,25 @@
     <!-- Columna izquierda: Programa, Línea de tiempo, Equipo -->
 <div class="col-md-9 mt-5">
 
-        <div class="card card-animate">
-            <div class="card-body">
-                <h4 class="card-title">Participación de Auditores y Auditados</h4>
-                <div id="participation_chart" style="height: 400px;"></div>
-            </div>
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card card-animate mb-4">
+        <div class="card-body">
+          <h4 class="card-title">Distribución de No Conformidades por Clasificación</h4>
+          <div id="nc_distribution_chart" class="apex-charts" style="min-height: 350px;"></div>
         </div>
- 
+      </div>
+    </div>
 
-    <!-- Línea de Tiempo -->
-          <div class="card card-animate">
-            <div class="card-body">
-                <h4 class="card-title">Línea de Tiempo de Auditorías</h4>
-        <div id="timeline-chart" style="min-height: 400px;"></div>
-         </div>
+    <div class="col-md-8">
+      <div class="card card-animate mb-4">
+        <div class="card-body">
+          <h4 class="card-title">Duración de Acciones Correctivas vs Severidad</h4>
+          <div id="scatter_chart" style="min-height: 350px;"></div>
         </div>
+      </div>
+    </div>
+  </div>
 
     <!-- Programa + Equipo Auditor -->
     <div class="row mt-4">
