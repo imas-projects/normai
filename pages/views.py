@@ -427,13 +427,6 @@ def wellcome_view(request):
     return render(request, "mistemplates/user-dashboard.html", contexto)
 
 @login_required
-from collections import defaultdict
-from django.db.models import Q, F, Count
-from django.shortcuts import render, get_object_or_404
-from django.core.paginator import Paginator
-from django.utils import timezone
-import json
-
 def area_detail_view(request, area_id):
     area = get_object_or_404(Area, id=area_id)
     current_date = timezone.now().date()
