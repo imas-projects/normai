@@ -28,11 +28,13 @@
         </div>
       </div>
 
-      <!-- KPIs fuera de rango + Auditoría próxima -->
       <div class="row">
-        <div class="col-md-6 col-xxl-5">
-          <div class="card card-animate">
-            <div class="card-body p-3">
+        <!-- Columna Izquierda -->
+        <div class="col-lg-4 d-flex flex-column gap-3">
+
+          <!-- KPIs necesitan revisión -->
+          <div class="card card-animate flex-grow-1">
+            <div class="card-body p-3 d-flex flex-column">
               <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
                 <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
                 <div class="flex-grow-1 text-truncate">
@@ -40,7 +42,7 @@
                 </div>
               </div>
 
-              <div class="p-3">
+              <div class="p-3 flex-grow-1 overflow-auto">
                 {% if procesos_con_alertas %}
                   {% for p in procesos_con_alertas %}
                     <p class="fs-16 lh-base">Proceso: <span class="fw-semibold">{{ p }}</span></p>
@@ -55,11 +57,10 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="col-md-6 col-xxl-5">
-          <div class="card card-animate">
-            <div class="card-body p-3">
+          <!-- Próxima auditoría (altura más pequeña) -->
+          <div class="card card-animate" style="height: 180px;">
+            <div class="card-body p-3 d-flex flex-column justify-content-between">
               <div class="alert alert-warning border-0 rounded-0 m-0 d-flex align-items-center" role="alert">
                 <i data-feather="alert-triangle" class="text-warning me-2 icon-sm"></i>
                 <div class="flex-grow-1 text-truncate">
@@ -69,117 +70,84 @@
 
               <div class="p-3">
                 {% if siguiente_auditoria %}
-                  <p class="fs-16 lh-base">Responsable: <span class="fw-semibold">{{ siguiente_auditoria.responsible }}</span></p>
-                  <p class="fs-16 lh-base">Área: <span class="fw-semibold">{{ siguiente_auditoria.area }}</span></p>
-                  <p class="text-muted">{{ siguiente_auditoria.audit_opening_date }}</p>
-                  <div class="mt-3">
-                    <a href="{% url 'audits:audits_home' %}" class="btn btn-warning">Ir a Auditorías</a>
-                  </div>
+                  <p class="fs-16 lh-base mb-1">Responsable: <span class="fw-semibold">{{ siguiente_auditoria.responsible }}</span></p>
+                  <p class="text-muted mb-3">{{ siguiente_auditoria.date }}</p>
+                  <a href="{% url 'audits:audits_home' %}" class="btn btn-warning">Ir a Auditorías</a>
                 {% else %}
                   <p>No hay auditorías próximas para esta área.</p>
                 {% endif %}
               </div>
             </div>
           </div>
-        </div>
-      </div>
-<div class="row">
-    <!-- Proveedores (Internos + Externos) -->
-    <div class="col-md-6">
-        <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Número de Proveedores</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold">
-                            {{ total_proveedores }}
-                        </h2>
-                        <p class="text-muted mb-0 small">
-                            Internos: {{ proveedores_internos|length }}<br>
-                            Externos: {{ proveedores_externos|length }}
-                        </p>
-                    </div>
-                    <div>
-                        <div class="avatar-sm flex-shrink-0">
-                            <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-2">
-                                <i class="ri-team-line"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- end card-body -->
-        </div> <!-- end card -->
-    </div> <!-- end col -->
 
-    <!-- Clientes (Internos + Externos) -->
-    <div class="col-md-6">
-        <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Número de Clientes</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold">
-                            {{ total_clientes }}
-                        </h2>
-                        <p class="text-muted mb-0 small">
-                            Internos: {{ clientes_internos|length }}<br>
-                            Externos: {{ clientes_externos|length }}
-                        </p>
-                    </div>
-                    <div>
-                        <div class="avatar-sm flex-shrink-0">
-                            <span class="avatar-title bg-info-subtle text-info rounded-circle fs-2">
-                                <i class="ri-group-2-line"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- end card-body -->
-        </div> <!-- end card -->
-    </div> <!-- end col -->
-</div> <!-- end row -->
-
-      <!-- Comunicación, Actividades, Gráficos -->
-      <div class="row mt-4">
-        <!-- Tablas de comunicación -->
-        <div class="col-md-4">
-          <div class="card card-animate h-100">
+          <!-- Tablas de Comunicación -->
+          <div class="card card-animate flex-grow-1">
             <div class="card-body">
               <h5 class="card-title mb-3">Tablas de Comunicación</h5>
-              <div id="communication-table-list">
+              <div id="communication-table-list" style="max-height: 300px; overflow-y: auto;">
                 {% include 'mistemplates/_communication_table_list.html' %}
               </div>
             </div>
           </div>
+
         </div>
 
-        <!-- Actividades -->
-        <div class="col-md-4">
-          <div class="card card-animate h-100">
-            <div class="card-body">
-              <h5 class="card-title mb-3">Próximas Actividades</h5>
-              <div id="activity-list">
-                {% include 'mistemplates/_activity_list.html' %}
+        <!-- Columna Central -->
+        <div class="col-lg-4 d-flex flex-column gap-3">
+
+          <!-- Proveedores y Clientes lado a lado -->
+          <div class="d-flex gap-3">
+
+            <!-- Proveedores -->
+            <div class="card card-animate flex-fill">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p class="fw-medium text-muted mb-0">Número de Proveedores</p>
+                    <h2 class="mt-4 ff-secondary fw-semibold">{{ total_proveedores }}</h2>
+                    <p class="text-muted mb-0 small">
+                      Internos: {{ proveedores_internos|length }}<br>
+                      Externos: {{ proveedores_externos|length }}
+                    </p>
+                  </div>
+                  <div>
+                    <div class="avatar-sm flex-shrink-0">
+                      <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-2">
+                        <i class="ri-team-line"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Gráfico: Indicadores en alerta -->
-        <div class="col-md-4">
-          <div class="card card-animate card-height-100">
-            <div class="card-body pb-0">
-              <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
-              <div id="process_alert_chart" class="apex-charts" style="min-height: 300px;" dir="ltr"></div>
+            <!-- Clientes -->
+            <div class="card card-animate flex-fill">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p class="fw-medium text-muted mb-0">Número de Clientes</p>
+                    <h2 class="mt-4 ff-secondary fw-semibold">{{ total_clientes }}</h2>
+                    <p class="text-muted mb-0 small">
+                      Internos: {{ clientes_internos|length }}<br>
+                      Externos: {{ clientes_externos|length }}
+                    </p>
+                  </div>
+                  <div>
+                    <div class="avatar-sm flex-shrink-0">
+                      <span class="avatar-title bg-info-subtle text-info rounded-circle fs-2">
+                        <i class="ri-group-2-line"></i>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Gráficos Riesgos -->
-      <div class="row mt-4">
-        <div class="col-md-6">
-          <div class="card card-animate mb-4">
+          </div>
+
+          <!-- Gráficos Riesgos -->
+          <div class="card card-animate flex-grow-1">
             <div class="card-body">
               <h4 class="card-title d-flex justify-content-between align-items-center">
                 Riesgos por Proceso y Nivel
@@ -190,10 +158,8 @@
               <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
             </div>
           </div>
-        </div>
 
-        <div class="col-md-6">
-          <div class="card card-animate">
+          <div class="card card-animate flex-grow-1">
             <div class="card-body">
               <h4 class="card-title d-flex justify-content-between align-items-center">
                 Distribución por Nivel de Riesgo
@@ -204,12 +170,37 @@
               <div id="pie_riesgos_nivel" style="height: 300px;"></div>
             </div>
           </div>
+
+        </div>
+
+        <!-- Columna Derecha -->
+        <div class="col-lg-4 d-flex flex-column gap-3">
+
+          <!-- Próximas actividades -->
+          <div class="card card-animate flex-grow-1">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Próximas Actividades</h5>
+              <div id="activity-list" style="max-height: 350px; overflow-y: auto;">
+                {% include 'mistemplates/_activity_list.html' %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfico indicadores en alerta con menos altura -->
+          <div class="card card-animate" style="height: 350px;">
+            <div class="card-body pb-0">
+              <h4 class="card-title">Indicadores en Alerta por Proceso</h4>
+              <div id="process_alert_chart" class="apex-charts" style="min-height: 280px;" dir="ltr"></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
     </div>
   </div>
 </div>
+
 
 <!-- JSON Data -->
 {{ process_labels|json_script:"process-labels" }}
