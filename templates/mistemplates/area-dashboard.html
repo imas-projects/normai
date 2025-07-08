@@ -46,7 +46,6 @@
         {% for p in procesos_con_alertas %}
           <p class="fs-16 lh-base">Proceso: <span class="fw-semibold">{{ p }}</span></p>
         {% endfor %}
-        <canvas id="kpiChart" class="mt-3"></canvas>
         <div class="mt-3">
           <a href="{% url 'processes:list_processes' %}" class="btn btn-warning">Ir a Procesos</a>
         </div>
