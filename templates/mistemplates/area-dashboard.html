@@ -18,96 +18,113 @@
 {% block content %}
 
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
+  <div class="page-content">
+    <div class="container-fluid">
 
-            <!-- Título centrado -->
-            <div class="row mb-2">
-                <div class="col-12 text-center mb-4">
-                    <h1 class="fw-bold">Área: {{ area.name }}</h1>
-                </div>
+      <!-- Título -->
+      <div class="row mb-4">
+        <div class="col-12 text-center">
+          <h1 class="fw-bold">Área: {{ area.name }}</h1>
+        </div>
+      </div>
+
+      <div class="row gy-4">
+
+        <!-- KPIs fuera de rango y Auditoría -->
+        <div class="col-md-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">Procesos con KPIs fuera de rango</h5>
             </div>
-            
-  <div class="row">
-    <div class="col-md-3">
-      <div class="card">
-<!-- === Procesos con Alertas === -->
-  <div class="card-header"><h5">Procesos con KPIs fuera de rango</h5>
-  {% if procesos_con_alertas %}
-    <ul>
-      {% for proceso in procesos_con_alertas %}
-        <li>{{ proceso.name }} ({{ proceso.performance_indicators.count }} indicadores)</li>
-      {% endfor %}
-    </ul>
-    <canvas id="kpiChart" class="mt-3"></canvas>
-  {% else %}
-    <p>No hay procesos con KPIs fuera de rango.</p>
-  {% endif %}
+            <div class="card-body">
+              {% if procesos_con_alertas %}
+                <ul>
+                  {% for proceso in procesos_con_alertas %}
+                    <li>{{ proceso.name }} ({{ proceso.performance_indicators.count }} indicadores)</li>
+                  {% endfor %}
+                </ul>
+                <canvas id="kpiChart" class="mt-3" height="200"></canvas>
+                <p class="mt-2 text-muted"><small>Al menos {{ kpis_revision }} KPI(s) necesitan revisión.</small></p>
+              {% else %}
+                <p>No hay procesos con KPIs fuera de rango.</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header">
+              <h5 class="mb-0">Próxima Auditoría</h5>
+            </div>
+            <div class="card-body">
+              {% if siguiente_auditoria %}
+                <p>{{ siguiente_auditoria.annual_program }} - En <strong>{{ siguiente_auditoria_dias_restantes }}</strong> días</p>
+                <p class="text-muted">{{ siguiente_auditoria.audit_opening_date }}</p>
+              {% else %}
+                <p>No hay auditorías próximas para esta área.</p>
+              {% endif %}
+            </div>
+          </div>
         </div>
-      </div>
 
-  <!-- === Próxima Auditoría === -->
-  <h4 class="mt-4">Próxima Auditoría</h4>
-  {% if siguiente_auditoria %}
-    <p>
-      {{ siguiente_auditoria.annual_program }} - En {{ siguiente_auditoria_dias_restantes }} días
-      ({{ siguiente_auditoria.audit_opening_date }})
-    </p>
-  {% else %}
-    <p>No hay auditorías próximas para esta área.</p>
-  {% endif %}
-
-
-
-    <!-- Izquierda: Tablas de Comunicación -->
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-header"><h5>Tablas de Comunicación</h5></div>
-        <div class="card-body" id="communication-table-list">
-          {% include 'mistemplates/_communication_table_list.html' %}
+        <!-- Tablas de Comunicación -->
+        <div class="col-md-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">Tablas de Comunicación</h5>
+            </div>
+            <div class="card-body" id="communication-table-list">
+              {% include 'mistemplates/_communication_table_list.html' %}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Centro: Gráficos apilados verticalmente -->
-    <div class="col-md-4">
-      <div class="card card-animate mb-4">
-        <div class="card-body">
-          <h4 class="card-title d-flex justify-content-between align-items-center">
-            Riesgos por Proceso y Nivel
-            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
-              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-            </button>
-          </h4>
-          <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
-        </div>
-      </div>
+        <!-- Gráficos Riesgos -->
+        <div class="col-md-4">
+          <div class="card card-animate mb-4">
+            <div class="card-body">
+              <h4 class="card-title d-flex justify-content-between align-items-center">
+                Riesgos por Proceso y Nivel
+                <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="bar" data-state="eval">
+                  <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+                </button>
+              </h4>
+              <div id="bar_riesgos_por_proceso" style="min-height: 300px;"></div>
+            </div>
+          </div>
 
-      <div class="card card-animate">
-        <div class="card-body">
-          <h4 class="card-title d-flex justify-content-between align-items-center">
-            Distribución por Nivel de Riesgo
-            <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
-              <i class="bi bi-arrow-left-right"></i> Reevaluaciones
-            </button>
-          </h4>
-          <div id="pie_riesgos_nivel" style="height: 300px;"></div>
+          <div class="card card-animate">
+            <div class="card-body">
+              <h4 class="card-title d-flex justify-content-between align-items-center">
+                Distribución por Nivel de Riesgo
+                <button class="btn btn-sm btn-outline-secondary toggle-eval" data-chart="pie" data-state="eval">
+                  <i class="bi bi-arrow-left-right"></i> Reevaluaciones
+                </button>
+              </h4>
+              <div id="pie_riesgos_nivel" style="height: 300px;"></div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Derecha: Próximas actividades -->
-    <div class="col-md-5">
-      <div class="card">
-        <div class="card-header"><h5>Próximas Actividades</h5></div>
-        <div class="card-body" id="activity-list">
-          {% include 'mistemplates/_activity_list.html' %}
+        <!-- Actividades -->
+        <div class="col-md-5">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">Próximas Actividades</h5>
+            </div>
+            <div class="card-body" id="activity-list">
+              {% include 'mistemplates/_activity_list.html' %}
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
+</div>
 
-
+<!-- JSON para JS -->
+{{ process_labels|json_script:"process-labels" }}
+{{ process_values|json_script:"process-values" }}
 
 {{ procesos_eval|json_script:"procesos-eval" }}
 {{ riesgo_alto_eval|json_script:"riesgo-alto-eval" }}
@@ -288,20 +305,50 @@ function renderBar(state = currentBarState) {
 });
 
 
-   {% if process_labels and process_values %}
-  new Chart(document.getElementById('kpiChart'), {
-    type: 'bar',
-    data: {
-      labels: {{ process_labels|safe }},
-      datasets: [{
-        label: 'Indicadores fuera de rango',
-        data: {{ process_values|safe }},
-        backgroundColor: 'tomato'
-      }]
-    }
-  });
-  {% endif %}
-   
+document.addEventListener("DOMContentLoaded", function () {
+  const labels = JSON.parse(document.getElementById("process-labels").textContent);
+  const data = JSON.parse(document.getElementById("process-values").textContent);
+
+  if (labels.length && data.length) {
+    const ctx = document.getElementById("kpiChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Indicadores fuera de rango",
+          data: data,
+          backgroundColor: "tomato",
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.parsed.y} KPI(s) fuera de rango`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+      }
+    });
+  }
+});
+
 </script>
 {% endblock extra_js %}
 
