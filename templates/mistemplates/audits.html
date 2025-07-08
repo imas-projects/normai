@@ -1943,21 +1943,22 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
     },
-    tooltip: {
-      custom: ({ dataPointIndex }) => {
-        const label = scatterDataRaw[dataPointIndex].label;
-        const duracion = scatterDataRaw[dataPointIndex].x;
-        const labelMap = {
-          'NC_MAYOR': 'No Conformidad Mayor',
-          'NC_MENOR': 'No Conformidad Menor',
-          'OPORTUNIDAD_MEJORA': 'Oportunidad de Mejora'
-        };
-        return `<div style="padding:5px;">
-          <strong>Severidad:</strong> ${labelMap[label] || label}<br/>
-          <strong>Duración:</strong> ${duracion} días
-        </div>`;
-      }
-    },
+        tooltip: {
+            custom: ({ dataPointIndex }) => {
+                const point = scatterDataRaw[dataPointIndex];
+                const labelMap = {
+                    'NC_MAYOR': 'No Conformidad Mayor',
+                    'NC_MENOR': 'No Conformidad Menor',
+                    'OPORTUNIDAD_MEJORA': 'Oportunidad de Mejora'
+                };
+                return `<div style="padding:5px;">
+                    <strong>Proceso:</strong> ${point.process}<br/>
+                    <strong>Severidad:</strong> ${labelMap[point.label] || point.label}<br/>
+                    <strong>Duración:</strong> ${point.x} días
+                </div>`;
+            }
+        },
+
     markers: { size: 7 }
   };
 
