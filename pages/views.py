@@ -509,7 +509,7 @@ def area_detail_view(request, area_id):
             unique_activities.append(act)
     activities = sorted(unique_activities, key=lambda x: x['date'])
 
-    paginator = Paginator(activities, 6)
+    paginator = Paginator(activities, 3)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
