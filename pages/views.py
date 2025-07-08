@@ -528,9 +528,16 @@ def area_detail_view(request, area_id):
         else:
             return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
 
-    # === Clientes y Proveedores por Área ===
-    clientes = area.clients.all()
-    proveedores = area.providers.all()
+    # Clientes y Proveedores por Área
+    procesos_donde_es_cliente = Process.objects.filter(internal_clients=area)
+    procesos_donde_es_proveedor = Process.objects.filter(internal_suppliers=area)
+
+    clientes_internos = Area.objects.filter(process_internal_client__in=procesos_donde_es_proveedor).distinct()
+    proveedores_internos = Area.objects.filter(process_internal_supplier__in=procesos_donde_es_cliente).distinct()
+
+    clientes_externos = ExternalClient.objects.filter(process_external_client__in=procesos_donde_es_proveedor).distinct()
+    proveedores_externos = ExternalSupplier.objects.filter(process_external_supplier__in=procesos_donde_es_cliente).distinct()
+
 
     # === KPIs y Procesos con Alertas ===
     procesos_con_alertas = []
@@ -677,8 +684,10 @@ def area_detail_view(request, area_id):
         "siguiente_auditoria": siguiente_auditoria,
         "siguiente_auditoria_dias_restantes": siguiente_auditoria_dias_restantes,
         # Clientes y Proveedores del área
-        "clientes": clientes,
-        "proveedores": proveedores,
+        "clientes_internos": clientes_internos,
+        "proveedores_internos": proveedores_internos,
+        "clientes_externos": clientes_externos,
+        "proveedores_externos": proveedores_externos,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
