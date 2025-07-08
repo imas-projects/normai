@@ -944,9 +944,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         tooltip: {
             custom: ({ dataPointIndex }) => {
-                const label = scatterDataRaw[dataPointIndex].label;
-                const duracion = scatterDataRaw[dataPointIndex].x;
-                // Etiquetas más legibles
+                const point = scatterDataRaw[dataPointIndex];
                 const labelMap = {
                     'NC_MAYOR': 'No Conformidad Mayor',
                     'NC_MENOR': 'No Conformidad Menor',
@@ -954,11 +952,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 };
                 return `<div style="padding:5px;">
                     <strong>Proceso:</strong> ${point.process}<br/>
-                    <strong>Severidad:</strong> ${labelMap[label] || label}<br/>
-                    <strong>Duración:</strong> ${duracion} días
+                    <strong>Severidad:</strong> ${labelMap[point.label] || point.label}<br/>
+                    <strong>Duración:</strong> ${point.x} días
                 </div>`;
             }
         },
+
         markers: { size: 7 }
     };
     new ApexCharts(document.querySelector('#scatter_chart'), scatterOptions).render();
