@@ -592,16 +592,21 @@ def area_detail_view(request, area_id):
     # Buscar todas las auditorías futuras relacionadas al área
     auditorias_area = []
 
-    for ap in AnnualPlan.objects.filter(audit_opening_date__gte=current_date):
-        for audited_user in ap.audited.all():
-            for up in audited_user.user.user_position.all():
-                if up.position.area_id == area.id:
+    for ap in AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related(
+        'audited_users__user__user_position__position__area'
+    ):
+        for audited in ap.audited_users.all():
+            user = audited.user
+            for up in user.user_position.all():
+                if up.position and up.position.area_id == area.id:
                     auditorias_area.append(ap)
                     break
 
+
     # Obtener la más próxima (fecha mínima)
     if auditorias_area:
-        siguiente_auditoria = min(auditorias_area, key=lambda x: x.audit_opening_date)
+        auditorias_area.sort(key=lambda x: x.audit_opening_date)
+        siguiente_auditoria = auditorias_area[0]
         siguiente_auditoria_dias_restantes = (siguiente_auditoria.audit_opening_date - current_date).days
 
     # === Riesgos Evaluados y Re-Evaluados ===
