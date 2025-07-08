@@ -953,6 +953,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     'OPORTUNIDAD_MEJORA': 'Oportunidad de Mejora'
                 };
                 return `<div style="padding:5px;">
+                    <strong>Proceso:</strong> ${point.process}<br/>
                     <strong>Severidad:</strong> ${labelMap[label] || label}<br/>
                     <strong>Duración:</strong> ${duracion} días
                 </div>`;
