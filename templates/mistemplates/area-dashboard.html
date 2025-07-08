@@ -29,6 +29,36 @@
             </div>
             
   <div class="row">
+    <div class="col-md-3">
+      <div class="card">
+<!-- === Procesos con Alertas === -->
+  <div class="card-header"><h5">Procesos con KPIs fuera de rango</h5>
+  {% if procesos_con_alertas %}
+    <ul>
+      {% for proceso in procesos_con_alertas %}
+        <li>{{ proceso.name }} ({{ proceso.performance_indicators.count }} indicadores)</li>
+      {% endfor %}
+    </ul>
+    <canvas id="kpiChart" class="mt-3"></canvas>
+  {% else %}
+    <p>No hay procesos con KPIs fuera de rango.</p>
+  {% endif %}
+        </div>
+      </div>
+
+  <!-- === Próxima Auditoría === -->
+  <h4 class="mt-4">Próxima Auditoría</h4>
+  {% if siguiente_auditoria %}
+    <p>
+      {{ siguiente_auditoria.annual_program }} - En {{ siguiente_auditoria_dias_restantes }} días
+      ({{ siguiente_auditoria.audit_opening_date }})
+    </p>
+  {% else %}
+    <p>No hay auditorías próximas para esta área.</p>
+  {% endif %}
+
+
+
     <!-- Izquierda: Tablas de Comunicación -->
     <div class="col-md-3">
       <div class="card">
@@ -257,6 +287,21 @@ function renderBar(state = currentBarState) {
 
 });
 
+
+   {% if process_labels and process_values %}
+  new Chart(document.getElementById('kpiChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ process_labels|safe }},
+      datasets: [{
+        label: 'Indicadores fuera de rango',
+        data: {{ process_values|safe }},
+        backgroundColor: 'tomato'
+      }]
+    }
+  });
+  {% endif %}
+   
 </script>
 {% endblock extra_js %}
 
