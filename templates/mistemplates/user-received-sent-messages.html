@@ -38,7 +38,7 @@
                         <!--Parte izquierda Enviados-->
                         <div class="col-md-6 align-self-start">
                             <div class="hstack">
-                            <h1 class="text-center flex-grow-1">Comunicaciones Recibidas</h1>
+                            <h1 class="text-center flex-grow-1 mb-2">Comunicaciones Recibidas</h1>
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="form_name" value="received_messages_form">
@@ -160,7 +160,7 @@
                         <!--Parte derecha-->
                         <div class="col-md-6 align-self-start">
                             <div class="hstack">
-                            <h1 class="text-center flex-grow-1">Comunicaciones Enviadas</h1>
+                            <h1 class="text-center flex-grow-1 mb-2">Comunicaciones Enviadas</h1>
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="form_name" value="sent_messages_form">
