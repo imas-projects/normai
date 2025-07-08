@@ -589,15 +589,20 @@ def area_detail_view(request, area_id):
     siguiente_auditoria = None
     siguiente_auditoria_dias_restantes = None
 
-    area_users = area.users.all()
-    annual_plans_area = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).distinct()
+    # Buscar todas las auditorías futuras relacionadas al área
+    auditorias_area = []
 
-    for ap in annual_plans_area:
-        audited_users = ap.audited.all()
-        if audited_users.filter(id__in=area_users).exists():
-            siguiente_auditoria = ap
-            siguiente_auditoria_dias_restantes = (ap.audit_opening_date - current_date).days
-            break
+    for ap in AnnualPlan.objects.filter(audit_opening_date__gte=current_date):
+        for audited_user in ap.audited.all():
+            for up in audited_user.user.user_position.all():
+                if up.position.area_id == area.id:
+                    auditorias_area.append(ap)
+                    break
+
+    # Obtener la más próxima (fecha mínima)
+    if auditorias_area:
+        siguiente_auditoria = min(auditorias_area, key=lambda x: x.audit_opening_date)
+        siguiente_auditoria_dias_restantes = (siguiente_auditoria.audit_opening_date - current_date).days
 
     # === Riesgos Evaluados y Re-Evaluados ===
     riesgos_eval = (
@@ -678,8 +683,8 @@ def area_detail_view(request, area_id):
         "procesos_con_alertas": procesos_con_alertas,
         "kpis_revision": kpis_revision,
         "kpis_fuera_rango": kpis_fuera_rango,
-        "process_labels": json.dumps(process_labels),
-        "process_values": json.dumps(process_values),
+        "process_labels": process_labels,
+        "process_values": process_values,
         # Auditoría próxima
         "siguiente_auditoria": siguiente_auditoria,
         "siguiente_auditoria_dias_restantes": siguiente_auditoria_dias_restantes,
@@ -688,6 +693,8 @@ def area_detail_view(request, area_id):
         "proveedores_internos": proveedores_internos,
         "clientes_externos": clientes_externos,
         "proveedores_externos": proveedores_externos,
+        "total_clientes": clientes_internos.count() + clientes_externos.count(),
+        "total_proveedores": proveedores_internos.count() + proveedores_externos.count(),
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
