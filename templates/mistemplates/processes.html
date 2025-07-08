@@ -217,8 +217,8 @@
                                     {% for indicator in process.performance_indicators.all %}
                                     <li>
                                         {{ indicator.name }}
-                                        {% if indicator.effective %}<span class="badge bg-success ms-1">Effective</span>{% endif %}
-                                        {% if indicator.efficient %}<span class="badge bg-info ms-1">Efficient</span>{% endif %}
+                                        {% if indicator.effective %}<span class="badge bg-secondary ms-1">Effective</span>{% endif %}
+                                        {% if indicator.efficient %}<span class="badge bg-warning ms-1">Efficient</span>{% endif %}
                                     </li>
                                     {% empty %}
                                     <li class="text-muted">No indicators available</li>
