@@ -595,12 +595,18 @@ def area_detail_view(request, area_id):
     for ap in AnnualPlan.objects.filter(audit_opening_date__gte=current_date).prefetch_related(
         'audited_users__user__user_position__position__area'
     ):
+        print(f"Plan: {ap}")
         for audited in ap.audited_users.all():
             user = audited.user
+            print(f"  Usuario auditado: {user.username}")
             for up in user.user_position.all():
-                if up.position and up.position.area_id == area.id:
+                pos = up.position
+                print(f"    Posición: {pos.name if pos else 'N/A'} - Área ID: {pos.area_id if pos else 'N/A'}")
+                if pos and pos.area_id == area.id:
+                    print("    → Coincide con el área actual")
                     auditorias_area.append(ap)
                     break
+
 
 
     # Obtener la más próxima (fecha mínima)
