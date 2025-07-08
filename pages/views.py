@@ -427,6 +427,13 @@ def wellcome_view(request):
     return render(request, "mistemplates/user-dashboard.html", contexto)
 
 @login_required
+from collections import defaultdict
+from django.db.models import Q, F, Count
+from django.shortcuts import render, get_object_or_404
+from django.core.paginator import Paginator
+from django.utils import timezone
+import json
+
 def area_detail_view(request, area_id):
     area = get_object_or_404(Area, id=area_id)
     current_date = timezone.now().date()
@@ -581,19 +588,37 @@ def area_detail_view(request, area_id):
     process_values = []
     kpis_revision = 0
 
-    area_processes = Process.objects.filter(responsible__area=area).prefetch_related('performance_indicators')
+    area_processes = Process.objects.filter(responsible__area=area)
 
     for proceso in area_processes:
-        indicadores_fuera_de_rango = proceso.performance_indicators.filter(
-            Q(goal_type='max', current_value__gt=F('target_value')) |
-            Q(goal_type='min', current_value__lt=F('target_value'))
-        )
+        indicadores_fuera_de_rango = 0
+        indicadores = ProcessPerformanceIndicators.objects.filter(process=proceso)
 
-        if indicadores_fuera_de_rango.exists():
+        for indicador in indicadores:
+            medicion = ProcessPerformanceMeasurements.objects.filter(
+                process=proceso,
+                performance_indicator=indicador.performanceindicator
+            ).order_by('-date').first()
+
+            if medicion:
+                valor = medicion.measured_value
+                min_val = indicador.min_acceptable_value
+                max_val = indicador.max_acceptable_value
+
+                fuera_de_rango = False
+                if min_val is not None and valor < min_val:
+                    fuera_de_rango = True
+                if max_val is not None and valor > max_val:
+                    fuera_de_rango = True
+
+                if fuera_de_rango:
+                    indicadores_fuera_de_rango += 1
+
+        if indicadores_fuera_de_rango > 0:
             procesos_con_alertas.append(proceso)
             process_labels.append(proceso.name)
-            process_values.append(indicadores_fuera_de_rango.count())
-            kpis_revision += indicadores_fuera_de_rango.count()
+            process_values.append(indicadores_fuera_de_rango)
+            kpis_revision += indicadores_fuera_de_rango
 
     # === Auditoría más próxima ===
     siguiente_auditoria = None
