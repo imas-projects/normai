@@ -446,9 +446,9 @@ def area_detail_view(request, area_id):
                     "url": "/risks/",
                 })
 
-    processes = Process.objects.filter(review_date__gte=current_date).select_related('responsible__area')
+    processes = Process.objects.filter(review_date__gte=current_date, responsible__area=area).select_related('responsible__area')
     for p in processes:
-        if p.responsible and p.responsible.area_id == area.id:
+        if p.responsible:
             activities.append({
                 "date": p.review_date,
                 "name": f"Revisión del Proceso: {p.name}",
@@ -509,7 +509,6 @@ def area_detail_view(request, area_id):
         emiter__area_id=area.id
     ).order_by('-review_date').select_related('emiter', 'reviewed_by', 'approved_by').prefetch_related('message__receiver')
 
-
     comm_paginator = Paginator(comm_queryset, 4)
     comm_page_number = request.GET.get('comm_page')
     comm_page_obj = comm_paginator.get_page(comm_page_number)
@@ -519,7 +518,8 @@ def area_detail_view(request, area_id):
             return render(request, "mistemplates/_communication_table_list.html", {"comm_page_obj": comm_page_obj})
         else:
             return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
-    
+
+    # === Riesgos Evaluados y Re-Evaluados ===
     riesgos_eval = (
         RiskEvaluation.objects
         .filter(risk__area=area)
@@ -556,7 +556,6 @@ def area_detail_view(request, area_id):
     procesos_eval, altos_eval, moderados_eval, bajos_eval = descomponer(riesgos_eval)
     procesos_reeval, altos_reeval, moderados_reeval, bajos_reeval = descomponer(riesgos_reeval)
 
-    # Pie charts (por nivel) para el área
     pie_eval_qs = (
         RiskEvaluation.objects
         .filter(risk__area=area)
@@ -573,12 +572,44 @@ def area_detail_view(request, area_id):
 
     pie_labels_eval = [item['risk_level'] for item in pie_eval_qs]
     pie_values_eval = [item['total'] for item in pie_eval_qs]
-
     pie_labels_reeval = [item['risk_level'] for item in pie_reeval_qs]
     pie_values_reeval = [item['total'] for item in pie_reeval_qs]
 
+    # === KPIs y Procesos con Alertas ===
+    procesos_con_alertas = []
+    process_labels = []
+    process_values = []
+    kpis_revision = 0
 
+    area_processes = Process.objects.filter(responsible__area=area).prefetch_related('performance_indicators')
 
+    for proceso in area_processes:
+        indicadores_fuera_de_rango = proceso.performance_indicators.filter(
+            Q(goal_type='max', current_value__gt=F('target_value')) |
+            Q(goal_type='min', current_value__lt=F('target_value'))
+        )
+
+        if indicadores_fuera_de_rango.exists():
+            procesos_con_alertas.append(proceso)
+            process_labels.append(proceso.name)
+            process_values.append(indicadores_fuera_de_rango.count())
+            kpis_revision += indicadores_fuera_de_rango.count()
+
+    # === Auditoría más próxima ===
+    siguiente_auditoria = None
+    siguiente_auditoria_dias_restantes = None
+
+    area_users = area.users.all()
+    annual_plans_area = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).distinct()
+
+    for ap in annual_plans_area:
+        audited_users = ap.audited.all()
+        if audited_users.filter(id__in=area_users).exists():
+            siguiente_auditoria = ap
+            siguiente_auditoria_dias_restantes = (ap.audit_opening_date - current_date).days
+            break
+
+    # === Render ===
     contexto = {
         "area": area,
         "page_obj": page_obj,
@@ -590,20 +621,22 @@ def area_detail_view(request, area_id):
         "riesgo_bajo_eval": bajos_eval,
         "pie_labels_eval": pie_labels_eval,
         "pie_values_eval": pie_values_eval,
-
-        # Datos para gráficos (reevaluaciones)
+        # Re-evaluaciones
         "procesos_reeval": procesos_reeval,
         "riesgo_alto_reeval": altos_reeval,
         "riesgo_moderado_reeval": moderados_reeval,
         "riesgo_bajo_reeval": bajos_reeval,
         "pie_labels_reeval": pie_labels_reeval,
         "pie_values_reeval": pie_values_reeval,
-
+        # Alertas de procesos
+        "procesos_con_alertas": procesos_con_alertas,
+        "kpis_revision": kpis_revision,
+        "process_labels": json.dumps(process_labels),
+        "process_values": json.dumps(process_values),
+        # Auditoría próxima
+        "siguiente_auditoria": siguiente_auditoria,
+        "siguiente_auditoria_dias_restantes": siguiente_auditoria_dias_restantes,
     }
-    print("procesos_eval:", procesos_eval)
-    print("altos_eval:", altos_eval)
-    print("pie_labels_eval:", pie_labels_eval)
-    print("pie_values_eval:", pie_values_eval)
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
 
