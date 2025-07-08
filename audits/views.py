@@ -534,12 +534,19 @@ def conduct_internal_audits(request):
         if findings.exists():
             sev_num = severity_map.get(findings.first().classification, 0)
             duracion_dias = abs((now().date() - action.due_date).days) if action.due_date else 0
+            
+            try:
+                process_name = action.audit_report.audit_plan.annual_program.process.name
+            except AttributeError:
+                process_name = "Sin proceso"
+
 
 
             scatter_data.append({
                 'x': duracion_dias,
                 'y': sev_num,
                 'label': findings.first().classification,
+                'process': process_name,
             })
 
 
