@@ -499,7 +499,16 @@ def area_detail_view(request, area_id):
                         "url": "/audits/annual-audit-plan/",
                     })
 
-    activities.sort(key=lambda x: x['date'])
+    # === Eliminar duplicados por nombre, tipo y fecha ===
+    seen = set()
+    unique_activities = []
+    for act in activities:
+        key = (act['name'], act['type'], act['date'])
+        if key not in seen:
+            seen.add(key)
+            unique_activities.append(act)
+    activities = sorted(unique_activities, key=lambda x: x['date'])
+
     paginator = Paginator(activities, 6)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -518,6 +527,70 @@ def area_detail_view(request, area_id):
             return render(request, "mistemplates/_communication_table_list.html", {"comm_page_obj": comm_page_obj})
         else:
             return render(request, "mistemplates/_activity_list.html", {"page_obj": page_obj})
+
+    # === Clientes y Proveedores por Área ===
+    clientes = area.clients.all()
+    proveedores = area.providers.all()
+
+    # === KPIs y Procesos con Alertas ===
+    procesos_con_alertas = []
+    process_labels = []
+    process_values = []
+    kpis_revision = 0
+    kpis_fuera_rango = []
+
+    area_processes = Process.objects.filter(responsible__area=area)
+
+    for proceso in area_processes:
+        indicadores_fuera_de_rango = 0
+        indicadores = ProcessPerformanceIndicators.objects.filter(process=proceso)
+
+        for indicador in indicadores:
+            medicion = ProcessPerformanceMeasurements.objects.filter(
+                process=proceso,
+                performance_indicator=indicador.performanceindicator
+            ).order_by('-date').first()
+
+            if medicion:
+                valor = medicion.measured_value
+                min_val = indicador.min_acceptable_value
+                max_val = indicador.max_acceptable_value
+
+                fuera_de_rango = False
+                if min_val is not None and valor < min_val:
+                    fuera_de_rango = True
+                if max_val is not None and valor > max_val:
+                    fuera_de_rango = True
+
+                if fuera_de_rango:
+                    indicadores_fuera_de_rango += 1
+                    kpis_fuera_rango.append({
+                        "indicador": indicador.performanceindicator.name,
+                        "proceso": proceso.name,
+                        "valor": valor,
+                        "rango": f"{min_val} - {max_val}",
+                        "fecha": medicion.date,
+                    })
+
+        if indicadores_fuera_de_rango > 0:
+            procesos_con_alertas.append(proceso)
+            process_labels.append(proceso.name)
+            process_values.append(indicadores_fuera_de_rango)
+            kpis_revision += indicadores_fuera_de_rango
+
+    # === Auditoría más próxima por área ===
+    siguiente_auditoria = None
+    siguiente_auditoria_dias_restantes = None
+
+    area_users = area.users.all()
+    annual_plans_area = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).distinct()
+
+    for ap in annual_plans_area:
+        audited_users = ap.audited.all()
+        if audited_users.filter(id__in=area_users).exists():
+            siguiente_auditoria = ap
+            siguiente_auditoria_dias_restantes = (ap.audit_opening_date - current_date).days
+            break
 
     # === Riesgos Evaluados y Re-Evaluados ===
     riesgos_eval = (
@@ -575,58 +648,6 @@ def area_detail_view(request, area_id):
     pie_labels_reeval = [item['risk_level'] for item in pie_reeval_qs]
     pie_values_reeval = [item['total'] for item in pie_reeval_qs]
 
-    # === KPIs y Procesos con Alertas ===
-    procesos_con_alertas = []
-    process_labels = []
-    process_values = []
-    kpis_revision = 0
-
-    area_processes = Process.objects.filter(responsible__area=area)
-
-    for proceso in area_processes:
-        indicadores_fuera_de_rango = 0
-        indicadores = ProcessPerformanceIndicators.objects.filter(process=proceso)
-
-        for indicador in indicadores:
-            medicion = ProcessPerformanceMeasurements.objects.filter(
-                process=proceso,
-                performance_indicator=indicador.performanceindicator
-            ).order_by('-date').first()
-
-            if medicion:
-                valor = medicion.measured_value
-                min_val = indicador.min_acceptable_value
-                max_val = indicador.max_acceptable_value
-
-                fuera_de_rango = False
-                if min_val is not None and valor < min_val:
-                    fuera_de_rango = True
-                if max_val is not None and valor > max_val:
-                    fuera_de_rango = True
-
-                if fuera_de_rango:
-                    indicadores_fuera_de_rango += 1
-
-        if indicadores_fuera_de_rango > 0:
-            procesos_con_alertas.append(proceso)
-            process_labels.append(proceso.name)
-            process_values.append(indicadores_fuera_de_rango)
-            kpis_revision += indicadores_fuera_de_rango
-
-    # === Auditoría más próxima ===
-    siguiente_auditoria = None
-    siguiente_auditoria_dias_restantes = None
-
-    area_users = area.users.all()
-    annual_plans_area = AnnualPlan.objects.filter(audit_opening_date__gte=current_date).distinct()
-
-    for ap in annual_plans_area:
-        audited_users = ap.audited.all()
-        if audited_users.filter(id__in=area_users).exists():
-            siguiente_auditoria = ap
-            siguiente_auditoria_dias_restantes = (ap.audit_opening_date - current_date).days
-            break
-
     # === Render ===
     contexto = {
         "area": area,
@@ -649,15 +670,18 @@ def area_detail_view(request, area_id):
         # Alertas de procesos
         "procesos_con_alertas": procesos_con_alertas,
         "kpis_revision": kpis_revision,
+        "kpis_fuera_rango": kpis_fuera_rango,
         "process_labels": json.dumps(process_labels),
         "process_values": json.dumps(process_values),
         # Auditoría próxima
         "siguiente_auditoria": siguiente_auditoria,
         "siguiente_auditoria_dias_restantes": siguiente_auditoria_dias_restantes,
+        # Clientes y Proveedores del área
+        "clientes": clientes,
+        "proveedores": proveedores,
     }
 
     return render(request, "mistemplates/area-dashboard.html", contexto)
-
 
 class PagesView(TemplateView):
     pass
