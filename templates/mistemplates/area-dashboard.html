@@ -83,6 +83,61 @@
           </div>
         </div>
       </div>
+<div class="row">
+    <!-- Proveedores (Internos + Externos) -->
+    <div class="col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="fw-medium text-muted mb-0">Número de Proveedores</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold">
+                            {{ proveedores_internos|length|add:proveedores_externos|length }}
+                        </h2>
+                        <p class="text-muted mb-0 small">
+                            Internos: {{ proveedores_internos|length }}<br>
+                            Externos: {{ proveedores_externos|length }}
+                        </p>
+                    </div>
+                    <div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-2">
+                                <i class="ri-team-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- end card-body -->
+        </div> <!-- end card -->
+    </div> <!-- end col -->
+
+    <!-- Clientes (Internos + Externos) -->
+    <div class="col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <p class="fw-medium text-muted mb-0">Número de Clientes</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold">
+                            {{ clientes_internos|length|add:clientes_externos|length }}
+                        </h2>
+                        <p class="text-muted mb-0 small">
+                            Internos: {{ clientes_internos|length }}<br>
+                            Externos: {{ clientes_externos|length }}
+                        </p>
+                    </div>
+                    <div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-info-subtle text-info rounded-circle fs-2">
+                                <i class="ri-group-2-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- end card-body -->
+        </div> <!-- end card -->
+    </div> <!-- end col -->
+</div> <!-- end row -->
 
       <!-- Comunicación, Actividades, Gráficos -->
       <div class="row mt-4">
