@@ -60,7 +60,34 @@ def list_processes(request):
     process_labels=list(proceso_numero_alertas.keys()) 
     process_values=list(proceso_numero_alertas.values())
 
-            
+    if request.method == 'POST' and request.content_type == 'application/json':
+        #formulario = request.POST.get('form_name')
+
+        #if formulario == 'table_summarize_form':
+        try:
+            data = json.loads(request.body) 
+            process_code = data.get('process_code')  # Simple text field
+            process_objective = data.get('process_objective') 
+            process_subject = data.get('process_subject') 
+            process_emiter = data.get('process_emiter')  # Foreign key
+        
+            new_process = Process(
+                process_code=process_code,
+                responsible=Position.objects.get(id=process_emiter),
+                creation_date=datetime.date.today(),
+                name=process_subject,
+                objective=process_objective
+                )
+            # Guardar tabla
+
+            print(new_process)
+            new_process.save()  
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': str(e)})      
 
     return render(request, 'mistemplates/processes.html', {'processes': processes, 'process_labels':process_labels,'process_values':process_values, 'todos_documentos':todos_documentos})
 
@@ -78,7 +105,18 @@ def create_process(request):
         form = ProcessForm()
     return render(request, 'mistemplates/create_process.html', {'form': form})
 
-@login_required
+def load_responsible(request):
+    responsible_options = list(
+        Position.objects.all().values('id', 'name')
+    )
+
+    return JsonResponse({
+        'success': True,
+        'responsible_options': responsible_options
+    })
+
+
+#@login_required
 def load_form_options(request):
     responsible_options = list(Position.objects.all().values('id', 'name'))
     internal_suppliers_options = list(Area.objects.all().values('id', 'name'))
@@ -754,3 +792,6 @@ def process_summarize_ia(request):
 def checklist_detector_ia(request):
 
     return render(request, 'mistemplates/processes.html')
+
+
+

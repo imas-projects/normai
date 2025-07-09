@@ -36,13 +36,13 @@
                     
                     <div class="d-flex justify-content-between align-items-center mt-5 mb-2">
                         <h1 class="text-center flex-grow-1">Procesos</h1>
-                        <!--<div class="">
+                        <div class="">
                             <button type="button" class="btn btn-dark add-table-btn" id="add-table-btn"
                                 data-bs-toggle="modal" data-bs-target="#addTableModal"><i
                                     class="ri-add-line"></i>
                                 Nuevo Proceso
                             </button>
-                        </div>-->
+                        </div>
                     </div>
                   
                     <div class="hstack">
@@ -608,9 +608,53 @@
         </div>
     </div>
     </div>
-
     {% endfor %}
-    </div>
+
+
+    <!-- Modal Añadir Proceso-->
+        <div class="modal fade" id="addTableModal" tabindex="-1" aria-labelledby="addTableLabel" data-bs-backdrop="static">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="addTableForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_name" value="table_summarize_form">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-dark p-1" id="addTableLabel">Nuevo Proceso</h5>
+                            <button type="button" class="btn-close bg-danger bg-opacity-50 close-btn"
+                                data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="new-process-code" class="form-label">Código Proceso</label>
+                                <input type="text" class="form-control" id="new-process-code" name="code" maxlength="240" required></input>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-process-subject" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="new-process-subject" name="subject"
+                                    maxlength="240" required>
+                            </div>
+                                                        <div class="mb-3">
+                                <label for="new-process-objective" class="form-label">Objetivo</label>
+                                <input type="text" class="form-control" id="new-process-objective" name="objective"
+                                    maxlength="240" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-process-emiter" class="form-label">Responsable</label>
+                                <select id="new-process-emiter" name="new-process-emiter" class="form-control" required>
+                                </select>
+                            </div>              
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="savetableBtn" class="btn btn-primary bg-success">Guardar
+                                cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!--Fin Modal Añadir Proceso-->
+
+</div>
 {{ process_labels|json_script:"process-labels" }}
 {{ process_values|json_script:"process-values" }}
     
@@ -952,6 +996,98 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 {% endif %}
 
+ <!--Añadir Proceso-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // COmporatmiento del botón de de nueva tabla
+            document.querySelectorAll('.add-table-btn').forEach(button => {
+                button.addEventListener('click', function () {
 
+
+                    const data = {
+                        form_name: 'table_summarize_form',
+                        process_code: document.getElementById("new-process-code").value,
+                        process_emiter: document.getElementById("new-process-emiter").value,
+                        process_objective: document.getElementById("new-process-objective").value,
+                        process_subject: document.getElementById("new-process-subject").value,
+                        //table_area: document.getElementById("new-table-area").value,
+                    };
+
+                    // Cargar opciones formulario
+                    fetch('/processes/load-responsible/')
+                        .then(response => response.json())
+                        .then(data => {
+                            //console.log('fech hecho') //debug
+                            if (data.success) {
+            
+                                const emiterSelect = document.getElementById('new-process-emiter');
+                                emiterSelect.innerHTML = ''; // Clear existing options
+                                data.responsible_options.forEach(emiterOption => {
+                                    const optionElement = document.createElement('option');
+                                    optionElement.value = emiterOption.id;
+                                    optionElement.textContent = emiterOption.name;
+                                    if (emiterOption.id === data.emiter) {
+                                        optionElement.selected = true; 
+                                    }
+                                    emiterSelect.appendChild(optionElement);
+                                });   
+
+
+                            }
+                        });
+                });
+            });
+
+
+            // Click en el botón de guardar cambios dentro del modal de añadir tabla.
+            document.getElementById('addTableForm').addEventListener('submit', function (event) {
+                event.preventDefault();
+                //console.log('addform submitted!'); //debug
+                //console.log('ID de tabla enviado:', tbId); //debug
+
+                const data = {
+                    process_code: document.getElementById('new-process-code').value,
+                    process_emiter: document.getElementById('new-process-emiter').value,
+                    process_objective: document.getElementById('new-process-objective').value,
+                    process_subject: document.getElementById('new-process-subject').value,
+                    //table_area: document.getElementById('new-table-area').value,
+                };
+
+                console.log(data)
+
+                fetch('/processes/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')  },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        //console.log(data); //debug
+                        if (data.success) {               
+                            alert('El proceso se ha creado con éxito', 'success');
+                            location.reload();
+                        } else {
+                            alert('Error al crear la tabla');
+                        }
+                    });
+            });
+        });
+
+        // Función para obtener el token CSRF si es necesario
+                function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
 {% endblock extra_js %}
     
