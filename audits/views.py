@@ -180,23 +180,24 @@ def audits_home(request):
 
     for action in acciones:
         findings = action.audit_report.audit_plan.findings.all()
-        if findings.exists():
-            sev_num = severity_map.get(findings.first().classification, 0)
-            duracion_dias = abs((now().date() - action.due_date).days) if action.due_date else 0
-            
-            try:
-                process_name = action.audit_report.audit_plan.annual_program.process.name
-            except AttributeError:
-                process_name = "Sin proceso"
+        if findings.exists() and action.due_date:
+            # Calcular días hasta la fecha de vencimiento
+            duracion_dias = (action.due_date - now().date()).days
 
+            if duracion_dias >= 0:  # Solo incluir si la fecha aún no ha pasado
+                sev_num = severity_map.get(findings.first().classification, 0)
 
+                try:
+                    process_name = action.audit_report.audit_plan.annual_program.process.name
+                except AttributeError:
+                    process_name = "Sin proceso"
 
-            scatter_data.append({
-                'x': duracion_dias,
-                'y': sev_num,
-                'label': findings.first().classification,
-                'process': process_name,
-            })
+                scatter_data.append({
+                    'x': duracion_dias,
+                    'y': sev_num,
+                    'label': findings.first().classification,
+                    'process': process_name,
+                })
 
     # === Renderizar con todos los datos ===
     context = {
