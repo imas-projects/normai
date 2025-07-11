@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 import json
 from openai import OpenAI
 
-OPENAI_KEY = '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'
+OPENAI_KEY = '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'
 client = OpenAI(api_key=OPENAI_KEY )
 
 MODEL = "gpt-4o-mini"
