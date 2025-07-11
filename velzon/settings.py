@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
+from decouple import config
 from pathlib import Path
 from django.contrib.messages import constants as messages
 
@@ -292,4 +293,4 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = config('OPENAI_API_KEY')
