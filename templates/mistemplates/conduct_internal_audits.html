@@ -138,9 +138,11 @@
 
               <h4>Reporte de Auditoría</h4>
               {% if audit.report %}
-              <p><strong>Resumen:</strong> {{ audit.report.summary }}</p>
-              <p><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</p>
-              <p><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</p>
+              <ul class="list-group mb-3">
+                <li class="list-group-item"><strong>Resumen:</strong> {{ audit.report.summary }}</li>
+                <li class="list-group-item"><strong>Recomendaciones:</strong> {{ audit.report.recommendations }}</li>
+                <li class="list-group-item"><strong>Conclusiones:</strong> {{ audit.report.conclusions }}</li>
+              </ul>
               {% else %}
               <p>No hay reporte de auditoría.</p>
               {% endif %}
