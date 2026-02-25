@@ -523,7 +523,7 @@ erDiagram
 
 ## 4. Refactorización de ProcessRequirement
 
-### 4.1 Estructura Actual vs. Propuesta
+## 4.1 Estructura Actual vs. Propuesta
 
 #### Estructura Actual
 
@@ -555,11 +555,6 @@ class ProcessRequirement(models.Model):
         on_delete=models.PROTECT
     )
     
-    # Campos opcionales adicionales para seguimiento de cumplimiento
-    compliance_status = models.CharField(...)
-    evidence_description = models.TextField(...)
-    last_assessment_date = models.DateField(...)
-    
     class Meta:
         db_table = 'tb_audit_process_requirements'
         unique_together = ('process', 'standard_requirement')
@@ -568,10 +563,132 @@ class ProcessRequirement(models.Model):
 **Mejoras:**
 - Requisito vinculado formalmente a StandardRequirement
 - Acceso completo a jerarquía: proceso → requisito → cláusula → norma
-- Sin límite de caracteres
-- Posibilidad de seguimiento de estado de cumplimiento
+- Sin límite de caracteres (texto almacenado en StandardRequirement)
+- Sin duplicación de campos con otros modelos existentes
 
-### 4.2 Implicaciones del Cambio
+## 4.2 Decisión Arquitectónica: Procesos se Adaptan a la Norma
+
+**Decisión clave:** En la arquitectura propuesta, **los procesos se adaptan a la norma**, no al revés.
+
+#### ¿Qué significa esto?
+```
+Norma define requisitos formales e inmutables
+    → Proceso identifica qué requisitos aplican
+    → Procesos diferentes pueden compartir requisitos
+    → La norma permanece como referencia única y autoritativa
+```
+
+#### Justificación de la decisión
+
+**1. Integridad de la norma**
+
+ISO 9001, AS9100 y otras normas son **estándares internacionales** con textos oficiales aprobados. Modificar o "personalizar" estos textos por proceso comprometería:
+- La validez legal de la certificación
+- La posibilidad de auditorías externas
+- La comparabilidad entre organizaciones
+
+**2. Reutilización y consistencia**
+
+Múltiples procesos pueden cumplir el mismo requisito.
+
+**3. Trazabilidad en auditorías**
+
+Un auditor externo necesita ver:
+> "El proceso de Producción cumple con ISO 9001:2015 § 6.2.1"
+
+La referencia debe ser a la **norma oficial**.
+
+**4. Soporte multi-norma coherente**
+
+Con normas múltiples (ISO 9001 + AS9100):
+
+```
+Proceso: Ensamblaje de componentes aeronáuticos
+
+Requisitos aplicables:
+- ISO 9001 § 8.5.1: Control de producción (general)
+- AS9100 § 8.5.1.1: Control de producción (aeroespacial específico)
+```
+
+El proceso se adapta cumpliendo **ambos** requisitos formales, no creando versiones híbridas.
+
+**5. Flexibilidad en la aplicación**
+
+Aunque la norma es fija, la **manera** de cumplirla puede variar por proceso:
+
+```
+StandardRequirement: "Establecer objetivos medibles"
+
+Proceso Producción:
+    → Objetivo: "Reducir defectos a <0.5%"
+    → Evidencia: Checklist con métricas de calidad
+
+Proceso Ventas:
+    → Objetivo: "Incrementar satisfacción cliente >90%"
+    → Evidencia: Encuestas trimestrales
+```
+
+El **qué** (requisito) es el mismo. El **cómo** (implementación) varía y se documenta en Checklist, Findings, evidencias.
+
+#### Implicaciones de esta decisión
+
+**En el modelo ProcessRequirement:**
+
+```python
+class ProcessRequirement(models.Model):
+    process = models.ForeignKey(Process, ...)
+    standard_requirement = models.ForeignKey(StandardRequirement, ...)
+    # NO hay campo "customized_text" o "process_specific_interpretation"
+```
+
+El modelo establece que un proceso debe cumplir un requisito formal, sin modificarlo.
+
+**En StandardRequirement:**
+
+```python
+class StandardRequirement(models.Model):
+    clause = models.ForeignKey(Clause, ...)
+    requirement_text = models.TextField()  # Texto inmutable de la norma
+    # NO hay relación inversa que permita "versiones por proceso"
+```
+
+El requisito es **autoritativo e inmutable** (excepto por actualizaciones de versión de norma).
+
+**En modelos de ejecución (Checklist, Findings):**
+
+Aquí es donde se documenta **cómo** cada proceso cumple los requisitos:
+
+```python
+class Checklist(models.Model):
+    question = models.ForeignKey(AuditedEvaluationQuestion, ...)
+    compliance = models.BooleanField()  # ¿Se cumple?
+    evidence = models.TextField()  # ¿Cómo se cumple?
+    # Evidencia específica de cómo este proceso cumple el requisito
+```
+
+#### Consecuencias para el diseño
+
+**1. Standard y StandardRequirement son maestros de referencia**
+- De solo lectura en operación normal
+- Modificados solo por actualizaciones de norma
+- Compartidos entre todos los procesos
+
+**2. ProcessRequirement es tabla de relación pura**
+- No contiene lógica de negocio
+- Solo establece qué requisitos aplican a qué procesos
+- Mínima: process_id + standard_requirement_id
+
+**3. Lógica de cumplimiento vive en modelos de auditoría**
+- Checklist: Evaluación de cumplimiento
+- Findings: Registro de no conformidades
+- AuditReport: Documentación formal
+
+**4. Escalabilidad multi-norma garantizada**
+- Añadir AS9100: Poblar StandardRequirement adicionales
+- Procesos aeroespaciales: Crear ProcessRequirement que apunten a requisitos AS9100
+- Sin cambios en modelo, solo en datos
+
+### 4.3 Implicaciones del Cambio
 
 **Antes:**
 ```
@@ -602,23 +719,10 @@ ProcessRequirement:
    - Texto completo sin truncar
    - Metadatos de norma
 
-3. **Capacidades nuevas:**
-   - Filtrar procesos por norma
-   - Análisis de cobertura por cláusula
-   - Comparación multi-norma
-   - Generación automática de checklists por norma
-
-### 4.3 Estrategia de Compatibilidad Hacia Atrás
-
-**Desafío:** Cambiar la estructura sin romper funcionalidad existente
-
-**Enfoque propuesto:** Transición gradual (detalles en F1-2)
-
-**Ventajas:**
-- Sistema funciona durante migración
-- Datos antiguos y nuevos coexisten
-- Rollback posible
-- Migración incremental
+3. **Mantenimiento simplificado:**
+   - Los cambios en texto de requisitos se hacen en un solo lugar (StandardRequirements)
+   - Todos los procesos que usan ese requisito se actualizan automáticamente
+   - Sin duplicación de texto entre procesos
 
 ## 5. Estrategia de Migración
 
@@ -682,26 +786,33 @@ Comando de gestión Django (`management/commands/populate_iso9001.py`) que:
 3. Crea los requisitos asociados a cada cláusula
 4. Valida la integridad de la estructura creada
 
-### 5.5 Mapeo de Requisitos Existentes
+### 5.5 Estrategia de migración simplificada
 
-**Desafío:** Conectar requisitos actuales (texto plano) con StandardRequirements estructurados
+*Decisión arquitectónica:** Dado que el proyecto está en fase de desarrollo con datos de prueba, se opta por **reconstruir ProcessRequirement desde cero** en lugar de intentar mapear requisitos existentes.
 
-**Enfoques de mapeo:**
+**Justificación:**
 
-1. **Mapeo automático con fuzzy matching:**
-   - Comparación textual entre requisitos existentes y StandardRequirements
-   - Umbral de similitud (ej: >80%) para auto-asignación
-   - Útil para requisitos que provienen claramente de ISO 9001
+1. **Datos de desarrollo sin valor productivo:** Los requisitos actuales son datos de prueba que pueden recrearse
+2. **Evitar complejidad innecesaria:** No tiene sentido invertir tiempo en algoritmos de mapeo (fuzzy matching, etc.) para datos no críticos
+3. **Garantizar corrección desde el inicio:** Reconstruir asegura que todos los vínculos a StandardRequirement sean correctos y conscientes
+4. **Enfoque del TFG:** El objetivo es demostrar la arquitectura multinorma, no resolver problemas complejos de migración de datos
 
-2. **Mapeo manual selectivo:**
-   - Revisión caso por caso para requisitos personalizados
-   - Decisión de qué StandardRequirement corresponde
-   - Creación de cláusula "Custom" para requisitos únicos del proyecto
+**Proceso de reconstrucción:**
 
-3. **Recreación completa (opción simplificada):**
-   - Dado que son datos de desarrollo, valorar recrear ProcessRequirement desde cero
-   - Asignar procesos a StandardRequirements directamente
-   - Ventaja: garantiza limpieza y corrección desde el inicio
+**Paso 1: Población de ISO 9001:2015**
+- Poblar completamente Standard, Clause, StandardRequirement
+- Validar estructura jerárquica
+
+**Paso 2: Limpieza de datos antiguos**
+```sql
+-- Eliminar ProcessRequirement existentes (datos de prueba)
+DELETE FROM tb_audit_process_requirements;
+```
+
+**Paso 3: Recreación consciente**
+- Revisar cada proceso
+- Asignar StandardRequirements apropiados de forma manual y consciente
+- Crear nuevos registros ProcessRequirement con vínculos correctos
 
 ### 5.6 Gestión de Errores en Desarrollo
 
