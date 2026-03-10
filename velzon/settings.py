@@ -52,7 +52,8 @@ LOCAL_APPS = [
     "authentication",
     "audits",
     "processes",
-    "ai_functions"
+    "ai_functions",
+    'standards'
     ]
 THIRDPARTY_APPS = [
     
@@ -145,10 +146,10 @@ DATABASES = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "postgres",
+        "NAME": "normai",
         "USER": "postgres",
-        "PASSWORD": "B82839044JMgp",
-        "HOST": "postgresqltest.cvsxzrox0hah.eu-west-1.rds.amazonaws.com",
+        "PASSWORD": "TFG2026",
+        "HOST": "localhost",
         "PORT": "5432", 
     }
 }
