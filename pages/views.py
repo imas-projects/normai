@@ -288,6 +288,8 @@ def wellcome_view(request):
 
     alerta = []
     procesos_alerta = []
+    proceso_numero_alertas = {}
+    procesos_con_alertas = []
 
     for ppm in recientes_process_perform_measure:
         indicador = ProcessPerformanceIndicators.objects.get(
@@ -304,7 +306,7 @@ def wellcome_view(request):
             alerta.append(ppm)
             procesos_alerta.append(ppm.process.name)
         
-        proceso_numero_alertas = {}
+        
         for nombre in procesos_alerta:
             if nombre in proceso_numero_alertas:
                 proceso_numero_alertas[nombre] += 1
@@ -369,10 +371,13 @@ def wellcome_view(request):
 
     # === Recuadros de Alertas ===
     siguiente_auditoria = next(
-    (a for a in activities if a['type'] == 'Auditoria' and a['date'] >= current_date),
+        (a for a in activities if a['type'] == 'Auditoria' and a['date'] >= current_date),
     None
     )
-    siguiente_auditoria_dias_restantes = (siguiente_auditoria['date'] - date.today()).days
+    if siguiente_auditoria:
+        siguiente_auditoria_dias_restantes = (siguiente_auditoria['date'] - date.today()).days
+    else:
+        siguiente_auditoria_dias_restantes = None
 
     # === Contexto final ===
     contexto = {

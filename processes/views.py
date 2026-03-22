@@ -29,6 +29,7 @@ def list_processes(request):
     recientes_process_perform_measure = ProcessPerformanceMeasurements.objects.filter(date__gte=ultimo_mes)
     alerta = []
     procesos_alerta = []
+    proceso_numero_alertas = {}
 
     for ppm in recientes_process_perform_measure:
         indicador = ProcessPerformanceIndicators.objects.get(
@@ -45,7 +46,7 @@ def list_processes(request):
             alerta.append(ppm)
             procesos_alerta.append(ppm.process.name)
         
-        proceso_numero_alertas = {}
+        
         for nombre in procesos_alerta:
             if nombre in proceso_numero_alertas:
                 proceso_numero_alertas[nombre] += 1

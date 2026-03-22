@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from company.models import Area, Requirement  
 from processes.models import Process
+from django.core.exceptions import ValidationError
+from standards.models import StandardRequirement
+
+
 
 
 class AuditProgramHeader(models.Model):
@@ -32,11 +36,15 @@ class ProcessRequirement(models.Model):
         Process,
         on_delete=models.CASCADE
     )
-    requirement = models.CharField(max_length=200, verbose_name="Requirement Name")
+    requirement = models.ForeignKey(
+        StandardRequirement,
+        on_delete=models.PROTECT,
+        verbose_name="Standard Requirement"
+    )
 
     class Meta:
         db_table = 'tb_audit_process_requirements'
-        unique_together = ('process', 'requirement')
+    
 
     def __str__(self):
         return f"{self.process.name} -> {self.requirement}"
@@ -224,7 +232,7 @@ class AuditedEvaluationQuestion(models.Model):
     def as_dict(self):
         return {
             "id": self.id,
-            "requirement": self.requirement.requirement if self.requirement else None,
+            "requirement": self.requirement.requirement.text if self.requirement else None,
             "question_text": self.question_text,
         }
 class AuditorEvaluation(models.Model):
@@ -317,7 +325,7 @@ class Findings(models.Model):
         return {
             "id": self.id,
             "audit_plan_id": self.audit_plan.id,
-            "requirement": self.requirement.requirement if self.requirement else None,
+            "requirement": self.requirement.requirement.text if self.requirement else None,
             "finding_text": self.finding_text,
             "classification": self.classification,
         }

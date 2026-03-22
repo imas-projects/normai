@@ -1734,8 +1734,9 @@ def classify_finding_ia(finding_text, requirement_obj=None):
 
     clause_identifier = ""
     if requirement_obj:
-        # Accede de forma segura al atributo 'requirement'
-        clause_identifier = getattr(requirement_obj, "requirement", "")
+        std_req = getattr(requirement_obj, "requirement", None)
+        if std_req:
+            clause_identifier = getattr(std_req, "text", "")
 
     prompt = f"""
 Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015.

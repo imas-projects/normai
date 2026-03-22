@@ -108,7 +108,7 @@ class ProcessRequirementForm(forms.ModelForm):
         fields = ['process', 'requirement']
         widgets = {
             'process': forms.Select(attrs={'class': 'form-control'}),
-            'requirement': forms.TextInput(attrs={'class': 'form-control'}),
+            'requirement': forms.Select(attrs={'class': 'form-control'}),
         }
 
 class AuditedEvaluationQuestionForm(forms.ModelForm):

@@ -76,8 +76,8 @@ def audits_home(request):
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
     requirements_by_process = defaultdict(list)
-    for pr in ProcessRequirement.objects.select_related("process"):
-        requirements_by_process[pr.process_id].append(pr.requirement)
+    for pr in ProcessRequirement.objects.select_related("process", "requirement"):
+        requirements_by_process[pr.process_id].append(pr.requirement.text)
 
     bar_chart_data = []
     for y, m in combined_months:
@@ -251,8 +251,8 @@ def annual_audit_program(request):
     ).select_related("program_header", "process").order_by('program_header__year', 'month')
 
     requirements_by_process = defaultdict(list)
-    for pr in ProcessRequirement.objects.select_related("process"):
-        requirements_by_process[pr.process_id].append(pr.requirement)
+    for pr in ProcessRequirement.objects.select_related("process", "requirement"):
+        requirements_by_process[pr.process_id].append(pr.requirement.text)
 
     annual_programs_by_year = OrderedDict()
     all_users = User.objects.all()
@@ -876,7 +876,7 @@ def save_selected_audit_question(request):
         if not requirement_id or not question_text:
             return JsonResponse({"error": "Faltan datos"}, status=400)
 
-        requirement = Requirement.objects.get(pk=requirement_id)
+        requirement = ProcessRequirement.objects.get(pk=requirement_id)
 
         question = AuditedEvaluationQuestion.objects.create(
             requirement=requirement,
