@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Standard, Clause, StandardRequirement
+from .models import Standard, Clause, StandardRequirement, StandardMapping
 
 
 @admin.register(Standard)
@@ -71,3 +71,35 @@ class StandardRequirementAdmin(admin.ModelAdmin):
     def text_preview(self, obj):
         return obj.text[:100] + '...' if len(obj.text) > 100 else obj.text
     text_preview.short_description = 'Texto del Requisito'
+
+
+@admin.register(StandardMapping)
+class StandardMappingAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'mapping_type', 'created_at')
+    list_filter = (
+        'mapping_type',
+        'source_requirement__clause__standard',
+        'target_requirement__clause__standard'
+    )
+    search_fields = (
+        'source_requirement__text',
+        'target_requirement__text',
+        'notes'
+    )
+    ordering = ('mapping_type',)
+
+    fieldsets = (
+        ('Requisitos', {
+            'fields': ('source_requirement', 'target_requirement')
+        }),
+        ('Relación', {
+            'fields': ('mapping_type', 'notes')
+        }),
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            'source_requirement__clause__standard',
+            'target_requirement__clause__standard'
+        )

@@ -157,3 +157,62 @@ class StandardRequirement(models.Model):
     def get_full_reference(self):
         """Retorna la referencia completa: Norma § Cláusula"""
         return f"{self.clause.standard.name} § {self.clause.code}"
+
+class StandardMapping(models.Model):
+    """
+    Representa la correspondencia formal entre dos requisitos de normas distintas.
+    Permite modelar relaciones entre ISO 9001:2015 y AS9100 Rev D.
+    """
+    MAPPING_TYPE_CHOICES = [
+        ('EQUIVALENT', 'Equivalente — mismo requisito en ambas normas'),
+        ('SUPERSET', 'Superconjunto — AS9100 amplía el requisito de ISO 9001'),
+        ('SUBSET', 'Subconjunto — AS9100 cubre solo una parte de ISO 9001'),
+        ('RELATED', 'Relacionado — mismo tema, enfoque diferente'),
+        ('NO_EQUIVALENT', 'Sin equivalente — requisito exclusivo de una norma'),
+    ]
+
+    source_requirement = models.ForeignKey(
+        StandardRequirement,
+        on_delete=models.CASCADE,
+        related_name='mappings_as_source',
+        verbose_name="Requisito Origen",
+        help_text="Requisito de la norma base (ISO 9001)"
+    )
+    target_requirement = models.ForeignKey(
+        StandardRequirement,
+        on_delete=models.CASCADE,
+        related_name='mappings_as_target',
+        verbose_name="Requisito Destino",
+        help_text="Requisito de la norma destino (AS9100)"
+    )
+    mapping_type = models.CharField(
+        max_length=20,
+        choices=MAPPING_TYPE_CHOICES,
+        verbose_name="Tipo de Mapeo"
+    )
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Notas",
+        help_text="Contexto adicional sobre la correspondencia entre requisitos"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de Creación"
+    )
+
+    class Meta:
+        db_table = 'tb_standard_mappings'
+        verbose_name = 'Mapeo Normativo'
+        verbose_name_plural = 'Mapeos Normativos'
+        unique_together = [('source_requirement', 'target_requirement')]
+        ordering = ['mapping_type']
+
+    def __str__(self):
+        return (
+            f"{self.source_requirement.clause.standard.name} "
+            f"§{self.source_requirement.clause.code} → "
+            f"{self.target_requirement.clause.standard.name} "
+            f"§{self.target_requirement.clause.code} "
+            f"[{self.mapping_type}]"
+        )
