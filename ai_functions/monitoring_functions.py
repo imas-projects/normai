@@ -1586,7 +1586,7 @@ def suggest_audit_questions(requirement_obj, process_name=None, max_results=5):
     """
 
     # Usamos el campo `requirement` como identificador del requisito (ej. "8.5.1")
-    clause_identifier = requirement_obj.requirement
+    clause_identifier = requirement_obj.requirement.text if requirement_obj.requirement else str(requirement_obj)
 
     # Si no se pasa explícitamente el nombre del proceso, lo sacamos del modelo
     process_name = process_name or requirement_obj.process.name
@@ -1657,10 +1657,12 @@ def suggest_compliance_rating(checklist_obj):
     """
 
     question_text = checklist_obj.question.question_text
-    requirement_name = checklist_obj.question.requirement.requirement if checklist_obj.question.requirement else "N/A"
+    process_req = checklist_obj.question.requirement
+    std_req = process_req.requirement if process_req else None
+    requirement_name = std_req.text if std_req else "N/A"
     evidence = checklist_obj.evidence or ""
     process_name = checklist_obj.audit_plan.annual_program.process.name  # CORREGIDO
-    clause_description = getattr(checklist_obj.question.requirement, "description", "")  # opcional
+    clause_description = std_req.clause.description if std_req and std_req.clause else ""
 
     prompt = f"""
 Eres un auditor experto en calidad bajo la norma ISO 9001:2015, especialmente en el sector industrial.

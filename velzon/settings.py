@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j%^*y0krq5^-#3lggoecxw!d7ad_gqkab3t5w17&0w06+qf8+8'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-clave-solo-para-desarrollo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -120,39 +123,17 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 WSGI_APPLICATION = 'velzon.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+DATABASES = {
+    "default": {
+        "ENGINE": os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        "NAME": os.getenv('DB_NAME', 'normai'),
+        "USER": os.getenv('DB_USER', 'postgres'),
+        "PASSWORD": os.getenv('DB_PASSWORD', ''),
+        "HOST": os.getenv('DB_HOST', 'localhost'),
+        "PORT": os.getenv('DB_PORT', '5432'),
+    }
+}
 
-'''
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-'''
-'''
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "db_tfg2",
-        "USER": "postgres",
-        "PASSWORD": "1234",
-        "HOST": "127.0.0.1",
-        "PORT": "5432", 
-    }
-}
-'''
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "normai",
-        "USER": "postgres",
-        "PASSWORD": "TFG2026",
-        "HOST": "localhost",
-        "PORT": "5432", 
-    }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -293,4 +274,4 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
