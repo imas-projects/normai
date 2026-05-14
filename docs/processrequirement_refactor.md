@@ -275,9 +275,9 @@ La cadena de acceso `self.requirement.requirement.text` se explica así:
 - `.text` → campo de texto con el contenido real del requisito normativo
 
 Nótese que en el estado anterior, `.requirement` sobre `ProcessRequirement`
-devolvía un string directamente porque era un `CharField`. Tras el refactor,
-devuelve un objeto `StandardRequirement`, por lo que hay que acceder
-explícitamente a su campo `.text`.
+devolvía un objeto `company.Requirement`. Tras el refactor, devuelve un
+objeto `standards.StandardRequirement`, por lo que hay que acceder
+explícitamente a su campo `.text` para obtener el texto del requisito.
 
 
 ---
@@ -327,7 +327,7 @@ La migración realiza las siguientes operaciones sobre la tabla `tb_audit_proces
 1. Elimina la constraint `unique_together` sobre `(process_id, requirement)`
 2. Elimina la FK antigua `requirement_id` que apuntaba a `tb_company_requirements`
 3. Añade la nueva FK `requirement_id` de tipo `BIGINT` apuntando a `tb_standards_requirements`
-2. Aplica la constraint `ON DELETE PROTECT`
+4. Aplica la constraint `ON DELETE PROTECT`
 
 ---
 
