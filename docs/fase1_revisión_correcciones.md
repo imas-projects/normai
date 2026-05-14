@@ -48,7 +48,7 @@ Los cinco puntos detectados fueron:
 
 El tutor señaló que la migración `0008_replace_requirement_charfield_with_fk.py`
 del módulo `audits` cambiaba el campo `requirement` de `ProcessRequirement`
-de un `CharField` a un `ForeignKey(StandardRequirement)`, pero no explicaba
+de una `ForeignKey(company.Requirement)` a una `ForeignKey(standards.StandardRequirement)`, pero no explicaba
 qué ocurría con los datos que pudieran existir previamente en esa tabla.
 
 La pregunta clave era: si existen registros en `ProcessRequirement` cuando

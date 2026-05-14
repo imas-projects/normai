@@ -24,12 +24,16 @@
 
 ### 1.1 Problema de Partida
 
-Antes de esta issue, el modelo `ProcessRequirement` almacenaba los requisitos normativos como texto plano mediante un `CharField`:
+Antes de esta issue, el modelo `ProcessRequirement` referenciaba los requisitos normativos mediante una `ForeignKey` al modelo antiguo `company.Requirement`:
 
 ```python
 class ProcessRequirement(models.Model):
     process = models.ForeignKey(Process, on_delete=models.CASCADE)
-    requirement = models.CharField(max_length=200, verbose_name="Requirement Name")
+    requirement = models.ForeignKey(
+        'company.Requirement',
+        on_delete=models.CASCADE,
+        verbose_name="Requirement Name"
+    )
 
     class Meta:
         db_table = 'tb_audit_process_requirements'
