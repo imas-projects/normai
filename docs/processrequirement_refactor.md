@@ -50,7 +50,7 @@ Esta implementación impedía:
 
 ### 1.2 Objetivo de la Issue
 
-Sustituir el campo `requirement = CharField` por `requirement = ForeignKey(StandardRequirement)`, conectando `ProcessRequirement` con el dominio normativo estructurado implementado en F1-2 (`standards` app).
+Sustituir la `ForeignKey` al modelo antiguo `company.Requirement` por una `ForeignKey` al nuevo modelo `standards.StandardRequirement`, conectando `ProcessRequirement` con el dominio normativo estructurado implementado en F1-2 (`standards` app).
 
 El resultado esperado es una cadena de trazabilidad completa:
 
@@ -69,11 +69,18 @@ erDiagram
     Process ||--o{ ProcessRequirement : "tiene"
     ProcessRequirement ||--o{ AuditedEvaluationQuestion : "referenciado por"
     ProcessRequirement ||--o{ Findings : "referenciado por"
+    ProcessRequirement }o--|| Requirement : "referenciaba"
+
+    Requirement {
+    bigint id PK
+    varchar name
+    text description
+    }
 
     ProcessRequirement {
         bigint id PK
         bigint process_id FK
-        varchar(200) requirement "Texto plano"
+        bigint requirement_id FK "FK a company.Requirement"
     }
 
     AuditedEvaluationQuestion {
@@ -199,9 +206,7 @@ erDiagram
 
 ### 3.3 Corrección de `as_dict()` en Modelos Dependientes
 
-Al cambiar `requirement` de `CharField` a `ForeignKey(StandardRequirement)`
-en `ProcessRequirement`, los métodos `as_dict()` de los modelos que
-referencian `ProcessRequirement` dejaban de funcionar correctamente.
+Al cambiar la FK de `company.Requirement` a `standards.StandardRequirement`, los métodos `as_dict()` que accedían a `.requirement` dejaban de funcionar correctamente porque el nuevo modelo expone el texto del requisito en el campo `.text`, mientras que el modelo antiguo `company.Requirement` lo exponía de forma diferente.
 
 Es importante entender la cadena de relaciones tras el refactor:
 
@@ -219,8 +224,9 @@ Se corrigieron dos modelos:
 
 ```python
 # ANTES
-# self.requirement apuntaba directamente al CharField de ProcessRequirement,
-# que era un string. Se accedía con .requirement para obtener ese string.
+# self.requirement apuntaba a ProcessRequirement, cuyo campo requirement
+# era una FK a company.Requirement. Se accedía con .requirement para
+# obtener el objeto company.Requirement, que se serializaba directamente.
 def as_dict(self):
     return {
         "id": self.id,
@@ -244,7 +250,8 @@ def as_dict(self):
 
 ```python
 # ANTES
-# Mismo patrón que AuditedEvaluationQuestion: acceso directo al string
+# Mismo patrón: .requirement accedía al objeto company.Requirement
+# a través de ProcessRequirement.
 def as_dict(self):
     return {
         ...
@@ -318,9 +325,9 @@ python manage.py migrate
 La migración realiza las siguientes operaciones sobre la tabla `tb_audit_process_requirements`:
 
 1. Elimina la constraint `unique_together` sobre `(process_id, requirement)`
-2. Elimina la columna `requirement` de tipo `VARCHAR(200)`
-3. Añade la columna `requirement_id` de tipo `BIGINT` con FK a `tb_standards_requirements`
-4. Aplica la constraint `ON DELETE PROTECT`
+2. Elimina la FK antigua `requirement_id` que apuntaba a `tb_company_requirements`
+3. Añade la nueva FK `requirement_id` de tipo `BIGINT` apuntando a `tb_standards_requirements`
+2. Aplica la constraint `ON DELETE PROTECT`
 
 ---
 
