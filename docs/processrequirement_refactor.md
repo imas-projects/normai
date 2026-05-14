@@ -195,12 +195,28 @@ erDiagram
 
 ### 3.3 Corrección de `as_dict()` en Modelos Dependientes
 
-Al cambiar `requirement` de `CharField` a `ForeignKey`, los métodos `as_dict()` que accedían a `.requirement` como string dejaban de funcionar correctamente. Se corrigieron dos modelos:
+Al cambiar `requirement` de `CharField` a `ForeignKey(StandardRequirement)`
+en `ProcessRequirement`, los métodos `as_dict()` de los modelos que
+referencian `ProcessRequirement` dejaban de funcionar correctamente.
+
+Es importante entender la cadena de relaciones tras el refactor:
+
+AuditedEvaluationQuestion.requirement  →  ProcessRequirement
+ProcessRequirement.requirement          →  StandardRequirement
+StandardRequirement.text                →  texto del requisito
+
+Por tanto, para obtener el texto del requisito desde
+`AuditedEvaluationQuestion` hay que recorrer dos FK:
+`self.requirement.requirement.text`
+
+Se corrigieron dos modelos:
 
 **`AuditedEvaluationQuestion.as_dict()` — `audits/models.py`**
 
 ```python
 # ANTES
+# self.requirement apuntaba directamente al CharField de ProcessRequirement,
+# que era un string. Se accedía con .requirement para obtener ese string.
 def as_dict(self):
     return {
         "id": self.id,
@@ -209,6 +225,9 @@ def as_dict(self):
     }
 
 # DESPUÉS
+# self.requirement apunta a ProcessRequirement (FK).
+# ProcessRequirement.requirement apunta a StandardRequirement (FK).
+# StandardRequirement.text contiene el texto real del requisito.
 def as_dict(self):
     return {
         "id": self.id,
@@ -221,6 +240,7 @@ def as_dict(self):
 
 ```python
 # ANTES
+# Mismo patrón que AuditedEvaluationQuestion: acceso directo al string
 def as_dict(self):
     return {
         ...
@@ -229,6 +249,7 @@ def as_dict(self):
     }
 
 # DESPUÉS
+# Recorre la cadena completa hasta el texto del StandardRequirement
 def as_dict(self):
     return {
         ...
@@ -238,9 +259,15 @@ def as_dict(self):
 ```
 
 La cadena de acceso `self.requirement.requirement.text` se explica así:
-- `self.requirement` → objeto `ProcessRequirement`
-- `.requirement` → objeto `StandardRequirement` (la FK)
-- `.text` → el texto del requisito normativo
+- `self.requirement` → objeto `ProcessRequirement` (FK desde el modelo)
+- `.requirement` → objeto `StandardRequirement` (FK dentro de ProcessRequirement)
+- `.text` → campo de texto con el contenido real del requisito normativo
+
+Nótese que en el estado anterior, `.requirement` sobre `ProcessRequirement`
+devolvía un string directamente porque era un `CharField`. Tras el refactor,
+devuelve un objeto `StandardRequirement`, por lo que hay que acceder
+explícitamente a su campo `.text`.
+
 
 ---
 
