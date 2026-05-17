@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from company.models import Area, Requirement  
 from processes.models import Process
 from django.core.exceptions import ValidationError
-from standards.models import StandardRequirement
+from standards.models import Standard, StandardRequirement
 
 
 
@@ -63,6 +63,15 @@ class AnnualProgram(models.Model):
         verbose_name="Process"
     )
     month = models.PositiveSmallIntegerField(verbose_name="Month")
+    standard = models.ForeignKey(
+        'standards.Standard',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="annual_programs",
+        verbose_name="Norma",
+        help_text="Norma que se auditará en este programa"
+    )
 
     def __str__(self):
         return f"{self.process.name} - {self.month}/{self.program_header.year}"
@@ -80,6 +89,10 @@ class AnnualProgram(models.Model):
                 "code": self.process.process_code
             },
             "month": self.month,
+            "standard": {
+                "id": self.standard.id,
+                "name": self.standard.name,
+            } if self.standard else None,
         }
 
 

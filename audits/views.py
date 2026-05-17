@@ -43,6 +43,9 @@ from processes.models import Process
 
 from ai_functions.monitoring_functions import suggest_audit_fields, suggest_annual_processes_ai, suggest_auditor_ai, suggest_audit_questions, suggest_compliance_rating, classify_finding_ia, suggest_audit_report_fields, suggest_corrective_actions
 
+from standards.models import Standard, StandardRequirement
+import json
+
 # === BASIC VIEWS ===
 @csrf_protect
 @login_required
@@ -954,6 +957,178 @@ def add_corrective_action_followup(request):
         'audits:conduct_internal_audits',  
         'mistemplates/add_corrective_action_followup.html'
     )
+
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+@require_POST
+@csrf_exempt
+@login_required
+def generate_dynamic_checklist(request):
+    """
+    Genera automáticamente AuditedEvaluationQuestions y Checklist items
+    para un AnnualPlan dado, basándose en los ProcessRequirements del
+    proceso y la norma seleccionada en el AnnualProgram.
+    """
+    try:
+        data = json.loads(request.body)
+        annual_plan_id = data.get('annual_plan_id')
+
+        if not annual_plan_id:
+            return JsonResponse({'error': 'Falta annual_plan_id'}, status=400)
+
+        annual_plan = AnnualPlan.objects.select_related(
+            'annual_program__process',
+            'annual_program__standard'
+        ).get(id=annual_plan_id)
+
+        process = annual_plan.annual_program.process
+        standard = annual_plan.annual_program.standard
+
+        if not standard:
+            return JsonResponse({
+                'error': 'El programa de auditoría no tiene una norma seleccionada. '
+                         'Edita el programa y selecciona una norma antes de generar el checklist.'
+            }, status=400)
+
+        # Obtener ProcessRequirements del proceso para la norma seleccionada
+        process_requirements = ProcessRequirement.objects.filter(
+            process=process,
+            requirement__clause__standard=standard
+        ).select_related(
+            'requirement__clause__standard'
+        )
+
+        if not process_requirements.exists():
+            return JsonResponse({
+                'error': f'El proceso "{process.name}" no tiene requisitos asignados '
+                         f'para la norma "{standard.name}". '
+                         f'Añade ProcessRequirements antes de generar el checklist.'
+            }, status=400)
+
+        # Verificar si ya existe checklist para este plan
+        if Checklist.objects.filter(audit_plan=annual_plan).exists():
+            return JsonResponse({
+                'error': 'Este plan de auditoría ya tiene un checklist generado. '
+                         'Elimina el checklist existente antes de regenerarlo.'
+            }, status=400)
+
+        # Generar preguntas e items de checklist
+        created_items = []
+        orden = 1
+
+        for pr in process_requirements.order_by(
+            'requirement__clause__ordering',
+            'requirement__ordering'
+        ):
+            req = pr.requirement
+
+            question_text = (
+                f"[{req.clause.code}] ¿La organización cumple con el siguiente "
+                f"requisito de {standard.name}?: {req.text}"
+            )
+
+            question, _ = AuditedEvaluationQuestion.objects.get_or_create(
+                requirement=pr,
+                question_text=question_text,
+            )
+
+            checklist_item = Checklist.objects.create(
+                audit_plan=annual_plan,
+                question=question,
+                orden=orden,
+                compliance=False,
+                evidence=None,
+            )
+
+            created_items.append({
+                'orden': orden,
+                'clause_code': req.clause.code,
+                'clause_title': req.clause.title,
+                'requirement_text': req.text[:100] + '...' if len(req.text) > 100 else req.text,
+                'mandatory': req.mandatory,
+                'criticality_level': req.criticality_level,
+                'checklist_id': checklist_item.id,
+            })
+
+            orden += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Checklist generado correctamente para la norma {standard.name}.',
+            'standard': standard.name,
+            'process': process.name,
+            'total_items': len(created_items),
+            'items': created_items,
+        })
+
+    except AnnualPlan.DoesNotExist:
+        return JsonResponse({'error': 'Plan de auditoría no encontrado.'}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_checklist_for_plan(request, annual_plan_id):
+    """
+    Devuelve el checklist actual de un AnnualPlan con trazabilidad
+    completa hacia el requisito normativo.
+    """
+    try:
+        annual_plan = AnnualPlan.objects.select_related(
+            'annual_program__process',
+            'annual_program__standard'
+        ).get(id=annual_plan_id)
+
+        checklist_items = Checklist.objects.filter(
+            audit_plan=annual_plan
+        ).select_related(
+            'question__requirement__requirement__clause__standard'
+        ).order_by('orden')
+
+        items = []
+        for item in checklist_items:
+            question = item.question
+            process_req = question.requirement
+            std_req = process_req.requirement if process_req else None
+            clause = std_req.clause if std_req else None
+            standard = clause.standard if clause else None
+
+            items.append({
+                'id': item.id,
+                'orden': item.orden,
+                'compliance': item.compliance,
+                'evidence': item.evidence,
+                'question_text': question.question_text,
+                'requirement': {
+                    'text': std_req.text if std_req else None,
+                    'mandatory': std_req.mandatory if std_req else None,
+                    'criticality_level': std_req.criticality_level if std_req else None,
+                },
+                'clause': {
+                    'code': clause.code if clause else None,
+                    'title': clause.title if clause else None,
+                },
+                'standard': {
+                    'name': standard.name if standard else None,
+                },
+            })
+
+        return JsonResponse({
+            'success': True,
+            'annual_plan_id': annual_plan_id,
+            'process': annual_plan.annual_program.process.name,
+            'standard': annual_plan.annual_program.standard.name if annual_plan.annual_program.standard else None,
+            'total_items': len(items),
+            'items': items,
+        })
+
+    except AnnualPlan.DoesNotExist:
+        return JsonResponse({'error': 'Plan de auditoría no encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 '''

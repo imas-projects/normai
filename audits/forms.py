@@ -21,11 +21,17 @@ class AuditProgramHeaderForm(forms.ModelForm):
 class AnnualProgramForm(forms.ModelForm):
     class Meta:
         model = AnnualProgram
-        fields = ['program_header', 'process', 'month']
+        fields = ['program_header', 'process', 'month', 'standard']
         widgets = {
             'program_header': forms.Select(attrs={'class': 'form-control'}),
             'process': forms.Select(attrs={'class': 'form-control'}),
-            'month': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12, 'placeholder': 'Month (1-12)'}),
+            'month': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'max': 12,
+                'placeholder': 'Month (1-12)'
+            }),
+            'standard': forms.Select(attrs={'class': 'form-control'}),
         }
 
 class AnnualPlanForm(forms.ModelForm):
