@@ -1129,6 +1129,157 @@ def get_checklist_for_plan(request, annual_plan_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@login_required
+@require_GET
+def get_gap_analysis(request, annual_plan_id):
+    """
+    Analiza las brechas de cumplimiento de un AnnualPlan.
+
+    Para cada ProcessRequirement del proceso auditado y la norma seleccionada,
+    determina si existe:
+    - COMPLIANT: cumplimiento confirmado con evidencia
+    - NON_COMPLIANT: incumplimiento documentado con evidencia
+    - INSUFFICIENT_EVIDENCE: checklist marcado como no conforme sin evidencia
+    - NOT_EVALUATED: requisito sin ítem de checklist en esta auditoría
+
+    Devuelve un JSON con el análisis completo y un resumen agregado.
+    """
+    try:
+        annual_plan = AnnualPlan.objects.select_related(
+            'annual_program__process',
+            'annual_program__standard'
+        ).get(id=annual_plan_id)
+
+        process = annual_plan.annual_program.process
+        standard = annual_plan.annual_program.standard
+
+        if not standard:
+            return JsonResponse({
+                'error': 'El programa de auditoría no tiene una norma seleccionada.'
+            }, status=400)
+
+        # Obtener todos los ProcessRequirements del proceso para la norma
+        process_requirements = ProcessRequirement.objects.filter(
+            process=process,
+            requirement__clause__standard=standard
+        ).select_related(
+            'requirement__clause__standard'
+        )
+
+        if not process_requirements.exists():
+            return JsonResponse({
+                'error': f'El proceso "{process.name}" no tiene requisitos '
+                         f'asignados para la norma "{standard.name}".'
+            }, status=400)
+
+        # Obtener todos los checklist items del plan indexados por ProcessRequirement
+        checklist_items = Checklist.objects.filter(
+            audit_plan=annual_plan
+        ).select_related(
+            'question__requirement__requirement__clause'
+        )
+
+        # Construir índice: process_requirement_id → checklist_item
+        checklist_index = {}
+        for item in checklist_items:
+            if item.question and item.question.requirement:
+                pr_id = item.question.requirement.id
+                checklist_index[pr_id] = item
+
+        # Analizar cada ProcessRequirement
+        gaps = []
+        summary = {
+            'total': 0,
+            'compliant': 0,
+            'non_compliant': 0,
+            'insufficient_evidence': 0,
+            'not_evaluated': 0,
+        }
+
+        for pr in process_requirements.order_by(
+            'requirement__clause__ordering',
+            'requirement__ordering'
+        ):
+            req = pr.requirement
+            clause = req.clause
+            checklist_item = checklist_index.get(pr.id)
+
+            summary['total'] += 1
+
+            if checklist_item is None:
+                # Requisito no evaluado en esta auditoría
+                status = 'NOT_EVALUATED'
+                summary['not_evaluated'] += 1
+                evidence = None
+                compliance = None
+            elif checklist_item.compliance:
+                # Cumplimiento confirmado
+                status = 'COMPLIANT'
+                summary['compliant'] += 1
+                evidence = checklist_item.evidence
+                compliance = True
+            elif checklist_item.evidence and checklist_item.evidence.strip():
+                # No conforme con evidencia documentada — incumplimiento real
+                status = 'NON_COMPLIANT'
+                summary['non_compliant'] += 1
+                evidence = checklist_item.evidence
+                compliance = False
+            else:
+                # No conforme sin evidencia — no se puede determinar
+                status = 'INSUFFICIENT_EVIDENCE'
+                summary['insufficient_evidence'] += 1
+                evidence = None
+                compliance = False
+
+            gaps.append({
+                'process_requirement_id': pr.id,
+                'status': status,
+                'compliance': compliance,
+                'evidence': evidence,
+                'requirement': {
+                    'text': req.text,
+                    'mandatory': req.mandatory,
+                    'criticality_level': req.criticality_level,
+                    'is_extension': req.is_extension,
+                },
+                'clause': {
+                    'code': clause.code,
+                    'title': clause.title,
+                },
+                'standard': {
+                    'name': standard.name,
+                },
+                'checklist_item_id': checklist_item.id if checklist_item else None,
+            })
+
+        # Calcular porcentaje de cumplimiento
+        evaluated = summary['total'] - summary['not_evaluated']
+        compliance_rate = round(
+            (summary['compliant'] / evaluated * 100) if evaluated > 0 else 0,
+            1
+        )
+
+        return JsonResponse({
+            'success': True,
+            'annual_plan_id': annual_plan_id,
+            'process': process.name,
+            'standard': standard.name,
+            'summary': {
+                **summary,
+                'compliance_rate': compliance_rate,
+            },
+            'gaps': gaps,
+        })
+
+    except AnnualPlan.DoesNotExist:
+        return JsonResponse({'error': 'Plan de auditoría no encontrado.'}, status=404)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
 
 '''
 # === AJAX VIEWS ===

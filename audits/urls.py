@@ -35,4 +35,5 @@ urlpatterns = [
     path('add_corrective_action_followup/', views.add_corrective_action_followup, name='add_corrective_action_followup'),
     path('generate-dynamic-checklist/', views.generate_dynamic_checklist, name='generate_dynamic_checklist'),
     path('get-checklist/<int:annual_plan_id>/', views.get_checklist_for_plan, name='get_checklist_for_plan'),
+    path('get-gap-analysis/<int:annual_plan_id>/', views.get_gap_analysis, name='get_gap_analysis'),
 ]
