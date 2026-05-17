@@ -1576,7 +1576,7 @@ Devuelve JSON con: user_id, username, full_name, score, justification.
 def suggest_audit_questions(requirement_obj, process_name=None, max_results=5):
     """
     Genera dinámicamente preguntas de auditoría para un objeto ProcessRequirement,
-    aplicadas a un proceso específico.
+    aprovechando el dominio normativo estructurado (StandardRequirement, Clause, Standard).
 
     - requirement_obj: instancia del modelo ProcessRequirement
     - process_name: nombre del proceso (opcional, si no se usa el del modelo)
@@ -1585,24 +1585,52 @@ def suggest_audit_questions(requirement_obj, process_name=None, max_results=5):
     Retorna una lista de strings con preguntas sugeridas por IA.
     """
 
-    # Usamos el campo `requirement` como identificador del requisito (ej. "8.5.1")
-    clause_identifier = requirement_obj.requirement.text if requirement_obj.requirement else str(requirement_obj)
+    # Obtener el StandardRequirement vinculado
+    std_req = requirement_obj.requirement if requirement_obj.requirement else None
+    clause = std_req.clause if std_req else None
+    standard = clause.standard if clause else None
+
+    # Construir el contexto normativo estructurado
+    clause_identifier = f"{clause.code} — {clause.title}" if clause else str(requirement_obj)
+    requirement_text = std_req.text if std_req else str(requirement_obj)
+    standard_name = standard.name if standard else "ISO 9001:2015"
+    criticality = std_req.criticality_level if std_req else "medium"
+    mandatory = std_req.mandatory if std_req else True
+    is_extension = std_req.is_extension if std_req else False
 
     # Si no se pasa explícitamente el nombre del proceso, lo sacamos del modelo
     process_name = process_name or requirement_obj.process.name
 
-    # Prompt enriquecido
-    prompt = f"""
-Eres un experto en auditorías de calidad bajo la norma ISO 9001:2015, con experiencia específica en la industria aeroespacial.
+    # Contexto adicional para requisitos exclusivos de AS9100
+    extension_context = ""
+    if is_extension:
+        extension_context = (
+            f"IMPORTANTE: Este es un requisito exclusivo de {standard_name} "
+            f"sin equivalente directo en ISO 9001:2015. "
+            f"Las preguntas deben reflejar el enfoque específico del sector aeroespacial."
+        )
 
-Quiero que generes {max_results} preguntas de auditoría bien formuladas, prácticas y alineadas con el requisito/cláusula "{clause_identifier}" de la norma ISO 9001:2015.
+    prompt = f"""
+Eres un experto en auditorías de calidad bajo la norma {standard_name}, 
+con experiencia específica en la industria aeroespacial.
+
+Quiero que generes {max_results} preguntas de auditoría bien formuladas, 
+prácticas y alineadas con el siguiente requisito normativo:
+
+Norma: {standard_name}
+Cláusula: {clause_identifier}
+Requisito: {requirement_text}
+Criticidad: {criticality}
+Obligatorio: {"Sí" if mandatory else "No"}
+{extension_context}
 
 Estas preguntas deben estar orientadas a auditar el proceso de: "{process_name}".
 
 Cada pregunta debe:
 - Estar en español
-- Ser clara, directa, y enfocada en verificar el cumplimiento del requisito
+- Ser clara, directa y enfocada en verificar el cumplimiento del requisito
 - Ser útil para identificar conformidades o no conformidades en una auditoría real
+- Estar alineada con el nivel de criticidad del requisito ({criticality})
 
 Por favor responde únicamente con una lista JSON de strings. Ejemplo:
 
@@ -1624,7 +1652,6 @@ Por favor responde únicamente con una lista JSON de strings. Ejemplo:
         content = response.choices[0].message.content.strip()
         print("Respuesta cruda de IA:", repr(content))
 
-        # Limpiar posibles delimitadores de markdown
         clean_content = re.sub(r'^```json\s*|\s*```$', '', content).strip()
         questions = json.loads(clean_content)
 

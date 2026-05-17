@@ -27,7 +27,6 @@ from .forms import (
     AnnualPlanAuditorForm, AnnualPlanAuditedForm, ChecklistForm, FindingsForm, AuditReportForm,
     ProcessRequirementForm, AuditedEvaluationQuestionForm, AuditorEvaluationForm, LeadAuditorEvaluationQuestionForm, CorrectiveActionForm, CorrectiveActionFollowUpForm
 )
-from company.models import Requirement
 
 from .models import (
     AuditProgramHeader,ProcessRequirement, AnnualProgram,

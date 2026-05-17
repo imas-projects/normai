@@ -242,12 +242,54 @@ class AuditedEvaluationQuestion(models.Model):
     class Meta:
         db_table = 'tb_audit_checklist_questions'
 
+    @property
+    def standard_requirement(self):
+        """
+        Acceso directo al StandardRequirement vinculado,
+        sin necesidad de recorrer la cadena completa.
+        Devuelve None si no hay requirement asignado.
+        """
+        if self.requirement and self.requirement.requirement:
+            return self.requirement.requirement
+        return None
+
+    @property
+    def clause(self):
+        """
+        Acceso directo a la Clause del requisito vinculado.
+        """
+        std_req = self.standard_requirement
+        return std_req.clause if std_req else None
+
+    @property
+    def standard(self):
+        """
+        Acceso directo al Standard del requisito vinculado.
+        """
+        clause = self.clause
+        return clause.standard if clause else None
+
     def as_dict(self):
+        std_req = self.standard_requirement
+        clause = self.clause
+        standard = self.standard
         return {
             "id": self.id,
-            "requirement": self.requirement.requirement.text if self.requirement else None,
             "question_text": self.question_text,
+            "requirement": {
+                "text": std_req.text if std_req else None,
+                "mandatory": std_req.mandatory if std_req else None,
+                "criticality_level": std_req.criticality_level if std_req else None,
+            } if std_req else None,
+            "clause": {
+                "code": clause.code if clause else None,
+                "title": clause.title if clause else None,
+            } if clause else None,
+            "standard": {
+                "name": standard.name if standard else None,
+            } if standard else None,
         }
+    
 class AuditorEvaluation(models.Model):
     audit_plan = models.ForeignKey(
         'AnnualPlan',
