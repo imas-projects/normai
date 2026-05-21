@@ -36,4 +36,7 @@ urlpatterns = [
     path('generate-dynamic-checklist/', views.generate_dynamic_checklist, name='generate_dynamic_checklist'),
     path('get-checklist/<int:annual_plan_id>/', views.get_checklist_for_plan, name='get_checklist_for_plan'),
     path('get-gap-analysis/<int:annual_plan_id>/', views.get_gap_analysis, name='get_gap_analysis'),
+    path('calculate-compliance/', views.calculate_compliance, name='calculate_compliance'),
+    path('get-compliance-snapshot/<int:annual_plan_id>/', views.get_compliance_snapshot, name='get_compliance_snapshot'),
+    path('get-standard-compliance/<int:standard_id>/', views.get_standard_compliance, name='get_standard_compliance'),
 ]

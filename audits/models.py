@@ -481,3 +481,102 @@ class CorrectiveActionFollowUp(models.Model):
             "comments": self.comments,
         }
 
+class ComplianceSnapshot(models.Model):
+    """
+    Persiste el resultado del cálculo de cumplimiento para un AnnualPlan.
+    Permite comparación temporal entre auditorías (F3-03).
+    """
+    CATEGORY_CHOICES = [
+        ('EXCELLENT', 'Excelente (≥85%)'),
+        ('GOOD', 'Bueno (70-84%)'),
+        ('PARTIAL', 'Parcial (50-69%)'),
+        ('LOW', 'Bajo (25-49%)'),
+        ('CRITICAL', 'Crítico (<25%)'),
+    ]
+
+    annual_plan = models.ForeignKey(
+        AnnualPlan,
+        on_delete=models.CASCADE,
+        related_name='compliance_snapshots',
+        verbose_name='Plan de Auditoría',
+    )
+    process = models.ForeignKey(
+        Process,
+        on_delete=models.PROTECT,
+        related_name='compliance_snapshots',
+        verbose_name='Proceso',
+    )
+    standard = models.ForeignKey(
+        'standards.Standard',
+        on_delete=models.PROTECT,
+        related_name='compliance_snapshots',
+        verbose_name='Norma',
+    )
+    score = models.FloatField(
+        verbose_name='Puntuación (0.0 - 1.0)',
+        help_text='Valor numérico del cumplimiento entre 0 y 1'
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        verbose_name='Categoría de Cumplimiento',
+    )
+    total_requirements = models.IntegerField(
+        verbose_name='Total de Requisitos',
+    )
+    compliant_count = models.IntegerField(
+        verbose_name='Requisitos Conformes',
+    )
+    non_compliant_count = models.IntegerField(
+        verbose_name='Requisitos No Conformes',
+    )
+    insufficient_count = models.IntegerField(
+        verbose_name='Requisitos con Evidencia Insuficiente',
+    )
+    not_evaluated_count = models.IntegerField(
+        verbose_name='Requisitos No Evaluados',
+    )
+    calculated_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de Cálculo',
+    )
+    detail = models.JSONField(
+        verbose_name='Desglose por Requisito',
+        help_text='JSON con el detalle del cálculo por cada ProcessRequirement',
+        default=dict,
+    )
+
+    class Meta:
+        db_table = 'tb_compliance_snapshots'
+        verbose_name = 'Snapshot de Cumplimiento'
+        verbose_name_plural = 'Snapshots de Cumplimiento'
+        ordering = ['-calculated_at']
+
+    def __str__(self):
+        return (
+            f"{self.process.name} | {self.standard.name} | "
+            f"{self.category} ({self.score:.1%}) | {self.calculated_at.date()}"
+        )
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'annual_plan_id': self.annual_plan.id,
+            'process': {
+                'id': self.process.id,
+                'name': self.process.name,
+            },
+            'standard': {
+                'id': self.standard.id,
+                'name': self.standard.name,
+            },
+            'score': round(self.score * 100, 1),
+            'category': self.category,
+            'total_requirements': self.total_requirements,
+            'compliant_count': self.compliant_count,
+            'non_compliant_count': self.non_compliant_count,
+            'insufficient_count': self.insufficient_count,
+            'not_evaluated_count': self.not_evaluated_count,
+            'calculated_at': self.calculated_at.isoformat(),
+            'detail': self.detail,
+        }

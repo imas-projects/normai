@@ -35,7 +35,8 @@ from .models import (
     AuditReport,
     Findings,
     AuditedEvaluationQuestion,
-    LeadAuditorEvaluationQuestion, CorrectiveAction, CorrectiveActionFollowUp
+    LeadAuditorEvaluationQuestion, CorrectiveAction, CorrectiveActionFollowUp,
+    ComplianceSnapshot,
 )
 
 from processes.models import Process
@@ -1279,6 +1280,75 @@ def get_gap_analysis(request, annual_plan_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+from .compliance_engine import calculate_compliance_for_plan, get_compliance_by_standard
+
+@require_POST
+@csrf_exempt
+@login_required
+def calculate_compliance(request):
+    """
+    Calcula y persiste el snapshot de cumplimiento para un AnnualPlan.
+    """
+    try:
+        data = json.loads(request.body)
+        annual_plan_id = data.get('annual_plan_id')
+        overwrite = data.get('overwrite', False)
+
+        if not annual_plan_id:
+            return JsonResponse({'error': 'Falta annual_plan_id'}, status=400)
+
+        result = calculate_compliance_for_plan(annual_plan_id, overwrite=overwrite)
+
+        if 'error' in result:
+            return JsonResponse(result, status=400)
+
+        return JsonResponse(result)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_compliance_snapshot(request, annual_plan_id):
+    """
+    Devuelve el snapshot de cumplimiento más reciente de un AnnualPlan.
+    """
+    try:
+        snapshot = ComplianceSnapshot.objects.filter(
+            annual_plan_id=annual_plan_id
+        ).order_by('-calculated_at').first()
+
+        if not snapshot:
+            return JsonResponse({
+                'error': 'No hay snapshot calculado para este plan. '
+                         'Invoca calculate-compliance primero.'
+            }, status=404)
+
+        return JsonResponse({
+            'success': True,
+            'snapshot': snapshot.as_dict(),
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_standard_compliance(request, standard_id):
+    """
+    Devuelve el cumplimiento agregado de una norma basado en los
+    snapshots más recientes de cada proceso.
+    """
+    try:
+        result = get_compliance_by_standard(standard_id)
+        if 'error' in result:
+            return JsonResponse(result, status=400)
+        return JsonResponse(result)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 '''
