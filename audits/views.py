@@ -1351,6 +1351,44 @@ def get_standard_compliance(request, standard_id):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+from .compliance_engine import (
+    calculate_compliance_for_plan,
+    get_compliance_by_standard,
+    get_compliance_history,
+    compare_compliance_periods,
+)
+
+@login_required
+def get_process_compliance_history(request, process_id, standard_id):
+    """
+    Devuelve la evolución temporal del cumplimiento de un proceso
+    para una norma dada.
+    """
+    try:
+        limit = int(request.GET.get('limit', 10))
+        result = get_compliance_history(process_id, standard_id, limit=limit)
+        if 'error' in result:
+            return JsonResponse(result, status=400)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def compare_periods(request, snapshot_id_a, snapshot_id_b):
+    """
+    Compara dos snapshots de cumplimiento identificando cambios
+    por requisito entre los dos periodos.
+    """
+    try:
+        result = compare_compliance_periods(snapshot_id_a, snapshot_id_b)
+        if 'error' in result:
+            return JsonResponse(result, status=400)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
 '''
 # === AJAX VIEWS ===
 

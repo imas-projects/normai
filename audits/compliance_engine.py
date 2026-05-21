@@ -322,3 +322,210 @@ def get_compliance_by_standard(standard_id):
         'total_processes': len(snapshots),
         'processes': [s.as_dict() for s in snapshots],
     }
+
+
+# ─────────────────────────────────────────────
+# Evolución temporal — F3-03
+# ─────────────────────────────────────────────
+
+def get_compliance_history(process_id, standard_id, limit=10):
+    """
+    Devuelve la evolución temporal del cumplimiento de un proceso
+    para una norma dada, ordenada de más reciente a más antigua.
+
+    Parámetros:
+    - process_id: ID del proceso
+    - standard_id: ID de la norma
+    - limit: número máximo de snapshots a devolver (por defecto 10)
+
+    Retorna una lista de snapshots ordenados cronológicamente,
+    con la tendencia entre el primero y el último.
+    """
+    from processes.models import Process
+    from standards.models import Standard
+
+    try:
+        process = Process.objects.get(id=process_id)
+    except Process.DoesNotExist:
+        return {'error': 'Proceso no encontrado.'}
+
+    try:
+        standard = Standard.objects.get(id=standard_id)
+    except Standard.DoesNotExist:
+        return {'error': 'Norma no encontrada.'}
+
+    snapshots = ComplianceSnapshot.objects.filter(
+        process=process,
+        standard=standard,
+    ).order_by('calculated_at')[:limit]
+
+    if not snapshots.exists():
+        return {
+            'error': f'No hay snapshots para el proceso "{process.name}" '
+                     f'con la norma "{standard.name}". '
+                     f'Calcula primero el cumplimiento con calculate-compliance.'
+        }
+
+    snapshots_list = list(snapshots)
+
+    # Calcular tendencia
+    if len(snapshots_list) >= 2:
+        first_score = snapshots_list[0].score
+        last_score = snapshots_list[-1].score
+        delta = last_score - first_score
+        if delta > 0.05:
+            trend = 'IMPROVING'
+        elif delta < -0.05:
+            trend = 'DECLINING'
+        else:
+            trend = 'STABLE'
+    else:
+        trend = 'INSUFFICIENT_DATA'
+
+    return {
+        'success': True,
+        'process': {
+            'id': process.id,
+            'name': process.name,
+        },
+        'standard': {
+            'id': standard.id,
+            'name': standard.name,
+        },
+        'total_snapshots': len(snapshots_list),
+        'trend': trend,
+        'history': [s.as_dict() for s in snapshots_list],
+    }
+
+
+def compare_compliance_periods(snapshot_id_a, snapshot_id_b):
+    """
+    Compara dos snapshots de cumplimiento del mismo proceso y norma,
+    identificando qué requisitos mejoraron, empeoraron o se mantuvieron.
+
+    Parámetros:
+    - snapshot_id_a: ID del snapshot más antiguo (periodo base)
+    - snapshot_id_b: ID del snapshot más reciente (periodo comparado)
+
+    Retorna un dict con el resumen de cambios y el desglose por requisito.
+    """
+    try:
+        snapshot_a = ComplianceSnapshot.objects.get(id=snapshot_id_a)
+    except ComplianceSnapshot.DoesNotExist:
+        return {'error': f'Snapshot {snapshot_id_a} no encontrado.'}
+
+    try:
+        snapshot_b = ComplianceSnapshot.objects.get(id=snapshot_id_b)
+    except ComplianceSnapshot.DoesNotExist:
+        return {'error': f'Snapshot {snapshot_id_b} no encontrado.'}
+
+    # Validar que son del mismo proceso y norma
+    if snapshot_a.process_id != snapshot_b.process_id:
+        return {
+            'error': 'Los snapshots pertenecen a procesos diferentes. '
+                     'Solo se pueden comparar snapshots del mismo proceso.'
+        }
+
+    if snapshot_a.standard_id != snapshot_b.standard_id:
+        return {
+            'error': 'Los snapshots pertenecen a normas diferentes. '
+                     'Solo se pueden comparar snapshots de la misma norma.'
+        }
+
+    # Construir índices por process_requirement_id
+    detail_a = {
+        item['process_requirement_id']: item
+        for item in snapshot_a.detail
+    }
+    detail_b = {
+        item['process_requirement_id']: item
+        for item in snapshot_b.detail
+    }
+
+    # Comparar requisito a requisito
+    changes = []
+    improved = 0
+    declined = 0
+    stable = 0
+    new_requirements = 0
+
+    all_req_ids = set(detail_a.keys()) | set(detail_b.keys())
+
+    for req_id in sorted(all_req_ids):
+        item_a = detail_a.get(req_id)
+        item_b = detail_b.get(req_id)
+
+        if item_a is None:
+            # Requisito nuevo en el periodo B
+            change_type = 'NEW'
+            new_requirements += 1
+            score_delta = item_b['final_score']
+        elif item_b is None:
+            # Requisito eliminado en el periodo B
+            change_type = 'REMOVED'
+            score_delta = -item_a['final_score']
+        else:
+            score_delta = item_b['final_score'] - item_a['final_score']
+            if score_delta > 0.1:
+                change_type = 'IMPROVED'
+                improved += 1
+            elif score_delta < -0.1:
+                change_type = 'DECLINED'
+                declined += 1
+            else:
+                change_type = 'STABLE'
+                stable += 1
+
+        changes.append({
+            'process_requirement_id': req_id,
+            'clause_code': (item_b or item_a)['clause_code'],
+            'clause_title': (item_b or item_a)['clause_title'],
+            'requirement_text': (item_b or item_a)['requirement_text'],
+            'criticality_level': (item_b or item_a)['criticality_level'],
+            'mandatory': (item_b or item_a)['mandatory'],
+            'status_a': item_a['status'] if item_a else None,
+            'status_b': item_b['status'] if item_b else None,
+            'score_a': item_a['final_score'] if item_a else None,
+            'score_b': item_b['final_score'] if item_b else None,
+            'score_delta': round(score_delta, 3),
+            'change_type': change_type,
+        })
+
+    # Ordenar por cambio más significativo primero
+    changes.sort(key=lambda x: abs(x['score_delta']), reverse=True)
+
+    score_delta_global = snapshot_b.score - snapshot_a.score
+
+    return {
+        'success': True,
+        'process': {
+            'id': snapshot_a.process.id,
+            'name': snapshot_a.process.name,
+        },
+        'standard': {
+            'id': snapshot_a.standard.id,
+            'name': snapshot_a.standard.name,
+        },
+        'period_a': {
+            'snapshot_id': snapshot_a.id,
+            'annual_plan_id': snapshot_a.annual_plan_id,
+            'calculated_at': snapshot_a.calculated_at.isoformat(),
+            'score': round(snapshot_a.score * 100, 1),
+            'category': snapshot_a.category,
+        },
+        'period_b': {
+            'snapshot_id': snapshot_b.id,
+            'annual_plan_id': snapshot_b.annual_plan_id,
+            'calculated_at': snapshot_b.calculated_at.isoformat(),
+            'score': round(snapshot_b.score * 100, 1),
+            'category': snapshot_b.category,
+        },
+        'summary': {
+            'score_delta': round(score_delta_global * 100, 1),
+            'improved_requirements': improved,
+            'declined_requirements': declined,
+            'stable_requirements': stable,
+            'new_requirements': new_requirements,
+        },
+        'changes': changes,
+    }
