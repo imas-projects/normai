@@ -354,21 +354,22 @@ def get_compliance_history(process_id, standard_id, limit=10):
     except Standard.DoesNotExist:
         return {'error': 'Norma no encontrada.'}
 
-    snapshots = ComplianceSnapshot.objects.filter(
+      # Obtener los N más recientes y reordenar cronológicamente para la salida
+    snapshots_qs = ComplianceSnapshot.objects.filter(
         process=process,
         standard=standard,
-    ).order_by('calculated_at')[:limit]
+    ).order_by('-calculated_at')[:limit]
 
-    if not snapshots.exists():
+    snapshots_list = list(reversed(list(snapshots_qs)))
+
+    if not snapshots_list:
         return {
             'error': f'No hay snapshots para el proceso "{process.name}" '
                      f'con la norma "{standard.name}". '
                      f'Calcula primero el cumplimiento con calculate-compliance.'
         }
 
-    snapshots_list = list(snapshots)
-
-    # Calcular tendencia
+    # Calcular tendencia usando el snapshot más antiguo y el más reciente
     if len(snapshots_list) >= 2:
         first_score = snapshots_list[0].score
         last_score = snapshots_list[-1].score

@@ -87,6 +87,17 @@ ordenados cronológicamente, con el cálculo de tendencia global.
     "history": [snapshot_1, snapshot_2]
 }
 ```
+### Nota de corrección (F3-04)
+
+El parámetro `limit` obtiene primero los N snapshots más recientes
+(ordenando por `calculated_at` descendente) y después los reordena
+cronológicamente para la salida. Esto garantiza que:
+
+- Con `limit=2` y 3 snapshots disponibles, se devuelven los 2 más
+  recientes, no los 2 más antiguos.
+- La tendencia siempre se calcula usando el estado actual del proceso.
+- La serie temporal sigue siendo legible en orden cronológico.
+
 
 ### 3.2 compare_compliance_periods(snapshot_id_a, snapshot_id_b)
 

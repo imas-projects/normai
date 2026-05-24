@@ -454,3 +454,478 @@ class GenerateDynamicChecklistTestCase(TestCase):
         response = self._post(99999)
         data = json.loads(response.content)
         self.assertIn('error', data)
+
+class ComplianceEngineTestCase(TestCase):
+    """
+    Tests para el motor de cumplimiento — F3-02 y F3-03.
+    Cubre: cálculo por proceso, agregado por norma, persistencia,
+    overwrite, penalización por hallazgos, comparación temporal
+    e histórico con limit.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='auditor_compliance',
+            password='testpass123'
+        )
+        self.client = Client()
+        self.client.login(username='auditor_compliance', password='testpass123')
+
+        self.area = Area.objects.create(name='Área Compliance')
+        self.position = Position.objects.create(
+            name='Posición Compliance',
+            code='POS-003',
+            area=self.area,
+        )
+        self.process = Process.objects.create(
+            name='Proceso Compliance Test',
+            objective='Objetivo compliance',
+            creation_date=date(2025, 1, 1),
+            process_code='PC-001',
+            responsible=self.position,
+        )
+        self.standard = Standard.objects.create(
+            name='ISO Test Compliance',
+            version='2015',
+            sector='General',
+            is_active=True,
+        )
+        self.clause = Clause.objects.create(
+            standard=self.standard,
+            code='4.1',
+            title='Cláusula de prueba',
+            ordering=1,
+        )
+        # Requisito high mandatory — peso 3
+        self.req_high = StandardRequirement.objects.create(
+            clause=self.clause,
+            text='Requisito alto obligatorio',
+            mandatory=True,
+            criticality_level='high',
+            is_extension=False,
+            ordering=1,
+        )
+        # Requisito medium mandatory — peso 2
+        self.req_medium = StandardRequirement.objects.create(
+            clause=self.clause,
+            text='Requisito medio obligatorio',
+            mandatory=True,
+            criticality_level='medium',
+            is_extension=False,
+            ordering=2,
+        )
+
+        self.pr_high = ProcessRequirement.objects.create(
+            process=self.process,
+            requirement=self.req_high,
+        )
+        self.pr_medium = ProcessRequirement.objects.create(
+            process=self.process,
+            requirement=self.req_medium,
+        )
+
+        self.header = AuditProgramHeader.objects.create(
+            year=2025,
+            objective='Objetivo test compliance',
+            scope='Alcance test',
+            audit_criteria='ISO Test',
+            security_standards='Normas',
+        )
+        self.programa = AnnualProgram.objects.create(
+            program_header=self.header,
+            process=self.process,
+            month=1,
+            standard=self.standard,
+        )
+        self.plan = AnnualPlan.objects.create(
+            annual_program=self.programa,
+            audit_opening_date=date(2025, 1, 1),
+            audit_opening_time=time(9, 0),
+            audit_opening_location='Sala A',
+            audit_closing_date=date(2025, 1, 2),
+            audit_closing_time=time(17, 0),
+            audit_closing_location='Sala A',
+        )
+
+        # Preguntas vinculadas a los ProcessRequirements
+        self.q_high = AuditedEvaluationQuestion.objects.create(
+            requirement=self.pr_high,
+            question_text='[4.1] ¿Cumple req alto?',
+        )
+        self.q_medium = AuditedEvaluationQuestion.objects.create(
+            requirement=self.pr_medium,
+            question_text='[4.1] ¿Cumple req medio?',
+        )
+
+    def _create_checklist(self, plan, compliance_high, evidence_high,
+                          compliance_medium, evidence_medium):
+        """Helper para crear checklist items en un plan."""
+        Checklist.objects.create(
+            audit_plan=plan, question=self.q_high, orden=1,
+            compliance=compliance_high, evidence=evidence_high,
+        )
+        Checklist.objects.create(
+            audit_plan=plan, question=self.q_medium, orden=2,
+            compliance=compliance_medium, evidence=evidence_medium,
+        )
+
+    def _create_plan(self, month):
+        """Helper para crear un AnnualPlan adicional."""
+        return AnnualPlan.objects.create(
+            annual_program=self.programa,
+            audit_opening_date=date(2025, month, 1),
+            audit_opening_time=time(9, 0),
+            audit_opening_location='Sala A',
+            audit_closing_date=date(2025, month, 2),
+            audit_closing_time=time(17, 0),
+            audit_closing_location='Sala A',
+        )
+
+    # ─── Cálculo por proceso ───────────────────────────────────────────
+
+    def test_calculo_proceso_ambos_conformes(self):
+        """Dos requisitos conformes → score 1.0 EXCELLENT."""
+        self._create_checklist(
+            self.plan,
+            True, 'Evidencia A',
+            True, 'Evidencia B',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        self.assertTrue(result['success'])
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 100.0, places=1)
+        self.assertEqual(snapshot['category'], 'EXCELLENT')
+        self.assertEqual(snapshot['compliant_count'], 2)
+
+    def test_calculo_proceso_ninguno_conforme(self):
+        """Dos requisitos no conformes → score 0.0 CRITICAL."""
+        self._create_checklist(
+            self.plan,
+            False, 'No cumple A',
+            False, 'No cumple B',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 0.0, places=1)
+        self.assertEqual(snapshot['category'], 'CRITICAL')
+        self.assertEqual(snapshot['non_compliant_count'], 2)
+
+    def test_calculo_proceso_ponderacion_por_peso(self):
+        """
+        req_high (peso 3) COMPLIANT, req_medium (peso 2) NON_COMPLIANT.
+        score = (1.0×3 + 0.0×2) / (3+2) = 3/5 = 0.6 → PARTIAL
+        """
+        self._create_checklist(
+            self.plan,
+            True, 'Evidencia ok',
+            False, 'No cumple',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 60.0, places=1)
+        self.assertEqual(snapshot['category'], 'PARTIAL')
+
+    def test_calculo_proceso_insufficient_evidence(self):
+        """
+        req_high INSUFFICIENT_EVIDENCE (0.25, peso 3),
+        req_medium COMPLIANT (1.0, peso 2).
+        score = (0.25×3 + 1.0×2) / 5 = 2.75/5 = 0.55 → PARTIAL
+        """
+        self._create_checklist(
+            self.plan,
+            False, '',
+            True, 'Evidencia ok',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 55.0, places=1)
+        self.assertEqual(snapshot['category'], 'PARTIAL')
+
+    # ─── Persistencia y overwrite ──────────────────────────────────────
+
+    def test_persistencia_snapshot(self):
+        """El snapshot se persiste en base de datos."""
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.compliance_engine import calculate_compliance_for_plan
+        from audits.models import ComplianceSnapshot
+        calculate_compliance_for_plan(self.plan.id)
+        self.assertEqual(
+            ComplianceSnapshot.objects.filter(annual_plan=self.plan).count(), 1
+        )
+
+    def test_no_duplica_sin_overwrite(self):
+        """Sin overwrite, el segundo cálculo devuelve error."""
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.compliance_engine import calculate_compliance_for_plan
+        calculate_compliance_for_plan(self.plan.id)
+        result = calculate_compliance_for_plan(self.plan.id)
+        self.assertIn('error', result)
+
+    def test_overwrite_recalcula(self):
+        """Con overwrite=True, el snapshot se recalcula."""
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.compliance_engine import calculate_compliance_for_plan
+        from audits.models import ComplianceSnapshot
+        calculate_compliance_for_plan(self.plan.id)
+        result = calculate_compliance_for_plan(self.plan.id, overwrite=True)
+        self.assertTrue(result['success'])
+        self.assertEqual(
+            ComplianceSnapshot.objects.filter(annual_plan=self.plan).count(), 1
+        )
+
+    def test_trazabilidad_detail(self):
+        """El campo detail incluye desglose por requisito."""
+        self._create_checklist(self.plan, True, 'E', False, 'No cumple')
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        detail = result['snapshot']['detail']
+        self.assertEqual(len(detail), 2)
+        for item in detail:
+            self.assertIn('process_requirement_id', item)
+            self.assertIn('status', item)
+            self.assertIn('final_score', item)
+            self.assertIn('weight', item)
+            self.assertIn('clause_code', item)
+
+    # ─── Penalización por hallazgos ────────────────────────────────────
+
+    def test_penalizacion_nc_mayor(self):
+        """
+        req_high COMPLIANT (1.0) con NC_MAYOR (-0.3) → final_score 0.7
+        req_medium COMPLIANT (1.0) sin hallazgo → final_score 1.0
+        score = (0.7×3 + 1.0×2) / 5 = 4.1/5 = 0.82 → GOOD
+        """
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.models import Findings
+        Findings.objects.create(
+            audit_plan=self.plan,
+            requirement=self.pr_high,
+            finding_text='No conformidad mayor detectada',
+            classification='NC_MAYOR',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 82.0, places=1)
+        self.assertEqual(snapshot['category'], 'GOOD')
+
+    def test_penalizacion_nc_menor(self):
+        """
+        req_high COMPLIANT (1.0) con NC_MENOR (-0.15) → final_score 0.85
+        req_medium COMPLIANT (1.0) sin hallazgo → final_score 1.0
+        score = (0.85×3 + 1.0×2) / 5 = 4.55/5 = 0.91 → EXCELLENT
+        """
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.models import Findings
+        Findings.objects.create(
+            audit_plan=self.plan,
+            requirement=self.pr_high,
+            finding_text='No conformidad menor detectada',
+            classification='NC_MENOR',
+        )
+        from audits.compliance_engine import calculate_compliance_for_plan
+        result = calculate_compliance_for_plan(self.plan.id)
+        snapshot = result['snapshot']
+        self.assertAlmostEqual(snapshot['score'], 91.0, places=1)
+        self.assertEqual(snapshot['category'], 'EXCELLENT')
+
+    # ─── Agregado por norma ────────────────────────────────────────────
+
+    def test_agregado_por_norma(self):
+        """El agregado por norma devuelve el score global correctamente."""
+        self._create_checklist(self.plan, True, 'E', True, 'E')
+        from audits.compliance_engine import (
+            calculate_compliance_for_plan, get_compliance_by_standard
+        )
+        calculate_compliance_for_plan(self.plan.id)
+        result = get_compliance_by_standard(self.standard.id)
+        self.assertTrue(result['success'])
+        self.assertAlmostEqual(result['global_score'], 100.0, places=1)
+        self.assertEqual(result['global_category'], 'EXCELLENT')
+        self.assertEqual(result['total_processes'], 1)
+
+    def test_agregado_sin_snapshots(self):
+        """Sin snapshots, get_compliance_by_standard devuelve error."""
+        from audits.compliance_engine import get_compliance_by_standard
+        result = get_compliance_by_standard(self.standard.id)
+        self.assertIn('error', result)
+
+    # ─── Comparación temporal ──────────────────────────────────────────
+
+    def test_comparacion_temporal(self):
+        """Compara dos snapshots e identifica mejoras correctamente."""
+        # Plan 1: req_high NON_COMPLIANT, req_medium NON_COMPLIANT
+        self._create_checklist(
+            self.plan, False, 'No cumple', False, 'No cumple'
+        )
+        from audits.compliance_engine import (
+            calculate_compliance_for_plan, compare_compliance_periods
+        )
+        result_a = calculate_compliance_for_plan(self.plan.id)
+        snapshot_id_a = result_a['snapshot']['id']
+
+        # Plan 2: ambos COMPLIANT
+        plan2 = self._create_plan(month=6)
+        q_high2 = AuditedEvaluationQuestion.objects.create(
+            requirement=self.pr_high,
+            question_text='[4.1] ¿Cumple req alto? P2',
+        )
+        q_medium2 = AuditedEvaluationQuestion.objects.create(
+            requirement=self.pr_medium,
+            question_text='[4.1] ¿Cumple req medio? P2',
+        )
+        Checklist.objects.create(
+            audit_plan=plan2, question=q_high2, orden=1,
+            compliance=True, evidence='Evidencia ok',
+        )
+        Checklist.objects.create(
+            audit_plan=plan2, question=q_medium2, orden=2,
+            compliance=True, evidence='Evidencia ok',
+        )
+        result_b = calculate_compliance_for_plan(plan2.id)
+        snapshot_id_b = result_b['snapshot']['id']
+
+        result = compare_compliance_periods(snapshot_id_a, snapshot_id_b)
+        self.assertTrue(result['success'])
+        self.assertAlmostEqual(result['summary']['score_delta'], 100.0, places=1)
+        self.assertEqual(result['summary']['improved_requirements'], 2)
+        self.assertEqual(result['summary']['declined_requirements'], 0)
+
+    def test_comparacion_procesos_distintos_da_error(self):
+        """No se pueden comparar snapshots de procesos diferentes."""
+        from audits.models import ComplianceSnapshot
+        from audits.compliance_engine import compare_compliance_periods
+
+        proceso2 = Process.objects.create(
+            name='Proceso 2',
+            objective='Obj',
+            creation_date=date(2025, 1, 1),
+            process_code='PC-002',
+            responsible=self.position,
+        )
+        snap_a = ComplianceSnapshot.objects.create(
+            annual_plan=self.plan,
+            process=self.process,
+            standard=self.standard,
+            score=0.5, category='PARTIAL',
+            total_requirements=2, compliant_count=1,
+            non_compliant_count=1, insufficient_count=0,
+            not_evaluated_count=0, detail=[],
+        )
+        snap_b = ComplianceSnapshot.objects.create(
+            annual_plan=self.plan,
+            process=proceso2,
+            standard=self.standard,
+            score=0.8, category='GOOD',
+            total_requirements=2, compliant_count=2,
+            non_compliant_count=0, insufficient_count=0,
+            not_evaluated_count=0, detail=[],
+        )
+        result = compare_compliance_periods(snap_a.id, snap_b.id)
+        self.assertIn('error', result)
+
+    # ─── Histórico con limit ───────────────────────────────────────────
+
+    def test_historico_limit_devuelve_mas_recientes(self):
+        """Con limit=2 y 3 snapshots, devuelve los 2 más recientes."""
+        from audits.models import ComplianceSnapshot
+        from audits.compliance_engine import get_compliance_history
+        
+
+        # Crear 3 snapshots con scores distintos
+        plan1 = self._create_plan(month=2)
+        plan2 = self._create_plan(month=3)
+        plan3 = self._create_plan(month=4)
+
+        from django.utils import timezone
+        from datetime import timedelta
+
+        now = timezone.now()
+
+        snap1 = ComplianceSnapshot.objects.create(
+            annual_plan=plan1, process=self.process, standard=self.standard,
+            score=0.2, category='CRITICAL', total_requirements=2,
+            compliant_count=0, non_compliant_count=2,
+            insufficient_count=0, not_evaluated_count=0, detail=[],
+        )
+        ComplianceSnapshot.objects.filter(pk=snap1.pk).update(
+            calculated_at=now - timedelta(days=60)
+        )
+
+        snap2 = ComplianceSnapshot.objects.create(
+            annual_plan=plan2, process=self.process, standard=self.standard,
+            score=0.5, category='PARTIAL', total_requirements=2,
+            compliant_count=1, non_compliant_count=1,
+            insufficient_count=0, not_evaluated_count=0, detail=[],
+        )
+        ComplianceSnapshot.objects.filter(pk=snap2.pk).update(
+            calculated_at=now - timedelta(days=30)
+        )
+
+        snap3 = ComplianceSnapshot.objects.create(
+            annual_plan=plan3, process=self.process, standard=self.standard,
+            score=0.9, category='EXCELLENT', total_requirements=2,
+            compliant_count=2, non_compliant_count=0,
+            insufficient_count=0, not_evaluated_count=0, detail=[],
+        )
+        ComplianceSnapshot.objects.filter(pk=snap3.pk).update(
+            calculated_at=now
+        )
+
+        result = get_compliance_history(
+            self.process.id, self.standard.id, limit=2
+        )
+        self.assertTrue(result['success'])
+        self.assertEqual(result['total_snapshots'], 2)
+
+        # Deben ser los 2 más recientes (snap2 y snap3)
+        scores = [h['score'] for h in result['history']]
+        self.assertIn(50.0, scores)
+        self.assertIn(90.0, scores)
+        self.assertNotIn(20.0, scores)
+
+        # Orden cronológico: snap2 antes que snap3
+        self.assertLess(
+            result['history'][0]['score'],
+            result['history'][1]['score']
+        )
+
+    def test_historico_tendencia_usa_estado_actual(self):
+        """La tendencia se calcula con el snapshot más reciente disponible."""
+        from audits.models import ComplianceSnapshot
+        from audits.compliance_engine import get_compliance_history
+
+        plan1 = self._create_plan(month=2)
+        plan2 = self._create_plan(month=3)
+
+        from django.utils import timezone
+        from datetime import timedelta
+
+        now = timezone.now()
+
+        snap_old = ComplianceSnapshot.objects.create(
+            annual_plan=plan1, process=self.process, standard=self.standard,
+            score=0.3, category='LOW', total_requirements=2,
+            compliant_count=0, non_compliant_count=2,
+            insufficient_count=0, not_evaluated_count=0, detail=[],
+        )
+        ComplianceSnapshot.objects.filter(pk=snap_old.pk).update(
+            calculated_at=now - timedelta(days=30)
+        )
+
+        snap_new = ComplianceSnapshot.objects.create(
+            annual_plan=plan2, process=self.process, standard=self.standard,
+            score=0.9, category='EXCELLENT', total_requirements=2,
+            compliant_count=2, non_compliant_count=0,
+            insufficient_count=0, not_evaluated_count=0, detail=[],
+        )
+        ComplianceSnapshot.objects.filter(pk=snap_new.pk).update(
+            calculated_at=now
+        )
+
+        result = get_compliance_history(self.process.id, self.standard.id)
+        self.assertEqual(result['trend'], 'IMPROVING')
