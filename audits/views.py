@@ -1389,6 +1389,27 @@ def compare_periods(request, snapshot_id_a, snapshot_id_b):
         return JsonResponse({'error': str(e)}, status=500)
     
 
+from .analytics_dataset import get_full_dataset_summary, get_process_dataset
+
+@login_required
+def get_analytics_dataset(request):
+    """
+    Devuelve el dataset histórico estructurado para analítica predictiva.
+    Acepta parámetro opcional ?standard_id=N para filtrar por norma.
+    """
+    try:
+        standard_id = request.GET.get('standard_id')
+        if standard_id:
+            standard_id = int(standard_id)
+
+        summary = get_full_dataset_summary()
+        return JsonResponse(summary)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
 '''
 # === AJAX VIEWS ===
 
