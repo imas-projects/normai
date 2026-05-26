@@ -42,4 +42,5 @@ urlpatterns = [
     path('get-compliance-history/<int:process_id>/<int:standard_id>/', views.get_process_compliance_history, name='get_compliance_history'),
     path('compare-compliance/<int:snapshot_id_a>/<int:snapshot_id_b>/', views.compare_periods, name='compare_compliance_periods'),
     path('get-analytics-dataset/', views.get_analytics_dataset, name='get_analytics_dataset'),
+    path('get-risk-predictions/', views.get_risk_predictions, name='get_risk_predictions'),
 ]

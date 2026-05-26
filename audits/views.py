@@ -1410,6 +1410,33 @@ def get_analytics_dataset(request):
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
 
+
+from .risk_predictor import predict_non_conformity_risk
+
+@login_required
+def get_risk_predictions(request):
+    """
+    Devuelve las predicciones de riesgo de no conformidad
+    para todos los procesos con datos históricos disponibles.
+    """
+    try:
+        standard_id = request.GET.get('standard_id')
+        if standard_id:
+            standard_id = int(standard_id)
+
+        result = predict_non_conformity_risk(standard_id=standard_id)
+
+        if 'error' in result:
+            return JsonResponse(result, status=400)
+
+        return JsonResponse(result)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
 '''
 # === AJAX VIEWS ===
 
