@@ -316,13 +316,20 @@ def detect_anomalies(standard_id=None):
     un informe consolidado ordenado por severidad.
 
     Parámetros:
-    - standard_id: filtrar por norma (opcional)
-
-    Retorna un dict con el resumen y la lista de anomalías detectadas.
+    - standard_id: filtrar por norma (opcional). Si se especifica,
+      solo se analizan procesos con datos para esa norma.
     """
     process_data = get_process_dataset(standard_id=standard_id)
     snapshot_data = get_snapshot_dataset(standard_id=standard_id)
-    risk_data = get_risk_dataset()
+
+    # Filtrar riesgos solo para los procesos que tienen datos
+    # para la norma seleccionada
+    relevant_process_ids = set(p['process_id'] for p in process_data)
+    all_risk_data = get_risk_dataset()
+    risk_data = [
+        r for r in all_risk_data
+        if r['process_id'] in relevant_process_ids
+    ]
 
     if not process_data:
         return {
@@ -349,11 +356,7 @@ def detect_anomalies(standard_id=None):
     high_count = sum(1 for a in all_anomalies if a['severity'] == 'HIGH')
     medium_count = sum(1 for a in all_anomalies if a['severity'] == 'MEDIUM')
     low_count = sum(1 for a in all_anomalies if a['severity'] == 'LOW')
-
-    # Procesos afectados únicos
     affected_processes = len(set(a['process_id'] for a in all_anomalies))
-
-    # Tipos de anomalía detectados
     detected_types = list(set(a['anomaly_type'] for a in all_anomalies))
 
     return {

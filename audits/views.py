@@ -1402,7 +1402,7 @@ def get_analytics_dataset(request):
         if standard_id:
             standard_id = int(standard_id)
 
-        summary = get_full_dataset_summary()
+        summary = get_full_dataset_summary(standard_id=standard_id)
         return JsonResponse(summary)
 
     except Exception as e:

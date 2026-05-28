@@ -296,7 +296,7 @@ def get_risk_dataset():
         'process', 'area'
     ).prefetch_related('evaluations'):
 
-        evaluations = list(risk.evaluations.all())
+        evaluations = list(risk.evaluations.order_by('id').all())
 
         if evaluations:
             latest_eval = evaluations[-1]
@@ -331,14 +331,14 @@ def get_risk_dataset():
     return dataset
 
 
-def get_full_dataset_summary():
+def get_full_dataset_summary(standard_id=None):
     """
     Devuelve un resumen del dataset histórico disponible,
     útil para validar la consistencia y completitud antes
     de aplicar modelos predictivos.
     """
-    process_data = get_process_dataset()
-    snapshot_data = get_snapshot_dataset()
+    process_data = get_process_dataset(standard_id=standard_id)
+    snapshot_data = get_snapshot_dataset(standard_id=standard_id)
     risk_data = get_risk_dataset()
 
     processes_with_audits = len(process_data)
