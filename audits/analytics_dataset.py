@@ -283,7 +283,7 @@ def get_snapshot_dataset(standard_id=None):
     return dataset
 
 
-def get_risk_dataset():
+def get_risk_dataset(process_ids=None):
     """
     Construye el dataset de riesgos por proceso.
 
@@ -291,10 +291,14 @@ def get_risk_dataset():
     y el contexto del proceso al que pertenece.
     """
     dataset = []
+    process_ids_filter = set(process_ids) if process_ids is not None else None
 
     for risk in RiskIdentification.objects.select_related(
         'process', 'area'
     ).prefetch_related('evaluations'):
+
+        if process_ids_filter is not None and risk.process_id not in process_ids_filter:
+            continue
 
         evaluations = list(risk.evaluations.order_by('id').all())
 
@@ -339,7 +343,8 @@ def get_full_dataset_summary(standard_id=None):
     """
     process_data = get_process_dataset(standard_id=standard_id)
     snapshot_data = get_snapshot_dataset(standard_id=standard_id)
-    risk_data = get_risk_dataset()
+    relevant_process_ids = [p['process_id'] for p in process_data]
+    risk_data = get_risk_dataset(process_ids=relevant_process_ids)
 
     processes_with_audits = len(process_data)
     processes_improving = sum(

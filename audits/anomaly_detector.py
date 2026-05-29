@@ -325,11 +325,7 @@ def detect_anomalies(standard_id=None):
     # Filtrar riesgos solo para los procesos que tienen datos
     # para la norma seleccionada
     relevant_process_ids = set(p['process_id'] for p in process_data)
-    all_risk_data = get_risk_dataset()
-    risk_data = [
-        r for r in all_risk_data
-        if r['process_id'] in relevant_process_ids
-    ]
+    risk_data = get_risk_dataset(process_ids=relevant_process_ids)
 
     if not process_data:
         return {

@@ -107,11 +107,7 @@ risk_data = get_risk_dataset()
 
 # DESPUÉS
 relevant_process_ids = set(p['process_id'] for p in process_data)
-all_risk_data = get_risk_dataset()
-risk_data = [
-    r for r in all_risk_data
-    if r['process_id'] in relevant_process_ids
-]
+risk_data = get_risk_dataset(process_ids=relevant_process_ids)
 ```
 
 ---
@@ -141,6 +137,22 @@ evaluations = list(risk.evaluations.order_by('id').all())
 Con esta corrección, la última evaluación es siempre la de mayor
 `id`, que corresponde a la creada más recientemente, de forma
 reproducible independientemente del motor de base de datos.
+
+### Ajuste adicional de revisión
+
+Además de las correcciones anteriores, se extendió `get_risk_dataset()`
+para aceptar un parámetro opcional `process_ids`. De esta forma,
+cuando `get_full_dataset_summary(standard_id=N)` construye el dataset
+filtrado por norma, también la sección `risk_dataset` queda restringida
+a los procesos relevantes para esa norma.
+
+```python
+def get_risk_dataset(process_ids=None):
+    ...
+
+relevant_process_ids = [p['process_id'] for p in process_data]
+risk_data = get_risk_dataset(process_ids=relevant_process_ids)
+```
 
 ---
 
@@ -251,4 +263,3 @@ condiciones:
 | Selección determinista de evaluaciones de riesgo | ✅ |
 | Evidencia funcional reproducible de los tres endpoints | ✅ |
 | Documento de correcciones creado en `docs/` | ✅ |
-
