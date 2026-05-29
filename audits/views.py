@@ -1464,6 +1464,27 @@ def get_anomaly_detection(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 
+from .executive_dashboard import get_executive_dashboard
+
+@login_required
+def executive_dashboard(request):
+    """
+    Devuelve el dashboard ejecutivo completo con indicadores
+    de cumplimiento, riesgo, auditorías y alertas.
+    """
+    try:
+        standard_id = request.GET.get('standard_id')
+        if standard_id:
+            standard_id = int(standard_id)
+
+        result = get_executive_dashboard(standard_id=standard_id)
+        return JsonResponse(result)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
     
 '''
 # === AJAX VIEWS ===

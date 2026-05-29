@@ -44,4 +44,5 @@ urlpatterns = [
     path('get-analytics-dataset/', views.get_analytics_dataset, name='get_analytics_dataset'),
     path('get-risk-predictions/', views.get_risk_predictions, name='get_risk_predictions'),
     path('get-anomaly-detection/', views.get_anomaly_detection, name='get_anomaly_detection'),
+    path('executive-dashboard/', views.executive_dashboard, name='executive_dashboard'),
 ]
