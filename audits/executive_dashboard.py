@@ -20,6 +20,7 @@ from .models import (
     AnnualPlan, Findings, ComplianceSnapshot
 )
 from standards.models import Standard
+from .strategic_alerts import evaluate_strategic_alerts
 
 
 def get_executive_dashboard(standard_id=None):
@@ -250,6 +251,14 @@ def get_executive_dashboard(standard_id=None):
         'top_risk_predictions': predictions[:3],
     }
 
+    # ── Bloque 6: Indicadores estratégicos y alertas ─────────────
+    strategic_result = evaluate_strategic_alerts(standard_id=standard_id)
+    strategic_block = {
+        'alerts': strategic_result.get('alerts', []),
+        'alerts_summary': strategic_result.get('summary', {}),
+        'strategic_indicators': strategic_result.get('strategic_indicators', {}),
+    }
+
     return {
         'success': True,
         'standards_available': standards,
@@ -258,4 +267,5 @@ def get_executive_dashboard(standard_id=None):
         'risk_block': risk_block,
         'audit_block': audit_block,
         'alert_block': alert_block,
+        'strategic_block': strategic_block,
     }
