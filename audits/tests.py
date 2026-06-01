@@ -929,3 +929,251 @@ class ComplianceEngineTestCase(TestCase):
 
         result = get_compliance_history(self.process.id, self.standard.id)
         self.assertEqual(result['trend'], 'IMPROVING')
+
+class ExecutiveDashboardTestCase(TestCase):
+    """
+    Tests para el dashboard ejecutivo — F5-02 y F5-03.
+    Cubre: dashboard completo, alertas estratégicas,
+    filtrado por norma e indicadores estratégicos.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='director_test',
+            password='testpass123'
+        )
+        self.client = Client()
+        self.client.login(username='director_test', password='testpass123')
+
+        self.area = Area.objects.create(name='Área Dashboard')
+        self.position = Position.objects.create(
+            name='Posición Dashboard',
+            code='POS-004',
+            area=self.area,
+        )
+        self.process = Process.objects.create(
+            name='Proceso Dashboard Test',
+            objective='Objetivo dashboard',
+            creation_date=date(2025, 1, 1),
+            process_code='PD-001',
+            responsible=self.position,
+        )
+        self.standard = Standard.objects.create(
+            name='ISO Dashboard Test',
+            version='2015',
+            sector='General',
+            is_active=True,
+        )
+        self.clause = Clause.objects.create(
+            standard=self.standard,
+            code='4.1',
+            title='Cláusula dashboard',
+            ordering=1,
+        )
+        self.req = StandardRequirement.objects.create(
+            clause=self.clause,
+            text='Requisito dashboard',
+            mandatory=True,
+            criticality_level='high',
+            is_extension=False,
+            ordering=1,
+        )
+        self.pr = ProcessRequirement.objects.create(
+            process=self.process,
+            requirement=self.req,
+        )
+        self.header = AuditProgramHeader.objects.create(
+            year=2025,
+            objective='Objetivo',
+            scope='Alcance',
+            audit_criteria='ISO Dashboard',
+            security_standards='Normas',
+        )
+        self.programa = AnnualProgram.objects.create(
+            program_header=self.header,
+            process=self.process,
+            month=1,
+            standard=self.standard,
+        )
+        self.plan = AnnualPlan.objects.create(
+            annual_program=self.programa,
+            audit_opening_date=date(2025, 1, 1),
+            audit_opening_time=time(9, 0),
+            audit_opening_location='Sala A',
+            audit_closing_date=date(2025, 1, 2),
+            audit_closing_time=time(17, 0),
+            audit_closing_location='Sala A',
+        )
+        self.q = AuditedEvaluationQuestion.objects.create(
+            requirement=self.pr,
+            question_text='[4.1] ¿Cumple?',
+        )
+        Checklist.objects.create(
+            audit_plan=self.plan, question=self.q, orden=1,
+            compliance=True, evidence='Evidencia ok',
+        )
+        # Crear snapshot
+        from audits.compliance_engine import calculate_compliance_for_plan
+        calculate_compliance_for_plan(self.plan.id)
+
+    def test_dashboard_requiere_autenticacion(self):
+        """Un usuario no autenticado no puede acceder al dashboard."""
+        client_anonimo = Client()
+        response = client_anonimo.get(
+            reverse('audits:executive_dashboard')
+        )
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_dashboard_devuelve_200(self):
+        """El dashboard devuelve 200 con datos disponibles."""
+        response = self.client.get(reverse('audits:executive_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+
+    def test_dashboard_estructura_bloques(self):
+        """El dashboard incluye todos los bloques definidos en F5-01."""
+        response = self.client.get(reverse('audits:executive_dashboard'))
+        data = json.loads(response.content)
+        self.assertIn('executive_summary', data)
+        self.assertIn('compliance_block', data)
+        self.assertIn('risk_block', data)
+        self.assertIn('audit_block', data)
+        self.assertIn('alert_block', data)
+        self.assertIn('strategic_block', data)
+
+    def test_dashboard_executive_summary(self):
+        """El resumen ejecutivo contiene los campos esperados."""
+        response = self.client.get(reverse('audits:executive_dashboard'))
+        data = json.loads(response.content)
+        summary = data['executive_summary']
+        self.assertIn('global_compliance_score', summary)
+        self.assertIn('global_compliance_category', summary)
+        self.assertIn('compliance_trend', summary)
+        self.assertIn('total_audits', summary)
+        self.assertIn('processes_audited', summary)
+
+    def test_dashboard_filtrado_por_norma(self):
+        """El filtrado por standard_id devuelve solo datos de esa norma."""
+        response = self.client.get(
+            reverse('audits:executive_dashboard'),
+            {'standard_id': self.standard.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        self.assertEqual(
+            data['executive_summary']['standard_filter'],
+            self.standard.id
+        )
+
+    def test_dashboard_filtrado_norma_inexistente(self):
+        """Filtrar por una norma sin datos devuelve error."""
+        response = self.client.get(
+            reverse('audits:executive_dashboard'),
+            {'standard_id': 99999}
+        )
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+
+    def test_alertas_requiere_autenticacion(self):
+        """Un usuario no autenticado no puede acceder a las alertas."""
+        client_anonimo = Client()
+        response = client_anonimo.get(
+            reverse('audits:get_strategic_alerts')
+        )
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_alertas_devuelve_200(self):
+        """El endpoint de alertas devuelve 200."""
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts')
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+
+    def test_alertas_estructura(self):
+        """Las alertas incluyen summary, alerts e indicadores."""
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts')
+        )
+        data = json.loads(response.content)
+        self.assertIn('summary', data)
+        self.assertIn('alerts', data)
+        self.assertIn('strategic_indicators', data)
+
+    def test_alertas_summary_campos(self):
+        """El summary de alertas tiene los campos esperados."""
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts')
+        )
+        data = json.loads(response.content)
+        summary = data['summary']
+        self.assertIn('total_active_alerts', summary)
+        self.assertIn('critical_alerts', summary)
+        self.assertIn('high_alerts', summary)
+        self.assertIn('requires_immediate_action', summary)
+
+    def test_indicadores_estrategicos(self):
+        """Los indicadores estratégicos contienen los campos esperados."""
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts')
+        )
+        data = json.loads(response.content)
+        indicators = data['strategic_indicators']
+        self.assertIn('maturity_index', indicators)
+        self.assertIn('maturity_label', indicators)
+        self.assertIn('risk_exposure_rate', indicators)
+        self.assertIn('control_rate', indicators)
+        self.assertIn('audit_coverage_rate', indicators)
+
+    def test_alerta_nc_mayor_se_activa(self):
+        """La alerta NC_MAYOR se activa cuando hay hallazgos."""
+        from audits.models import Findings
+        Findings.objects.create(
+            audit_plan=self.plan,
+            requirement=self.pr,
+            finding_text='NC Mayor de prueba',
+            classification='NC_MAYOR',
+        )
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts'),
+            {'standard_id': self.standard.id}
+        )
+        data = json.loads(response.content)
+        alert_ids = [a['alert_id'] for a in data['alerts']]
+        self.assertIn('NC_MAYOR_ACCUMULATED', alert_ids)
+
+    def test_alerta_proceso_sin_auditoria_suficiente(self):
+        """La alerta PROCESSES_NOT_AUDITED se activa con 1 sola auditoría."""
+        response = self.client.get(
+            reverse('audits:get_strategic_alerts'),
+            {'standard_id': self.standard.id}
+        )
+        data = json.loads(response.content)
+        alert_ids = [a['alert_id'] for a in data['alerts']]
+        self.assertIn('PROCESSES_NOT_AUDITED', alert_ids)
+
+    def test_dashboard_compliance_block_estructura(self):
+        """El bloque de cumplimiento tiene la estructura esperada."""
+        response = self.client.get(reverse('audits:executive_dashboard'))
+        data = json.loads(response.content)
+        cb = data['compliance_block']
+        self.assertIn('by_category', cb)
+        self.assertIn('worst_processes', cb)
+        self.assertIn('best_processes', cb)
+        self.assertIn('all_processes', cb)
+        self.assertIn('improving_count', cb)
+
+    def test_dashboard_audit_block_filtrado(self):
+        """El bloque de auditorías filtra por norma correctamente."""
+        response = self.client.get(
+            reverse('audits:executive_dashboard'),
+            {'standard_id': self.standard.id}
+        )
+        data = json.loads(response.content)
+        ab = data['audit_block']
+        self.assertIn('total_audits', ab)
+        self.assertIn('nc_mayor_total', ab)
+        self.assertEqual(ab['total_audits'], 1)

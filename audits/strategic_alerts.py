@@ -40,16 +40,16 @@ ALERT_DEFINITIONS = {
         'color': 'orange',
     },
     'HIGH_NPN_UNADDRESSED': {
-        'name': 'Riesgos con NPN crítico sin tratamiento',
-        'description': 'Hay riesgos con NPN superior a 300 que requieren atención prioritaria.',
-        'action': 'Activar plan de tratamiento de riesgo para los procesos afectados.',
+        'name': 'Riesgos con NPN elevado',
+        'description': 'Hay riesgos con NPN superior a 300, indicando alta exposición al riesgo.',
+        'action': 'Revisar el estado de tratamiento de los riesgos afectados y priorizar su atención.',
         'severity': 'HIGH',
         'color': 'orange',
     },
     'NC_MAYOR_ACCUMULATED': {
-        'name': 'No conformidades mayores acumuladas',
-        'description': 'El sistema acumula no conformidades mayores sin resolver.',
-        'action': 'Verificar estado de acciones correctivas asociadas.',
+        'name': 'No conformidades mayores registradas',
+        'description': 'El sistema tiene no conformidades mayores registradas en auditorías.',
+        'action': 'Verificar si existen acciones correctivas asociadas y su estado de seguimiento.',
         'severity': 'MEDIUM',
         'color': 'yellow',
     },
@@ -180,9 +180,19 @@ def evaluate_strategic_alerts(standard_id=None):
         })
 
     # ── Alerta 5: NC_MAYOR acumuladas ─────────────────────────────
-    nc_mayor_total = Findings.objects.filter(
-        classification='NC_MAYOR'
-    ).count()
+    if standard_id:
+        audit_plans_qs = AnnualPlan.objects.filter(
+            annual_program__standard_id=standard_id
+        )
+        nc_mayor_total = Findings.objects.filter(
+            audit_plan__in=audit_plans_qs,
+            classification='NC_MAYOR'
+        ).count()
+    else:
+        nc_mayor_total = Findings.objects.filter(
+            classification='NC_MAYOR'
+        ).count()
+
     if nc_mayor_total > 0:
         active_alerts.append({
             **ALERT_DEFINITIONS['NC_MAYOR_ACCUMULATED'],

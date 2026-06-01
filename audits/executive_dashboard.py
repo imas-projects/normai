@@ -47,6 +47,15 @@ def get_executive_dashboard(standard_id=None):
     # ── Dataset de procesos ───────────────────────────────────────
     process_data = get_process_dataset(standard_id=standard_id)
 
+    # Calcular total de auditorías filtrado por norma
+    if standard_id:
+        _audit_plans_base = AnnualPlan.objects.filter(
+            annual_program__standard_id=standard_id
+        )
+    else:
+        _audit_plans_base = AnnualPlan.objects.all()
+    total_audits = _audit_plans_base.count()
+
     if not process_data:
         return {
             'success': False,
@@ -83,7 +92,6 @@ def get_executive_dashboard(standard_id=None):
     else:
         global_trend = 'STABLE'
 
-    total_audits = AnnualPlan.objects.count()
 
     executive_summary = {
         'global_compliance_score': round(avg_score, 1),
@@ -199,14 +207,28 @@ def get_executive_dashboard(standard_id=None):
     }
 
     # ── Bloque 4: Auditorías y hallazgos ──────────────────────────
-    total_findings = Findings.objects.count()
+    if standard_id:
+        audit_plans_qs = AnnualPlan.objects.filter(
+            annual_program__standard_id=standard_id
+        )
+    else:
+        audit_plans_qs = AnnualPlan.objects.all()
+
+    total_audits_block = audit_plans_qs.count()
+
+    total_findings = Findings.objects.filter(
+        audit_plan__in=audit_plans_qs
+    ).count()
     nc_mayor_total = Findings.objects.filter(
+        audit_plan__in=audit_plans_qs,
         classification='NC_MAYOR'
     ).count()
     nc_menor_total = Findings.objects.filter(
+        audit_plan__in=audit_plans_qs,
         classification='NC_MENOR'
     ).count()
     oportunidad_total = Findings.objects.filter(
+        audit_plan__in=audit_plans_qs,
         classification='OPORTUNIDAD_MEJORA'
     ).count()
 
@@ -215,17 +237,17 @@ def get_executive_dashboard(standard_id=None):
     )
 
     audit_block = {
-        'total_audits': total_audits,
+        'total_audits': total_audits_block,
         'total_findings': total_findings,
         'nc_mayor_total': nc_mayor_total,
         'nc_menor_total': nc_menor_total,
         'oportunidad_total': oportunidad_total,
         'processes_without_recent_audit': processes_without_recent_audit,
         'avg_audits_per_process': round(
-            total_audits / total_processes, 1
+            total_audits_block / total_processes, 1
         ) if total_processes > 0 else 0,
     }
-
+    
     # ── Bloque 5: Alertas y predicciones ─────────────────────────
     anomaly_result = detect_anomalies(standard_id=standard_id)
     anomalies = anomaly_result.get('anomalies', [])
