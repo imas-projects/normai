@@ -56,7 +56,8 @@ LOCAL_APPS = [
     "audits",
     "processes",
     "ai_functions",
-    'standards'
+    'standards',
+    'demo',
     ]
 THIRDPARTY_APPS = [
     

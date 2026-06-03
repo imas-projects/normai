@@ -68,19 +68,48 @@ def get_process_dataset(standard_id=None):
     if standard_id:
         filters['standard_id'] = standard_id
 
-    # Obtener procesos con snapshots
-    process_ids = ComplianceSnapshot.objects.filter(
-        **filters
-    ).values_list('process_id', flat=True).distinct()
+    # Obtener process_ids únicos — sin filtro de norma puede haber
+    # el mismo proceso en varias normas, lo deduplicamos aquí
+    if standard_id:
+        process_ids = list(set(
+            ComplianceSnapshot.objects.filter(
+                standard_id=standard_id
+            ).values_list('process_id', flat=True)
+        ))
+    else:
+        process_ids = list(set(
+            ComplianceSnapshot.objects.values_list(
+                'process_id', flat=True
+            )
+        ))
 
     dataset = []
 
     for process_id in process_ids:
         process = Process.objects.get(id=process_id)
 
-        snapshots = ComplianceSnapshot.objects.filter(
-            process_id=process_id, **filters
-        ).order_by('calculated_at')
+        # Si no hay filtro de norma, agrupar por proceso tomando
+        # solo la norma con más snapshots para evitar duplicados
+        if not standard_id:
+            # Obtener la norma con más snapshots para este proceso
+            from django.db.models import Count
+            top_standard = ComplianceSnapshot.objects.filter(
+                process_id=process_id
+            ).values('standard_id').annotate(
+                total=Count('id')
+            ).order_by('-total').first()
+
+            if not top_standard:
+                continue
+
+            snapshots = ComplianceSnapshot.objects.filter(
+                process_id=process_id,
+                standard_id=top_standard['standard_id']
+            ).order_by('calculated_at')
+        else:
+            snapshots = ComplianceSnapshot.objects.filter(
+                process_id=process_id, **filters
+            ).order_by('calculated_at')
 
         if not snapshots.exists():
             continue
