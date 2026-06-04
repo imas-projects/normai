@@ -1,8 +1,306 @@
 {% extends "mistemplates/mi_base.html" %}
-{% block title %}Catálogo Normativo{% endblock %}
+{% load static %}
+
+{% block title %}Catálogo Normativo — NormAI{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .clause-item {
+        cursor: pointer;
+        transition: background .15s;
+        border-left: 3px solid transparent;
+    }
+    .clause-item:hover { background: #f8f9fa; }
+    .clause-item.active {
+        background: #eef2ff;
+        border-left-color: #405189;
+        font-weight: 600;
+    }
+    .req-card {
+        border-left: 4px solid #dee2e6;
+        transition: border-color .15s;
+    }
+    .req-card.high    { border-left-color: #f06548; }
+    .req-card.medium  { border-left-color: #f7b84b; }
+    .req-card.low     { border-left-color: #0ab39c; }
+    .mapping-badge {
+        font-size: .7rem;
+        padding: 3px 8px;
+    }
+    .standard-tab.active {
+        background: #405189 !important;
+        color: white !important;
+        border-color: #405189 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="main-content"><div class="page-content"><div class="container-fluid mt-4">
-    <h3>Catálogo Normativo — Próximamente (F6-02)</h3>
-    <a href="/demo/dashboard/" class="btn btn-primary mt-3">← Volver al Dashboard</a>
-</div></div></div>
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+
+      <!-- Cabecera -->
+      <div class="row mt-4 mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <div>
+            <a href="/demo/dashboard/" class="text-muted small">
+              <i class="bi bi-arrow-left me-1"></i>Dashboard
+            </a>
+            <h3 class="mb-1 mt-1">
+              <i class="bx bx-book-open text-primary me-2"></i>Catálogo Normativo
+            </h3>
+            <p class="text-muted mb-0">
+              Dominio multinorma estructurado · ISO 9001:2015 + AS9100 Rev D
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas del mapeo -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-0 text-primary">{{ mapping_summary.total }}</h4>
+              <p class="text-muted small mb-0">Mapeos ISO↔AS9100</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-0 text-success">{{ mapping_summary.equivalent }}</h4>
+              <p class="text-muted small mb-0">Equivalentes</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-0 text-warning">{{ mapping_summary.superset }}</h4>
+              <p class="text-muted small mb-0">AS9100 amplía ISO</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-3">
+              <h4 class="mb-0 text-danger">{{ mapping_summary.no_equivalent }}</h4>
+              <p class="text-muted small mb-0">Exclusivos AS9100</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- Panel izquierdo: selector de norma + árbol de cláusulas -->
+        <div class="col-xl-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h6 class="mb-2">Seleccionar Norma</h6>
+              <div class="d-flex gap-2 flex-wrap">
+                {% for std in standards %}
+                <a href="?standard_id={{ std.id }}"
+                   class="btn btn-sm standard-tab
+                     {% if selected_standard_id == std.id %}active{% else %}btn-outline-secondary{% endif %}">
+                  {{ std.name|truncatechars:15 }}
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="card-body p-0">
+              {% if standard_stats %}
+              <div class="px-3 py-2 bg-light border-bottom">
+                <div class="row g-1 text-center">
+                  <div class="col-6">
+                    <span class="fw-semibold">{{ standard_stats.total_clauses }}</span>
+                    <p class="text-muted mb-0" style="font-size:.7rem;">Cláusulas</p>
+                  </div>
+                  <div class="col-6">
+                    <span class="fw-semibold">{{ standard_stats.total_requirements }}</span>
+                    <p class="text-muted mb-0" style="font-size:.7rem;">Requisitos</p>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Árbol de cláusulas -->
+              <div class="list-group list-group-flush">
+                {% for clause in root_clauses %}
+                <!-- Cláusula principal -->
+                <a href="?standard_id={{ selected_standard_id }}&clause_id={{ clause.id }}"
+                   class="list-group-item list-group-item-action clause-item py-2 px-3
+                     {% if selected_clause_id == clause.id|stringformat:'s' %}active{% endif %}">
+                  <span class="badge bg-primary-subtle text-primary me-2">{{ clause.code }}</span>
+                  <span style="font-size:.85rem;">{{ clause.title|truncatechars:30 }}</span>
+                </a>
+                <!-- Subcláusulas visibles si la principal está seleccionada -->
+                {% if selected_clause and selected_clause.code|slice:":1" == clause.code %}
+                  {% for child in child_clauses %}
+                  <a href="?standard_id={{ selected_standard_id }}&clause_id={{ child.id }}"
+                     class="list-group-item list-group-item-action clause-item py-1 px-4
+                       {% if selected_clause_id == child.id|stringformat:'s' %}active{% endif %}"
+                     style="font-size:.82rem;">
+                    <span class="text-muted me-2">{{ child.code }}</span>
+                    {{ child.title|truncatechars:28 }}
+                  </a>
+                  {% endfor %}
+                {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel central: requisitos de la cláusula seleccionada -->
+        <div class="col-xl-5">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <div>
+                <i class="bx bx-list-ul text-primary me-2"></i>
+                <h6 class="mb-0 d-inline">
+                  {% if selected_clause %}
+                    {{ selected_clause.code }} — {{ selected_clause.title }}
+                  {% else %}
+                    Selecciona una cláusula
+                  {% endif %}
+                </h6>
+              </div>
+              {% if clause_requirements %}
+              <span class="badge bg-primary">{{ clause_requirements|length }} requisitos</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              {% if not selected_clause %}
+              <div class="text-center py-5 text-muted">
+                <i class="bx bx-left-arrow-alt mb-2" style="font-size:2rem;"></i>
+                <p>Selecciona una cláusula del panel izquierdo para ver sus requisitos.</p>
+              </div>
+
+              {% elif child_clauses and not clause_requirements %}
+              <p class="text-muted small mb-3">
+                Esta cláusula contiene las siguientes subcláusulas:
+              </p>
+              {% for child in child_clauses %}
+              <a href="?standard_id={{ selected_standard_id }}&clause_id={{ child.id }}"
+                 class="d-block p-2 mb-2 rounded bg-light text-decoration-none text-dark">
+                <span class="badge bg-primary-subtle text-primary me-2">{{ child.code }}</span>
+                {{ child.title }}
+                <i class="bi bi-arrow-right float-end mt-1"></i>
+              </a>
+              {% endfor %}
+
+              {% else %}
+              {% for req in clause_requirements %}
+              <div class="req-card p-3 mb-3 rounded {{ req.criticality_level }}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div class="d-flex gap-1 flex-wrap">
+                    <span class="badge
+                      {% if req.criticality_level == 'high' %}bg-danger-subtle text-danger
+                      {% elif req.criticality_level == 'medium' %}bg-warning-subtle text-warning
+                      {% else %}bg-success-subtle text-success{% endif %}">
+                      {{ req.criticality_level|upper }}
+                    </span>
+                    {% if req.mandatory %}
+                    <span class="badge bg-dark-subtle text-dark">Obligatorio</span>
+                    {% endif %}
+                    {% if req.is_extension %}
+                    <span class="badge bg-info-subtle text-info">Extensión AS9100</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <p class="mb-0 small">{{ req.text }}</p>
+              </div>
+              {% empty %}
+              <p class="text-muted">Esta cláusula no tiene requisitos directos.</p>
+              {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel derecho: trazabilidad y mapeos -->
+        <div class="col-xl-4">
+          <div class="card h-100">
+            <div class="card-header">
+              <i class="bx bx-transfer text-primary me-2"></i>
+              <h6 class="mb-0 d-inline">Trazabilidad ISO 9001 ↔ AS9100</h6>
+            </div>
+            <div class="card-body">
+              {% if not selected_clause %}
+              <div class="text-center py-5 text-muted">
+                <i class="bx bx-transfer mb-2" style="font-size:2rem;"></i>
+                <p class="small">Selecciona una cláusula para ver sus mapeos normativos.</p>
+              </div>
+
+              {% elif mappings %}
+              <p class="text-muted small mb-3">
+                Correspondencias encontradas para los requisitos de
+                <strong>{{ selected_clause.code }}</strong>:
+              </p>
+              {% for mapping in mappings %}
+              <div class="border rounded p-2 mb-2">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <span class="badge mapping-badge
+                    {% if mapping.mapping_type == 'EQUIVALENT' %}bg-success
+                    {% elif mapping.mapping_type == 'SUPERSET' %}bg-warning text-dark
+                    {% elif mapping.mapping_type == 'NO_EQUIVALENT' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ mapping.mapping_type }}
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small">
+                  <div class="text-center" style="min-width:80px;">
+                    <span class="badge bg-primary-subtle text-primary d-block mb-1">ISO 9001</span>
+                    <span class="text-muted">§{{ mapping.source_requirement.clause.code }}</span>
+                  </div>
+                  <i class="bi bi-arrow-right text-muted"></i>
+                  <div class="text-center" style="min-width:80px;">
+                    <span class="badge bg-info-subtle text-info d-block mb-1">AS9100</span>
+                    <span class="text-muted">§{{ mapping.target_requirement.clause.code }}</span>
+                  </div>
+                </div>
+                {% if mapping.notes %}
+                <p class="text-muted mb-0 mt-1" style="font-size:.75rem;">
+                  {{ mapping.notes|truncatechars:80 }}
+                </p>
+                {% endif %}
+              </div>
+              {% endfor %}
+
+              {% else %}
+              <div class="text-center py-4 text-muted">
+                <i class="bx bx-info-circle mb-2" style="font-size:2rem;"></i>
+                <p class="small">No hay mapeos registrados para los requisitos de esta cláusula.</p>
+              </div>
+              {% endif %}
+
+              <!-- Leyenda de tipos de mapeo -->
+              <hr class="mt-3">
+              <p class="text-muted small mb-2 fw-semibold">Tipos de relación:</p>
+              <div class="d-flex flex-column gap-1">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-success mapping-badge">EQUIVALENT</span>
+                  <span class="text-muted" style="font-size:.75rem;">Requisito idéntico en ambas normas</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-warning text-dark mapping-badge">SUPERSET</span>
+                  <span class="text-muted" style="font-size:.75rem;">AS9100 amplía el requisito ISO</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-danger mapping-badge">NO_EQUIVALENT</span>
+                  <span class="text-muted" style="font-size:.75rem;">Exclusivo de AS9100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
