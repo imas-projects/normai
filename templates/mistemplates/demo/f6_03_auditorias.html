@@ -1,8 +1,382 @@
 {% extends "mistemplates/mi_base.html" %}
-{% block title %}Auditorías y Checklists{% endblock %}
+{% load static %}
+
+{% block title %}Auditorías y Checklists — NormAI{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .plan-item {
+        cursor: pointer;
+        transition: background .15s;
+        border-left: 3px solid transparent;
+    }
+    .plan-item:hover { background: #f8f9fa; }
+    .plan-item.active {
+        background: #eef2ff;
+        border-left-color: #405189;
+        font-weight: 600;
+    }
+    .check-row { border-left: 4px solid #dee2e6; }
+    .check-row.compliant     { border-left-color: #0ab39c; }
+    .check-row.non-compliant { border-left-color: #f06548; }
+    .check-row.insufficient  { border-left-color: #f7b84b; }
+    .status-icon { font-size: 1.2rem; }
+    .gap-row.COMPLIANT            { background: #f0fdfb; }
+    .gap-row.NON_COMPLIANT        { background: #fff5f5; }
+    .gap-row.INSUFFICIENT_EVIDENCE{ background: #fffdf0; }
+    .gap-row.NOT_EVALUATED        { background: #f8f9fa; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="main-content"><div class="page-content"><div class="container-fluid mt-4">
-    <h3>Auditorías y Checklists — Próximamente (F6-03)</h3>
-    <a href="/demo/dashboard/" class="btn btn-primary mt-3">← Volver al Dashboard</a>
-</div></div></div>
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+
+      <!-- Cabecera -->
+      <div class="row mt-4 mb-3">
+        <div class="col-12">
+          <a href="/demo/dashboard/" class="text-muted small">
+            <i class="bi bi-arrow-left me-1"></i>Dashboard
+          </a>
+          <h3 class="mb-1 mt-1">
+            <i class="bx bx-list-check text-success me-2"></i>Auditorías y Checklists Dinámicos
+          </h3>
+          <p class="text-muted mb-0">
+            Generación dinámica de checklists · Trazabilidad normativa · Análisis de brechas
+          </p>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- Panel izquierdo: selector de plan -->
+        <div class="col-xl-3">
+          <div class="card">
+            <div class="card-header">
+              <i class="bx bx-clipboard text-primary me-2"></i>
+              <h6 class="mb-0 d-inline">Planes de Auditoría</h6>
+              <span class="badge bg-primary float-end">{{ plans_with_data|length }}</span>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for plan in plans_with_data %}
+              <a href="?plan_id={{ plan.id }}"
+                 class="list-group-item list-group-item-action plan-item py-2 px-3
+                   {% if selected_plan_id == plan.id %}active{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <p class="mb-0 small fw-medium">{{ plan.process_name|truncatechars:25 }}</p>
+                    <p class="mb-0 text-muted" style="font-size:.75rem;">
+                      {{ plan.standard_name|truncatechars:20 }}
+                    </p>
+                    <p class="mb-0 text-muted" style="font-size:.7rem;">
+                      {{ plan.opening_date|date:"d M Y" }}
+                    </p>
+                  </div>
+                  <span class="badge bg-light text-dark mt-1">
+                    {{ plan.checklist_count }} <i class="bi bi-check2-square"></i>
+                  </span>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel derecho: checklist + análisis -->
+        <div class="col-xl-9">
+
+          {% if not selected_plan %}
+          <!-- Estado vacío -->
+          <div class="card">
+            <div class="card-body text-center py-5">
+              <i class="bx bx-left-arrow-alt text-muted mb-2" style="font-size:2.5rem;"></i>
+              <h5 class="text-muted">Selecciona un plan de auditoría</h5>
+              <p class="text-muted small">
+                Selecciona un plan del panel izquierdo para ver su checklist
+                con trazabilidad normativa y el análisis de brechas.
+              </p>
+            </div>
+          </div>
+
+          {% else %}
+
+          <!-- Cabecera del plan seleccionado -->
+          <div class="card mb-3">
+            <div class="card-body py-2">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h6 class="mb-0">
+                    <i class="bx bx-buildings text-primary me-2"></i>
+                    {{ selected_plan.annual_program.process.name }}
+                  </h6>
+                  <p class="text-muted small mb-0">
+                    {{ selected_plan.annual_program.standard.name }}
+                    · {{ selected_plan.audit_opening_date|date:"d M Y" }}
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <div class="row g-2 text-center">
+                    <div class="col-3">
+                      <span class="fw-semibold text-success">{{ stats.compliant }}</span>
+                      <p class="text-muted mb-0" style="font-size:.7rem;">Conforme</p>
+                    </div>
+                    <div class="col-3">
+                      <span class="fw-semibold text-danger">{{ stats.non_compliant }}</span>
+                      <p class="text-muted mb-0" style="font-size:.7rem;">No conforme</p>
+                    </div>
+                    <div class="col-3">
+                      <span class="fw-semibold text-warning">{{ stats.insufficient }}</span>
+                      <p class="text-muted mb-0" style="font-size:.7rem;">Sin evidencia</p>
+                    </div>
+                    <div class="col-3">
+                      <span class="fw-semibold text-primary">{{ stats.compliance_rate }}%</span>
+                      <p class="text-muted mb-0" style="font-size:.7rem;">Conformidad</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs: Checklist / Análisis de brechas / Hallazgos -->
+          <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" data-bs-toggle="tab"
+                data-bs-target="#tab-checklist">
+                <i class="bx bx-check-square me-1"></i>
+                Checklist <span class="badge bg-primary ms-1">{{ stats.total }}</span>
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-bs-toggle="tab"
+                data-bs-target="#tab-gap">
+                <i class="bx bx-analyse me-1"></i>
+                Análisis de Brechas
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-bs-toggle="tab"
+                data-bs-target="#tab-findings">
+                <i class="bx bx-error me-1"></i>
+                Hallazgos
+                {% if findings %}
+                <span class="badge bg-danger ms-1">{{ findings|length }}</span>
+                {% endif %}
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- Tab 1: Checklist con trazabilidad normativa -->
+            <div class="tab-pane fade show active" id="tab-checklist">
+              <div class="card">
+                <div class="card-body p-0">
+                  {% for item in checklist_items %}
+                  <div class="p-3 border-bottom check-row
+                    {% if item.compliance %}compliant
+                    {% elif item.evidence %}non-compliant
+                    {% else %}insufficient{% endif %}">
+                    <div class="row align-items-start">
+                      <div class="col-auto">
+                        {% if item.compliance %}
+                        <i class="bi bi-check-circle-fill text-success status-icon"></i>
+                        {% elif item.evidence %}
+                        <i class="bi bi-x-circle-fill text-danger status-icon"></i>
+                        {% else %}
+                        <i class="bi bi-question-circle-fill text-warning status-icon"></i>
+                        {% endif %}
+                      </div>
+                      <div class="col">
+                        <!-- Trazabilidad normativa -->
+                        <div class="d-flex gap-1 mb-1 flex-wrap">
+                          <span class="badge bg-primary-subtle text-primary" style="font-size:.7rem;">
+                            § {{ item.clause_code }}
+                          </span>
+                          <span class="badge
+                            {% if item.criticality == 'high' %}bg-danger-subtle text-danger
+                            {% elif item.criticality == 'medium' %}bg-warning-subtle text-warning
+                            {% else %}bg-success-subtle text-success{% endif %}"
+                            style="font-size:.7rem;">
+                            {{ item.criticality|upper }}
+                          </span>
+                          {% if item.mandatory %}
+                          <span class="badge bg-dark-subtle text-dark" style="font-size:.7rem;">
+                            Obligatorio
+                          </span>
+                          {% endif %}
+                        </div>
+                        <!-- Pregunta -->
+                        <p class="mb-1 small fw-medium">{{ item.question_text }}</p>
+                        <!-- Requisito normativo -->
+                        <p class="mb-1 text-muted" style="font-size:.78rem;">
+                          <i class="bi bi-book me-1"></i>{{ item.req_text|truncatechars:120 }}
+                        </p>
+                        <!-- Evidencia -->
+                        {% if item.evidence %}
+                        <p class="mb-0 small">
+                          <i class="bi bi-paperclip me-1 text-muted"></i>
+                          <span class="text-muted">{{ item.evidence|truncatechars:100 }}</span>
+                        </p>
+                        {% endif %}
+                      </div>
+                      <div class="col-auto text-end">
+                        <span class="badge
+                          {% if item.compliance %}bg-success
+                          {% elif item.evidence %}bg-danger
+                          {% else %}bg-warning text-dark{% endif %}">
+                          {% if item.compliance %}CONFORME
+                          {% elif item.evidence %}NO CONFORME
+                          {% else %}SIN EVIDENCIA{% endif %}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Análisis de brechas -->
+            <div class="tab-pane fade" id="tab-gap">
+              {% if gap_analysis %}
+              <!-- Resumen de brechas -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-success">
+                        {{ gap_analysis.summary.compliant_count }}
+                      </h5>
+                      <p class="text-muted small mb-0">Conformes</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-danger">
+                        {{ gap_analysis.summary.non_compliant_count }}
+                      </h5>
+                      <p class="text-muted small mb-0">No Conformes</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-warning">
+                        {{ gap_analysis.summary.insufficient_count }}
+                      </h5>
+                      <p class="text-muted small mb-0">Sin Evidencia</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-muted">
+                        {{ gap_analysis.summary.not_evaluated_count }}
+                      </h5>
+                      <p class="text-muted small mb-0">No Evaluados</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detalle de brechas -->
+              <div class="card">
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Cláusula</th>
+                          <th>Requisito</th>
+                          <th>Criticidad</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in gap_analysis.gaps %}
+                        <tr class="gap-row {{ item.status }}">
+                          <td>
+                            <span class="badge bg-primary-subtle text-primary">
+                              § {{ item.clause_code }}
+                            </span>
+                          </td>
+                          <td class="small">{{ item.requirement_text|truncatechars:80 }}</td>
+                          <td>
+                            <span class="badge
+                              {% if item.criticality_level == 'high' %}bg-danger-subtle text-danger
+                              {% elif item.criticality_level == 'medium' %}bg-warning-subtle text-warning
+                              {% else %}bg-success-subtle text-success{% endif %}">
+                              {{ item.criticality_level|upper }}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="badge
+                              {% if item.status == 'COMPLIANT' %}bg-success
+                              {% elif item.status == 'NON_COMPLIANT' %}bg-danger
+                              {% elif item.status == 'INSUFFICIENT_EVIDENCE' %}bg-warning text-dark
+                              {% else %}bg-secondary{% endif %}">
+                              {{ item.status }}
+                            </span>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {% else %}
+              <div class="card">
+                <div class="card-body text-center py-4 text-muted">
+                  <i class="bx bx-info-circle mb-2" style="font-size:2rem;"></i>
+                  <p>No hay análisis de brechas disponible para este plan.</p>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Tab 3: Hallazgos -->
+            <div class="tab-pane fade" id="tab-findings">
+              {% if findings %}
+              {% for finding in findings %}
+              <div class="card mb-2">
+                <div class="card-body py-2">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <span class="badge
+                        {% if finding.classification == 'NC_MAYOR' %}bg-danger
+                        {% elif finding.classification == 'NC_MENOR' %}bg-warning text-dark
+                        {% else %}bg-info{% endif %} me-2">
+                        {{ finding.classification }}
+                      </span>
+                      <span class="small fw-medium">{{ finding.finding_text }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% else %}
+              <div class="card">
+                <div class="card-body text-center py-4 text-muted">
+                  <i class="bx bx-check-shield text-success mb-2" style="font-size:2rem;"></i>
+                  <p>No hay hallazgos registrados para este plan.</p>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

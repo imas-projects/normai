@@ -154,9 +154,209 @@ def demo_normative_catalog(request):
         'standard_stats': standard_stats,
     })
 
+def _get_gap_analysis_data(annual_plan):
+    """
+    Calcula el análisis de brechas para un plan de auditoría.
+    Replica la lógica de audits/views.py::get_gap_analysis
+    pero devuelve un dict en lugar de JsonResponse.
+    """
+    from audits.models import ProcessRequirement, Checklist
+
+    process = annual_plan.annual_program.process
+    standard = annual_plan.annual_program.standard
+
+    if not standard:
+        return None
+
+    process_requirements = ProcessRequirement.objects.filter(
+        process=process,
+        requirement__clause__standard=standard
+    ).select_related('requirement__clause__standard')
+
+    if not process_requirements.exists():
+        return None
+
+    checklist_items = Checklist.objects.filter(
+        audit_plan=annual_plan
+    ).select_related('question__requirement__requirement__clause')
+
+    checklist_index = {}
+    for item in checklist_items:
+        if item.question and item.question.requirement:
+            pr_id = item.question.requirement.id
+            checklist_index[pr_id] = item
+
+    gaps = []
+    summary = {
+        'compliant_count': 0,
+        'non_compliant_count': 0,
+        'insufficient_count': 0,
+        'not_evaluated_count': 0,
+    }
+
+    for pr in process_requirements.order_by(
+        'requirement__clause__ordering',
+        'requirement__ordering'
+    ):
+        req = pr.requirement
+        clause = req.clause
+        checklist_item = checklist_index.get(pr.id)
+
+        if checklist_item is None:
+            status = 'NOT_EVALUATED'
+            summary['not_evaluated_count'] += 1
+        elif checklist_item.compliance:
+            status = 'COMPLIANT'
+            summary['compliant_count'] += 1
+        elif checklist_item.evidence and checklist_item.evidence.strip():
+            status = 'NON_COMPLIANT'
+            summary['non_compliant_count'] += 1
+        else:
+            status = 'INSUFFICIENT_EVIDENCE'
+            summary['insufficient_count'] += 1
+
+        gaps.append({
+            'status': status,
+            'requirement_text': req.text,
+            'criticality_level': req.criticality_level,
+            'mandatory': req.mandatory,
+            'clause_code': clause.code,
+            'clause_title': clause.title,
+        })
+
+    return {
+        'summary': summary,
+        'gaps': gaps,
+    }
+
 @login_required
 def demo_audit_checklists(request):
-    return render(request, 'mistemplates/demo/f6_03_auditorias.html', {})
+    """
+    Vista de auditorías y checklists dinámicos — F6-03
+    Muestra el flujo de auditoría con trazabilidad normativa y análisis de brechas.
+    """
+    from audits.models import (
+        AnnualPlan, Checklist, Findings, AnnualProgram
+    )
+    
+
+    # Selector de plan
+    selected_plan_id = request.GET.get('plan_id')
+    if selected_plan_id:
+        selected_plan_id = int(selected_plan_id)
+
+    # Todos los planes con checklist disponible
+    plans_with_data = []
+    for plan in AnnualPlan.objects.select_related(
+        'annual_program__process',
+        'annual_program__standard'
+    ).order_by('id'):
+        checklist_count = Checklist.objects.filter(
+            audit_plan=plan
+        ).count()
+        if checklist_count > 0:
+            plans_with_data.append({
+                'id': plan.id,
+                'process_name': plan.annual_program.process.name,
+                'standard_name': plan.annual_program.standard.name
+                    if plan.annual_program.standard else '—',
+                'opening_date': plan.audit_opening_date,
+                'checklist_count': checklist_count,
+            })
+
+    selected_plan = None
+    checklist_items = []
+    gap_analysis = None
+    findings = []
+    stats = {}
+
+    if selected_plan_id:
+        try:
+            selected_plan = AnnualPlan.objects.select_related(
+                'annual_program__process',
+                'annual_program__standard'
+            ).get(id=selected_plan_id)
+
+            # Checklist con trazabilidad normativa
+            raw_checklist = Checklist.objects.filter(
+                audit_plan=selected_plan
+            ).select_related(
+                'question__requirement__requirement__clause__standard'
+            ).order_by('orden')
+
+            for item in raw_checklist:
+                req = None
+                clause_code = '—'
+                clause_title = '—'
+                req_text = '—'
+                criticality = 'low'
+                mandatory = False
+
+                try:
+                    pr = item.question.requirement
+                    req = pr.requirement
+                    clause_code = req.clause.code
+                    clause_title = req.clause.title
+                    req_text = req.text
+                    criticality = req.criticality_level
+                    mandatory = req.mandatory
+                except Exception:
+                    pass
+
+                checklist_items.append({
+                    'id': item.id,
+                    'orden': item.orden,
+                    'question_text': item.question.question_text,
+                    'compliance': item.compliance,
+                    'evidence': item.evidence or '',
+                    'clause_code': clause_code,
+                    'clause_title': clause_title,
+                    'req_text': req_text,
+                    'criticality': criticality,
+                    'mandatory': mandatory,
+                })
+
+            # Análisis de brechas
+            gap_analysis = _get_gap_analysis_data(selected_plan)
+
+            # Hallazgos
+            findings = list(Findings.objects.filter(
+                audit_plan=selected_plan
+            ).select_related('requirement__requirement__clause'))
+
+            # Estadísticas del checklist
+            total = len(checklist_items)
+            compliant = sum(1 for i in checklist_items if i['compliance'])
+            non_compliant = sum(
+                1 for i in checklist_items
+                if not i['compliance'] and i['evidence']
+            )
+            insufficient = sum(
+                1 for i in checklist_items
+                if not i['compliance'] and not i['evidence']
+            )
+            stats = {
+                'total': total,
+                'compliant': compliant,
+                'non_compliant': non_compliant,
+                'insufficient': insufficient,
+                'compliance_rate': round(
+                    compliant / total * 100, 1
+                ) if total > 0 else 0,
+            }
+
+        except AnnualPlan.DoesNotExist:
+            selected_plan = None
+
+    return render(request, 'mistemplates/demo/f6_03_auditorias.html', {
+        'plans_with_data': plans_with_data,
+        'selected_plan_id': selected_plan_id,
+        'selected_plan': selected_plan,
+        'checklist_items': checklist_items,
+        'gap_analysis': gap_analysis,
+        'findings': findings,
+        'stats': stats,
+    })
 
 @login_required
 def demo_compliance(request):
