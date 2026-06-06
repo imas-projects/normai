@@ -511,4 +511,42 @@ def demo_compliance(request):
 
 @login_required
 def demo_analytics(request):
-    return render(request, 'mistemplates/demo/f6_05_analitica.html', {})
+    """
+    Vista de analítica predictiva — F6-05
+    Muestra predicciones de riesgo de NC y detección de anomalías.
+    """
+    from audits.risk_predictor import predict_non_conformity_risk
+    from audits.anomaly_detector import detect_anomalies
+    from standards.models import Standard
+
+    standards = Standard.objects.filter(is_active=True)
+    selected_standard_id = request.GET.get('standard_id')
+    if selected_standard_id:
+        selected_standard_id = int(selected_standard_id)
+
+    # Predicciones de riesgo
+    prediction_result = predict_non_conformity_risk(
+        standard_id=selected_standard_id
+    )
+    predictions = prediction_result.get('predictions', [])
+    prediction_summary = prediction_result.get('summary', {})
+    model_info = prediction_result.get('model_info', {})
+
+    # Detección de anomalías
+    anomaly_result = detect_anomalies(standard_id=selected_standard_id)
+    anomalies = anomaly_result.get('anomalies', [])
+    anomaly_summary = anomaly_result.get('summary', {})
+    anomaly_thresholds = anomaly_result.get('model_info', {}).get(
+        'thresholds', {}
+    )
+
+    return render(request, 'mistemplates/demo/f6_05_analitica.html', {
+        'standards': standards,
+        'selected_standard_id': selected_standard_id,
+        'predictions': predictions,
+        'prediction_summary': prediction_summary,
+        'model_info': model_info,
+        'anomalies': anomalies,
+        'anomaly_summary': anomaly_summary,
+        'anomaly_thresholds': anomaly_thresholds,
+    })

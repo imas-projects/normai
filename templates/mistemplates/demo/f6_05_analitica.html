@@ -1,8 +1,354 @@
 {% extends "mistemplates/mi_base.html" %}
-{% block title %}Analítica Predictiva{% endblock %}
+{% load static %}
+
+{% block title %}Analítica Predictiva — NormAI{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .risk-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+    .risk-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width .3s;
+    }
+    .risk-HIGH    { background: #f06548; }
+    .risk-MEDIUM  { background: #f7b84b; }
+    .risk-LOW     { background: #405189; }
+    .risk-MINIMAL { background: #0ab39c; }
+    .factor-bar {
+        height: 6px;
+        border-radius: 3px;
+    }
+    .anomaly-HIGH   { border-left: 4px solid #f06548; background: #fff8f5; }
+    .anomaly-MEDIUM { border-left: 4px solid #f7b84b; background: #fffdf0; }
+    .anomaly-LOW    { border-left: 4px solid #878a99; background: #f8f9fa; }
+    .prototype-badge {
+        background: #eef2ff;
+        border: 1px solid #c5cfe8;
+        color: #405189;
+        font-size: .75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="main-content"><div class="page-content"><div class="container-fluid mt-4">
-    <h3>Analítica Predictiva — Próximamente (F6-05)</h3>
-    <a href="/demo/dashboard/" class="btn btn-primary mt-3">← Volver al Dashboard</a>
-</div></div></div>
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+
+      <!-- Cabecera -->
+      <div class="row mt-4 mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-start">
+          <div>
+            <a href="/demo/dashboard/" class="text-muted small">
+              <i class="bi bi-arrow-left me-1"></i>Dashboard
+            </a>
+            <h3 class="mb-1 mt-1">
+              <i class="bx bx-brain text-danger me-2"></i>Analítica Predictiva
+            </h3>
+            <p class="text-muted mb-0">
+              Predicción de riesgo de no conformidad · Detección de anomalías
+            </p>
+          </div>
+          <div class="d-flex flex-column align-items-end gap-2">
+            <!-- Selector de norma -->
+            <form method="get" class="d-flex align-items-center gap-2">
+              <label class="text-muted small mb-0">Norma:</label>
+              <select name="standard_id" class="form-select form-select-sm"
+                style="width:180px;" onchange="this.form.submit()">
+                <option value="">Todas las normas</option>
+                {% for std in standards %}
+                <option value="{{ std.id }}"
+                  {% if selected_standard_id == std.id %}selected{% endif %}>
+                  {{ std.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </form>
+            <!-- Aviso de prototipo -->
+            <span class="prototype-badge">
+              <i class="bi bi-info-circle me-1"></i>
+              Prototipo exploratorio — modelo heurístico
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aviso académico -->
+      <div class="alert alert-info d-flex align-items-start gap-2 mb-4">
+        <i class="bx bx-info-circle mt-1 flex-shrink-0"></i>
+        <div>
+          <strong>Contexto del prototipo:</strong>
+          {{ model_info.description }}
+          Con el volumen de datos actual ({{ model_info.data_points }} procesos),
+          los resultados son señales orientativas para análisis cualitativo,
+          no predicciones estadísticamente validadas.
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- Columna izquierda: Predicciones de riesgo -->
+        <div class="col-xl-6">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <div>
+                <i class="bx bx-error-alt text-danger me-2"></i>
+                <h5 class="mb-0 d-inline">Riesgo de No Conformidad</h5>
+              </div>
+              <div class="d-flex gap-1">
+                <span class="badge bg-danger-subtle text-danger">
+                  {{ prediction_summary.high_risk }} HIGH
+                </span>
+                <span class="badge bg-warning-subtle text-warning">
+                  {{ prediction_summary.medium_risk }} MEDIUM
+                </span>
+                <span class="badge bg-primary-subtle text-primary">
+                  {{ prediction_summary.low_risk }} LOW
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+
+              <!-- Pesos del modelo -->
+              <div class="p-2 bg-light rounded mb-3">
+                <p class="text-muted small mb-2 fw-semibold">
+                  Factores del modelo heurístico:
+                </p>
+                <div class="row g-1">
+                  <div class="col-6">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted">Cumplimiento</span>
+                      <span>40%</span>
+                    </div>
+                    <div class="factor-bar bg-primary" style="width:40%"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted">Nivel de riesgo</span>
+                      <span>25%</span>
+                    </div>
+                    <div class="factor-bar bg-danger" style="width:25%"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted">Tendencia</span>
+                      <span>20%</span>
+                    </div>
+                    <div class="factor-bar bg-warning" style="width:20%"></div>
+                  </div>
+                  <div class="col-6">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted">Historial NC</span>
+                      <span>15%</span>
+                    </div>
+                    <div class="factor-bar bg-success" style="width:15%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ranking de procesos por riesgo -->
+              {% for pred in predictions %}
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="small fw-medium">{{ pred.process_name }}</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">{{ pred.risk_score }}%</span>
+                    <span class="badge
+                      {% if pred.risk_category == 'HIGH' %}bg-danger
+                      {% elif pred.risk_category == 'MEDIUM' %}bg-warning text-dark
+                      {% elif pred.risk_category == 'LOW' %}bg-primary
+                      {% else %}bg-success{% endif %}"
+                      style="font-size:.68rem; min-width:55px;">
+                      {{ pred.risk_category }}
+                    </span>
+                  </div>
+                </div>
+                <div class="risk-bar">
+                  <div class="risk-fill risk-{{ pred.risk_category }}"
+                    style="width:{{ pred.risk_score }}%"></div>
+                </div>
+                <!-- Desglose de factores -->
+                <div class="row g-0 mt-1">
+                  <div class="col-3 text-center">
+                    <span class="text-muted" style="font-size:.65rem;">
+                      Cumpl. {{ pred.factors.compliance_factor }}%
+                    </span>
+                  </div>
+                  <div class="col-3 text-center">
+                    <span class="text-muted" style="font-size:.65rem;">
+                      Riesgo {{ pred.factors.risk_level_factor }}%
+                    </span>
+                  </div>
+                  <div class="col-3 text-center">
+                    <span class="text-muted" style="font-size:.65rem;">
+                      Tend. {{ pred.factors.trend_factor }}%
+                    </span>
+                  </div>
+                  <div class="col-3 text-center">
+                    <span class="text-muted" style="font-size:.65rem;">
+                      NC {{ pred.factors.findings_factor }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna derecha: Anomalías -->
+        <div class="col-xl-6">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <div>
+                <i class="bx bx-search-alt text-warning me-2"></i>
+                <h5 class="mb-0 d-inline">Detección de Anomalías</h5>
+              </div>
+              <span class="badge bg-danger">
+                {{ anomaly_summary.total_anomalies }} detectadas
+              </span>
+            </div>
+            <div class="card-body">
+
+              <!-- Resumen por severidad -->
+              <div class="row g-2 mb-3">
+                <div class="col-4 text-center">
+                  <div class="p-2 rounded bg-danger bg-opacity-10">
+                    <h5 class="mb-0 text-danger">
+                      {{ anomaly_summary.high_severity }}
+                    </h5>
+                    <p class="text-muted mb-0" style="font-size:.7rem;">HIGH</p>
+                  </div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="p-2 rounded bg-warning bg-opacity-10">
+                    <h5 class="mb-0 text-warning">
+                      {{ anomaly_summary.medium_severity }}
+                    </h5>
+                    <p class="text-muted mb-0" style="font-size:.7rem;">MEDIUM</p>
+                  </div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="p-2 rounded bg-secondary bg-opacity-10">
+                    <h5 class="mb-0 text-muted">
+                      {{ anomaly_summary.low_severity }}
+                    </h5>
+                    <p class="text-muted mb-0" style="font-size:.7rem;">LOW</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Umbrales del detector -->
+              <div class="p-2 bg-light rounded mb-3">
+                <p class="text-muted small mb-1 fw-semibold">
+                  Umbrales del detector:
+                </p>
+                <div class="row g-1">
+                  <div class="col-6">
+                    <span class="text-muted" style="font-size:.72rem;">
+                      Score crítico: &lt; {{ anomaly_thresholds.critical_score }}%
+                    </span>
+                  </div>
+                  <div class="col-6">
+                    <span class="text-muted" style="font-size:.72rem;">
+                      Caída brusca: &gt; {{ anomaly_thresholds.score_drop }}pts
+                    </span>
+                  </div>
+                  <div class="col-6">
+                    <span class="text-muted" style="font-size:.72rem;">
+                      NPN elevado: &gt; {{ anomaly_thresholds.high_npn }}
+                    </span>
+                  </div>
+                  <div class="col-6">
+                    <span class="text-muted" style="font-size:.72rem;">
+                      Cobertura mínima: {{ anomaly_thresholds.min_coverage }} req.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lista de anomalías -->
+              {% if anomalies %}
+                {% for anomaly in anomalies %}
+                <div class="p-3 mb-2 rounded anomaly-{{ anomaly.severity }}">
+                  <div class="d-flex align-items-start gap-2">
+                    {% if anomaly.severity == 'HIGH' %}
+                    <i class="bx bx-error text-danger mt-1 flex-shrink-0"></i>
+                    {% elif anomaly.severity == 'MEDIUM' %}
+                    <i class="bx bx-info-circle text-warning mt-1 flex-shrink-0"></i>
+                    {% else %}
+                    <i class="bx bx-bell text-muted mt-1 flex-shrink-0"></i>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <p class="fw-semibold mb-1 small">{{ anomaly.name }}</p>
+                        <span class="badge
+                          {% if anomaly.severity == 'HIGH' %}bg-danger
+                          {% elif anomaly.severity == 'MEDIUM' %}bg-warning text-dark
+                          {% else %}bg-secondary{% endif %}"
+                          style="font-size:.65rem;">
+                          {{ anomaly.severity }}
+                        </span>
+                      </div>
+                      <p class="text-muted mb-1" style="font-size:.78rem;">
+                        {{ anomaly.description }}
+                      </p>
+                      <p class="text-muted mb-1" style="font-size:.72rem;">
+                        <i class="bi bi-building me-1"></i>
+                        {{ anomaly.process_name }}
+                      </p>
+                      {% if anomaly.details.npn %}
+                      <p class="mb-0" style="font-size:.72rem; color:#405189;">
+                        <i class="bi bi-graph-up me-1"></i>
+                        NPN: {{ anomaly.details.npn }}
+                        (umbral: {{ anomaly.details.threshold_npn }})
+                      </p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+              <div class="text-center py-4 text-muted">
+                <i class="bx bx-check-shield text-success mb-2"
+                  style="font-size:2rem;"></i>
+                <p class="small">No se han detectado anomalías.</p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nota sobre evolución futura -->
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-body py-2">
+              <p class="text-muted small mb-0">
+                <i class="bi bi-arrow-up-right-circle text-primary me-2"></i>
+                <strong>Evolución futura:</strong>
+                Con un histórico de 100+ snapshots este prototipo
+                puede evolucionar hacia regresión logística para
+                predicción de NC_MAYOR, Isolation Forest para
+                detección multivariante de anomalías y cartas de
+                control estadísticas para monitorización continua.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 {% endblock %}
