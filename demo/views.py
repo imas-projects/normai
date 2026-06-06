@@ -360,7 +360,154 @@ def demo_audit_checklists(request):
 
 @login_required
 def demo_compliance(request):
-    return render(request, 'mistemplates/demo/f6_04_cumplimiento.html', {})
+    """
+    Vista del motor de cumplimiento — F6-04
+    Muestra snapshots, histórico temporal y comparación entre periodos.
+    """
+    from audits.models import ComplianceSnapshot
+    from audits.compliance_engine import (
+        get_compliance_history, compare_compliance_periods
+    )
+    from standards.models import Standard
+
+    standards = Standard.objects.filter(is_active=True)
+    processes_with_snapshots = []
+
+    # Obtener procesos únicos con snapshots
+    process_ids = list(set(
+        ComplianceSnapshot.objects.values_list('process_id', flat=True)
+    ))
+    from processes.models import Process
+    for pid in sorted(process_ids):
+        try:
+            p = Process.objects.get(id=pid)
+            snap_count = ComplianceSnapshot.objects.filter(
+                process_id=pid
+            ).count()
+            latest = ComplianceSnapshot.objects.filter(
+                process_id=pid
+            ).order_by('-calculated_at').first()
+            processes_with_snapshots.append({
+                'id': p.id,
+                'name': p.name,
+                'snap_count': snap_count,
+                'latest_score': round(latest.score * 100, 1) if latest else 0,
+                'latest_category': latest.category if latest else '—',
+            })
+        except Process.DoesNotExist:
+            pass
+
+    # Parámetros de selección
+    selected_process_id = request.GET.get('process_id')
+    selected_standard_id = request.GET.get('standard_id')
+    selected_snapshot_a = request.GET.get('snap_a')
+    selected_snapshot_b = request.GET.get('snap_b')
+    active_tab = request.GET.get('tab', 'history')
+
+    if selected_process_id:
+        selected_process_id = int(selected_process_id)
+    else:
+        if processes_with_snapshots:
+            selected_process_id = processes_with_snapshots[0]['id']
+
+    if selected_standard_id:
+        selected_standard_id = int(selected_standard_id)
+    else:
+        selected_standard_id = 3  # ISO 9001:2015 por defecto
+
+    # Histórico del proceso seleccionado
+    history_data = None
+    chart_data = []
+    snapshots_for_process = []
+
+    if selected_process_id and selected_standard_id:
+        history_result = get_compliance_history(
+            selected_process_id, selected_standard_id
+        )
+        if history_result.get('success'):
+            history_data = history_result
+            for snap in history_result.get('history', []):
+                chart_data.append({
+                    'x': snap['calculated_at'][:10],
+                    'y': snap['score'],
+                    'category': snap['category'],
+                    'snapshot_id': snap['id'],
+                })
+
+        # Snapshots disponibles para comparación
+        snapshots_for_process = list(
+            ComplianceSnapshot.objects.filter(
+                process_id=selected_process_id,
+                standard_id=selected_standard_id,
+            ).order_by('-calculated_at').values(
+                'id', 'score', 'category', 'calculated_at',
+                'annual_plan_id', 'total_requirements',
+                'compliant_count', 'non_compliant_count'
+            )
+        )
+        for s in snapshots_for_process:
+            s['score'] = round(s['score'] * 100, 1)
+
+    # Comparación entre snapshots
+    comparison_data = None
+    if selected_snapshot_a and selected_snapshot_b:
+        comparison_result = compare_compliance_periods(
+            int(selected_snapshot_a),
+            int(selected_snapshot_b)
+        )
+        if comparison_result.get('success'):
+            comparison_data = comparison_result
+
+    # Detalle del snapshot seleccionado
+    snapshot_detail = None
+    selected_snapshot_id = request.GET.get('snapshot_id')
+    if selected_snapshot_id:
+        try:
+            snap = ComplianceSnapshot.objects.select_related(
+                'process', 'standard'
+            ).get(id=int(selected_snapshot_id))
+            snapshot_detail = {
+                'id': snap.id,
+                'process_name': snap.process.name,
+                'standard_name': snap.standard.name,
+                'score': round(snap.score * 100, 1),
+                'category': snap.category,
+                'calculated_at': snap.calculated_at,
+                'total_requirements': snap.total_requirements,
+                'compliant_count': snap.compliant_count,
+                'non_compliant_count': snap.non_compliant_count,
+                'insufficient_count': snap.insufficient_count,
+                'not_evaluated_count': snap.not_evaluated_count,
+                'detail': snap.detail,
+            }
+        except ComplianceSnapshot.DoesNotExist:
+            pass
+
+    latest_score = None
+    latest_category = None
+    if history_data and history_data.get('history'):
+        last_snap = history_data['history'][-1]
+        latest_score = last_snap.get('score')
+        latest_category = last_snap.get('category')
+
+    import json
+    return render(request, 'mistemplates/demo/f6_04_cumplimiento.html', {
+        'standards': standards,
+        'processes_with_snapshots': processes_with_snapshots,
+        'selected_process_id': selected_process_id,
+        'selected_standard_id': selected_standard_id,
+        'history_data': history_data,
+        'chart_data_json': json.dumps(chart_data),
+        'snapshots_for_process': snapshots_for_process,
+        'selected_snapshot_a': selected_snapshot_a,
+        'selected_snapshot_b': selected_snapshot_b,
+        'comparison_data': comparison_data,
+        'snapshot_detail': snapshot_detail,
+        'selected_snapshot_id': selected_snapshot_id,
+        'active_tab': active_tab,
+        'latest_score': latest_score,
+        'latest_category': latest_category,
+    })
 
 @login_required
 def demo_analytics(request):

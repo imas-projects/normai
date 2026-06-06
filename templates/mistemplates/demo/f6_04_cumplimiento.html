@@ -1,8 +1,577 @@
 {% extends "mistemplates/mi_base.html" %}
-{% block title %}Motor de Cumplimiento{% endblock %}
+{% load static %}
+
+{% block title %}Motor de Cumplimiento — NormAI{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .process-item {
+        cursor: pointer;
+        transition: background .15s;
+        border-left: 3px solid transparent;
+    }
+    .process-item:hover { background: #f8f9fa; }
+    .process-item.active {
+        background: #eef2ff;
+        border-left-color: #405189;
+        font-weight: 600;
+    }
+    .score-badge {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; font-weight: 700; color: white;
+    }
+    .cat-EXCELLENT { background: #0ab39c; }
+    .cat-GOOD      { background: #405189; }
+    .cat-PARTIAL   { background: #f7b84b; color: #333; }
+    .cat-LOW       { background: #f06548; }
+    .cat-CRITICAL  { background: #dc3545; }
+    .snap-card {
+        cursor: pointer;
+        transition: border-color .15s;
+        border: 2px solid transparent;
+    }
+    .snap-card:hover { border-color: #405189; }
+    .snap-card.selected { border-color: #405189; background: #eef2ff; }
+    .change-IMPROVED { color: #0ab39c; }
+    .change-DECLINED { color: #f06548; }
+    .change-STABLE   { color: #878a99; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="main-content"><div class="page-content"><div class="container-fluid mt-4">
-    <h3>Motor de Cumplimiento — Próximamente (F6-04)</h3>
-    <a href="/demo/dashboard/" class="btn btn-primary mt-3">← Volver al Dashboard</a>
-</div></div></div>
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+
+      <!-- Cabecera -->
+      <div class="row mt-4 mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <div>
+            <a href="/demo/dashboard/" class="text-muted small">
+              <i class="bi bi-arrow-left me-1"></i>Dashboard
+            </a>
+            <h3 class="mb-1 mt-1">
+              <i class="bx bx-trending-up text-warning me-2"></i>Motor de Cumplimiento
+            </h3>
+            <p class="text-muted mb-0">
+              Snapshots · Histórico temporal · Comparación entre periodos
+            </p>
+          </div>
+          <!-- Selector de norma -->
+          <form method="get" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="process_id" value="{{ selected_process_id }}">
+            <input type="hidden" name="tab" value="{{ active_tab }}">
+            <label class="text-muted small mb-0">Norma:</label>
+            <select name="standard_id" class="form-select form-select-sm"
+              style="width:180px;" onchange="this.form.submit()">
+              {% for std in standards %}
+              <option value="{{ std.id }}"
+                {% if selected_standard_id == std.id %}selected{% endif %}>
+                {{ std.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <div class="row g-3">
+
+        <!-- Panel izquierdo: procesos -->
+        <div class="col-xl-3">
+          <div class="card">
+            <div class="card-header">
+              <i class="bx bx-git-branch text-primary me-2"></i>
+              <h6 class="mb-0 d-inline">Procesos Auditados</h6>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for p in processes_with_snapshots %}
+              <a href="?process_id={{ p.id }}&standard_id={{ selected_standard_id }}&tab={{ active_tab }}"
+                 class="list-group-item list-group-item-action process-item py-2 px-3
+                   {% if selected_process_id == p.id %}active{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <p class="mb-0 small fw-medium">{{ p.name|truncatechars:25 }}</p>
+                    <p class="mb-0 text-muted" style="font-size:.72rem;">
+                      {{ p.snap_count }} auditorías
+                    </p>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge
+                      {% if p.latest_category == 'EXCELLENT' %}bg-success
+                      {% elif p.latest_category == 'GOOD' %}bg-primary
+                      {% elif p.latest_category == 'PARTIAL' %}bg-warning text-dark
+                      {% elif p.latest_category == 'LOW' %}bg-danger
+                      {% else %}bg-dark{% endif %}"
+                      style="font-size:.7rem;">
+                      {{ p.latest_score }}%
+                    </span>
+                  </div>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel derecho: tabs -->
+        <div class="col-xl-9">
+          <ul class="nav nav-tabs mb-3" role="tablist" id="complianceTabs">
+            <li class="nav-item">
+              <button class="nav-link {% if active_tab == 'history' %}active{% endif %}"
+                onclick="switchTab('history')">
+                <i class="bx bx-time me-1"></i>Histórico
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link {% if active_tab == 'snapshots' %}active{% endif %}"
+                onclick="switchTab('snapshots')">
+                <i class="bx bx-camera me-1"></i>Snapshots
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link {% if active_tab == 'compare' %}active{% endif %}"
+                onclick="switchTab('compare')">
+                <i class="bx bx-transfer me-1"></i>Comparar
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- Tab 1: Histórico -->
+            <div class="tab-pane fade {% if active_tab == 'history' %}show active{% endif %}"
+              id="tab-history">
+              {% if history_data %}
+              <!-- Resumen de tendencia -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0">{{ history_data.total_snapshots }}</h5>
+                      <p class="text-muted small mb-0">Auditorías realizadas</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0">{{ latest_score }}%</h5>
+                      <p class="text-muted small mb-0">Último score</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0
+                        {% if history_data.trend == 'IMPROVING' %}text-success
+                        {% elif history_data.trend == 'DECLINING' %}text-danger
+                        {% else %}text-muted{% endif %}">
+                        {% if history_data.trend == 'IMPROVING' %}↑ Mejorando
+                        {% elif history_data.trend == 'DECLINING' %}↓ Empeorando
+                        {% elif history_data.trend == 'STABLE' %}→ Estable
+                        {% else %}— Sin datos{% endif %}
+                      </h5>
+                      <p class="text-muted small mb-0">Tendencia global</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gráfico de evolución -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h6 class="mb-0">
+                    <i class="bx bx-line-chart text-primary me-2"></i>
+                    Evolución del cumplimiento — {{ history_data.process.name }}
+                  </h6>
+                </div>
+                <div class="card-body">
+                  <div id="complianceChart"></div>
+                </div>
+              </div>
+
+              <!-- Tabla de histórico -->
+              <div class="card">
+                <div class="card-body p-0">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Score</th>
+                        <th>Categoría</th>
+                        <th>Conformes</th>
+                        <th>No Conformes</th>
+                        <th>Sin Evaluar</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for snap in history_data.history %}
+                      <tr>
+                        <td class="small">{{ snap.calculated_at|slice:":10" }}</td>
+                        <td>
+                          <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:6px;width:80px;">
+                              <div class="progress-bar
+                                {% if snap.score >= 85 %}bg-success
+                                {% elif snap.score >= 70 %}bg-primary
+                                {% elif snap.score >= 50 %}bg-warning
+                                {% else %}bg-danger{% endif %}"
+                                style="width:{{ snap.score }}%"></div>
+                            </div>
+                            <span class="small fw-medium">{{ snap.score }}%</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="badge
+                            {% if snap.category == 'EXCELLENT' %}bg-success
+                            {% elif snap.category == 'GOOD' %}bg-primary
+                            {% elif snap.category == 'PARTIAL' %}bg-warning text-dark
+                            {% elif snap.category == 'LOW' %}bg-danger
+                            {% else %}bg-dark{% endif %}">
+                            {{ snap.category }}
+                          </span>
+                        </td>
+                        <td class="text-success small">{{ snap.compliant_count }}</td>
+                        <td class="text-danger small">{{ snap.non_compliant_count }}</td>
+                        <td class="text-muted small">{{ snap.not_evaluated_count }}</td>
+                        <td>
+                          <a href="?process_id={{ selected_process_id }}&standard_id={{ selected_standard_id }}&tab=snapshots&snapshot_id={{ snap.id }}"
+                             class="btn btn-sm btn-outline-primary">
+                            Ver detalle
+                          </a>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% else %}
+              <div class="card">
+                <div class="card-body text-center py-5 text-muted">
+                  <i class="bx bx-info-circle mb-2" style="font-size:2rem;"></i>
+                  <p>No hay snapshots disponibles para este proceso y norma.</p>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Tab 2: Snapshots -->
+            <div class="tab-pane fade {% if active_tab == 'snapshots' %}show active{% endif %}"
+              id="tab-snapshots">
+              <div class="row g-3">
+                <!-- Lista de snapshots -->
+                <div class="col-md-5">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="mb-0">Snapshots disponibles</h6>
+                    </div>
+                    <div class="card-body p-0">
+                      {% for snap in snapshots_for_process %}
+                      <a href="?process_id={{ selected_process_id }}&standard_id={{ selected_standard_id }}&tab=snapshots&snapshot_id={{ snap.id }}"
+                         class="d-block p-3 border-bottom snap-card
+                           {% if selected_snapshot_id == snap.id|stringformat:'s' %}selected{% endif %}">
+                        <div class="d-flex align-items-center gap-3">
+                          <div class="score-badge cat-{{ snap.category }}">
+                            {{ snap.score }}%
+                          </div>
+                          <div>
+                            <p class="mb-0 fw-medium small">{{ snap.category }}</p>
+                            <p class="mb-0 text-muted" style="font-size:.75rem;">
+                              {{ snap.calculated_at|slice:":10" }}
+                            </p>
+                            <p class="mb-0 text-muted" style="font-size:.72rem;">
+                              Plan {{ snap.annual_plan_id }} ·
+                              {{ snap.compliant_count }}/{{ snap.total_requirements }} conformes
+                            </p>
+                          </div>
+                        </div>
+                      </a>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detalle del snapshot -->
+                <div class="col-md-7">
+                  {% if snapshot_detail %}
+                  <div class="card">
+                    <div class="card-header d-flex align-items-center gap-3">
+                      <div class="score-badge cat-{{ snapshot_detail.category }}">
+                        {{ snapshot_detail.score }}%
+                      </div>
+                      <div>
+                        <h6 class="mb-0">{{ snapshot_detail.category }}</h6>
+                        <p class="text-muted small mb-0">
+                          {{ snapshot_detail.calculated_at|date:"d M Y H:i" }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <!-- Resumen -->
+                      <div class="row g-2 mb-3">
+                        <div class="col-3 text-center">
+                          <h5 class="mb-0 text-success">{{ snapshot_detail.compliant_count }}</h5>
+                          <p class="text-muted mb-0" style="font-size:.72rem;">Conformes</p>
+                        </div>
+                        <div class="col-3 text-center">
+                          <h5 class="mb-0 text-danger">{{ snapshot_detail.non_compliant_count }}</h5>
+                          <p class="text-muted mb-0" style="font-size:.72rem;">No conformes</p>
+                        </div>
+                        <div class="col-3 text-center">
+                          <h5 class="mb-0 text-warning">{{ snapshot_detail.insufficient_count }}</h5>
+                          <p class="text-muted mb-0" style="font-size:.72rem;">Sin evidencia</p>
+                        </div>
+                        <div class="col-3 text-center">
+                          <h5 class="mb-0 text-muted">{{ snapshot_detail.not_evaluated_count }}</h5>
+                          <p class="text-muted mb-0" style="font-size:.72rem;">No evaluados</p>
+                        </div>
+                      </div>
+                      <!-- Desglose por requisito -->
+                      <h6 class="text-muted mb-2 small">Desglose por requisito:</h6>
+                      {% for item in snapshot_detail.detail %}
+                      <div class="d-flex align-items-center gap-2 p-2 mb-1 rounded
+                        {% if item.status == 'COMPLIANT' %}bg-success bg-opacity-10
+                        {% elif item.status == 'NON_COMPLIANT' %}bg-danger bg-opacity-10
+                        {% elif item.status == 'INSUFFICIENT_EVIDENCE' %}bg-warning bg-opacity-10
+                        {% else %}bg-light{% endif %}">
+                        <span class="badge bg-primary-subtle text-primary" style="font-size:.68rem;">
+                          §{{ item.clause_code }}
+                        </span>
+                        <span class="small flex-grow-1">{{ item.requirement_text|truncatechars:60 }}</span>
+                        <span class="badge
+                          {% if item.status == 'COMPLIANT' %}bg-success
+                          {% elif item.status == 'NON_COMPLIANT' %}bg-danger
+                          {% elif item.status == 'INSUFFICIENT_EVIDENCE' %}bg-warning text-dark
+                          {% else %}bg-secondary{% endif %}"
+                          style="font-size:.68rem;">
+                          {{ item.status }}
+                        </span>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="card">
+                    <div class="card-body text-center py-5 text-muted">
+                      <i class="bx bx-camera mb-2" style="font-size:2rem;"></i>
+                      <p>Selecciona un snapshot para ver su desglose por requisito.</p>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Comparación -->
+            <div class="tab-pane fade {% if active_tab == 'compare' %}show active{% endif %}"
+              id="tab-compare">
+              <!-- Selector de snapshots a comparar -->
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h6 class="mb-0">Seleccionar periodos a comparar</h6>
+                </div>
+                <div class="card-body">
+                  <form method="get">
+                    <input type="hidden" name="process_id" value="{{ selected_process_id }}">
+                    <input type="hidden" name="standard_id" value="{{ selected_standard_id }}">
+                    <input type="hidden" name="tab" value="compare">
+                    <div class="row g-3 align-items-end">
+                      <div class="col-md-4">
+                        <label class="form-label small text-muted">Periodo base (A)</label>
+                        <select name="snap_a" class="form-select form-select-sm">
+                          <option value="">Seleccionar...</option>
+                          {% for snap in snapshots_for_process %}
+                          <option value="{{ snap.id }}"
+                            {% if selected_snapshot_a == snap.id|stringformat:'s' %}selected{% endif %}>
+                            {{ snap.calculated_at|slice:":10" }} — {{ snap.score }}% {{ snap.category }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small text-muted">Periodo comparado (B)</label>
+                        <select name="snap_b" class="form-select form-select-sm">
+                          <option value="">Seleccionar...</option>
+                          {% for snap in snapshots_for_process %}
+                          <option value="{{ snap.id }}"
+                            {% if selected_snapshot_b == snap.id|stringformat:'s' %}selected{% endif %}>
+                            {{ snap.calculated_at|slice:":10" }} — {{ snap.score }}% {{ snap.category }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                          <i class="bx bx-transfer me-1"></i>Comparar
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              {% if comparison_data %}
+              <!-- Resumen de comparación -->
+              <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 {% if comparison_data.summary.score_delta > 0 %}text-success{% elif comparison_data.summary.score_delta < 0 %}text-danger{% else %}text-muted{% endif %}">
+                        {% if comparison_data.summary.score_delta > 0 %}+{% endif %}{{ comparison_data.summary.score_delta }}%
+                      </h5>
+                      <p class="text-muted small mb-0">Delta de score</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-success">{{ comparison_data.summary.improved_requirements }}</h5>
+                      <p class="text-muted small mb-0">Requisitos mejorados</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-danger">{{ comparison_data.summary.declined_requirements }}</h5>
+                      <p class="text-muted small mb-0">Requisitos empeorados</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card text-center">
+                    <div class="card-body py-2">
+                      <h5 class="mb-0 text-muted">{{ comparison_data.summary.stable_requirements }}</h5>
+                      <p class="text-muted small mb-0">Sin cambio</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tabla de cambios por requisito -->
+              <div class="card">
+                <div class="card-body p-0">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Cláusula</th>
+                        <th>Requisito</th>
+                        <th>Estado A</th>
+                        <th>Estado B</th>
+                        <th>Cambio</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for change in comparison_data.changes %}
+                      <tr>
+                        <td>
+                          <span class="badge bg-primary-subtle text-primary">
+                            §{{ change.clause_code }}
+                          </span>
+                        </td>
+                        <td class="small">{{ change.requirement_text|truncatechars:60 }}</td>
+                        <td>
+                          <span class="badge
+                            {% if change.status_a == 'COMPLIANT' %}bg-success
+                            {% elif change.status_a == 'NON_COMPLIANT' %}bg-danger
+                            {% elif change.status_a == 'INSUFFICIENT_EVIDENCE' %}bg-warning text-dark
+                            {% else %}bg-secondary{% endif %}"
+                            style="font-size:.68rem;">
+                            {{ change.status_a|default:"—" }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="badge
+                            {% if change.status_b == 'COMPLIANT' %}bg-success
+                            {% elif change.status_b == 'NON_COMPLIANT' %}bg-danger
+                            {% elif change.status_b == 'INSUFFICIENT_EVIDENCE' %}bg-warning text-dark
+                            {% else %}bg-secondary{% endif %}"
+                            style="font-size:.68rem;">
+                            {{ change.status_b|default:"—" }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="change-{{ change.change_type }} small fw-medium">
+                            {% if change.change_type == 'IMPROVED' %}↑ Mejorado
+                            {% elif change.change_type == 'DECLINED' %}↓ Empeorado
+                            {% else %}→ Sin cambio{% endif %}
+                          </span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% elif selected_snapshot_a and selected_snapshot_b %}
+              <div class="alert alert-warning">
+                No se pudo comparar los snapshots seleccionados.
+                Asegúrate de seleccionar dos snapshots del mismo proceso y norma.
+              </div>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+function switchTab(tab) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.location.href = url.toString();
+}
+
+{% if chart_data_json and chart_data_json != '[]' %}
+const chartData = {{ chart_data_json|safe }};
+const options = {
+    series: [{
+        name: 'Cumplimiento (%)',
+        data: chartData.map(d => ({ x: d.x, y: d.y }))
+    }],
+    chart: {
+        type: 'line',
+        height: 250,
+        toolbar: { show: false },
+        zoom: { enabled: false }
+    },
+    stroke: { curve: 'smooth', width: 3 },
+    colors: ['#405189'],
+    markers: { size: 6 },
+    xaxis: { type: 'category' },
+    yaxis: {
+        min: 0, max: 100,
+        labels: { formatter: val => val + '%' }
+    },
+    annotations: {
+        yaxis: [
+            { y: 85, borderColor: '#0ab39c', label: { text: 'EXCELLENT', style: { color: '#0ab39c' } } },
+            { y: 70, borderColor: '#405189', label: { text: 'GOOD', style: { color: '#405189' } } },
+            { y: 50, borderColor: '#f7b84b', label: { text: 'PARTIAL', style: { color: '#f7b84b' } } },
+            { y: 25, borderColor: '#f06548', label: { text: 'LOW', style: { color: '#f06548' } } },
+        ]
+    },
+    tooltip: {
+        y: { formatter: val => val + '%' }
+    },
+    grid: { borderColor: '#f1f1f1' }
+};
+const chart = new ApexCharts(document.querySelector('#complianceChart'), options);
+chart.render();
+{% endif %}
+</script>
 {% endblock %}
