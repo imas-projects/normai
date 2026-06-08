@@ -11,8 +11,10 @@ def demo_dashboard(request):
     del recorrido de defensa del TFG.
     """
     standard_id = request.GET.get('standard_id')
-    if standard_id:
-        standard_id = int(standard_id)
+    try:
+        standard_id = int(standard_id) if standard_id else None
+    except (ValueError, TypeError):
+        standard_id = None
 
     dashboard_data = get_executive_dashboard(standard_id=standard_id)
 
@@ -38,8 +40,10 @@ def demo_normative_catalog(request):
     selected_standard_id = request.GET.get('standard_id')
     selected_clause_id = request.GET.get('clause_id')
 
-    if selected_standard_id:
-        selected_standard_id = int(selected_standard_id)
+    try:
+        selected_standard_id = int(selected_standard_id) if selected_standard_id else None
+    except (ValueError, TypeError):
+        selected_standard_id = None
         selected_standard = Standard.objects.filter(
             id=selected_standard_id
         ).first()
@@ -242,8 +246,10 @@ def demo_audit_checklists(request):
 
     # Selector de plan
     selected_plan_id = request.GET.get('plan_id')
-    if selected_plan_id:
-        selected_plan_id = int(selected_plan_id)
+    try:
+        selected_plan_id = int(selected_plan_id) if selected_plan_id else None
+    except (ValueError, TypeError):
+        selected_plan_id = None
 
     # Todos los planes con checklist disponible
     plans_with_data = []
@@ -254,15 +260,15 @@ def demo_audit_checklists(request):
         checklist_count = Checklist.objects.filter(
             audit_plan=plan
         ).count()
-        if checklist_count > 0:
-            plans_with_data.append({
-                'id': plan.id,
-                'process_name': plan.annual_program.process.name,
-                'standard_name': plan.annual_program.standard.name
-                    if plan.annual_program.standard else '—',
-                'opening_date': plan.audit_opening_date,
-                'checklist_count': checklist_count,
-            })
+        plans_with_data.append({
+            'id': plan.id,
+            'process_name': plan.annual_program.process.name,
+            'standard_name': plan.annual_program.standard.name
+                if plan.annual_program.standard else '—',
+            'opening_date': plan.audit_opening_date,
+            'checklist_count': checklist_count,
+            'has_checklist': checklist_count > 0,
+        })
 
     selected_plan = None
     checklist_items = []
@@ -404,16 +410,25 @@ def demo_compliance(request):
     selected_snapshot_b = request.GET.get('snap_b')
     active_tab = request.GET.get('tab', 'history')
 
-    if selected_process_id:
-        selected_process_id = int(selected_process_id)
-    else:
-        if processes_with_snapshots:
-            selected_process_id = processes_with_snapshots[0]['id']
+    try:
+        selected_process_id = int(selected_process_id) if selected_process_id else None
+    except (ValueError, TypeError):
+        selected_process_id = None
+    if not selected_process_id and processes_with_snapshots:
+        selected_process_id = processes_with_snapshots[0]['id']
 
-    if selected_standard_id:
-        selected_standard_id = int(selected_standard_id)
-    else:
-        selected_standard_id = 3  # ISO 9001:2015 por defecto
+    try:
+        selected_standard_id = int(selected_standard_id) if selected_standard_id else None
+    except (ValueError, TypeError):
+        selected_standard_id = None
+    if not selected_standard_id:
+        # Buscar norma robustamente desde snapshots disponibles
+        from audits.models import ComplianceSnapshot
+        first_snap = ComplianceSnapshot.objects.select_related(
+            'standard'
+        ).order_by('id').first()
+        if first_snap:
+            selected_standard_id = first_snap.standard_id
 
     # Histórico del proceso seleccionado
     history_data = None
@@ -451,10 +466,13 @@ def demo_compliance(request):
     # Comparación entre snapshots
     comparison_data = None
     if selected_snapshot_a and selected_snapshot_b:
-        comparison_result = compare_compliance_periods(
-            int(selected_snapshot_a),
-            int(selected_snapshot_b)
-        )
+        try:
+            comparison_result = compare_compliance_periods(
+                int(selected_snapshot_a),
+                int(selected_snapshot_b)
+            )
+        except (ValueError, TypeError):
+            comparison_result = {'error': 'IDs de snapshot no válidos.'}
         if comparison_result.get('success'):
             comparison_data = comparison_result
 
@@ -465,7 +483,7 @@ def demo_compliance(request):
         try:
             snap = ComplianceSnapshot.objects.select_related(
                 'process', 'standard'
-            ).get(id=int(selected_snapshot_id))
+            ).get(id=int(selected_snapshot_id) if str(selected_snapshot_id).isdigit() else 0)
             snapshot_detail = {
                 'id': snap.id,
                 'process_name': snap.process.name,
@@ -521,8 +539,10 @@ def demo_analytics(request):
 
     standards = Standard.objects.filter(is_active=True)
     selected_standard_id = request.GET.get('standard_id')
-    if selected_standard_id:
-        selected_standard_id = int(selected_standard_id)
+    try:
+        selected_standard_id = int(selected_standard_id) if selected_standard_id else None
+    except (ValueError, TypeError):
+        selected_standard_id = None
 
     # Predicciones de riesgo
     prediction_result = predict_non_conformity_risk(
