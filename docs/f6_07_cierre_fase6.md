@@ -213,6 +213,3 @@ multinorma con las siguientes capacidades demostradas:
   de riesgo de no conformidad y detección de anomalías
 - Dashboard ejecutivo que consolida todos los indicadores
 - Capa visual completa accesible desde la interfaz web
-
-
-
