@@ -1,9 +1,9 @@
 # Pantalla de Cumplimiento Normativo, Histórico y Comparación de Snapshots
 
-**Issue:** F6-04 — Pantalla de cumplimiento normativo, histórico y comparación de snapshots  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F3-01, F3-02, F3-03, F3-04  
-**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo  
+**Issue:** F6-04 — Pantalla de cumplimiento normativo, histórico y comparación de snapshots
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F3-01, F3-02, F3-03, F3-04
+**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo
 
 ---
 

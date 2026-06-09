@@ -1,9 +1,9 @@
 # Integración Visual de Checklists Dinámicos y Análisis de Brechas en Auditorías
 
-**Issue:** F6-03 — Integración visual de checklists dinámicos y análisis de brechas  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F2-01 (Checklists dinámicos), F2-02 (Preguntas de evaluación), F2-03 (Análisis de brechas)  
-**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, función auxiliar de gap analysis  
+**Issue:** F6-03 — Integración visual de checklists dinámicos y análisis de brechas
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F2-01 (Checklists dinámicos), F2-02 (Preguntas de evaluación), F2-03 (Análisis de brechas)
+**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, función auxiliar de gap analysis
 
 ---
 

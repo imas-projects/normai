@@ -1,9 +1,9 @@
 # Vista Visual del Catálogo Normativo y Trazabilidad ISO 9001-AS9100
 
-**Issue:** F6-02 — Vista visual del catálogo normativo y trazabilidad ISO 9001-AS9100  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F1-02 (Modelos normativos), F1-03 (Estrategia de mapeo), F1-05 (Carga de datos)  
-**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo  
+**Issue:** F6-02 — Vista visual del catálogo normativo y trazabilidad ISO 9001-AS9100
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F1-02 (Modelos normativos), F1-03 (Estrategia de mapeo), F1-05 (Carga de datos)
+**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo
 
 ---
 

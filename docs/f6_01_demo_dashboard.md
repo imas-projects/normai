@@ -1,9 +1,9 @@
 # Dashboard Principal de Demostración para Defensa del TFG
 
-**Issue:** F6-01 — Dashboard principal de demostración para defensa del TFG  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F5-01, F5-02, F5-03  
-**Impacto arquitectónico:** Medio — nueva app Django, nueva vista HTML/JS, corrección en analytics_dataset  
+**Issue:** F6-01 — Dashboard principal de demostración para defensa del TFG
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F5-01, F5-02, F5-03
+**Impacto arquitectónico:** Medio — nueva app Django, nueva vista HTML/JS, corrección en analytics_dataset
 
 ---
 

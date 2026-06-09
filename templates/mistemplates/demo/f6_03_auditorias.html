@@ -69,7 +69,7 @@
                       {{ plan.checklist_count }} <i class="bi bi-check2-square"></i>
                     </span>
                     {% if not plan.has_checklist %}
-                    <button onclick="generateChecklist({{ plan.id }})"
+                    <button onclick="generateChecklist(event, {{ plan.id }})"
                       class="btn btn-outline-success"
                       style="font-size:.65rem; padding:1px 6px;"
                       title="Generar checklist dinámico">
@@ -350,7 +350,7 @@
 
 {% block extra_js %}
 <script>
-function generateChecklist(planId) {
+function generateChecklist(event, planId) {
     const btn = event.target.closest('button');
     btn.disabled = true;
     btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i>';

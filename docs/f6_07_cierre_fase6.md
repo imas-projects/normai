@@ -1,9 +1,9 @@
 # Revisión de Cierre de Fase 6 y Preparación Final de la Defensa
 
-**Issue:** F6-07 — Revisión de cierre de Fase 6 y preparación final de la defensa  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F6-01, F6-02, F6-03, F6-04, F6-05, F6-06  
-**Tests:** 51/51 pasando  
+**Issue:** F6-07 — Revisión de cierre de Fase 6 y preparación final de la defensa
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F6-01, F6-02, F6-03, F6-04, F6-05, F6-06
+**Tests:** 51/51 pasando
 
 ---
 

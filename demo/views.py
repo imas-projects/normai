@@ -44,6 +44,13 @@ def demo_normative_catalog(request):
         selected_standard_id = int(selected_standard_id) if selected_standard_id else None
     except (ValueError, TypeError):
         selected_standard_id = None
+
+    try:
+        selected_clause_id = int(selected_clause_id) if selected_clause_id else None
+    except (ValueError, TypeError):
+        selected_clause_id = None
+
+    if selected_standard_id:
         selected_standard = Standard.objects.filter(
             id=selected_standard_id
         ).first()
@@ -240,9 +247,8 @@ def demo_audit_checklists(request):
     Muestra el flujo de auditoría con trazabilidad normativa y análisis de brechas.
     """
     from audits.models import (
-        AnnualPlan, Checklist, Findings, AnnualProgram
+        AnnualPlan, Checklist, Findings
     )
-    
 
     # Selector de plan
     selected_plan_id = request.GET.get('plan_id')

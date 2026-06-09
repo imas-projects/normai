@@ -1,9 +1,9 @@
 # Vista de Analítica Predictiva, Riesgos y Detección de Anomalías
 
-**Issue:** F6-05 — Vista de analítica predictiva, riesgos y detección de anomalías  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F4-01 (Dataset histórico), F4-02 (Predicción de riesgo), F4-03 (Detección de anomalías)  
-**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo  
+**Issue:** F6-05 — Vista de analítica predictiva, riesgos y detección de anomalías
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F4-01 (Dataset histórico), F4-02 (Predicción de riesgo), F4-03 (Detección de anomalías)
+**Impacto arquitectónico:** Bajo — nueva vista HTML en app demo, sin cambios de modelo
 
 ---
 

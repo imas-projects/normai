@@ -1,8 +1,8 @@
 # Preparación de Demo y Guión para el Tribunal
 
-**Issue:** F6-06 — Preparación de datos, navegación y guión de demo para el tribunal  
-**Fase:** FASE 6 — Representación Visual para Defensa del TFG  
-**Dependencias:** F6-01, F6-02, F6-03, F6-04, F6-05  
+**Issue:** F6-06 — Preparación de datos, navegación y guión de demo para el tribunal
+**Fase:** FASE 6 — Representación Visual para Defensa del TFG
+**Dependencias:** F6-01, F6-02, F6-03, F6-04, F6-05
 
 ---
 
