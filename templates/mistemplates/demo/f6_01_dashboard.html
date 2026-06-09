@@ -1,0 +1,424 @@
+{% extends "mistemplates/mi_base.html" %}
+{% load static %}
+
+{% block title %}NormAI — Dashboard Ejecutivo{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .score-circle {
+        width: 90px; height: 90px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; font-weight: 700; color: white;
+    }
+    .cat-EXCELLENT { background: #0ab39c; }
+    .cat-GOOD      { background: #405189; }
+    .cat-PARTIAL   { background: #f7b84b; }
+    .cat-LOW       { background: #f06548; }
+    .cat-CRITICAL  { background: #dc3545; }
+    .trend-up   { color: #0ab39c; }
+    .trend-down { color: #f06548; }
+    .trend-flat { color: #878a99; }
+    .alert-CRITICAL { border-left: 4px solid #dc3545; background: #fff5f5; }
+    .alert-HIGH     { border-left: 4px solid #f06548; background: #fff8f5; }
+    .alert-MEDIUM   { border-left: 4px solid #f7b84b; background: #fffdf0; }
+    .alert-INFO     { border-left: 4px solid #0ab39c; background: #f0fdfb; }
+    .demo-nav-card {
+        transition: transform .15s, box-shadow .15s;
+        cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .demo-nav-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.12);
+        text-decoration: none; color: inherit;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+  <div class="page-content">
+    <div class="container-fluid">
+
+      <!-- Cabecera -->
+      <div class="row mb-4 mt-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="mb-1">
+              <i class="bx bx-shield-quarter text-primary me-2"></i>NormAI
+              <span class="badge bg-primary-subtle text-primary ms-2" style="font-size:.75rem;">Demo TFG</span>
+            </h2>
+            <p class="text-muted mb-0">Panel ejecutivo de gestión de calidad multinorma · ISO 9001:2015 + AS9100 Rev D</p>
+          </div>
+          <!-- Selector de norma -->
+          <form method="get" class="d-flex align-items-center gap-2">
+            <label class="me-1 mb-0 text-muted small">Norma:</label>
+            <select name="standard_id" class="form-select form-select-sm" style="width:200px;" onchange="this.form.submit()">
+              <option value="">Todas las normas</option>
+              {% for std in standards %}
+              <option value="{{ std.id }}" {% if selected_standard_id == std.id %}selected{% endif %}>
+                {{ std.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+
+      {% if dashboard_data.success %}
+      {% with s=dashboard_data.executive_summary c=dashboard_data.compliance_block r=dashboard_data.risk_block a=dashboard_data.audit_block al=dashboard_data.alert_block st=dashboard_data.strategic_block %}
+
+      <!-- Tarjetas KPI principales -->
+      <div class="row g-3 mb-4">
+        <!-- Score global -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+              <div class="score-circle cat-{{ s.global_compliance_category }}">
+                {{ s.global_compliance_score }}%
+              </div>
+              <div>
+                <p class="text-muted mb-1 small">Cumplimiento Global</p>
+                <h5 class="mb-0">{{ s.global_compliance_category }}</h5>
+                {% if s.compliance_trend == 'IMPROVING' %}
+                <span class="trend-up small"><i class="bi bi-arrow-up-short"></i> Mejorando</span>
+                {% elif s.compliance_trend == 'DECLINING' %}
+                <span class="trend-down small"><i class="bi bi-arrow-down-short"></i> Empeorando</span>
+                {% else %}
+                <span class="trend-flat small"><i class="bi bi-dash"></i> Estable</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Procesos auditados -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <div class="avatar-sm me-3">
+                  <span class="avatar-title bg-info-subtle rounded-circle fs-4">
+                    <i class="bx bx-git-branch text-info"></i>
+                  </span>
+                </div>
+                <div>
+                  <p class="text-muted mb-0 small">Procesos Auditados</p>
+                  <h4 class="mb-0">{{ s.processes_audited }}</h4>
+                </div>
+              </div>
+              <div class="row g-1 mt-1">
+                <div class="col-4 text-center">
+                  <span class="badge bg-success-subtle text-success">{{ c.improving_count }} ↑</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Mejorando</p>
+                </div>
+                <div class="col-4 text-center">
+                  <span class="badge bg-warning-subtle text-warning">{{ c.stable_count }} →</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Estable</p>
+                </div>
+                <div class="col-4 text-center">
+                  <span class="badge bg-danger-subtle text-danger">{{ c.declining_count }} ↓</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Bajando</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Riesgos -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <div class="avatar-sm me-3">
+                  <span class="avatar-title bg-danger-subtle rounded-circle fs-4">
+                    <i class="bx bx-error-alt text-danger"></i>
+                  </span>
+                </div>
+                <div>
+                  <p class="text-muted mb-0 small">Riesgos Identificados</p>
+                  <h4 class="mb-0">{{ r.total_risks }}</h4>
+                </div>
+              </div>
+              <div class="row g-1 mt-1">
+                <div class="col-4 text-center">
+                  <span class="badge bg-danger-subtle text-danger">{{ r.total_high_risks }}</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Alto</p>
+                </div>
+                <div class="col-4 text-center">
+                  <span class="badge bg-warning-subtle text-warning">{{ r.total_moderate_risks }}</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Moderado</p>
+                </div>
+                <div class="col-4 text-center">
+                  <span class="badge bg-success-subtle text-success">{{ r.total_low_risks }}</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">Bajo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auditorías -->
+        <div class="col-xl-3 col-md-6">
+          <div class="card h-100">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <div class="avatar-sm me-3">
+                  <span class="avatar-title bg-primary-subtle rounded-circle fs-4">
+                    <i class="bx bx-clipboard text-primary"></i>
+                  </span>
+                </div>
+                <div>
+                  <p class="text-muted mb-0 small">Auditorías Realizadas</p>
+                  <h4 class="mb-0">{{ a.total_audits }}</h4>
+                </div>
+              </div>
+              <div class="row g-1 mt-1">
+                <div class="col-6 text-center">
+                  <span class="badge bg-danger-subtle text-danger">{{ a.nc_mayor_total }}</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">NC Mayor</p>
+                </div>
+                <div class="col-6 text-center">
+                  <span class="badge bg-warning-subtle text-warning">{{ a.nc_menor_total }}</span>
+                  <p class="text-muted mb-0" style="font-size:.7rem;">NC Menor</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila central: cumplimiento por proceso + alertas -->
+      <div class="row g-3 mb-4">
+
+        <!-- Cumplimiento por proceso -->
+        <div class="col-xl-7">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="bx bx-bar-chart-alt-2 text-primary me-2"></i>
+              <h5 class="mb-0">Cumplimiento por Proceso</h5>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Proceso</th>
+                      <th>Score</th>
+                      <th>Categoría</th>
+                      <th>Tendencia</th>
+                      <th>Auditorías</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for p in c.all_processes %}
+                    <tr>
+                      <td class="fw-medium">{{ p.process_name }}</td>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="progress flex-grow-1" style="height:6px;">
+                            <div class="progress-bar
+                              {% if p.score >= 85 %}bg-success
+                              {% elif p.score >= 70 %}bg-primary
+                              {% elif p.score >= 50 %}bg-warning
+                              {% else %}bg-danger{% endif %}"
+                              style="width:{{ p.score }}%"></div>
+                          </div>
+                          <span class="text-muted small" style="min-width:40px;">{{ p.score }}%</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge
+                          {% if p.category == 'EXCELLENT' %}bg-success
+                          {% elif p.category == 'GOOD' %}bg-primary
+                          {% elif p.category == 'PARTIAL' %}bg-warning text-dark
+                          {% elif p.category == 'LOW' %}bg-danger
+                          {% else %}bg-dark{% endif %}">
+                          {{ p.category }}
+                        </span>
+                      </td>
+                      <td>
+                        {% if p.trend == 'IMPROVING' %}
+                        <span class="text-success"><i class="bi bi-arrow-up-short"></i> Mejorando</span>
+                        {% elif p.trend == 'DECLINING' %}
+                        <span class="text-danger"><i class="bi bi-arrow-down-short"></i> Bajando</span>
+                        {% elif p.trend == 'STABLE' %}
+                        <span class="text-muted"><i class="bi bi-dash"></i> Estable</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                      </td>
+                      <td class="text-center">
+                        <span class="badge bg-light text-dark">{{ p.num_audits }}</span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alertas estratégicas -->
+        <div class="col-xl-5">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <div>
+                <i class="bx bx-bell text-warning me-2"></i>
+                <h5 class="mb-0 d-inline">Alertas Estratégicas</h5>
+              </div>
+              <span class="badge bg-danger">{{ st.alerts_summary.total_active_alerts }}</span>
+            </div>
+            <div class="card-body">
+              {% if st.alerts %}
+                {% for alert in st.alerts %}
+                <div class="p-3 mb-2 rounded alert-{{ alert.severity }}">
+                  <div class="d-flex align-items-start gap-2">
+                    {% if alert.severity == 'CRITICAL' %}
+                    <i class="bx bx-error-circle text-danger mt-1"></i>
+                    {% elif alert.severity == 'HIGH' %}
+                    <i class="bx bx-error text-warning mt-1"></i>
+                    {% elif alert.severity == 'MEDIUM' %}
+                    <i class="bx bx-info-circle text-info mt-1"></i>
+                    {% else %}
+                    <i class="bx bx-check-circle text-success mt-1"></i>
+                    {% endif %}
+                    <div>
+                      <p class="fw-semibold mb-1 small">{{ alert.name }}</p>
+                      <p class="text-muted mb-1" style="font-size:.8rem;">{{ alert.description }}</p>
+                      <p class="mb-0" style="font-size:.75rem; color:#405189;">
+                        <i class="bi bi-arrow-right-circle me-1"></i>{{ alert.action }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-center py-4">
+                  <i class="bx bx-check-shield text-success" style="font-size:3rem;"></i>
+                  <p class="text-muted mt-2">No hay alertas activas</p>
+                </div>
+              {% endif %}
+
+              <!-- Indicadores de madurez -->
+              <hr>
+              <div class="row g-2 mt-1">
+                <div class="col-6">
+                  <p class="text-muted mb-1 small">Índice de Madurez</p>
+                  <h5 class="mb-0">{{ st.strategic_indicators.maturity_index }}
+                    <small class="text-muted fs-6">({{ st.strategic_indicators.maturity_label }})</small>
+                  </h5>
+                </div>
+                <div class="col-6">
+                  <p class="text-muted mb-1 small">Procesos bajo control</p>
+                  <h5 class="mb-0">{{ st.strategic_indicators.control_rate }}%</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicadores estratégicos adicionales -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <i class="bx bx-trending-up text-success mb-2" style="font-size:2rem;"></i>
+              <h4 class="mb-0">{{ st.strategic_indicators.audit_coverage_rate }}%</h4>
+              <p class="text-muted small mb-0">Cobertura de Auditorías</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <i class="bx bx-shield-x text-danger mb-2" style="font-size:2rem;"></i>
+              <h4 class="mb-0">{{ st.strategic_indicators.risk_exposure_rate }}%</h4>
+              <p class="text-muted small mb-0">Exposición al Riesgo</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <i class="bx bx-check-shield text-primary mb-2" style="font-size:2rem;"></i>
+              <h4 class="mb-0">{{ st.strategic_indicators.avg_checklist_compliance_rate }}%</h4>
+              <p class="text-muted small mb-0">Tasa Conformidad Checklists</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <i class="bx bx-target-lock text-warning mb-2" style="font-size:2rem;"></i>
+              <h4 class="mb-0">{{ r.max_npn }}</h4>
+              <p class="text-muted small mb-0">NPN Máximo</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegación hacia vistas de detalle F6 -->
+      <div class="row mb-4">
+          <div class="col-12">
+              <h5 class="text-muted mb-3">
+                  <i class="bx bx-grid-alt me-2"></i>Explorar funcionalidades
+              </h5>
+          </div>
+          <div class="col-md-3 mb-3">
+              <a href="/demo/normativo/" class="card demo-nav-card h-100">
+                  <div class="card-body text-center py-4">
+                      <i class="bx bx-book-open text-primary mb-2" style="font-size:2.5rem;"></i>
+                      <h6 class="mb-1">Catálogo Normativo</h6>
+                      <p class="text-muted small mb-0">ISO 9001 · AS9100 · Trazabilidad</p>
+                  </div>
+              </a>
+          </div>
+          <div class="col-md-3 mb-3">
+              <a href="/demo/auditorias/" class="card demo-nav-card h-100">
+                  <div class="card-body text-center py-4">
+                      <i class="bx bx-list-check text-success mb-2" style="font-size:2.5rem;"></i>
+                      <h6 class="mb-1">Auditorías y Checklists</h6>
+                      <p class="text-muted small mb-0">Checklists dinámicos · Brechas</p>
+                  </div>
+              </a>
+          </div>
+          <div class="col-md-3 mb-3">
+              <a href="/demo/cumplimiento/" class="card demo-nav-card h-100">
+                  <div class="card-body text-center py-4">
+                      <i class="bx bx-trending-up text-warning mb-2" style="font-size:2.5rem;"></i>
+                      <h6 class="mb-1">Motor de Cumplimiento</h6>
+                      <p class="text-muted small mb-0">Snapshots · Histórico · Comparación</p>
+                  </div>
+              </a>
+          </div>
+          <div class="col-md-3 mb-3">
+              <a href="/demo/analitica/" class="card demo-nav-card h-100">
+                  <div class="card-body text-center py-4">
+                      <i class="bx bx-brain text-danger mb-2" style="font-size:2.5rem;"></i>
+                      <h6 class="mb-1">Analítica Predictiva</h6>
+                      <p class="text-muted small mb-0">Riesgo NC · Anomalías</p>
+                  </div>
+              </a>
+          </div>
+      </div>
+
+      {% endwith %}
+      {% else %}
+      <div class="row">
+        <div class="col-12">
+          <div class="alert alert-warning">
+            <i class="bx bx-info-circle me-2"></i>
+            {{ dashboard_data.error }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

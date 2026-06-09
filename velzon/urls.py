@@ -52,6 +52,7 @@ urlpatterns = [
     path('audits/', include('audits.urls')),
     path('processes/', include('processes.urls')),
     path('ai_functions/', include('ai_functions.urls')),
+    path('demo/', include('demo.urls')),
     
 ]
 
